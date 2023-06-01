@@ -1,0 +1,26 @@
+#### Required Packages #####
+numpy
+pandas
+tabulate
+colorama
+matplotlib
+tqdm
+h5py
+pyYaml
+datetime
+pillow
+tabulate
+colorama
+zarr
+ome_zarr
+alphabase
+#to be installed previously via conda
+#numba
+#cellpose
+#torch
+#pytorch-lightning
+#torchvision
+#opencv
+#scikit-image
+#scikit-fmm
+#scipy

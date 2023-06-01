@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; SPARCSpy  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Walkthrough the SPARCSpy Ecosystem" href="../notebooks/example_sparcspy_project.html" />
+    <link rel="prev" title="SPARCSpy Ecosystem" href="../ecosystem.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> SPARCSpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../ecosystem.html">SPARCSpy Ecosystem</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">Walkthrough the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sparcscmd.html">Command Line Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-split">sparcs-split</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-stat">sparcs-stat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-cleanup">sparcs-cleanup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.utils">utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.preprocessing">preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#base">base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#logable">Logable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#processingstep">ProcessingStep</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#project">project</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id1">Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecourseproject">TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-sparcscore.pipeline.workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#classification">classification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#selection">selection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#lmdselection">LMDSelection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/ml.html">ml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.datasets">datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.metrics">metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.transforms">transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.utils">utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SPARCSpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../ecosystem.html">SPARCSpy Ecosystem</a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/ecosystem/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline"></a></h1>
+<p>SPARCSpy has been tested with <strong>Python 3.8 and 3.9</strong>. We recommended installing the library within a conda environment.</p>
+<p>To install the SPARCSpy library clone the Github repository and use pip to install the library in your current environment.
+Please make sure that the package is installed editable (with the <cite>-e</cite> flag). Otherwise pretrained models might not be available.</p>
+<p>We recommend installing the non-python dependencies with conda before installing SPARCSpy (especially if running on an M1 Silicon Mac):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">MannLabs</span><span class="o">/</span><span class="n">SPARCSpy</span>
+<span class="n">cd</span> <span class="n">SPARCSpy</span>
+
+<span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="s2">&quot;SPARCSpy&quot;</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">SPARCSpy</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.9</span> <span class="n">scipy</span> <span class="s1">&#39;scikit-image&gt;=0.19&#39;</span> <span class="n">scikit</span><span class="o">-</span><span class="n">fmm</span> <span class="n">cellpose</span> <span class="n">opencv</span> <span class="n">numba</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span>
+</pre></div>
+</div>
+<p>In case you wish to utilize the ML capabilities of SPARCSpy (either for segmentation or classification) please follow the instructions <a class="reference external" href="https://pytorch.org/get-started/locally/">here</a> to install pytorch correctly for your operating system. Once this has been installed you can verify that pytorch is installed correctly by executing the following python code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can access the python console by typing <cite>python</cite> and exit it when you are finished by entering <cite>exit()</cite>.
+The output should look something like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.3380</span><span class="p">,</span> <span class="mf">0.3845</span><span class="p">,</span> <span class="mf">0.3217</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">0.8337</span><span class="p">,</span> <span class="mf">0.9050</span><span class="p">,</span> <span class="mf">0.2650</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">0.2979</span><span class="p">,</span> <span class="mf">0.7141</span><span class="p">,</span> <span class="mf">0.9069</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">0.1449</span><span class="p">,</span> <span class="mf">0.1132</span><span class="p">,</span> <span class="mf">0.1375</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">0.4675</span><span class="p">,</span> <span class="mf">0.3947</span><span class="p">,</span> <span class="mf">0.1426</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>Once you have installed pytorch according to the instructions we still need to install pytorch lightning. To do this run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">pytorch</span><span class="o">-</span><span class="n">lightning</span>
+</pre></div>
+</div>
+<p>Currently SPARCSpy depends on a developer version of alphabase so please install the package from source by doing the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">MannLabs</span><span class="o">/</span><span class="n">alphabase</span>
+</pre></div>
+</div>
+<p>Once these steps are completed you can proceed to install the SPARCSpy package via pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>In case you wish to export shapes for excision on a Leica LMD please also install the <a class="reference external" href="https://github.com/MannLabs/py-lmd">py-lmd</a> library into the same conda environment
+following the installation instructions <a class="reference external" href="https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github">here</a>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../ecosystem.html" class="btn btn-neutral float-left" title="SPARCSpy Ecosystem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../notebooks/example_sparcspy_project.html" class="btn btn-neutral float-right" title="Walkthrough the SPARCSpy Ecosystem" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann, Niklas Schmacke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

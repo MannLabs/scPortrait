@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>processing &mdash; SPARCSpy  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="pipeline" href="pipeline.html" />
+    <link rel="prev" title="Module Documentation" href="../module.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> SPARCSpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../ecosystem.html">SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ecosystem/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">Walkthrough the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sparcscmd.html">Command Line Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-split">sparcs-split</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-stat">sparcs-stat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-cleanup">sparcs-cleanup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../module.html">Module Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-sparcscore.processing.utils">utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sparcscore.processing.preprocessing">preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sparcscore.processing.segmentation">segmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#base">base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#logable">Logable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#processingstep">ProcessingStep</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#project">project</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id1">Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecourseproject">TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#module-sparcscore.pipeline.workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#extraction">extraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#classification">classification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#selection">selection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#lmdselection">LMDSelection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml.html">ml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.datasets">datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.metrics">metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#models">models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.transforms">transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.utils">utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SPARCSpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../module.html">Module Documentation</a></li>
+      <li class="breadcrumb-item active">processing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/module/processing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="processing">
+<h1>processing<a class="headerlink" href="#processing" title="Permalink to this headline"></a></h1>
+<section id="module-sparcscore.processing.utils">
+<span id="utils"></span><h2>utils<a class="headerlink" href="#module-sparcscore.processing.utils" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.utils.plot_image">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">plot_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'magma'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.plot_image" title="Permalink to this definition"></a></dt>
+<dd><p>Visualize and optionally save an input array as an image.</p>
+<p>This function displays a 2D array using matplotlib and can save
+the resulting image as a PNG file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>np.array</em>) – Input 2D numpy array to be plotted.</p></li>
+<li><p><strong>size</strong> (<em>tuple of int</em><em>, </em><em>optional</em>) – Figure size in inches, by default (10, 10).</p></li>
+<li><p><strong>save_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the output file, without extension. If not provided, image will not be saved, by default “”.</p></li>
+<li><p><strong>cmap</strong> (<em>str</em><em>, </em><em>optional</em>) – Color map used to display the array, by default “magma”.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Additional keyword arguments to be passed to <cite>ax.imshow</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plot_image</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.utils.visualize_class">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">visualize_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.visualize_class" title="Permalink to this definition"></a></dt>
+<dd><p>Visualize specific classes in a segmentation map by highlighting them on top of a background image.</p>
+<p>This function takes in class IDs and a segmentation map, and creates an output visualization
+where the specified classes are highlighted on top of the provided background image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>class_ids</strong> (<em>array-like</em>) – A list or array of integers representing the class IDs to be highlighted.</p></li>
+<li><p><strong>seg_map</strong> (<em>2D array-like</em>) – A 2D array representing the segmentation map, where each value corresponds to a class ID.</p></li>
+<li><p><strong>background</strong> (<em>2D/3D array-like</em>) – Background image (2D or 3D) on which the classes will be highlighted. Its size should match
+that of <cite>seg_map</cite>.</p></li>
+<li><p><strong>*args</strong> (<em>additional positional arguments</em>) – Any additional positional arguments that are passed to the underlying plotting functions.</p></li>
+<li><p><strong>**kwargs</strong> (<em>additional keyword arguments</em>) – Any additional keyword arguments that are passed underlying plotting functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The function will display the highlighted image but does not return any values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">class_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seg_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">background</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="o">*</span> <span class="mi">255</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">visualize_class</span><span class="p">(</span><span class="n">class_ids</span><span class="p">,</span> <span class="n">seg_map</span><span class="p">,</span> <span class="n">background</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.utils.download_testimage">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">download_testimage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.download_testimage" title="Permalink to this definition"></a></dt>
+<dd><p>Download a set of test images to a provided folder path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>folder</strong> (<em>string</em>) – The path of the folder where the test images will be saved.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>returns</strong> – A list containing the local file paths of the downloaded images.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">folder</span> <span class="o">=</span> <span class="s2">&quot;test_images&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">downloaded_images</span> <span class="o">=</span> <span class="n">download_testimage</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+<span class="go">Successfully downloaded testimage_dapi.tiff from https://zenodo.org/record/5701474/files/testimage_dapi.tiff?download=1</span>
+<span class="go">Successfully downloaded testimage_wga.tiff from https://zenodo.org/record/5701474/files/testimage_wga.tiff?download=1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">downloaded_images</span><span class="p">)</span>
+<span class="go">[&#39;test_images/testimage_dapi.tiff&#39;, &#39;test_images/testimage_wga.tiff&#39;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.utils.flatten">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.flatten" title="Permalink to this definition"></a></dt>
+<dd><p>Flatten a list of lists into a single list.</p>
+<p>This function takes in a list of lists (nested lists) and returns a single list
+containing all the elements from the input lists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>l</strong> (<em>list of lists</em>) – A list containing one or more lists as its elements.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>flattened_list</strong> – A single list containing all elements from the input lists.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">nested_list</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">flatten</span><span class="p">(</span><span class="n">nested_list</span><span class="p">)</span>
+<span class="go">[1, 2, 3, 4, 5, 6, 7, 8, 9]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-sparcscore.processing.preprocessing">
+<span id="preprocessing"></span><h2>preprocessing<a class="headerlink" href="#module-sparcscore.processing.preprocessing" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.preprocessing.percentile_normalization">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.preprocessing.</span></span><span class="sig-name descname"><span class="pre">percentile_normalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">im</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.preprocessing.percentile_normalization" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize an input image channel-wise based on defined percentiles.</p>
+<p>The percentiles will be calculated, and the image will be normalized to [0, 1]
+based on the lower and upper percentile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>im</strong> (<em>np.array</em>) – Numpy array of shape (height, width) or (channels, height, width).</p></li>
+<li><p><strong>lower_percentile</strong> (<em>float</em><em>, </em><em>between</em><em> [</em><em>0</em><em>, </em><em>1</em><em>]</em>) – Lower percentile used for normalization, all lower values will be clipped to 0.</p></li>
+<li><p><strong>upper_percentile</strong> (<em>float</em><em>, </em><em>between</em><em> [</em><em>0</em><em>, </em><em>1</em><em>]</em>) – Upper percentile used for normalization, all higher values will be clipped to 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>im</strong> – Normalized Numpy array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="c1"># (channels, height, width)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">norm_img</span> <span class="o">=</span> <span class="n">percentile_normalization</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.preprocessing.rolling_window_mean">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.preprocessing.</span></span><span class="sig-name descname"><span class="pre">rolling_window_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.preprocessing.rolling_window_mean" title="Permalink to this definition"></a></dt>
+<dd><p>Compute rolling window mean and normalize the input 2D array.</p>
+<p>The function takes an input 2D array and a window size. It calculates the mean
+within a rolling window of provided size and removes the mean from each element
+in the window. The modified array is returned. If scaling is set to True,
+the chunk is normalized by dividing by its standard deviation.
+Function is numba optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>np.array</em>) – Input 2D numpy array.</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Size of the rolling window.</p></li>
+<li><p><strong>scaling</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, normalizes the chunk by dividing it by standard deviation, by default False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>array</strong> – Processed 2D numpy array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rolling_array</span> <span class="o">=</span> <span class="n">rolling_window_mean</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.preprocessing.origins_from_distance">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.preprocessing.</span></span><span class="sig-name descname"><span class="pre">origins_from_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.preprocessing.origins_from_distance" title="Permalink to this definition"></a></dt>
+<dd><p>Compute a list of local peaks (origins) in the input array.
+The function applies a Gaussian filter to the input array, creates a binary
+mask using a threshold based on the standard deviation of the filtered data, and
+performs a distance transform on the mask. It finds the local peaks of the
+distance-transformed image with a minimum distance between the peaks,
+and returns the coordinates and a map of the peaks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>array</strong> (<em>np.array</em>) – Input 2D numpy array to be processed.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>peak_list</strong> (<em>np.array</em>) – List of peak coordinates, shape (num_peaks, 2).</p></li>
+<li><p><strong>peak_map</strong> (<em>np.array</em>) – Binary map of peaks, same shape as input array.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">peak_list</span><span class="p">,</span> <span class="n">peak_map</span> <span class="o">=</span> <span class="n">origins_from_distance</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.preprocessing.MinMax">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.preprocessing.</span></span><span class="sig-name descname"><span class="pre">MinMax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inarr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.preprocessing.MinMax" title="Permalink to this definition"></a></dt>
+<dd><p>Perform Min-Max normalization on the input array.
+The function scales the input array values to the range [0, 1] using Min-Max
+normalization. If the range of the input array (i.e., max - min) is zero,
+the original array is returned unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inarr</strong> (<em>np.array</em>) – Input numpy array to be normalized.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Min-Max normalized numpy array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalized_array</span> <span class="o">=</span> <span class="n">MinMax</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-sparcscore.processing.segmentation">
+<span id="segmentation"></span><h2>segmentation<a class="headerlink" href="#module-sparcscore.processing.segmentation" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.global_otsu">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">global_otsu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.global_otsu" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the optimal global threshold for an input grayscale image using Otsu’s method.</p>
+<p>Otsu’s method maximizes the between-class variance and minimizes the within-class variance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>image</strong> (<em>numpy.ndarray</em>) – Input grayscale image.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Optimal threshold value calculated using Otsu’s method.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coins</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">threshold</span> <span class="o">=</span> <span class="n">global_otsu</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.segment_global_threshold">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">segment_global_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_footprint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speckle_kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.segment_global_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>Segments an image based on a global threshold determined using Otsu’s method, followed by peak detection using
+distance transforms and watershed segmentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>numpy.ndarray</em>) – Input grayscale image.</p></li>
+<li><p><strong>dilation</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element for the dilation operation (default is 4).</p></li>
+<li><p><strong>min_distance</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum number of pixels separating peaks (default is 10).</p></li>
+<li><p><strong>peak_footprint</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element used for finding local maxima (default is 7).</p></li>
+<li><p><strong>speckle_kernel</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element used for speckle removal (default is 4).</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, intermediate results are plotted (default is False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Labeled array, where each unique feature in the input image has a unique label.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">segment</span> <span class="kn">import</span> <span class="n">segment_global_threshold</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">coins</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coins</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">labels</span> <span class="o">=</span> <span class="n">segment_global_threshold</span><span class="p">(</span><span class="n">coins</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">min_distance</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">peak_footprint</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">speckle_kernel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.segment_local_threshold">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">segment_local_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">median_block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">51</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_footprint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speckle_kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">median_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.segment_local_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>This function takes a unprocessed image with low background noise and extracts and segments approximately round foreground objects
+based on intensity. The image is segmented using the local (adaptive) threshold method. It first applies a local threshold based on
+the median value of a block of pixels, followed by peak detection using distance transforms and watershed segmentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>numpy.ndarray</em>) – Input grayscale image.</p></li>
+<li><p><strong>dilation</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element for the dilation operation (default is 4).</p></li>
+<li><p><strong>thr</strong> (<em>float</em><em>, </em><em>optional</em>) – The value added to the median of the block of pixels when calculating the local threshold (default is 0.01).</p></li>
+<li><p><strong>median_block</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the block of pixels used to compute the local threshold (default is 51).</p></li>
+<li><p><strong>min_distance</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum number of pixels separating peaks (default is 10).</p></li>
+<li><p><strong>peak_footprint</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element used for finding local maxima (default is 7).</p></li>
+<li><p><strong>speckle_kernel</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the structuring element used for speckle removal (default is 4).</p></li>
+<li><p><strong>median_step</strong> (<em>int</em><em>, </em><em>optional</em>) – The step size for downsampling the image before applying the local threshold (default is 1).</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, intermediate results are plotted (default is False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Labeled array, where each unique feature in the input image has a unique label.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; import matplotlib.pyplot as plt
+&gt;&gt;&gt; from skimage import data
+&gt;&gt;&gt; image = data.coins()
+&gt;&gt;&gt; labels = segment_local_threshold(image, dilation=4, thr=0.01, median_block=51, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False)
+&gt;&gt;&gt; plt.imshow(labels, cmap=‘jet’)
+&gt;&gt;&gt; plt.colorbar()
+&gt;&gt;&gt; plt.show()
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.shift_labels">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">shift_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_shifted_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.shift_labels" title="Permalink to this definition"></a></dt>
+<dd><p>Shift the labels of a given labeled map (2D or 3D numpy array) by a specific value.
+Return the shifted map and the labels that are in contact with the edges of the canvas.
+All labels but the background are incremented and all classes in contact with the edges of the
+canvas are returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_map</strong> (<em>numpy.ndarray</em>) – Input segmentation as a 2D or 3D numpy array of integers.</p></li>
+<li><p><strong>shift</strong> (<em>int</em>) – Value to increment the labels by.</p></li>
+<li><p><strong>return_shifted_labels</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the edge labels after shifting (default is False).
+If False will return the edge labels before shifting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>shifted_map</strong> (<em>numpy.ndarray</em>) – The labeled map with incremented labels.</p></li>
+<li><p><strong>edge_labels</strong> (<em>list</em>) – List of unique labels in contact with the edges of the canvas.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<span class="go">                          [0, 2, 0],</span>
+<span class="go">                          [0, 0, 3]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shift</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shifted_map</span><span class="p">,</span> <span class="n">edge_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">(</span><span class="n">input_map</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">shifted_map</span><span class="p">)</span>
+<span class="go">array([[11,  0,  0],</span>
+<span class="go">       [ 0, 12,  0],</span>
+<span class="go">       [ 0,  0, 13]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">edge_labels</span><span class="p">)</span>
+<span class="go">[11, 13]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.remove_classes">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">remove_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_remove</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.remove_classes" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper function for the numba optimized _remove_classes function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_in</strong> (<em>numpy.ndarray</em>) – Input labeled array.</p></li>
+<li><p><strong>to_remove</strong> (<em>list</em><em> or </em><em>array-like</em>) – List of label classes to remove.</p></li>
+<li><p><strong>background</strong> (<em>int</em><em>, </em><em>optional</em>) – Value used to represent the background class (default is 0).</p></li>
+<li><p><strong>reindex</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, reindex the remaining classes after removal (default is False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>label</strong> – Labeled array with specified classes removed or reindexed.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">remove_classes</span><span class="p">(</span><span class="n">label_in</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">)</span>
+<span class="go">array([[0, 2, 0],</span>
+<span class="go">       [0, 0, 2],</span>
+<span class="go">       [0, 2, 0]])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.contact_filter_lambda">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">contact_filter_lambda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.contact_filter_lambda" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the contact proportion of classes in the labeled array.</p>
+<p>This function calculates the surrounding background and non-background elements
+for each class in the label array and returns the proportion of background elements
+to total surrounding elements for each class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>numpy.ndarray</em>) – Input labeled array.</p></li>
+<li><p><strong>background</strong> (<em>int</em><em>, </em><em>optional</em>) – Value used to represent the background class (default is 0).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>pop</strong> – Array containing the contact proportion for each class.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="go">                  [0, 2, 1],</span>
+<span class="go">                  [0, 0, 2]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter_lambda</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+<span class="go">array([1.        , 1.,  0.6 ])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.contact_filter">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">contact_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inarr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.contact_filter" title="Permalink to this definition"></a></dt>
+<dd><p>Filter the input labeled array based on its contact with background pixels.</p>
+<p>This function filters an input labeled array by removing classes with a background
+contact proportion less than the given threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inarr</strong> (<em>numpy.ndarray</em>) – Input labeled array.</p></li>
+<li><p><strong>threshold</strong> (<em>int</em><em>, </em><em>optional</em>) – Specifies the minimum background contact proportion for class retention (default is 1).</p></li>
+<li><p><strong>reindex</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, reindexes the remaining classes after removal (default is False).</p></li>
+<li><p><strong>background</strong> (<em>int</em><em>, </em><em>optional</em>) – Value used to represent the background class (default is 0).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>label</strong> – Filtered labeled array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="go">                  [0, 2, 1],</span>
+<span class="go">                  [0, 0, 2]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter</span><span class="p">(</span><span class="n">inarr</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="go">array([[0, 1, 1],</span>
+<span class="go">       [0, 0, 1],</span>
+<span class="go">       [0, 0, 0]])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.size_filter">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">size_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">100000]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.size_filter" title="Permalink to this definition"></a></dt>
+<dd><p>Filter classes in a labeled array based on their size (number of pixels).</p>
+<p>This function filters classes in the input labeled array by removing classes
+that have a size (number of pixels) outside the provided limits. Optionally,
+it can reindex the remaining classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>numpy.ndarray</em>) – Input labeled array.</p></li>
+<li><p><strong>limits</strong> (<em>list</em><em>, </em><em>optional</em>) – List containing the minimum and maximum allowed class size (number of pixels)
+(default is [0, 100000]).</p></li>
+<li><p><strong>background</strong> (<em>int</em><em>, </em><em>optional</em>) – Value used to represent the background class (default is 0).</p></li>
+<li><p><strong>reindex</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, reindexes the remaining classes after removal (default is False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>label</strong> – Filtered labeled array.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="go">                      [0, 2, 1],</span>
+<span class="go">                      [0, 0, 2]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">size_filter</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="go">array([[0, 0, 0],</span>
+<span class="go">       [0, 2, 0],</span>
+<span class="go">       [0, 0, 2]])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sparcscore.processing.segmentation.numba_mask_centroid">
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.segmentation.</span></span><span class="sig-name descname"><span class="pre">numba_mask_centroid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.segmentation.numba_mask_centroid" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the centroids of classes in a given mask.</p>
+<p>This function calculates the centroids of each class in the mask and returns an array
+with the (y, x) coordinates of the centroids, the number of pixels associated with
+each class, and the id number of each class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – Input mask containing classes.</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – Debug flag (default is False).</p></li>
+<li><p><strong>skip_background</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, skip background class (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>center</strong> (<em>numpy.ndarray</em>) – Array containing the (y, x) coordinates of the centroids of each class.</p></li>
+<li><p><strong>points_class</strong> (<em>numpy.ndarray</em>) – Array containing the number of pixels associated with each class.</p></li>
+<li><p><strong>ids</strong> (<em>numpy.ndarray</em>) – Array containing the id number of each class.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">numba_mask_centroid</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+<span class="go">(array([[0.33333333, 1.66666667],</span>
+<span class="go">        [1.5       , 1.5       ]]),</span>
+<span class="go">array([3, 2], dtype=uint32),</span>
+<span class="go">array([1, 2], dtype=int32))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../module.html" class="btn btn-neutral float-left" title="Module Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pipeline.html" class="btn btn-neutral float-right" title="pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann, Niklas Schmacke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
