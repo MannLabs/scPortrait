@@ -188,7 +188,7 @@ class BaseSegmentation(Segmentation):
     def _cellmembrane_fastmarching(self, center_nuclei):
         self.log("Started with fast marching")
         fmm_marker = np.ones_like(self.maps["median"][0])
-        px_center = np.round(center_nuclei).astype(int)
+        px_center = np.round(center_nuclei).astype(np.uint64)
         
         for center in px_center[1:]:
             fmm_marker[center[0],center[1]] = 0
@@ -210,7 +210,7 @@ class BaseSegmentation(Segmentation):
         
         marker = np.zeros_like(self.maps["median"][1])
         
-        px_center = np.round(center_nuclei).astype(int)
+        px_center = np.round(center_nuclei).astype(np.uint64)
         for i, center in enumerate(px_center[1:]):
             marker[center[0],center[1]] = i+1
 
@@ -332,10 +332,10 @@ class WGASegmentation(BaseSegmentation):
         else:   
             feature_maps = [element for element in self.maps["normalized"][2:]]
             
-        channels = np.stack(required_maps + feature_maps).astype("float64")                   
+        channels = np.stack(required_maps + feature_maps).astype(np.float64)                   
         
         segmentation = np.stack([self.maps["nucleus_segmentation"],
-                                self.maps["watershed"]]).astype("int32")
+                                self.maps["watershed"]]).astype(np.uint64)
 
         return(channels, segmentation)
     
@@ -425,9 +425,9 @@ class DAPISegmentation(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         feature_maps = [element for element in self.maps["normalized"][1:]]
             
-        channels = np.stack(required_maps+feature_maps).astype("float64")
+        channels = np.stack(required_maps+feature_maps).astype(np.float64)
                     
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("int32")
+        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype(np.uint64)
         return(channels, segmentation)
     
     def process(self, input_image):
@@ -489,11 +489,11 @@ class DAPISegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 1:
             feature_maps = [element for element in self.maps["normalized"][1:]]
-            channels = np.stack(required_maps+feature_maps).astype("float64")
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
         else:
-            channels = np.stack(required_maps).astype("float64")
+            channels = np.stack(required_maps).astype(np.float64)
                     
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint32")
+        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint64")
         return(channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -554,11 +554,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps+feature_maps).astype("float64")
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
         else:
-            channels = np.stack(required_maps).astype("float64")
+            channels = np.stack(required_maps).astype(np.float64)
                     
-        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]).astype("int32")
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]).astype(np.uint64)
         return(channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -606,6 +606,62 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         #currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
         print(all_classes)
+
+        channels, segmentation = self._finalize_segmentation_results()
+        results = self.save_segmentation(channels, segmentation, all_classes)
+        return(results)
+
+class CytosolOnlySegmentationCellpose(BaseSegmentation):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _finalize_segmentation_results(self):
+        # The required maps are only nucleus channel
+        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
+        
+        # Feature maps are all further channel which contain phenotypes needed for the classification
+        if self.maps["normalized"].shape[0] > 2:
+            feature_maps = [element for element in self.maps["normalized"][2:]]
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
+        else:
+            channels = np.stack(required_maps).astype(np.float64)
+                    
+        segmentation = np.stack([self.maps["cytosol_segmentation"]]).astype(np.uint64)
+        return(channels, segmentation)
+
+    def cellpose_segmentation(self, input_image):
+        torch.cuda.empty_cache()
+        
+        #check that image is int
+        input_image = input_image.astype('int64')
+
+        #check if GPU is available
+        use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
+        self.log(f"GPU Status for segmentation: {use_GPU}")
+        
+        model_name = self.config["cytosol_segmentation"]["model"]
+        self.log(f"Segmenting cytosol using the following model: {model_name}")
+        model = models.Cellpose(model_type=self.config["cytosol_segmentation"]["model"], gpu = use_GPU)
+        masks, _, _, _ = model.eval([input_image], diameter = None, channels = [2, 1]) 
+        masks = np.array(masks) #convert to array
+
+        self.maps["cytosol_segmentation"] = masks.reshape(masks.shape[1:]) #need to add reshape so that hopefully saving works out
+    
+    def process(self, input_image):
+
+        #initialize location to save masks to
+        self.maps = {"normalized":None,
+                     "cytosol_segmentation": None}
+
+        #could add a normalization step here if so desired
+        self.maps["normalized"] = input_image
+
+        #self.log("Starting Cellpose DAPI Segmentation.")
+        self.cellpose_segmentation(input_image)
+        
+        #currently no implemented filtering steps to remove nuclei outside of specific thresholds
+        all_classes = np.unique(self.maps["cytosol_segmentation"])
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
