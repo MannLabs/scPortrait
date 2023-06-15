@@ -695,8 +695,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         )
         masks_cytosol, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
         masks_cytosol = np.array(masks_cytosol)  # convert to array
-        
-        all_classes = np.unique(masks_nucleus]
+
+        all_classes = np.unique(masks_nucleus)
         all_classes = np.delete(all_classes, 0)
 
         nucleus_cytosol_pairs = {}
@@ -724,20 +724,24 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                     nucleus_cytosol_pairs[nucleus_id] = 0
             else:
                 continue
-        
-        # code to update the segmentation and nucleus masks with the lookup table here
-        # CODE HERE
-        # CODE HERE                       
-                 
-        #first when the masks are finalized save them to the maps
+
+        # now we have all the nucleus cytosol pairs we can filter the masks
+        for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
+            if cytosol_id == 0:
+                masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
+                masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)
+            else:
+                # set the cytosol_id in the cytosol mask to the id that the nucleus has:
+                masks_cytosol = np.where(masks_cytosol == cytosol_id, nucleus_id, masks_cytosol)
+
+        # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
             masks_nucleus.shape[1:]
         )  # need to add reshape so that hopefully saving works out
-        
+
         self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
             masks_cytosol.shape[1:]
         )  # need to add reshape so that hopefully saving works out
-        
 
     def process(self, input_image):
         # initialize location to save masks to
