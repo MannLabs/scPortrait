@@ -247,8 +247,7 @@ class BaseSegmentation(Segmentation):
     def _cellmembrane_fastmarching(self, center_nuclei):
         self.log("Started with fast marching")
         fmm_marker = np.ones_like(self.maps["median"][0])
-        px_center = np.round(center_nuclei).astype(int)
-
+        px_center = np.round(center_nuclei).astype(np.uint64)
         for center in px_center[1:]:
             fmm_marker[center[0], center[1]] = 0
 
@@ -269,8 +268,7 @@ class BaseSegmentation(Segmentation):
         self.log("Started with watershed")
 
         marker = np.zeros_like(self.maps["median"][1])
-
-        px_center = np.round(center_nuclei).astype(int)
+        px_center = np.round(center_nuclei).astype(np.uint64)
         for i, center in enumerate(px_center[1:]):
             marker[center[0], center[1]] = i + 1
 
@@ -418,15 +416,14 @@ class WGASegmentation(BaseSegmentation):
                 feature_maps = [element for element in self.maps["normalized"][2:]]
         else:
             feature_maps = [element for element in self.maps["normalized"][2:]]
+            
+        channels = np.stack(required_maps + feature_maps).astype(np.float64)                   
+        
+        segmentation = np.stack([self.maps["nucleus_segmentation"],
+                                 self.maps["watershed"]]).astype(np.uint64)
 
-        channels = np.stack(required_maps + feature_maps).astype("float64")
-
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["watershed"]]
-        ).astype("int32")
-
-        return (channels, segmentation)
-
+        return(channels, segmentation)
+    
     def process(self, input_image):
         # self.directory = super().get_directory(super())
 
@@ -518,12 +515,12 @@ class DAPISegmentation(BaseSegmentation):
 
         # Feature maps are all further channel which contain phenotypes needed for the classification
         feature_maps = [element for element in self.maps["normalized"][1:]]
-
-        channels = np.stack(required_maps + feature_maps).astype("float64")
-
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("int32")
-        return (channels, segmentation)
-
+            
+        channels = np.stack(required_maps+feature_maps).astype(np.float64)
+                    
+        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype(np.uint64)
+        return(channels, segmentation)
+    
     def process(self, input_image):
         self.maps = {
             "normalized": None,
@@ -588,12 +585,13 @@ class DAPISegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 1:
             feature_maps = [element for element in self.maps["normalized"][1:]]
-            channels = np.stack(required_maps + feature_maps).astype("float64")
-        else:
-            channels = np.stack(required_maps).astype("float64")
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint32")
-        return (channels, segmentation)
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
+        else:
+            channels = np.stack(required_maps).astype(np.float64)
+                    
+        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint64")
+        return(channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
         # check that image is int
@@ -654,14 +652,12 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype("float64")
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
         else:
-            channels = np.stack(required_maps).astype("float64")
-
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype("int32")
-        return (channels, segmentation)
+            channels = np.stack(required_maps).astype(np.float64)
+                    
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]).astype(np.uint64)
+        return(channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
         # torch.cuda.empty_cache()
@@ -727,7 +723,70 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         return results
 
 
-class WGATimecourseSegmentation(TimecourseSegmentation):
+class CytosolOnlySegmentationCellpose(BaseSegmentation):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _finalize_segmentation_results(self):
+        # The required maps are only nucleus channel
+        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
+        
+        # Feature maps are all further channel which contain phenotypes needed for the classification
+        if self.maps["normalized"].shape[0] > 2:
+            feature_maps = [element for element in self.maps["normalized"][2:]]
+            channels = np.stack(required_maps+feature_maps).astype(np.float64)
+        else:
+            channels = np.stack(required_maps).astype(np.float64)
+                    
+        segmentation = np.stack([self.maps["cytosol_segmentation"],self.maps["cytosol_segmentation"]]).astype(np.uint64)
+        return(channels, segmentation)
+
+    def cellpose_segmentation(self, input_image):
+        torch.cuda.empty_cache()
+        import sys
+        
+        #check that image is int
+        input_image = input_image.astype('int64')
+
+        #check if GPU is available
+        use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
+        self.log(f"GPU Status for segmentation: {use_GPU}")
+        
+        model_name = self.config["cytosol_segmentation"]["model"]
+        self.log(f"Segmenting cytosol using the following model: {model_name}")
+        model = models.Cellpose(model_type=self.config["cytosol_segmentation"]["model"], gpu = use_GPU)
+        #get size of input_image
+        self.log(f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}")
+        self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
+        masks, _, _, _ = model.eval([input_image], diameter = None, channels = [2, 1]) 
+        masks = np.array(masks) #convert to array
+
+        self.maps["cytosol_segmentation"] = masks.reshape(masks.shape[1:]) #need to add reshape so that hopefully saving works out
+    
+    def process(self, input_image):
+
+        #initialize location to save masks to
+        self.maps = {"normalized":None,
+                     "cytosol_segmentation": None}
+
+        #could add a normalization step here if so desired
+        self.maps["normalized"] = input_image
+
+        #self.log("Starting Cellpose DAPI Segmentation.")
+        self.cellpose_segmentation(input_image)
+        
+        #currently no implemented filtering steps to remove nuclei outside of specific thresholds
+        all_classes = np.unique(self.maps["cytosol_segmentation"])
+
+        channels, segmentation = self._finalize_segmentation_results()
+        results = self.save_segmentation(channels, segmentation, all_classes)
+        return(results)
+
+class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
+    method = CytosolOnlySegmentationCellpose
+
+class WGA_TimecourseSegmentation(TimecourseSegmentation):
     """
     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
     No intermediate results are saved and everything is written to one .hdf5 file.
@@ -739,10 +798,9 @@ class WGATimecourseSegmentation(TimecourseSegmentation):
     method = WGASegmentation_Timecourse
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class MultithreadedWGATimecourseSegmentation(MultithreadedSegmentation):
+         super().__init__(*args, **kwargs)
+  
+class Multithreaded_WGA_TimecourseSegmentation(MultithreadedSegmentation):
     class WGASegmentation_Timecourse(WGASegmentation, TimecourseSegmentation):
         method = WGASegmentation
 
@@ -752,7 +810,7 @@ class MultithreadedWGATimecourseSegmentation(MultithreadedSegmentation):
         super().__init__(*args, **kwargs)
 
 
-class CytosolCellposeTimecourseSegmentation(TimecourseSegmentation):
+class Cytosol_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
     """
     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
     No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
@@ -769,13 +827,33 @@ class CytosolCellposeTimecourseSegmentation(TimecourseSegmentation):
         super().__init__(*args, **kwargs)
 
 
-class MultithreadedCytosolCellposeTimecourseSegmentation(MultithreadedSegmentation):
-    class CytosolSegmentationCellpose_Timecourse(
-        CytosolSegmentationCellpose, TimecourseSegmentation
-    ):
+class CytosolOnly_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
+    """
+    Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
+    No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
+    """
+    class CytosolOnly_Cellpose_TimecourseSegmentation(CytosolOnlySegmentationCellpose, TimecourseSegmentation):
+        method = CytosolOnlySegmentationCellpose
+
+    method = CytosolOnly_Cellpose_TimecourseSegmentation
+
+    def __init__(self, *args, **kwargs):
+         super().__init__(*args, **kwargs)
+
+class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegmentation):
+    class CytosolSegmentationCellpose_Timecourse(CytosolSegmentationCellpose, TimecourseSegmentation):
         method = CytosolSegmentationCellpose
 
     method = CytosolSegmentationCellpose_Timecourse
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+         super().__init__(*args, **kwargs) 
+
+class Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation(MultithreadedSegmentation):
+    class CytosolOnly_SegmentationCellpose_Timecourse(CytosolOnlySegmentationCellpose, TimecourseSegmentation):
+        method = CytosolOnlySegmentationCellpose
+
+    method = CytosolOnly_SegmentationCellpose_Timecourse
+
+    def __init__(self, *args, **kwargs):
+         super().__init__(*args, **kwargs) 
