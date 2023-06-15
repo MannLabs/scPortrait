@@ -24,7 +24,6 @@ import shutil
 import timeit
 
 import _pickle as cPickle
-from matplotlib.pyplot import imshow, figure
 
 class HDF5CellExtraction(ProcessingStep):
     """
@@ -114,11 +113,12 @@ class HDF5CellExtraction(ProcessingStep):
 
     def get_classes(self, filtered_classes_path):
         self.log(f"Loading filtered classes from {filtered_classes_path}")
-        cr = csv.reader(open(filtered_classes_path,'r'))
-        filtered_classes = [int(el[0]) for el in list(cr)]
+        cr = csv.reader(open(filtered_classes_path,'r'),    )
+        filtered_classes = [int(float(el[0])) for el in list(cr)]
 
         self.log("Loaded {} filtered classes".format(len(filtered_classes)))
         filtered_classes = np.unique(filtered_classes) #make sure they are all unique
+        filtered_classes.astype(np.uint64)
         self.log("After removing duplicates {} filtered classes remain.".format(len(filtered_classes)))
 
         class_list = list(filtered_classes)
@@ -406,7 +406,7 @@ class HDF5CellExtraction(ProcessingStep):
             
         self.log("Started extraction")
         self.log("Loading segmentation data from {input_segmentation_path}")
-        
+    
         hf = h5py.File(input_segmentation_path, 'r')
         hdf_channels = hf.get(self.channel_label)
         hdf_labels = hf.get(self.segmentation_label)
@@ -415,6 +415,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Using segmentation label {hdf_labels}")
         self.log("Finished loading channel data " + str(hdf_channels.shape))
         self.log("Finished loading label data " + str(hdf_labels.shape))
+        self.n_masks = hdf_labels.shape[0]
 
         # Calculate centers
         self.log("Checked class coordinates")
@@ -431,7 +432,7 @@ class HDF5CellExtraction(ProcessingStep):
                 _cell_ids = cPickle.load(input_file)
         else:
             self.log("Started class coordinate calculation")
-            center_nuclei, length, _cell_ids = numba_mask_centroid(hdf_labels[0], debug=self.debug)
+            center_nuclei, length, _cell_ids = numba_mask_centroid(hdf_labels[0].astype(np.uint32), debug=self.debug)
             px_centers = np.round(center_nuclei).astype(int)
             self.log("Finished class coordinate calculation")
             with open(center_path, "wb") as output_file:

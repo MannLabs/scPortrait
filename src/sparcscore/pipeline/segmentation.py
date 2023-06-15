@@ -416,15 +416,15 @@ class ShardedSegmentation(Segmentation):
         self.image_size = input_image.shape[1:]
 
         if self.config["shard_size"] >= np.prod(self.image_size):
-            self.log(
-                "target size is equal or larger to input image. Sharding will not be used."
-            )
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used.")
 
             sharding_plan = [
                 (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
             ]
         else:
-            self.log("target size is smaller than input image. Sharding will be used.")
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
             sharding_plan = self.calculate_sharding_plan(self.image_size)
 
         shard_list = self.initialize_shard_list(sharding_plan)
@@ -1027,8 +1027,9 @@ class TimecourseSegmentation(Segmentation):
 
         current_shard.initialize_as_shard(indexes, input_path=input_path)
 
-        # unpack results and write to temp array
-        results = current_shard.call_as_shard()
+        #unpack results and write to temp array
+        results = [current_shard.call_as_shard()]
+       
 
         self._transfer_results_to_hdf5(results)
         # results = flatten(results)
