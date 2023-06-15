@@ -612,7 +612,7 @@ class TimecourseProject(Project):
 
             # check to ensure that imaging data is found for all wells listed in plate_layout
             _wells = [
-                re.match("^Row.._Well[0-9][0-9]", _dir).group() for _dir in directories
+                re.search("Row.._Well[0-9][0-9]", _dir).group() for _dir in directories
             ]
             not_found = [well for well in _wells if well not in wells]
             if len(not_found) > 0:
@@ -686,6 +686,226 @@ class TimecourseProject(Project):
                 ):
                     _read_write_images(dir, index, h5py_path=path)
 
+    def load_input_from_stitched_files(
+            self,
+            input_dir,
+            channels,
+            timepoints,
+            plate_layout,
+            overwrite=False,
+    ):
+        """
+        Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
+        Assumes that stitched images for all files have already been assembled.
+        """
+
+        # check if already exists if so throw error message
+        if not os.path.isdir(
+                os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
+        ):
+            os.makedirs(
+                os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
+            )
+
+        path = os.path.join(
+            self.directory,
+            self.DEFAULT_SEGMENTATION_DIR_NAME,
+            self.DEFAULT_INPUT_IMAGE_NAME,
+        )
+
+        import imagesize
+
+        
+
+        if not overwrite:
+            if os.path.isfile(path):
+                sys.exit("File already exists")
+            else:
+                overwrite = True
+
+        if overwrite:
+
+            def _read_write_images(well, indexes, h5py_path):
+                # unpack indexes
+                index_start, index_end = indexes
+
+                # list all images for that well
+                _files = [_file for _file in files if well in _file]
+
+                # filter to only contain the timepoints of interest
+                _files = np.sort([x for x in _files if x.startswith(tuple(timepoints))])
+
+                # checkt to make sure all timepoints are actually there
+                _timepoints = np.unique(
+                    [re.search("Timepoint[0-9][0-9][0-9]", x).group() for x in _files]
+                )
+
+                sum = 0
+                for timepoint in timepoints:
+                    if timepoint in _timepoints:
+                        sum += 1
+                        continue
+                    else:
+                        print(f"No images found for Timepoint {timepoint}")
+                # print(f"{sum} different timepoints found of the total {len(timepoints)} timepoints given.")
+                self.log(
+                    f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
+                )
+
+                # read images for that region
+                imgs = np.empty(
+                    (n_timepoints, n_channels, size1, size2), dtype="uint16"
+                )
+                for ix, channel in enumerate(channels):
+                    images = [x for x in _files if channel in x]
+
+                    for i, im in enumerate(images):
+                        image = imread(os.path.join(input_dir, im), 0)
+
+                        #perform cropping so that all stitched images have the same size
+                        x, y = image.shape
+                        diff1 = x - size1
+                        diff1x = int(np.floor(diff1 / 2))
+                        diff1y = int(np.ceil(diff1 / 2))
+                        diff2 = y - size2
+                        diff2x = int(np.floor(diff2 / 2))
+                        diff2y = int(np.ceil(diff2 / 2))
+                        cropped = image[slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)]
+                        print(image.shape, cropped.shape)
+
+                        imgs[i, ix, :, :] = cropped
+                
+                # create labelling
+                column_values = []
+                for column in plate_layout.columns:
+                    column_values.append(plate_layout.loc[well, column])
+
+                list_input = [
+                    list(range(index_start, index_end)),
+                    [well+ "_" + x for x in timepoints],
+                    [well] * n_timepoints,
+                    timepoints,
+                    [well] * n_timepoints,
+                ]
+                list_input = [np.array(x) for x in list_input]
+
+                for x in column_values:
+                    list_input.append(np.array([x] * n_timepoints))
+
+                labelling = np.array(list_input).T
+
+                input_images[index_start:index_end, :, :, :] = imgs
+                labels[index_start:index_end] = labelling
+
+            # read plate layout
+            plate_layout = pd.read_csv(plate_layout, sep="\s+|;|,", engine="python")
+            plate_layout = plate_layout.set_index("Well")
+
+            column_labels = [
+                                "index",
+                                "ID",
+                                "location",
+                                "timepoint",
+                                "well",
+                            ] + plate_layout.columns.tolist()
+
+            # get information on number of timepoints and number of channels
+            n_timepoints = len(timepoints)
+            n_channels = len(channels)
+            wells = np.unique(plate_layout.index.tolist())
+
+            # get all files contained within the input dir
+            files = os.listdir(input_dir)
+            files = [file for file in files if file.endswith(".tif")]
+
+            # filter directories to only contain those listed in the plate layout
+            files = [
+                _dir
+                for _dir in files
+                if re.search("Row.._Well[0-9][0-9]", _dir).group() in wells
+            ]
+
+            # check to ensure that imaging data is found for all wells listed in plate_layout
+            _wells = [
+                re.search("Row.._Well[0-9][0-9]", _dir).group() for _dir in files
+            ]
+            not_found = [well for well in _wells if well not in wells]
+            if len(not_found) > 0:
+                print(
+                    "following wells listed in plate_layout not found in imaging data:",
+                    not_found,
+                )
+                self.log(
+                    f"following wells listed in plate_layout not found in imaging data: {not_found}"
+                )
+
+            #get image size and subtract 10 pixels from each edge 
+            # will adjust all merged images to this dimension to ensure that they all have the same dimensions and can be loaded into the same hdf5 file
+            size1, size2 = imagesize.get(os.path.join(input_dir, files[0]))
+            size1 = size1 - 2 * 10
+            size2 = size2 - 2 * 10
+            self.img_size = (size1, size2)
+
+            # create .h5 dataset to which all results are written
+            path = os.path.join(
+                self.directory,
+                self.DEFAULT_SEGMENTATION_DIR_NAME,
+                self.DEFAULT_INPUT_IMAGE_NAME,
+            )
+
+            # for some reason this directory does not always exist so check to make sure it does otherwise the whole reading of stuff fails
+            if not os.path.isdir(
+                    os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
+            ):
+                os.makedirs(
+                    os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
+                )
+
+            with h5py.File(path, "w") as hf:
+                dt = h5py.special_dtype(vlen=str)
+                hf.create_dataset(
+                    "label_names", (len(column_labels)), chunks=None, dtype=dt
+                )
+                hf.create_dataset(
+                    "labels",
+                    (len(wells) * n_timepoints, len(column_labels)),
+                    chunks=None,
+                    dtype=dt,
+                )
+                hf.create_dataset(
+                    "input_images",
+                    (len(wells) * n_timepoints, n_channels, size1, size2),
+                    chunks=(1, 1, size1, size2),
+                )
+
+                label_names = hf.get("label_names")
+                labels = hf.get("labels")
+                input_images = hf.get("input_images")
+
+                label_names[:] = column_labels
+
+                # ------------------
+                # start reading data
+                # ------------------
+
+                indexes = []
+                # create indexes
+                start_index = 0
+                for i, _ in enumerate(wells):
+                    stop_index = start_index + n_timepoints
+                    indexes.append((start_index, stop_index))
+                    start_index = stop_index
+
+                # iterate through all directories and add to .h5
+                # this is not implemented with multithreaded processing because writing multi-threaded to hdf5 is hard
+                # multithreaded reading is easier
+
+                for well, index in tqdm(
+                        zip(wells, indexes), total=len(wells)
+                ):
+                    _read_write_images(well, index, h5py_path=path)
+
+  
     def load_input_from_files_and_merge(
             self,
             input_dir,
@@ -703,7 +923,7 @@ class TimecourseProject(Project):
         """
         Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing after merging all the regions from each teampoint in each well.
         """
-        from vipertools.stitch import generate_stitched
+        from sparcstools.stitch import generate_stitched
 
         # check if already exists if so throw error message
         if not os.path.isdir(
