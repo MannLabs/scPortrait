@@ -684,11 +684,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         model = models.Cellpose(
             model_type=self.config["nucleus_segmentation"]["model"], gpu=use_GPU
         )
-        masks, _, _, _ = model.eval([input_image], diameter=None, channels=[1, 0])
-        masks = np.array(masks)  # convert to array
-        self.maps["nucleus_segmentation"] = masks.reshape(
-            masks.shape[1:]
-        )  # need to add reshape so that hopefully saving works out
+        masks_nucleus, _, _, _ = model.eval([input_image], diameter=None, channels=[1, 0])
+        masks_nucleus = np.array(masks_nucleus)  # convert to array
 
         model_name = self.config["cytosol_segmentation"]["model"]
 
@@ -696,13 +693,51 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         model = models.Cellpose(
             model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
         )
-        masks, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
-        masks = np.array(masks)  # convert to array
+        masks_cytosol, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
+        masks_cytosol = np.array(masks_cytosol)  # convert to array
+        
+        all_classes = np.unique(masks_nucleus]
+        all_classes = np.delete(all_classes, 0)
 
-        self.maps["cytosol_segmentation"] = masks.reshape(
-            masks.shape[1:]
+        nucleus_cytosol_pairs = {}
+
+        for nucleus_id in all_classes:
+            # get the nucleus and set the background to 0 and the nucleus to 1
+            nucleus = np.where(masks_nucleus == nucleus_id, 1, 0)
+            # now get the coordinates of the nucleus
+            nucleus_pixels = np.nonzero(nucleus)
+
+            # check if those indices are not background in the cytosol mask
+            potential_cytosol = masks_cytosol[nucleus_pixels]
+            potential_cytosol = np.all(potential_cytosol != 0)
+
+            if potential_cytosol:
+                unique, counts = np.unique(masks_cytosol[nucleus_pixels], return_counts=True)
+                all_counts = np.sum(counts)
+                proportions = np.divide(counts, all_counts)
+
+                if np.any(proportions >= self.config["filtering_threshold"]):
+                    # get the cytosol_id with max proportion
+                    cytosol_id = unique[np.argmax(proportions >= self.config["filtering_threshold"])]
+                    nucleus_cytosol_pairs[nucleus_id] = cytosol_id
+                else:
+                    nucleus_cytosol_pairs[nucleus_id] = 0
+            else:
+                continue
+        
+        # code to update the segmentation and nucleus masks with the lookup table here
+        # CODE HERE
+        # CODE HERE                       
+                 
+        #first when the masks are finalized save them to the maps
+        self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
+            masks_nucleus.shape[1:]
         )  # need to add reshape so that hopefully saving works out
-
+        
+        self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
+            masks_cytosol.shape[1:]
+        )  # need to add reshape so that hopefully saving works out
+        
 
     def process(self, input_image):
         # initialize location to save masks to
@@ -720,34 +755,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
-        all_classes = np.delete(all_classes, 0)
-
-        nucleus_cytosol_pairs = {}
-
-        for nucleus_id in all_classes:
-            # get the nucleus and set the background to 0 and the nucleus to 1
-            nucleus = np.where(self.maps["nucleus_segmentation"] == nucleus_id, 1, 0)
-            # now get the coordinates of the nucleus
-            nucleus_pixels = np.nonzero(nucleus)
-
-            # check if those indices are not background in the cytosol mask
-            potential_cytosol = self.maps["cytosol_segmentation"][nucleus_pixels]
-            potential_cytosol = np.all(potential_cytosol != 0)
-
-            if potential_cytosol:
-                unique, counts = np.unique(self.maps["cytosol_segmentation"][nucleus_pixels], return_counts=True)
-                all_counts = np.sum(counts)
-                proportions = np.divide(counts, all_counts)
-
-                if np.any(proportions >= self.config["filtering_threshold"]):
-                    # get the cytosol_id with max proportion
-                    cytosol_id = unique[np.argmax(proportions >= self.config["filtering_threshold"])]
-                    nucleus_cytosol_pairs[nucleus_id] = cytosol_id
-                else:
-                    nucleus_cytosol_pairs[nucleus_id] = 0
-            else:
-                continue
-
+        
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
 
