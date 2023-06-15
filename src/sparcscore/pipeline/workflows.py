@@ -725,14 +725,31 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             else:
                 continue
 
+        # check if there are any cytosol masks that are assigned to multiple nuclei
+        unique_pairs = list(set(nucleus_cytosol_pairs.values()))
+        # check if there are any duplicate values
+        if len(unique_pairs) != len(nucleus_cytosol_pairs):
+            # if there are duplicate values, set them to 0
+            seen_cytosol = set()
+            for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
+                if cytosol_id in seen_cytosol:
+                    nucleus_cytosol_pairs[nucleus_id] = 0
+                else:
+                    seen_cytosol.add(cytosol_id)
+
         # now we have all the nucleus cytosol pairs we can filter the masks
+        updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
+
         for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
             if cytosol_id == 0:
-                masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
-                masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)
+                masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)  # set the nucleus to 0
+                masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)  # set the cytosol to 0
             else:
-                # set the cytosol_id in the cytosol mask to the id that the nucleus has:
-                masks_cytosol = np.where(masks_cytosol == cytosol_id, nucleus_id, masks_cytosol)
+                # set the cytosol pixels to the nucleus_id if not previously updated
+                masks_cytosol = np.where(np.logical_and(masks_cytosol == cytosol_id, ~updated_cytosol_mask), nucleus_id,
+                                         masks_cytosol)
+                # update the updated_cytosol_mask with the newly updated cytosol pixels
+                updated_cytosol_mask = np.logical_or(updated_cytosol_mask, masks_cytosol == nucleus_id)
 
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
