@@ -88,7 +88,7 @@ class BaseSegmentation(Segmentation):
             )
         else:
             self.log(
-                "No treshold or median_block for nucleus segmentation defined, global otsu will be used."
+                "No threshold or median_block for nucleus segmentation defined, global otsu will be used."
             )
             self.maps["nucleus_segmentation"] = segment_global_threshold(
                 nucleus_map_tr,
@@ -120,7 +120,7 @@ class BaseSegmentation(Segmentation):
         )
         all_classes = np.unique(self.maps["nucleus_segmentation"])
 
-        # ids of all nucleis which are unconnected and can be used for further analysis
+        # ids of all nuclei  s which are unconnected and can be used for further analysis
         labels_nuclei_unconnected = contact_filter(
             self.maps["nucleus_segmentation"],
             threshold=self.config["nucleus_segmentation"]["contact_filter"],
@@ -554,7 +554,7 @@ class DAPISegmentation(BaseSegmentation):
             if self.debug:
                 self._dapi_median_intensity_plot()
 
-        # segment dapi channels based on local tresholding
+        # segment dapi channels based on local thresholding
         if start_from <= 2:
             self.log("Started performing nucleus segmentation.")
             self._nucleus_thresholding()
@@ -597,7 +597,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
 
     def cellpose_segmentation(self, input_image):
         # check that image is int
-        input_image = input_image.astype("int")
+        input_image = input_image.astype("int64")
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -625,6 +625,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         self.maps["normalized"] = input_image
 
         self.log("Starting Cellpose DAPI Segmentation.")
+
         self.cellpose_segmentation(input_image)
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
@@ -668,7 +669,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # with torch.no_grad():
 
         # check that image is int
-        input_image = input_image.astype("int")
+        input_image = input_image.astype("int64")
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -681,7 +682,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # load correct segmentation model for nuclei
         model_name = self.config["nucleus_segmentation"]["model"]
+
         self.log(f"Segmenting nuclei using the following model: {model_name}")
+
         model = models.Cellpose(
             model_type=self.config["nucleus_segmentation"]["model"], gpu=use_GPU
         )
@@ -692,6 +695,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         )  # need to add reshape so that hopefully saving works out
 
         model_name = self.config["cytosol_segmentation"]["model"]
+
         self.log(f"Segmenting cytosol using the following model: {model_name}")
         model = models.Cellpose(
             model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
@@ -720,10 +724,37 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
-        print(all_classes)
+        all_classes = np.delete(all_classes, 0)
+
+        nucleus_cytosol_pairs = {}
+
+        for nucleus_id in all_classes:
+            # get the nucleus and set the background to 0 and the nucleus to 1
+            nucleus = np.where(self.maps["nucleus_segmentation"] == nucleus_id, 1, 0)
+            # now get the coordinates of the nucleus
+            nucleus_pixels = np.nonzero(nucleus)
+
+            # check if those indices are not background in the cytosol mask
+            potential_cytosol = self.maps["cytosol_segmentation"][nucleus_pixels]
+            potential_cytosol = np.all(potential_cytosol != 0)
+
+            if potential_cytosol:
+                unique, counts = np.unique(self.maps["cytosol_segmentation"][nucleus_pixels], return_counts=True)
+                all_counts = np.sum(counts)
+                proportions = np.divide(counts, all_counts)
+
+                if np.any(proportions >= self.config["filtering_threshold"]):
+                    # get the cytosol_id with max proportion
+                    cytosol_id = unique[np.argmax(proportions >= self.config["filtering_threshold"])]
+                    nucleus_cytosol_pairs[nucleus_id] = cytosol_id
+                else:
+                    nucleus_cytosol_pairs[nucleus_id] = 0
+            else:
+                continue
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
+
         return results
 
 
