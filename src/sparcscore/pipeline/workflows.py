@@ -661,8 +661,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         return(channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
-        # torch.cuda.empty_cache()
-        # with torch.no_grad():
+        torch.cuda.empty_cache() #run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
         input_image = input_image.astype("int64")
@@ -672,8 +671,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             use_GPU = True
         else:
             use_GPU = False
+        
         # currently no real acceleration through using GPU as we can't load batches
-
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         # load correct segmentation model for nuclei
@@ -696,6 +695,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         masks_cytosol, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
+        if self.debug:
+            #save unfiltered masks for visualization of filtering process
+            masks_nucleus_unfiltered = masks_nucleus.copy()
+            masks_cytosol_unfiltered = masks_cytosol.copy()
+            
         all_classes = np.unique(masks_nucleus)
         all_classes = np.delete(all_classes, 0)
 
@@ -727,38 +731,68 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # check if there are any cytosol masks that are assigned to multiple nuclei
         unique_pairs = list(set(nucleus_cytosol_pairs.values()))
+
         # check if there are any duplicate values
         if len(unique_pairs) != len(nucleus_cytosol_pairs):
-            # if there are duplicate values, set them to 0
-            seen_cytosol = set()
-            for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
-                if cytosol_id in seen_cytosol:
-                    nucleus_cytosol_pairs[nucleus_id] = 0
-                else:
-                    seen_cytosol.add(cytosol_id)
+            
+            #invert dictionary to get all cytosol values that are assigned to more than one nucleus
+            rev_multidict = {}
+            for key, value in nucleus_cytosol_pairs.items():
+                rev_multidict.setdefault(value, set()).add(key)
 
+            #if there are duplicate values set them to 0
+            for key, values in rev_multidict.items():
+                if len(values) > 1:
+                    for value in values:
+                        nucleus_cytosol_pairs[value] = 0
+
+        #set all cytosol ids that are not present in lookup table to 0
+        #need to do this before updating any of the ids
+        used_cytosol_ids = set(nucleus_cytosol_pairs.values())
+        all_cytosol_ids = set(np.unique(masks_cytosol))
+        not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids #get unique cytosol ids that are not in the lookup table
+        for cytosol_id in not_used_cytosol_ids:
+            masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol) 
+        
         # now we have all the nucleus cytosol pairs we can filter the masks
         updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
 
         for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
             if cytosol_id == 0:
                 masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)  # set the nucleus to 0
-                masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)  # set the cytosol to 0
             else:
                 # set the cytosol pixels to the nucleus_id if not previously updated
                 masks_cytosol = np.where(np.logical_and(masks_cytosol == cytosol_id, ~updated_cytosol_mask), nucleus_id,
                                          masks_cytosol)
                 # update the updated_cytosol_mask with the newly updated cytosol pixels
                 updated_cytosol_mask = np.logical_or(updated_cytosol_mask, masks_cytosol == nucleus_id)
+        
+        if self.debug:
+            #plot nucleus and cytosol masks before and after filtering
+            fig, axs = plt.subplots(2, 2, figsize = (8, 8))
+            axs[0,0].imshow(masks_nucleus_unfiltered[0])
+            axs[0,0].axis("off")
+            axs[0,0].set_title("before filtering", fontsize = 6)
+            axs[0,1].imshow(masks_nucleus[0])
+            axs[0,1].axis("off")
+            axs[0,1].set_title("after filtering", fontsize = 6)
+
+            axs[1,0].imshow(masks_cytosol_unfiltered[0])
+            axs[1,0].axis("off")
+            axs[1,1].imshow(masks_cytosol[0])
+            axs[1,1].axis("off")
+            fig.tight_layout()
+            fig.show()
+            del fig #delete figure after showing to free up memory again
 
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
             masks_nucleus.shape[1:]
-        )  # need to add reshape so that hopefully saving works out
+        )  # need to add reshape to save in proper format for HDF5
 
         self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
             masks_cytosol.shape[1:]
-        )  # need to add reshape so that hopefully saving works out
+        )  # need to add reshape to save in proper format for HDF5
 
     def process(self, input_image):
         # initialize location to save masks to
