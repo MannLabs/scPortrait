@@ -774,12 +774,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
             if cytosol_id == 0:
                 masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)  # set the nucleus to 0
-            else:
+            else:               
                 # set the cytosol pixels to the nucleus_id if not previously updated
-                masks_cytosol = np.where(np.logical_and(masks_cytosol == cytosol_id, ~updated_cytosol_mask), nucleus_id,
-                                         masks_cytosol)
-                # update the updated_cytosol_mask with the newly updated cytosol pixels
-                updated_cytosol_mask = np.logical_or(updated_cytosol_mask, masks_cytosol == nucleus_id)
+                condition = np.logical_and(masks_cytosol == cytosol_id, ~updated_cytosol_mask)
+                masks_cytosol = np.where(condition, nucleus_id, masks_cytosol)
+                updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
 
         if self.debug:
             # plot nucleus and cytosol masks before and after filtering
