@@ -747,7 +747,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # get unique cytosol ids that are not in the lookup table
         all_cytosol_ids = set(np.unique(masks_cytosol))
-        all_cytosol_ids = np.delete(list(all_cytosol_ids), 0)
+        all_cytosol_ids = all_cytosol_ids.remove(0)
         used_cytosol_ids = set(nucleus_cytosol_pairs.values())
         not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids
 
@@ -757,7 +757,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # get unique nucleus ids that are not in the lookup table
         all_nucleus_ids = set(np.unique(masks_nucleus))
-        all_nucleus_ids = np.delete(list(all_nucleus_ids), 0)
+        all_nucleus_ids = all_nucleus_ids.remove(0)
         used_nucleus_ids = set(nucleus_cytosol_pairs.keys())
         not_used_nucleus_ids = all_nucleus_ids - used_nucleus_ids
 
