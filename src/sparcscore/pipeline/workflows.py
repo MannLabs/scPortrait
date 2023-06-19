@@ -741,28 +741,28 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             # if there are duplicate values set them to 0
             for cytosol, nuclei in rev_nucleus_cytosol_pairs.items():
-                if len(nuclei) > 1: # if the cytosol mapped to multiple nuclei
+                if len(nuclei) > 1:  # if the cytosol mapped to multiple nuclei
                     for nucleus in nuclei:
                         nucleus_cytosol_pairs[nucleus] = 0
 
         # get unique cytosol ids that are not in the lookup table
         all_cytosol_ids = set(np.unique(masks_cytosol))
+        all_cytosol_ids = np.delete(list(all_cytosol_ids), 0)
         used_cytosol_ids = set(nucleus_cytosol_pairs.values())
         not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids
 
         # set all cytosol ids that are not present in lookup table to 0 in the cytosol mask
         for cytosol_id in not_used_cytosol_ids:
-            print("Not used cytosol id:", cytosol_id)
             masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)
 
         # get unique nucleus ids that are not in the lookup table
         all_nucleus_ids = set(np.unique(masks_nucleus))
+        all_nucleus_ids = np.delete(list(all_nucleus_ids), 0)
         used_nucleus_ids = set(nucleus_cytosol_pairs.keys())
         not_used_nucleus_ids = all_nucleus_ids - used_nucleus_ids
 
         # set all nucleus ids that are not present in lookup table to 0 in the nucleus mask
         for nucleus_id in not_used_nucleus_ids:
-            print("Not used nucleus id:", nucleus_id)
             masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
 
         # now we have all the nucleus cytosol pairs we can filter the masks
