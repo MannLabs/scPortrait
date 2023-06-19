@@ -72,8 +72,8 @@ class BaseSegmentation(Segmentation):
         # Use manual threshold if defined in ["wga_segmentation"]["threshold"]
         # If not, use global otsu
         if (
-                "threshold" in self.config["nucleus_segmentation"]
-                and "median_block" in self.config["nucleus_segmentation"]
+            "threshold" in self.config["nucleus_segmentation"]
+            and "median_block" in self.config["nucleus_segmentation"]
         ):
             self.maps["nucleus_segmentation"] = segment_local_threshold(
                 nucleus_map_tr,
@@ -340,7 +340,7 @@ class BaseSegmentation(Segmentation):
         plt.show()
 
     def _visualize_nucleus_segmentation(
-            self, classes_nuclei_unconnected, classes_nuclei_filtered
+        self, classes_nuclei_unconnected, classes_nuclei_filtered
     ):
         um_p_px = 665 / 1024  # what is this!!?? @GWallmann
         um_2_px = um_p_px * um_p_px  # what is this!!?? @GWallmann
@@ -419,8 +419,9 @@ class WGASegmentation(BaseSegmentation):
 
         channels = np.stack(required_maps + feature_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"],
-                                 self.maps["watershed"]]).astype(np.uint64)
+        segmentation = np.stack(
+            [self.maps["nucleus_segmentation"], self.maps["watershed"]]
+        ).astype(np.uint64)
 
         return (channels, segmentation)
 
@@ -657,8 +658,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         else:
             channels = np.stack(required_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]).astype(
-            np.uint64)
+        segmentation = np.stack(
+            [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
+        ).astype(np.uint64)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -684,7 +686,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         model = models.Cellpose(
             model_type=self.config["nucleus_segmentation"]["model"], gpu=use_GPU
         )
-        masks_nucleus, _, _, _ = model.eval([input_image], diameter=None, channels=[1, 0])
+        masks_nucleus, _, _, _ = model.eval(
+            [input_image], diameter=None, channels=[1, 0]
+        )
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
         model_name = self.config["cytosol_segmentation"]["model"]
@@ -693,7 +697,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         model = models.Cellpose(
             model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
         )
-        masks_cytosol, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
+        masks_cytosol, _, _, _ = model.eval(
+            [input_image], diameter=None, channels=[2, 1]
+        )
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         if self.debug:
@@ -701,12 +707,12 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_nucleus_unfiltered = masks_nucleus.copy()
             masks_cytosol_unfiltered = masks_cytosol.copy()
 
-        all_classes = np.unique(masks_nucleus)
-        all_classes = np.delete(all_classes, 0)
+        all_nucleus_ids = np.unique(masks_nucleus)
+        all_nucleus_ids = np.delete(all_nucleus_ids, 0)
 
         nucleus_cytosol_pairs = {}
 
-        for nucleus_id in all_classes:
+        for nucleus_id in all_nucleus_ids:
             # get the nucleus and set the background to 0 and the nucleus to 1
             nucleus = np.where(masks_nucleus == nucleus_id, 1, 0)
             # now get the coordinates of the nucleus
@@ -717,33 +723,34 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             potential_cytosol = np.all(potential_cytosol != 0)
 
             if potential_cytosol:
-                unique, counts = np.unique(masks_cytosol[nucleus_pixels], return_counts=True)
+                unique_cytosol, counts = np.unique(
+                    masks_cytosol[nucleus_pixels], return_counts=True
+                )
                 all_counts = np.sum(counts)
-                proportions = np.divide(counts, all_counts)
+                cytosol_proportions = np.divide(counts, all_counts)
 
-                if np.any(proportions >= self.config["filtering_threshold"]):
+                if np.any(cytosol_proportions >= self.config["filtering_threshold"]):
                     # get the cytosol_id with max proportion
-                    cytosol_id = unique[np.argmax(proportions >= self.config["filtering_threshold"])]
+                    cytosol_id = unique_cytosol[
+                        np.argmax(cytosol_proportions >= self.config["filtering_threshold"])
+                    ]
                     nucleus_cytosol_pairs[nucleus_id] = cytosol_id
                 else:
                     nucleus_cytosol_pairs[nucleus_id] = 0
             else:
                 continue
 
-        print("Initial lookup table: ", nucleus_cytosol_pairs)
-
         # check if there are any cytosol masks that are assigned to multiple nuclei
         unique_pairs = list(set(nucleus_cytosol_pairs.values()))
         if len(unique_pairs) != len(nucleus_cytosol_pairs):
-            
             # invert dictionary to get all cytosol values that are assigned to more than one nucleus
             rev_nucleus_cytosol_pairs = {}
             for nucleus, cytosol in nucleus_cytosol_pairs.items():
                 rev_nucleus_cytosol_pairs.setdefault(cytosol, set()).add(nucleus)
 
-            # if there are duplicate values set them to 0
+            # if there are multiple nuclei assigned to one cytosol, set all cytosol values to 0
             for cytosol, nuclei in rev_nucleus_cytosol_pairs.items():
-                if len(nuclei) > 1:  # if the cytosol mapped to multiple nuclei
+                if len(nuclei) > 1:
                     for nucleus in nuclei:
                         nucleus_cytosol_pairs[nucleus] = 0
 
@@ -767,16 +774,18 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         for nucleus_id in not_used_nucleus_ids:
             masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
 
-        print("Filtered lookup table: ", nucleus_cytosol_pairs)
-
         # now we have all the nucleus cytosol pairs we can filter the masks
         updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
         for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
             if cytosol_id == 0:
-                masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)  # set the nucleus to 0
-            else:               
+                masks_nucleus = np.where(
+                    masks_nucleus == nucleus_id, 0, masks_nucleus
+                )  # set the nucleus to 0
+            else:
                 # set the cytosol pixels to the nucleus_id if not previously updated
-                condition = np.logical_and(masks_cytosol == cytosol_id, ~updated_cytosol_mask)
+                condition = np.logical_and(
+                    masks_cytosol == cytosol_id, ~updated_cytosol_mask
+                )
                 masks_cytosol = np.where(condition, nucleus_id, masks_cytosol)
                 updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
 
@@ -831,7 +840,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
 
 class CytosolOnlySegmentationCellpose(BaseSegmentation):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -846,8 +854,9 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         else:
             channels = np.stack(required_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]).astype(
-            np.uint64)
+        segmentation = np.stack(
+            [self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]
+        ).astype(np.uint64)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -855,7 +864,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         import sys
 
         # check that image is int
-        input_image = input_image.astype('int64')
+        input_image = input_image.astype("int64")
 
         # check if GPU is available
         use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
@@ -863,22 +872,24 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         model_name = self.config["cytosol_segmentation"]["model"]
         self.log(f"Segmenting cytosol using the following model: {model_name}")
-        model = models.Cellpose(model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU)
+        model = models.Cellpose(
+            model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
+        )
         # get size of input_image
         self.log(
-            f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}")
+            f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
+        )
         self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
         masks, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
         masks = np.array(masks)  # convert to array
 
         self.maps["cytosol_segmentation"] = masks.reshape(
-            masks.shape[1:])  # need to add reshape so that hopefully saving works out
+            masks.shape[1:]
+        )  # need to add reshape so that hopefully saving works out
 
     def process(self, input_image):
-
         # initialize location to save masks to
-        self.maps = {"normalized": None,
-                     "cytosol_segmentation": None}
+        self.maps = {"normalized": None, "cytosol_segmentation": None}
 
         # could add a normalization step here if so desired
         self.maps["normalized"] = input_image
@@ -891,7 +902,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
-        return (results)
+        return results
 
 
 class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
@@ -946,7 +957,9 @@ class CytosolOnly_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
     No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
     """
 
-    class CytosolOnly_Cellpose_TimecourseSegmentation(CytosolOnlySegmentationCellpose, TimecourseSegmentation):
+    class CytosolOnly_Cellpose_TimecourseSegmentation(
+        CytosolOnlySegmentationCellpose, TimecourseSegmentation
+    ):
         method = CytosolOnlySegmentationCellpose
 
     method = CytosolOnly_Cellpose_TimecourseSegmentation
@@ -956,7 +969,9 @@ class CytosolOnly_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
 
 
 class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegmentation):
-    class CytosolSegmentationCellpose_Timecourse(CytosolSegmentationCellpose, TimecourseSegmentation):
+    class CytosolSegmentationCellpose_Timecourse(
+        CytosolSegmentationCellpose, TimecourseSegmentation
+    ):
         method = CytosolSegmentationCellpose
 
     method = CytosolSegmentationCellpose_Timecourse
@@ -965,8 +980,12 @@ class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegment
         super().__init__(*args, **kwargs)
 
 
-class Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation(MultithreadedSegmentation):
-    class CytosolOnly_SegmentationCellpose_Timecourse(CytosolOnlySegmentationCellpose, TimecourseSegmentation):
+class Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation(
+    MultithreadedSegmentation
+):
+    class CytosolOnly_SegmentationCellpose_Timecourse(
+        CytosolOnlySegmentationCellpose, TimecourseSegmentation
+    ):
         method = CytosolOnlySegmentationCellpose
 
     method = CytosolOnly_SegmentationCellpose_Timecourse
