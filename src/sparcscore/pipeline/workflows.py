@@ -225,7 +225,7 @@ class BaseSegmentation(Segmentation):
         wga_mask_comp = wga_mask_comp / nn
         wga_mask_comp = np.clip(wga_mask_comp, 0, 1)
 
-        # substract golgi and dapi channel from wga
+        # subtract golgi and dapi channel from wga
         diff = np.clip(wga_mask_comp - self.maps["median"][0], 0, 1)
         diff = np.clip(diff - self.maps["nucleus_mask"], 0, 1)
         diff = 1 - diff
@@ -256,7 +256,7 @@ class BaseSegmentation(Segmentation):
 
         if not isinstance(travel_time, np.ma.core.MaskedArray):
             raise TypeError(
-                "travel_time for WGA based segmentation returned no MaskedArray. This is most likely due to missing WGA background determination."
+                "Travel_time for WGA based segmentation returned no MaskedArray. This is most likely due to missing WGA background determination."
             )
 
         self.maps["travel_time"] = travel_time.filled(fill_value=np.max(travel_time))
@@ -423,7 +423,7 @@ class WGASegmentation(BaseSegmentation):
             [self.maps["nucleus_segmentation"], self.maps["watershed"]]
         ).astype(np.uint64)
 
-        return (channels, segmentation)
+        return channels, segmentation
 
     def process(self, input_image):
         # self.directory = super().get_directory(super())
@@ -595,6 +595,8 @@ class DAPISegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+        torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
+
         # check that image is int
         input_image = input_image.astype("int64")
 
@@ -602,7 +604,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         if torch.cuda.is_available():
             use_GPU = True
         else:
-            use_GPU = False  # currently no realy acceleration through using GPU as we can't load batches
+            use_GPU = False  # currently no real acceleration through using GPU as we can't load batches
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
@@ -661,7 +663,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
         ).astype(np.uint64)
-        return (channels, segmentation)
+        return channels, segmentation
 
     def cellpose_segmentation(self, input_image):
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
@@ -860,8 +862,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
-        torch.cuda.empty_cache()
-        import sys
+        torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
         input_image = input_image.astype("int64")
