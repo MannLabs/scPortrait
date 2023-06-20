@@ -19,6 +19,7 @@ from sparcscore.processing.segmentation import (
 import os
 import numpy as np
 import torch
+import gc
 import matplotlib.pyplot as plt
 import skfmm
 
@@ -595,6 +596,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+        gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
@@ -617,6 +619,11 @@ class DAPISegmentationCellpose(BaseSegmentation):
         self.maps["nucleus_segmentation"] = masks.reshape(
             masks.shape[1:]
         )  # need to add reshape so that hopefully saving works out
+
+        #manually delete model and perform gc to free up memory on GPU
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()  
 
     def process(self, input_image):
         # initialize location to save masks to
@@ -666,7 +673,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         return channels, segmentation
 
     def cellpose_segmentation(self, input_image):
-        torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
+        # clean up old cached variables to free up GPU memory
+        gc.collect()
+        torch.cuda.empty_cache()  
 
         # check that image is int
         input_image = input_image.astype("int64")
@@ -693,6 +702,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         )
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
+        #manually delete model and perform gc to free up memory on GPU
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()  
+
         model_name = self.config["cytosol_segmentation"]["model"]
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
@@ -703,6 +717,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             [input_image], diameter=None, channels=[2, 1]
         )
         masks_cytosol = np.array(masks_cytosol)  # convert to array
+
+        #manually delete model and perform gc to free up memory on GPU
+        del model
+        gc.collect()
+        torch.cuda.empty_cache() 
 
         if self.debug:
             # save unfiltered masks for visualization of filtering process
@@ -862,6 +881,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+        gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
@@ -876,6 +896,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         model = models.Cellpose(
             model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
         )
+
         # get size of input_image
         self.log(
             f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
@@ -886,7 +907,12 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         self.maps["cytosol_segmentation"] = masks.reshape(
             masks.shape[1:]
-        )  # need to add reshape so that hopefully saving works out
+        )  # add reshape to match shape to HDF5 shape
+
+        #manually delete model and perform gc to free up memory on GPU
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()  
 
     def process(self, input_image):
         # initialize location to save masks to
