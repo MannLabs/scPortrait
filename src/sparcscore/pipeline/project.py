@@ -764,8 +764,8 @@ class TimecourseProject(Project):
                         if image.shape[0] < size1 or image.shape[1] < size2:
                             image = np.pad(
                                 image,
-                                ((0, size1 - image.shape[0]),
-                                 (0, size2 - image.shape[1])),
+                                ((0, np.max((size1 - image.shape[0], 0))),
+                                 (0, np.max((size2 - image.shape[1], 0)))),
                                 mode='constant',
                                 constant_values=0
                             )
