@@ -714,8 +714,6 @@ class TimecourseProject(Project):
 
         import imagesize
 
-        
-
         if not overwrite:
             if os.path.isfile(path):
                 sys.exit("File already exists")
@@ -761,7 +759,19 @@ class TimecourseProject(Project):
                     for i, im in enumerate(images):
                         image = imread(os.path.join(input_dir, im), 0)
 
-                        #perform cropping so that all stitched images have the same size
+                        # check if image is too small and if yes, pad the image with black pixels
+                        if image.shape[0] < size1 or image.shape[1] < size2:
+                            image = np.pad(
+                                image,
+                                ((0, np.max((size1 - image.shape[0], 0))),
+                                 (0, np.max((size2 - image.shape[1], 0)))),
+                                mode='constant',
+                                constant_values=0
+                            )
+                            self.log(f"Image {im} with the index {i} is too small and was padded with black pixels. "
+                                     f"Image shape after padding: {image.shape}.")
+
+                        # perform cropping so that all stitched images have the same size
                         x, y = image.shape
                         diff1 = x - size1
                         diff1x = int(np.floor(diff1 / 2))
@@ -769,7 +779,10 @@ class TimecourseProject(Project):
                         diff2 = y - size2
                         diff2x = int(np.floor(diff2 / 2))
                         diff2y = int(np.ceil(diff2 / 2))
-                        cropped = image[slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)]
+
+                        cropped = image[
+                            slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
+                        ]
 
                         imgs[i, ix, :, :] = cropped
                 
@@ -903,7 +916,6 @@ class TimecourseProject(Project):
                 ):
                     _read_write_images(well, index, h5py_path=path)
 
-  
     def load_input_from_files_and_merge(
             self,
             input_dir,
@@ -925,7 +937,7 @@ class TimecourseProject(Project):
 
         # check if already exists if so throw error message
         if not os.path.isdir(
-                os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
+            os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
         ):
             os.makedirs(
                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
@@ -1099,8 +1111,8 @@ class TimecourseProject(Project):
                         diff2x = int(np.floor(diff2 / 2))
                         diff2y = int(np.ceil(diff2 / 2))
                         cropped = merged_images[
-                                  :, slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
-                                  ]
+                            :, slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
+                        ]
                         print(merged_images.shape, cropped.shape)
 
                         # create labelling
@@ -1165,7 +1177,7 @@ class TimecourseProject(Project):
         segment timecourse project with the defined segmentation method.
         """
 
-        if overwrite == True:
+        if overwrite:
             # delete segmentation and classes from .hdf5 to be able to create new again
             path = os.path.join(
                 self.directory,
