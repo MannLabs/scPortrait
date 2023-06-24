@@ -13,7 +13,7 @@ import pandas as pd
 from cv2 import imread
 import re
 import h5py
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from sparcscore.pipeline.base import Logable
 
@@ -479,8 +479,7 @@ class TimecourseProject(Project):
             timepoints,
             plate_layout,
             img_size=1080,
-            overwrite=False,
-    ):
+            overwrite=False):
         """
         Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
         """
@@ -771,7 +770,6 @@ class TimecourseProject(Project):
                         diff2x = int(np.floor(diff2 / 2))
                         diff2y = int(np.ceil(diff2 / 2))
                         cropped = image[slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)]
-                        print(image.shape, cropped.shape)
 
                         imgs[i, ix, :, :] = cropped
                 
