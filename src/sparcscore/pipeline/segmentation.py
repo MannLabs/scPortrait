@@ -386,8 +386,6 @@ class ShardedSegmentation(Segmentation):
             self.log("Created new shard directory " + self.shard_directory)
 
         self.save_input_image(input_image)
-        # self.save_input_
-        # (input_image) #until we can fully work with ome.zarr export both
 
         # calculate sharding plan
         self.image_size = input_image.shape[1:]
@@ -540,9 +538,7 @@ class ShardedSegmentation(Segmentation):
             label_size = (2, self.image_size[0], self.image_size[1])
 
         # dirty fix to get this to run until we can impelement a better solution
-        if (
-            "wga_segmentation" in self.config
-        ):  # need to add this check because otherwise it sometimes throws errors need better solution
+        if ("wga_segmentation" in self.config):  # need to add this check because otherwise it sometimes throws errors need better solution
             if "wga_background_image" in self.config["wga_segmentation"]:
                 if self.config["wga_segmentation"]["wga_background_image"]:
                     channel_size = (
