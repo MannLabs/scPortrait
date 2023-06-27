@@ -116,7 +116,7 @@ class Downsize(object):
     """
 
     def __init__(self, size=160):
-        self.size = (size, size)
+        self.size = size
 
     def __call__(self, tensor):
         return T.Resize(tensor, self.size)
