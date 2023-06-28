@@ -110,12 +110,12 @@ class ChannelSelector(object):
         return tensor[self.channels, :, :]
 
 
-class ImageDownsizer(object, size=160):
+class ImageDownsizer(object):
     """
     Downsize the image to a given size.
     """
 
-    def __init__(self, size):
+    def __init__(self, size=160):
         self.size = size
 
     def __call__(self, tensor):
