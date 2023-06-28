@@ -115,7 +115,7 @@ class ImageDownsizer(object):
     Downsize the image to a given size.
     """
 
-    def __init__(self, size=160):
+    def __init__(self, size):
         self.size = size
 
     def __call__(self, tensor):
