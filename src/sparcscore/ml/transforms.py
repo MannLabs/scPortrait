@@ -119,4 +119,4 @@ class ImageDownsizer(object):
         self.size = size
 
     def __call__(self, tensor):
-        return TF.resize(tensor, self.size)
+        return TF.resize(tensor, self.size, antialias=True)
