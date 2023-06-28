@@ -38,8 +38,8 @@ class GaussianNoise(object):
         if self.sigma != 0:
             scale = self.sigma * tensor
             sampled_noise = (
-                torch.tensor(0, dtype=torch.float32).repeat(*tensor.size()).normal_()
-                * scale
+                    torch.tensor(0, dtype=torch.float32).repeat(*tensor.size()).normal_()
+                    * scale
             )
 
             # remove noise for masked channels
@@ -58,7 +58,7 @@ class GaussianBlur(object):
     """
 
     def __init__(
-        self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 0.2), channels=[]
+            self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 0.2), channels=[]
     ):
         self.kernel_size = kernel_size
         self.sigma = sigma
@@ -110,9 +110,9 @@ class ChannelSelector(object):
         return tensor[self.channels, :, :]
 
 
-class ImageDownsizer(object):
+class ImageDownsampler(object):
     """
-    Downsize the image to a given size.
+    Downsample the image to a given size.
     """
 
     def __init__(self, size):
