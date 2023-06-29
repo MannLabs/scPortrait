@@ -794,12 +794,12 @@ class TimecourseSegmentation(Segmentation):
                 "segmentation",
                 shape=_tmp_seg.shape,
                 chunks=(1, 2, self.shape_input_images[2], self.shape_input_images[3]),
-                dtype="int32",
+                dtype="uint32",
             )
             
             hf["segmentation"][:] = _tmp_seg
             
-            dt = h5py.special_dtype(vlen=np.dtype("int32"))
+            dt = h5py.special_dtype(vlen=np.dtype("uint32"))
 
             if "classes" in hf.keys():
                 del hf["classes"]
