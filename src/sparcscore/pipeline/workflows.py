@@ -701,10 +701,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
             model_name = self.config["nucleus_segmentation"]["model"]
-            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+            model = _read_cellpose_model("pretrained", model_name, use_GPU)
         elif "model_path" in self.config["nucleus_segmentation"].keys():
             model_name = self.config["nucleus_segmentation"]["model_path"]
-            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
+            model = _read_cellpose_model("custom", model_name, use_GPU)
 
         self.log(f"Segmenting nuclei using the following model: {model_name}")
 
@@ -925,7 +925,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         self.log(
             f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
         )
-        
+
         self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
         masks, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
         masks = np.array(masks)  # convert to array
