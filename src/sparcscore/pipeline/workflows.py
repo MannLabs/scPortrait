@@ -722,10 +722,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # load correct segmentation model for cytosol
         if "model" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model"]
-            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+            model = _read_cellpose_model("pretrained", model_name, use_GPU)
         elif "model_path" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model_path"]
-            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
+            model = _read_cellpose_model("custom", model_name, use_GPU)
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
         masks_cytosol, _, _, _ = model.eval(
@@ -914,10 +914,10 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         # load correct segmentation model for cytosol
         if "model" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model"]
-            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+            model = _read_cellpose_model("pretrained", model_name, use_GPU)
         elif "model_path" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model_path"]
-            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
+            model = _read_cellpose_model("custom", model_name, use_GPU)
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
 
