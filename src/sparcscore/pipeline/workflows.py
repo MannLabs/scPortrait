@@ -398,6 +398,14 @@ class BaseSegmentation(Segmentation):
         visualize_class(
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][0]
         )
+    
+    def _read_cellpose_model(self, modeltype, name, use_GPU):
+        if modeltype == "pretrained":
+            model = models.Cellpose(model_type=name, gpu=use_GPU)
+        elif modeltype == "custom":
+            model = models.CellposeModel(pretrained_model = name, gpu=use_GPU)
+        return model
+
 
 
 class WGASegmentation(BaseSegmentation):
@@ -663,13 +671,14 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(np.float64)
+            channels = np.stack(required_maps + feature_maps).astype(np.uint16)
         else:
-            channels = np.stack(required_maps).astype(np.float64)
+            channels = np.stack(required_maps).astype(np.uint16)
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(np.uint64)
+        ).astype(np.uint32)
+        
         return channels, segmentation
 
     def cellpose_segmentation(self, input_image):
@@ -678,7 +687,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache()  
 
         # check that image is int
-        input_image = input_image.astype("int64")
+        input_image = input_image.astype(np.uint16)
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -690,16 +699,19 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         # load correct segmentation model for nuclei
-        model_name = self.config["nucleus_segmentation"]["model"]
+        if "model" in self.config["nucleus_segmentation"].keys():
+            model_name = self.config["nucleus_segmentation"]["model"]
+            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+        elif "model_path" in self.config["nucleus_segmentation"].keys():
+            model_name = self.config["nucleus_segmentation"]["model_path"]
+            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
 
         self.log(f"Segmenting nuclei using the following model: {model_name}")
 
-        model = models.Cellpose(
-            model_type=self.config["nucleus_segmentation"]["model"], gpu=use_GPU
-        )
         masks_nucleus, _, _, _ = model.eval(
             [input_image], diameter=None, channels=[1, 0]
         )
+        
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
         #manually delete model and perform gc to free up memory on GPU
@@ -707,15 +719,19 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         gc.collect()
         torch.cuda.empty_cache()  
 
-        model_name = self.config["cytosol_segmentation"]["model"]
+        # load correct segmentation model for cytosol
+        if "model" in self.config["cytosol_segmentation"].keys():
+            model_name = self.config["cytosol_segmentation"]["model"]
+            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+        elif "model_path" in self.config["cytosol_segmentation"].keys():
+            model_name = self.config["cytosol_segmentation"]["model_path"]
+            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
-        model = models.Cellpose(
-            model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
-        )
         masks_cytosol, _, _, _ = model.eval(
             [input_image], diameter=None, channels=[2, 1]
         )
+
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         #manually delete model and perform gc to free up memory on GPU
@@ -837,6 +853,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_cytosol.shape[1:]
         )  # need to add reshape to save in proper format for HDF5
 
+        del masks_nucleus, masks_cytosol, updated_cytosol_mask, all_nucleus_ids, used_nucleus_ids
+        gc.collect()
+        torch.cuda.empty_cache() 
+
     def process(self, input_image):
         # initialize location to save masks to
         self.maps = {
@@ -891,16 +911,21 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
-        model_name = self.config["cytosol_segmentation"]["model"]
+        # load correct segmentation model for cytosol
+        if "model" in self.config["cytosol_segmentation"].keys():
+            model_name = self.config["cytosol_segmentation"]["model"]
+            model = _read_cellpose_model(modeltype = "pretrained", model_name, use_GPU)
+        elif "model_path" in self.config["cytosol_segmentation"].keys():
+            model_name = self.config["cytosol_segmentation"]["model_path"]
+            model = _read_cellpose_model(modeltype = "custom", model_name, use_GPU)
+
         self.log(f"Segmenting cytosol using the following model: {model_name}")
-        model = models.Cellpose(
-            model_type=self.config["cytosol_segmentation"]["model"], gpu=use_GPU
-        )
 
         # get size of input_image
         self.log(
             f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
         )
+        
         self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
         masks, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
         masks = np.array(masks)  # convert to array

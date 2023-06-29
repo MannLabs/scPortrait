@@ -550,7 +550,7 @@ class TimecourseProject(Project):
 
                     for i, im in enumerate(images):
                         image = imread(os.path.join(path, im), 0)
-                        imgs[i, ix, :, :] = image
+                        imgs[i, ix, :, :] = image.astype("uint16")
 
                 # create labelling
                 column_values = []
@@ -652,10 +652,12 @@ class TimecourseProject(Project):
                     chunks=None,
                     dtype=dt,
                 )
+                
                 hf.create_dataset(
                     "input_images",
                     (len(directories) * n_timepoints, n_channels, img_size, img_size),
                     chunks=(1, 1, img_size, img_size),
+                    dtype = "uint16"
                 )
 
                 label_names = hf.get("label_names")
@@ -757,7 +759,7 @@ class TimecourseProject(Project):
                     images = [x for x in _files if channel in x]
 
                     for i, im in enumerate(images):
-                        image = imread(os.path.join(input_dir, im), 0)
+                        image = imread(os.path.join(input_dir, im), 0).astype("uint16")
 
                         # check if image is too small and if yes, pad the image with black pixels
                         if image.shape[0] < size1 or image.shape[1] < size2:
@@ -887,6 +889,7 @@ class TimecourseProject(Project):
                     "input_images",
                     (len(wells) * n_timepoints, n_channels, size1, size2),
                     chunks=(1, 1, size1, size2),
+                    dtype = "uint16"
                 )
 
                 label_names = hf.get("label_names")

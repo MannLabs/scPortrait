@@ -13,7 +13,6 @@ from skimage.color import label2rgb
 
 from sparcscore.processing.segmentation import shift_labels
 from sparcscore.processing.utils import plot_image, flatten
-
 from sparcscore.pipeline.base import ProcessingStep
 
 # for export to ome.zarr
@@ -23,7 +22,7 @@ from ome_zarr.writer import write_image
 from ome_zarr.scale import Scaler
 
 # to show progress
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class Segmentation(ProcessingStep):
@@ -171,6 +170,15 @@ class Segmentation(ProcessingStep):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
         self.log("saving segmentation to ome.zarr")
 
+        path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE_ZARR)
+
+        # check if file already exists if so delete with warning
+        if os.path.exists(path):
+            shutil.rmtree(path)
+            self.log(
+                "Warning: .zarr file already existed. Will be removed and overwritten."
+            )
+
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
 
@@ -180,49 +188,18 @@ class Segmentation(ProcessingStep):
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
         label_names = ["nuclei"] if labels.shape[0] == 1 else ["nuclei", "cytosol"]
 
-        # initialize ome.zarr
-        path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE_ZARR)
-        loc = parse_url(path, mode="w").store
-        group = zarr.group(store=loc)
-        axes = "cyx"
-
-        channel_names = [f"Channel_{i}" for i in range(1, channels.shape[0])]
-
-        group.attrs["omero"] = {
-            "name": self.DEFAULT_OUTPUT_FILE_ZARR,
-            "channels": [
-                {"label": channel_name, "color": self.channel_colors[i], "active": True}
-                for i, channel_name in enumerate(channel_names)
-            ],
-        }
-
-        write_image(
-            channels,
-            group=group,
-            axes=axes,
-            storage_options=dict(
-                chunks=(1, self.config["chunk_size"], self.config["chunk_size"])
-            ),
-        )
-        self.log(f"added channel information to ome.zarr")
-
-        # add segmentation label
-        labels_grp = group.create_group("labels")
-        labels_grp.attrs["labels"] = label_names
-
-        for i, name in enumerate(label_names):
-            # write the labels to /labels
-            # the 'labels' .zattrs lists the named labels data
-            label_grp = labels_grp.create_group(name)
-            # need 'image-label' attr to be recognized as label
-            label_grp.attrs["image-label"] = {
-                "colors": [
-                    {"label-value": 0, "rgba": [0, 0, 0, 0]},
-                ]
-            }
-
-            write_image(labels[i, :, :], label_grp, axes="cyx")
-            self.log("added {} segmentation information to ome.zarr".format(name))
+        from sparcstools.segmentation_viz import write_zarr_with_seg
+        
+        #reformat labels to list for passing to function
+        if labels.shape[0] > 1:
+            labels = [np.expand_dims(seg, axis=0) if len(seg.shape) == 2 else seg for seg in labels]
+        elif labels.shape[0] == 1:
+            labels =[labels]
+ 
+        write_zarr_with_seg(channels, 
+                            labels,  #list of all sets you want to visualize
+                            label_names, #list of what each cell set should be called
+                            path)
 
     def load_maps_from_disk(self):
         """Tries to load all maps which were defined in ``self.maps`` and returns the current state of processing.
@@ -409,8 +386,6 @@ class ShardedSegmentation(Segmentation):
             self.log("Created new shard directory " + self.shard_directory)
 
         self.save_input_image(input_image)
-        # self.save_input_
-        # (input_image) #until we can fully work with ome.zarr export both
 
         # calculate sharding plan
         self.image_size = input_image.shape[1:]
@@ -563,9 +538,7 @@ class ShardedSegmentation(Segmentation):
             label_size = (2, self.image_size[0], self.image_size[1])
 
         # dirty fix to get this to run until we can impelement a better solution
-        if (
-            "wga_segmentation" in self.config
-        ):  # need to add this check because otherwise it sometimes throws errors need better solution
+        if ("wga_segmentation" in self.config):  # need to add this check because otherwise it sometimes throws errors need better solution
             if "wga_background_image" in self.config["wga_segmentation"]:
                 if self.config["wga_segmentation"]["wga_background_image"]:
                     channel_size = (
@@ -748,6 +721,7 @@ class TimecourseSegmentation(Segmentation):
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
+        global _tmp_seg
 
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("input_images")
@@ -755,7 +729,6 @@ class TimecourseSegmentation(Segmentation):
             if type(self.index) == int:
                 self.index = [self.index]
 
-            self.log(f"Starting segmentation on a total of {len(self.index)} indexes.")
             results = []
             for index in self.index:
                 self.current_index = index
@@ -763,10 +736,10 @@ class TimecourseSegmentation(Segmentation):
                 self.log(f"Segmentation on index {index} started.")
                 try:
                     _result = super().__call__(input_image)
-                    results.append(_result)
                 except Exception:
                     self.log(traceback.format_exc())
                 self.log(f"Segmentation on index {index} completed.")
+            
         return results
 
     def save_segmentation(
@@ -775,21 +748,23 @@ class TimecourseSegmentation(Segmentation):
         labels,
         classes,
     ):
-        """Saves the results of a segmentation at the end of the process.
+        """Saves the results of a segmentation at the end of the process by transferring it to the initialized
+        memory mapped array
 
         Args:
             labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
 
         """
-        # global _tmp_seg
+        global _tmp_seg
+        
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
         classes = np.array(list(classes))
-        # _tmp_seg[self.current_index] = labels
-        return (self.current_index, labels)
-        # _tmp_classes[self.current_index] = [classes]
+        
+        self.log(f"transferring {self.current_index} to temmporray memory mapped array")
+        _tmp_seg[self.current_index] = labels
 
     def _initialize_tempmmap_array(self):
         global _tmp_seg
@@ -797,51 +772,11 @@ class TimecourseSegmentation(Segmentation):
         from alphabase.io import tempmmap
 
         TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
-        # get shape of array that needs to be produced
-        _tmp_seg = tempmmap.array(self.shape_segmentation, dtype=np.int32)
-
-        # dt = h5py.special_dtype(vlen=np.int32)
-        # _tmp_classes  = tempmmap.array(, dtype = np.int32)
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
-    def _transfer_results_to_hdf5(self, results):
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
-        # create hdf5 datasets with temp_arrays as input
-        with h5py.File(input_path, "a") as hf:
-            # check if dataset already exists if so delete and overwrite
-            if "segmentation" in hf.keys():
-                del hf["segmentation"]
-                self.log(
-                    "segmentation dataset already existe in hdf5, deleted and overwritten."
-                )
-            hf.create_dataset(
-                "segmentation",
-                shape=self.shape_segmentation,
-                chunks=(1, 2, self.shape_input_images[2], self.shape_input_images[3]),
-                dtype="int32",
-            )
-            dt = h5py.special_dtype(vlen=np.dtype("int32"))
-
-            if "classes" in hf.keys():
-                del hf["classes"]
-                self.log(
-                    "classes dataset already existed in hdf5, deleted and overwritten."
-                )
-
-            hf.create_dataset(
-                "classes",
-                shape=self.shape_classes,
-                maxshape=(None),
-                chunks=None,
-                dtype=dt,
-            )
-
-            results = flatten(results)
-
-            for x in results:
-                i, arr = x
-                hf["segmentation"][i] = arr
+        # initialize tempmmap array to save segmentation results to
+        # this required when trying to segment so many images that the results can no longer fit into memory
+        _tmp_seg = tempmmap.array(self.shape_segmentation, dtype=np.int32)
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_seg
@@ -859,9 +794,12 @@ class TimecourseSegmentation(Segmentation):
                 "segmentation",
                 shape=_tmp_seg.shape,
                 chunks=(1, 2, self.shape_input_images[2], self.shape_input_images[3]),
-                dtype="int32",
+                dtype="uint32",
             )
-            dt = h5py.special_dtype(vlen=np.dtype("int32"))
+            
+            hf["segmentation"][:] = _tmp_seg
+            
+            dt = h5py.special_dtype(vlen=np.dtype("uint32"))
 
             if "classes" in hf.keys():
                 del hf["classes"]
@@ -876,7 +814,7 @@ class TimecourseSegmentation(Segmentation):
                 chunks=None,
                 dtype=dt,
             )
-            hf["segmentation"][:] = _tmp_seg
+
 
         # delete tempobjects (to cleanup directory)
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
@@ -995,8 +933,6 @@ class TimecourseSegmentation(Segmentation):
         self.log("resolved segmentation list")
 
     def process(self):
-        # global _tmp_seg
-
         input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         with h5py.File(input_path, "r") as hf:
@@ -1014,9 +950,11 @@ class TimecourseSegmentation(Segmentation):
             self.shape_classes = input_images.shape[0]
 
         # initialize temp object to write segmentations too
-        # self._initialize_tempmmap_array()
+        self._initialize_tempmmap_array()
+
         self.log("Beginning segmentation without multithreading.")
 
+        #initialzie segmentation objects
         current_shard = self.method(
             self.config,
             self.directory,
@@ -1027,20 +965,14 @@ class TimecourseSegmentation(Segmentation):
 
         current_shard.initialize_as_shard(indexes, input_path=input_path)
 
-        #unpack results and write to temp array
+        #calculate results for each shard
         results = [current_shard.call_as_shard()]
        
-
-        self._transfer_results_to_hdf5(results)
-        # results = flatten(results)
-
-        # for x in results:
-        #     i, arr = x
-        #     _tmp_seg[i] = arr
-
         # save results to hdf5
         self.log("Writing segmentation results to .hdf5 file.")
-        # self._transfer_tempmmap_to_hdf5()
+        self._transfer_tempmmap_to_hdf5()
+
+        #adjust segmentation indexes
         self.adjust_segmentation_indexes()
         self.log("Adjusted Indexes.")
 
@@ -1078,17 +1010,10 @@ class MultithreadedSegmentation(TimecourseSegmentation):
             self.shape_classes = input_images.shape[0]
 
         # initialize temp object to write segmentations too
-        # self._initialize_tempmmap_array()
+        self._initialize_tempmmap_array()
 
-        # self.log("Segmentation Plan generated with {} elements. Segmentation with {} threads begins.").format(self.n_files, self.config["threads"])
-
-        # example code of how to save classes in correct shape!
-        # class1 = np.array([1,2,3,4,5,6,7,8,9,10], dtype= "int32").reshape(1, 1, -1)
-        # class2 = np.array([1,2,3,4,5], dtype= "int32").reshape(1, 1, -1)
 
         segmentation_list = self.initialize_shard_list(indexes, input_path=input_path)
-
-        print("Segmentation with", self.config["threads"], "threads beginns.")
 
         # make more verbose output for troubleshooting and timing purposes.
         n_threads = self.config["threads"]
@@ -1096,9 +1021,6 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         self.log(f"A total of {len(segmentation_list)} processes need to be executed.")
 
         with Pool(processes=self.config["threads"]) as pool:
-            # x = pool.map(self.method.call_as_shard, segmentation_list)
-            # for _ in tqdm(pool.imap(self.method.call_as_shard, segmentation_list), total = len(indexes)):
-            #     pass
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, segmentation_list),
@@ -1110,19 +1032,12 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         self.log("Finished parallel segmentation")
         self.log("Transferring results to array.")
 
-        self._transfer_results_to_hdf5(results)
-        # #add results to tmp_seg so that it can be transferred
-        # results = flatten(results)
-        # for x in results:
-        #     i, arr = x
-        #     _tmp_seg[i] = arr
-
-        # self._transfer_tempmmap_to_hdf5()
+        self._transfer_tempmmap_to_hdf5()
         self.adjust_segmentation_indexes()
         self.log("Adjusted Indexes.")
 
         # cleanup variables to make sure memory is cleared up again
-        del results
+        del results 
 
     def initialize_shard_list(self, segmentation_list, input_path):
         _shard_list = []
