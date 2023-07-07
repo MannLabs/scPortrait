@@ -7,6 +7,7 @@ from PIL import Image
 import PIL
 import numpy as np
 import sys
+import imagesize
 
 # packages for timecourse project
 import pandas as pd
@@ -14,9 +15,15 @@ from cv2 import imread
 import re
 import h5py
 from tqdm.auto import tqdm
+from time import time
+import shutil
 
 from sparcscore.pipeline.base import Logable
 
+import zarr
+from ome_zarr.io import parse_url
+from ome_zarr.writer import write_image
+from ome_zarr.reader import Reader
 
 class Project(Logable):
     """
@@ -63,6 +70,17 @@ class Project(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
     DEFAULT_SELECTION_DIR_NAME = "selection"
+    DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
+    channel_colors = [
+        "#0000FF",
+        "#00FF00",
+        "#FF0000",
+        "#FFE464", 
+        "#9b19f5", 
+        "#ffa300", 
+        "#dc0ab4", 
+        "#b3d4ff", 
+        "#00bfa0"]
 
     # Project object is initialized, nothing is written to disk
     def __init__(
@@ -147,6 +165,7 @@ class Project(Logable):
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
                 seg_directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
@@ -168,6 +187,7 @@ class Project(Logable):
             self.extraction_f = extraction_f(
                 self.config[extraction_f.__name__],
                 extraction_directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
@@ -188,6 +208,7 @@ class Project(Logable):
             self.classification_f = classification_f(
                 self.config[classification_f.__name__],
                 classification_directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
@@ -208,6 +229,7 @@ class Project(Logable):
             self.selection_f = selection_f(
                 self.config[selection_f.__name__],
                 selection_directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
@@ -244,6 +266,37 @@ class Project(Logable):
             except yaml.YAMLError as exc:
                 print(exc)
 
+    def save_input_image(self, input_image):
+
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        loc = parse_url(path, mode="w").store
+        group = zarr.group(store = loc)
+
+        n_channels = input_image.shape[0]
+        channels = [f"Channel{i}" for i in range(n_channels)]
+        
+        group.attrs["omero"] = {
+            "name": self.DEFAULT_INPUT_IMAGE_NAME,
+            "channels": [{"label":channel, "color":self.channel_colors[i], "active":True} for i, channel in enumerate(channels)]
+        }
+
+        write_image(input_image, group = group, axes = "cyx", storage_options=dict(chunks=(1, 1024, 1024)))
+
+        self.log(f"saved input_image: {path}")
+
+    def load_input_image(self):
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        # read the image data
+        loc = parse_url(path, mode="r")
+        zarr_reader = Reader(loc).zarr
+
+        #read entire data into memory
+        time_start = time()
+        self.input_image = np.array(zarr_reader.load("0").compute())
+        time_end = time()
+
+        self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
+
     def load_input_from_file(self, file_paths, crop=[(0, -1), (0, -1)]):
         """
         Load input image from a number of files.
@@ -267,6 +320,16 @@ class Project(Logable):
         """
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
+        
+        #check if an input image was already loaded if so throw error if overwrite = False
+
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        if os.path.isdir(path):
+            if self.overwrite:
+                shutil.rmtree(path)
+                self.log("Overwrite is set to True. Existing input image was deleted.")
+            else:
+                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
 
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
@@ -293,6 +356,8 @@ class Project(Logable):
 
         if self.remap is not None:
             self.input_image = self.input_image[self.remap]
+        
+        self.save_input_image(self.input_image)
 
     def load_input_from_array(self, array, remap=None):
         """
@@ -313,6 +378,16 @@ class Project(Logable):
         # input data is not copied to the project folder
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
+        
+        #check if an input image was already loaded if so throw error if overwrite = False
+
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        if os.path.isdir(path):
+            if self.overwrite:
+                shutil.rmtree(path)
+                self.log("Overwrite is set to True. Existing input image was deleted.")
+            else:
+                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
 
         if not array.shape[0] == self.config["input_channels"]:
             raise ValueError(
@@ -325,6 +400,8 @@ class Project(Logable):
 
         if self.remap is not None:
             self.input_image = self.input_image[self.remap]
+        
+        self.save_input_image(self.input_image)
 
     def segment(self, *args, **kwargs):
         """
@@ -333,9 +410,14 @@ class Project(Logable):
 
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
-        elif type(self.input_image) is None:
-            raise ValueError("No input image defined")
-        else:
+        elif self.input_image is None:
+            self.log("No input image loaded. Trying to read file from disk.")
+            try:
+                self.load_input_image()
+                self.segmentation_f(self.input_image, *args, **kwargs)
+            except:
+                raise ValueError("No input image loaded and no file found to load image from.")
+        elif self.input_image is not None:
             self.segmentation_f(self.input_image, *args, **kwargs)
 
     def extract(self, *args, **kwargs):
@@ -376,6 +458,37 @@ class Project(Logable):
         input_selection = self.segmentation_f.get_output()
 
         self.selection_f(input_selection, *args, **kwargs)
+
+    def write_segmentation_to_omezarr(self):
+        
+        from sparcstools.segmentation_viz import write_zarr_with_seg
+
+        input_dir = os.path.join(
+            self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "segmentation.h5"
+        )
+
+        output_file = os.path.join(
+            self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "segmentation.ome.zarr"
+        )
+       
+        #read segmentation and images
+        hf = h5py.File(input_dir, "r")
+
+        labels = hf.get("labels")
+        images = hf.get("channels")
+
+        image = images[:]
+        label = labels[:]
+        
+        hf.close()
+
+        n_channels = self.config["input_channels"]
+
+        write_zarr_with_seg(image, 
+                            [label[0], label[1]],  #list of all sets you want to visualize
+                            ["nucleus_segmentation", "cytosol_segmentation"], #list of what each cell set should be called
+                            output_file, 
+                            channels =["nucleus", "membrane"] + [f"Channel{i}" for i in range(n_channels-2)])
 
     def process(self):
         self.segment()
@@ -713,8 +826,6 @@ class TimecourseProject(Project):
             self.DEFAULT_SEGMENTATION_DIR_NAME,
             self.DEFAULT_INPUT_IMAGE_NAME,
         )
-
-        import imagesize
 
         if not overwrite:
             if os.path.isfile(path):

@@ -94,7 +94,7 @@ class ProcessingStep(Logable):
     """
 
     def __init__(
-            self, config, directory, debug=False, intermediate_output=False, overwrite=True
+            self, config, directory, project_location, debug=False, intermediate_output=False, overwrite=True
     ):
         super().__init__()
 
@@ -102,7 +102,9 @@ class ProcessingStep(Logable):
         self.overwrite = overwrite
         self.intermediate_output = intermediate_output
         self.directory = directory
+        self.project_location = project_location
         self.config = config
+        
 
     def __call__(
             self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs

@@ -31,6 +31,7 @@ class MLClusterClassifier:
     def __init__(self, 
                  config, 
                  path, 
+                 project_location,
                  debug=False, 
                  overwrite=False,
                  intermediate_output = True):
@@ -56,6 +57,7 @@ class MLClusterClassifier:
         self.overwrite = overwrite
         self.config = config
         self.intermediate_output = intermediate_output
+        self.project_location = project_location
         
         # Create segmentation directory
         self.directory = path

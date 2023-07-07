@@ -18,8 +18,7 @@ from sparcscore.pipeline.base import ProcessingStep
 # for export to ome.zarr
 import zarr
 from ome_zarr.io import parse_url
-from ome_zarr.writer import write_image
-from ome_zarr.scale import Scaler
+from ome_zarr.writer import write_labels, write_label_metadata 
 
 # to show progress
 from tqdm.auto import tqdm
@@ -62,14 +61,16 @@ class Segmentation(ProcessingStep):
     """
 
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
-    DEFAULT_OUTPUT_FILE_ZARR = "segmentation.ome.zarr"
     DEFAULT_FILTER_FILE = "classes.csv"
     PRINT_MAPS_ON_DEBUG = True
+
+    DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
+
     channel_colors = [
-        "#e60049",
-        "#0bb4ff",
-        "#50e991",
-        "#e6d800",
+        "#0000FF",
+        "#00FF00",
+        "#FF0000",
+        "#FFE464",
         "#9b19f5",
         "#ffa300",
         "#dc0ab4",
@@ -83,6 +84,7 @@ class Segmentation(ProcessingStep):
         self.identifier = None
         self.window = None
         self.input_path = None
+
 
     def initialize_as_shard(self, identifier, window, input_path):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
@@ -166,40 +168,40 @@ class Segmentation(ProcessingStep):
 
         self.log("=== finished segmentation ===")
 
-    def save_segmentation_zarr(self, channels, labels):
+        self.save_segmentation_zarr(labels = labels)
+
+    def save_segmentation_zarr(self, labels = None):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
-        self.log("saving segmentation to ome.zarr")
 
-        path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE_ZARR)
+        self.log("adding segmentation to input_image.ome.zarr")
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME) 
 
-        # check if file already exists if so delete with warning
-        if os.path.exists(path):
-            shutil.rmtree(path)
-            self.log(
-                "Warning: .zarr file already existed. Will be removed and overwritten."
-            )
+        loc = parse_url(path, mode="w").store
+        group = zarr.group(store = loc)
 
-        # size (C, H, W) is expected
-        # dims are expanded in case (H, W) is passed
+        segmentation_names = ["nucleus", "cyotosol"]
 
-        channels = (
-            np.expand_dims(channels, axis=0) if len(channels.shape) == 2 else channels
-        )
-        labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
-        label_names = ["nuclei"] if labels.shape[0] == 1 else ["nuclei", "cytosol"]
+        #check if segmentation names already exist if so delete
+        for seg_names in segmentation_names:
+            path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME, "labels", seg_names)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+                self.log("removed existing segmentation from ome.zarr")
 
-        from sparcstools.segmentation_viz import write_zarr_with_seg
+        #reading labels
+        if labels is None:
+            path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+            
+            with h5py.File(path_labels, "r") as hf:
+                labels = hf["labels"][:]
         
-        #reformat labels to list for passing to function
-        if labels.shape[0] > 1:
-            labels = [np.expand_dims(seg, axis=0) if len(seg.shape) == 2 else seg for seg in labels]
-        elif labels.shape[0] == 1:
-            labels =[labels]
- 
-        write_zarr_with_seg(channels, 
-                            labels,  #list of all sets you want to visualize
-                            label_names, #list of what each cell set should be called
-                            path)
+        segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
+
+        for seg, name in zip(segmentations, segmentation_names):
+            write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
+            write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
+
+        self.log("finished saving segmentation results to ome.zarr")
 
     def load_maps_from_disk(self):
         """Tries to load all maps which were defined in ``self.maps`` and returns the current state of processing.
@@ -352,23 +354,7 @@ class ShardedSegmentation(Segmentation):
         DEFAULT_SHARD_FOLDER (str, default ``tiles``): Date and time format used for logging.
     """
 
-    DEFAULT_OUTPUT_FILE = "segmentation.h5"
-    DEFAULT_FILTER_FILE = "classes.csv"
-    DEFAULT_INPUT_IMAGE_NAME = "input_image.h5"
-    DEFAULT_INPUT_IMAGE_NAME_ZARR = "input_image.ome.zarr"
     DEFAULT_SHARD_FOLDER = "tiles"
-
-    channel_colors = [
-        "#e60049",
-        "#0bb4ff",
-        "#50e991",
-        "#e6d800",
-        "#9b19f5",
-        "#ffa300",
-        "#dc0ab4",
-        "#b3d4ff",
-        "#00bfa0",
-    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -378,117 +364,48 @@ class ShardedSegmentation(Segmentation):
                 "No Segmentation method defined, please set attribute ``method``"
             )
 
-    def process(self, input_image):
-        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+    def save_input_image(self, input_image):
+        
+        output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        
+        with h5py.File(output, "w") as hf:
 
-        if not os.path.isdir(self.shard_directory):
-            os.makedirs(self.shard_directory)
-            self.log("Created new shard directory " + self.shard_directory)
-
-        self.save_input_image(input_image)
-
-        # calculate sharding plan
-        self.image_size = input_image.shape[1:]
-
-        if self.config["shard_size"] >= np.prod(self.image_size):
-            target_size = self.config["shard_size"]
-            self.log(f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used.")
-
-            sharding_plan = [
-                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
-            ]
-        else:
-            target_size = self.config["shard_size"]
-            self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
-            sharding_plan = self.calculate_sharding_plan(self.image_size)
-
-        shard_list = self.initialize_shard_list(sharding_plan)
-        self.log(
-            f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
-        )
-
-        with Pool(processes=self.config["threads"]) as pool:
-            results = list(
-                tqdm(
-                    pool.imap(self.method.call_as_shard, shard_list),
-                    total=len(shard_list),
-                )
+            hdf_channels = hf.create_dataset(
+                "channels",
+                data = input_image,
+                chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+                dtype="uint16",
             )
-            pool.close()
-            pool.join()
-            print("All segmentations are done.", flush=True)
 
-        self.log("Finished parallel segmentation")
+        
+        self.log("Input image added to .h5. Provides data source for reading shard information.")
 
-        self.resolve_sharding(sharding_plan)
-
-        self.log("=== finished segmentation === ")
-
+    
+    def save_segmentation_zarr(self):
+        #set save_segmentation_zarr function to pass so that the results from each shard are not written to ome.zarr
+        pass 
+    
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
 
-        input_path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME)
+        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        self.input_path = input_path
 
         for i, window in enumerate(sharding_plan):
             local_shard_directory = os.path.join(self.shard_directory, str(i))
-
             current_shard = self.method(
                 self.config,
                 local_shard_directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-
-            current_shard.initialize_as_shard(i, window, input_path)
+            print(self.input_path)
+            current_shard.initialize_as_shard(i, window, self.input_path)
 
             _shard_list.append(current_shard)
         return _shard_list
-
-    def save_input_image(self, input_image):
-        path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME)
-        hf = h5py.File(path, "w")
-        hf.create_dataset(
-            "channels",
-            data=input_image,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-        )
-        hf.close()
-        self.log(f"saved input_image: {path}")
-
-    def save_input_image_zarr(self, input_image):
-        path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME_ZARR)
-
-        # check if file already exists if so delete with warning
-        if os.path.exists(path):
-            shutil.rmtree(path)
-            self.log(
-                "Warning: .zarr file already existed. Will be removed and overwritten."
-            )
-
-        loc = parse_url(path, mode="w").store
-        group = zarr.group(store=loc)
-        axes = "cyx"
-
-        channels = [f"Channel_{i}" for i in range(1, self.config["input_channels"] + 1)]
-
-        group.attrs["omero"] = {
-            "name": self.DEFAULT_INPUT_IMAGE_NAME_ZARR,
-            "channels": [
-                {"label": channel, "color": self.channel_colors[i], "active": True}
-                for i, channel in enumerate(channels)
-            ],
-        }
-
-        write_image(
-            input_image,
-            group=group,
-            axes=axes,
-            storage_options=dict(
-                chunks=(1, self.config["chunk_size"], self.config["chunk_size"])
-            ),
-        )
-        self.log(f"saved input_image to ome.zarr: {path}")
 
     def calculate_sharding_plan(self, image_size):
         _sharding_plan = []
@@ -565,7 +482,7 @@ class ShardedSegmentation(Segmentation):
                 self.image_size[1],
             )
 
-        hf = h5py.File(output, "w")
+        hf = h5py.File(output, "a")
 
         hdf_labels = hf.create_dataset(
             "labels",
@@ -574,12 +491,7 @@ class ShardedSegmentation(Segmentation):
             dtype="int32",
         )
 
-        hdf_channels = hf.create_dataset(
-            "channels",
-            channel_size,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-            dtype="float16",
-        )
+        hdf_channels = hf.get("channels")
 
         class_id_shift = 0
 
@@ -609,7 +521,6 @@ class ShardedSegmentation(Segmentation):
             )
 
             hdf_labels[:, window[0], window[1]] = shifted_map
-            hdf_channels[:, window[0], window[1]] = local_hdf_channels
 
             edge_classes_combined += edge_labels
             class_id_shift += np.max(local_hdf_labels[0])
@@ -666,7 +577,81 @@ class ShardedSegmentation(Segmentation):
 
         hf.close()
 
-        self.log("resolved sharding plan")
+        self.log("resolved sharding plan.")
+
+        #add segmentation results to ome.zarr
+        path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME) 
+
+        loc = parse_url(path, mode="w").store
+        group = zarr.group(store = loc)
+
+        segmentation_names = ["nucleus", "cyotosol"]
+
+        #reading labels
+        path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+            
+        with h5py.File(path_labels, "r") as hf:
+            labels = hf["labels"][:]
+
+        segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
+
+        for seg, name in zip(segmentations, segmentation_names):
+            write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
+            write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
+
+        self.log("finished saving segmentation results to ome.zarr")
+
+        # Add section here that cleans up the results from the tiles and deletes them to save memory
+        self.log("Deleting intermediate tile results to free up storage space")
+        shutil.rmtree(self.shard_directory)
+
+    def process(self, input_image):
+
+        self.save_input_image(input_image)
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+
+        if not os.path.isdir(self.shard_directory):
+            os.makedirs(self.shard_directory)
+            self.log("Created new shard directory " + self.shard_directory)
+
+        # calculate sharding plan
+        self.image_size = input_image.shape[1:]
+
+        if self.config["shard_size"] >= np.prod(self.image_size):
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used.")
+
+            sharding_plan = [
+                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
+            ]
+        else:
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
+            sharding_plan = self.calculate_sharding_plan(self.image_size)
+
+        shard_list = self.initialize_shard_list(sharding_plan)
+        self.log(
+            f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
+        )
+
+        del input_image #remove from memory to free up space
+
+        with Pool(processes=self.config["threads"]) as pool:
+            results = list(
+                tqdm(
+                    pool.imap(self.method.call_as_shard, shard_list),
+                    total=len(shard_list),
+                )
+            )
+            pool.close()
+            pool.join()
+            print("All segmentations are done.", flush=True)
+
+        self.log("Finished parallel segmentation")
+
+        self.resolve_sharding(sharding_plan)
+
+        self.log("=== finished segmentation === ")
 
 
 class TimecourseSegmentation(Segmentation):
@@ -1048,6 +1033,7 @@ class MultithreadedSegmentation(TimecourseSegmentation):
             current_shard = self.method(
                 self.config,
                 self.directory,
+                project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
