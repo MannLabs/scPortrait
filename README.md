@@ -3,6 +3,12 @@
 
 SPARCSpy is a scalable toolkit to analyse SPARCS datasets. The python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes and subsequent excision using Laser Microdissection.
 
+To better understand what SPARCSpy can do please checkout our [documentation](https://mannlabs.github.io/SPARCSpy/html/index.html), the [paper](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1) or our [tweetorial on the computation tools](https://twitter.com/SophiaMaedler/status/1665816840726085634?s=20) and our [tweetorial on the science](https://twitter.com/niklas_a_s/status/1664538053744947203?s=20).
+
+## Documentation
+
+The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
+
 ## Installation from Github
 
 SPARCSpy has been tested with **Python 3.8 and 3.9**. We recommended installing the library within a conda environment. 
@@ -59,9 +65,6 @@ pip install -e .
 
 In case you wish to export shapes for excision on a Leica LMD please also install the [py-lmd](https://github.com/MannLabs/py-lmd) library into the same conda environment following the installation instructions [here](https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github).
   
-## Documentation
-
-The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
 
 ## Citing our Work
 
