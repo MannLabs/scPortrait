@@ -11,7 +11,7 @@ import traceback
 from PIL import Image
 from skimage.color import label2rgb
 
-from sparcscore.processing.segmentation import shift_labels
+from sparcscore.processing.segmentation import shift_labels, sc_any
 from sparcscore.processing.utils import plot_image, flatten
 from sparcscore.pipeline.base import ProcessingStep
 
@@ -119,10 +119,18 @@ class Segmentation(ProcessingStep):
             hdf_input = hf.get("channels")
             input_image = hdf_input[:, self.window[0], self.window[1]]
 
-        try:
-            super().__call__(input_image)
-        except Exception:
-            self.log(traceback.format_exc())
+        #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
+        if sc_any(input_image):
+            try:
+                super().__call__(input_image)
+            except Exception:
+                self.log(traceback.format_exc())
+        else:  
+            print(f"Shard in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
+            try:
+                super().__call_empty__(input_image)
+            except Exception:
+                self.log(traceback.format_exc())
 
     def save_segmentation(self, channels, labels, classes):
         """Saves the results of a segmentation at the end of the process.
@@ -286,8 +294,6 @@ class Segmentation(ProcessingStep):
 
                     # save map
                     self.save_map("myMap")
-
-
         """
 
         if self.maps[map_name] is None:

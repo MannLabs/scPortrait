@@ -405,7 +405,10 @@ class BaseSegmentation(Segmentation):
         elif modeltype == "custom":
             model = models.CellposeModel(pretrained_model = name, gpu=use_GPU)
         return model
-
+    
+    def return_empty_mask(self, input_image):
+        n_channels, x, y = input_image.shape
+        self.save_segmentation(input_image, np.zeros((2, x, y)), [])
 
 class WGASegmentation(BaseSegmentation):
     def __init__(self, *args, **kwargs):

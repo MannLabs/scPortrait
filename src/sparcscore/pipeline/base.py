@@ -147,6 +147,48 @@ class ProcessingStep(Logable):
             return x
         else:
             warnings.warn("no process method defined")
+    
+    def __call_empty__(
+            self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
+    ):
+        """Call the empty processing step.
+
+        object which can create log entries.
+
+        Args:
+
+            intermediate_output (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True intermediate outputs will be saved where applicable.
+
+            debug (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True debug outputs will be printed where applicable.
+
+            overwrite (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True, the processing step directory will be completely deleted and newly created when called.
+
+        """
+
+        # set flags if provided
+        self.debug = debug if debug is not None else self.debug
+        self.overwrite = overwrite if overwrite is not None else self.overwrite
+        self.intermediate_output = (
+            intermediate_output
+            if intermediate_output is not None
+            else self.intermediate_output
+        )
+
+        # remove directory for processing step if overwrite is enabled
+        if self.overwrite:
+            if os.path.isdir(self.directory):
+                shutil.rmtree(self.directory)
+
+        # create directory for processing step
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+
+        process = getattr(self, "return_empty_mask", None)
+        if callable(process):
+            x = self.return_empty_mask(*args, **kwargs)
+            return x
+        else:
+            warnings.warn("no return_empty_mask method defined")
 
     def register_parameter(self, key, value):
         """

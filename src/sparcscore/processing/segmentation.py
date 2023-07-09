@@ -890,3 +890,46 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
             ids[1:] += (min_cell_id - 1 ) #leave the background at 0
 
     return center, points_class, ids.astype("int32")
+
+
+#### Helper Numba functions to increase speed of numpy operations
+
+import numba as nb
+
+# short-circuiting replacement for np.any()
+@nb.jit(nopython=True)
+def sc_any(array):
+    """short-circuiting replacement for np.any()
+
+    Parameters
+    ----------
+    array: numpy.ndarray
+        Input array to check if any values are True
+
+    Returns
+    -------
+    boolean value indicating if expression evalutated to True or False
+    """
+    for x in array.flat:
+        if x:
+            return True
+    return False
+
+# short-circuiting replacement for np.all()
+@nb.jit(nopython=True)
+def sc_all(array):
+    """short-circuiting replacement for np.all()
+
+    Parameters
+    ----------
+    array: numpy.ndarray
+        Input array to check if all values are True
+
+    Returns
+    -------
+    boolean value indicating if expression evalutated to True or False
+    """
+    for x in array.flat:
+        if not x:
+            return False
+    return True
