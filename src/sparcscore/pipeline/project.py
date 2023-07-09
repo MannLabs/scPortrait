@@ -485,7 +485,7 @@ class Project(Logable):
         n_channels = self.config["input_channels"]
 
         write_zarr_with_seg(image, 
-                            [label[0], label[1]],  #list of all sets you want to visualize
+                            [np.expand_dims(seg, axis = 0) for seg in label],  #list of all sets you want to visualize
                             ["nucleus_segmentation", "cytosol_segmentation"], #list of what each cell set should be called
                             output_file, 
                             channels =["nucleus", "membrane"] + [f"Channel{i}" for i in range(n_channels-2)])

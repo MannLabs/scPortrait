@@ -85,8 +85,7 @@ class Segmentation(ProcessingStep):
         self.window = None
         self.input_path = None
 
-
-    def initialize_as_shard(self, identifier, window, input_path):
+    def initialize_as_shard(self, identifier, window, input_path, zarr_status = True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
@@ -105,6 +104,7 @@ class Segmentation(ProcessingStep):
         self.identifier = identifier
         self.window = window
         self.input_path = input_path
+        self.save_zarr = zarr_status
 
     def call_as_shard(self):
         """Wrapper function for calling a sharded segmentation.
@@ -172,36 +172,40 @@ class Segmentation(ProcessingStep):
 
     def save_segmentation_zarr(self, labels = None):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
+        if self.save_zarr:
 
-        self.log("adding segmentation to input_image.ome.zarr")
-        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME) 
+            self.log("adding segmentation to input_image.ome.zarr")
+            path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME) 
 
-        loc = parse_url(path, mode="w").store
-        group = zarr.group(store = loc)
+            loc = parse_url(path, mode="w").store
+            group = zarr.group(store = loc)
 
-        segmentation_names = ["nucleus", "cyotosol"]
+            segmentation_names = ["nucleus", "cyotosol"]
 
-        #check if segmentation names already exist if so delete
-        for seg_names in segmentation_names:
-            path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME, "labels", seg_names)
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-                self.log("removed existing segmentation from ome.zarr")
+            #check if segmentation names already exist if so delete
+            for seg_names in segmentation_names:
+                path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME, "labels", seg_names)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                    self.log(f"removed existing {seg_names} segmentation from ome.zarr")
 
-        #reading labels
-        if labels is None:
-            path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+            #reading labels
+            if labels is None:
+                path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+                
+                with h5py.File(path_labels, "r") as hf:
+                    labels = hf["labels"][:]
             
-            with h5py.File(path_labels, "r") as hf:
-                labels = hf["labels"][:]
-        
-        segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
+            segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
 
-        for seg, name in zip(segmentations, segmentation_names):
-            write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
-            write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
+            for seg, name in zip(segmentations, segmentation_names):
+                write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
+                write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
 
-        self.log("finished saving segmentation results to ome.zarr")
+            self.log("finished saving segmentation results to ome.zarr")
+        else:
+            self.log("Not saving shard segmentation into ome.zarr. Will only save completely assembled image.")
+            pass
 
     def load_maps_from_disk(self):
         """Tries to load all maps which were defined in ``self.maps`` and returns the current state of processing.
@@ -363,6 +367,8 @@ class ShardedSegmentation(Segmentation):
             raise AttributeError(
                 "No Segmentation method defined, please set attribute ``method``"
             )
+        
+        self.save_zarr = False
 
     def save_input_image(self, input_image):
         
@@ -377,13 +383,8 @@ class ShardedSegmentation(Segmentation):
                 dtype="uint16",
             )
 
-        
         self.log("Input image added to .h5. Provides data source for reading shard information.")
 
-    
-    def save_segmentation_zarr(self):
-        #set save_segmentation_zarr function to pass so that the results from each shard are not written to ome.zarr
-        pass 
     
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
@@ -401,10 +402,9 @@ class ShardedSegmentation(Segmentation):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-            print(self.input_path)
-            current_shard.initialize_as_shard(i, window, self.input_path)
-
+            current_shard.initialize_as_shard(i, window, self.input_path, zarr_status = False)
             _shard_list.append(current_shard)
+
         return _shard_list
 
     def calculate_sharding_plan(self, image_size):
@@ -579,13 +579,9 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolved sharding plan.")
 
+
         #add segmentation results to ome.zarr
-        path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME) 
-
-        loc = parse_url(path, mode="w").store
-        group = zarr.group(store = loc)
-
-        segmentation_names = ["nucleus", "cyotosol"]
+        self.save_zarr = True
 
         #reading labels
         path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
@@ -593,20 +589,15 @@ class ShardedSegmentation(Segmentation):
         with h5py.File(path_labels, "r") as hf:
             labels = hf["labels"][:]
 
-        segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
-
-        for seg, name in zip(segmentations, segmentation_names):
-            write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
-            write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
-
-        self.log("finished saving segmentation results to ome.zarr")
+        self.save_segmentation_zarr(labels = labels)
+        self.log("finished saving segmentation results to ome.zarr from sharded segmentation.")
 
         # Add section here that cleans up the results from the tiles and deletes them to save memory
         self.log("Deleting intermediate tile results to free up storage space")
         shutil.rmtree(self.shard_directory)
 
     def process(self, input_image):
-
+        self.save_zarr = False
         self.save_input_image(input_image)
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
 
