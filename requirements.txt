@@ -14,6 +14,9 @@ colorama
 zarr
 ome_zarr
 alphabase
+aicspylibczi
+shapely
+rasterio
 #to be installed previously via conda
 #numba
 #cellpose
@@ -24,3 +27,4 @@ alphabase
 #scikit-image
 #scikit-fmm
 #scipy
+#mahotas

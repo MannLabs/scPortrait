@@ -24,7 +24,7 @@ cd SPARCSpy
 
 conda create -n "SPARCSpy"
 conda activate SPARCSpy
-conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba -c conda-forge
+conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba mahotas -c conda-forge
 ```
 
 In case you wish to utilize the ML capabilities of SPARCSpy (either for segmentation or classification) please follow the instructions [here](https://pytorch.org/get-started/locally/) to install pytorch correctly for your operating system. Once this has been installed you can verify that pytorch is installed correctly by executing the following python code:

@@ -6,6 +6,7 @@ import yaml
 from PIL import Image
 import PIL
 import numpy as np
+import numpy.ma as ma
 import sys
 import imagesize
 
@@ -19,6 +20,8 @@ from time import time
 import shutil
 
 from sparcscore.pipeline.base import Logable
+from sparcscore.processing.preprocessing import percentile_normalization, EDF, maximum_intensity_projection
+from sparcscore.pipeline.utils import _read_napari_csv, _generate_mask_polygon
 
 import zarr
 from ome_zarr.io import parse_url
@@ -402,6 +405,138 @@ class Project(Logable):
             self.input_image = self.input_image[self.remap]
         
         self.save_input_image(self.input_image)
+
+    def load_input_from_czi(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
+        """Load image input from .czi file
+
+        Parameters
+        ----------
+
+        czi_path : path
+            path to .czi file that should be loaded
+        intensity_rescale : boolean | default = True
+            boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile.
+        scene : int or None | default = None
+            integer indicating which scene should be selected if the .czi contains several
+        z_stack_projection : int or "maximum_intensity_projection" or "EDF"
+            if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer 
+            is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods.
+        remap : list(int), optional
+            Define remapping of channels. For example use “[1, 0, 2]”
+            to change the order of the first and the second channel.
+            The expected order is Nucleus Channel, Cellmembrane Channel
+            followed by other channels.
+        """
+        import aicspylibczi
+
+        self.log(f"Reading CZI file from path {czi_path}")
+        czi = aicspylibczi.CziFile(czi_path)
+
+        # Get the shape of the data
+        dimensions = czi.dims  # 'STCZMYX'
+        shape = czi.get_dims_shape()  # (1, 1, 1, 1, 2, 624, 924)
+
+        #check that we have a mosaic image else return an error as this method only support mosaic czi
+        if not czi.is_mosaic():
+            sys.exit("Only mosaic CZI files are supported. Please contact the developers.")
+
+        n_scenes = len(shape)
+        boxes = czi.get_all_mosaic_scene_bounding_boxes()
+
+        if n_scenes > 1:
+            if scene is None:
+                sys.exit("For multi-scene CZI files you need to select one scene that you wish to load into SPARCSpy. Please pass an integer to the parameter scene indicating which scene to choose.")
+            else:
+                self.log(f"Reading scene {scene} from CZI file.")
+        
+        #if there is only one scene automatically select this one
+        if n_scenes == 1:
+            scene = 0
+
+        
+        box = boxes[scene]
+        channels = shape[scene]["C"][1]
+
+        #check if more than one zstack is contained
+        if "Z" in dimensions:
+            self.log("Found more than one Z-stack in CZI file.")
+            
+            if type(z_stack_projection) == int:
+                self.log(f"Selection Z-stack {z_stack_projection}")
+                _mosaic = np.array([czi.read_mosaic(region = (box.x, box.y, box.w, box.h),
+                                                    C = c, 
+                                                    Z = z_stack_projection).squeeze() for c in range(channels)])
+            
+            elif z_stack_projection is not None:
+                
+                #define method for aggregating z-stacks
+                if z_stack_projection == "maximum_intensity_projection":
+                    self.log("Using Maximum Intensity Projection to combine Z-stacks.")
+                    method = maximum_intensity_projection
+                elif z_stack_projection == "EDF":
+                    self.log("Using EDF to combine Z-stacks.")
+                    method = EDF
+                else:
+                    sys.exit("Please define a valid method for z_stack_projection.")
+                
+                #get number of zstacks
+                zstacks = shape[scene]["Z"][1]
+                
+                #actually read data
+                _mosaic = []
+                for c in range(channels):
+                    _img = []
+                    for z in range(zstacks):
+                        _img.append(czi.read_mosaic(region = (box.x, box.y, box.w, box.h), C = c, Z = z).squeeze())
+                    _img = np.array(_img) #convert to numpy array
+                    _mosaic.append(method(_img))
+            
+        else:
+            _mosaic = np.array([czi.read_mosaic(region = (box.x, box.y, box.w, box.h),
+                                                C = c).squeeze() for c in range(channels)])
+
+        #perform intensity rescaling before loading images
+        if percentile_normalization:
+            self.log("Performing percentile normalization on the input image with lower_percentile=0.005 and upper_percentile=0.995")
+            _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=0.005, upper_percentile=0.995) for i in range(channels)])
+            _mosaic = (_mosaic * 65535).astype('uint16') #convert to 16bit images
+
+        else:
+            _mosaic = np.array(_mosaic)
+
+        self.load_input_from_array(_mosaic, remap = remap)
+
+    def define_image_area_napari(self, napari_csv_path):
+            if self.input_image is None:
+                self.log("No input image loaded. Trying to read file from disk.")
+            try:
+                self.load_input_image()
+            except:
+                raise ValueError("No input image loaded and no file found to load image from.")
+            
+            #get name from naparipath
+            name = os.path.basename(napari_csv_path).split(".")[0]
+
+            # read napari csv
+            polygons = _read_napari_csv(napari_csv_path)
+    
+            #determine size that mask needs to be generated for
+            _, x, y = self.input_image.shape
+            
+            #generate mask indicating which areas of the image to use
+            mask = _generate_mask_polygon(polygons, outshape = (x, y))
+            mask = np.broadcast_to(mask, self.input_image.shape)
+            
+            #get all unique cell ids in this area
+            masked = ma.masked_array(self.input_image, mask=~mask)
+
+            #delete old input image
+            path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+            shutil.rmtree(path)
+            self.log("Removed old input image and writing new input image with masked areas set to 0 to file.")
+
+            self.save_input_image(masked.filled(0))
+            
 
     def segment(self, *args, **kwargs):
         """
