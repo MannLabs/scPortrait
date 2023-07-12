@@ -622,7 +622,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
 
         # load correct segmentation model
         model = models.Cellpose(model_type="nuclei", gpu=use_GPU)
-        masks, _, _, _ = model.eval([input_image], diameter=None, channels=[1, 0])
+        masks = model.eval([input_image], diameter=None, channels=[1, 0])[0]
         masks = np.array(masks)  # convert to array
 
         self.log(f"Segmented mask shape: {masks.shape}")
@@ -710,9 +710,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         self.log(f"Segmenting nuclei using the following model: {model_name}")
 
-        masks_nucleus, _, _, _ = model.eval(
+        masks_nucleus = model.eval(
             [input_image], diameter=None, channels=[1, 0]
-        )
+        )[0]
         
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
@@ -730,9 +730,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             model = self._read_cellpose_model("custom", model_name, use_GPU)
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
-        masks_cytosol, _, _, _ = model.eval(
+        masks_cytosol = model.eval(
             [input_image], diameter=None, channels=[2, 1]
-        )
+        )[0]
 
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
@@ -929,7 +929,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         )
 
         self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
-        masks, _, _, _ = model.eval([input_image], diameter=None, channels=[2, 1])
+        masks = model.eval([input_image], diameter=None, channels=[2, 1])[0]
         masks = np.array(masks)  # convert to array
 
         self.maps["cytosol_segmentation"] = masks.reshape(
