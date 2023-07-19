@@ -119,6 +119,9 @@ class Segmentation(ProcessingStep):
             hdf_input = hf.get("channels")
             input_image = hdf_input[:, self.window[0], self.window[1]]
 
+        if input_image.dtype != float:
+            input_image = input_image.astype(float)
+
         #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
             try:
@@ -180,40 +183,43 @@ class Segmentation(ProcessingStep):
 
     def save_segmentation_zarr(self, labels = None):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
-        if self.save_zarr:
+        if hasattr(self, 'save_zarr'):
+            if self.save_zarr:
 
-            self.log("adding segmentation to input_image.ome.zarr")
-            path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME) 
+                self.log("adding segmentation to input_image.ome.zarr")
+                path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME) 
 
-            loc = parse_url(path, mode="w").store
-            group = zarr.group(store = loc)
+                loc = parse_url(path, mode="w").store
+                group = zarr.group(store = loc)
 
-            segmentation_names = ["nucleus", "cyotosol"]
+                segmentation_names = ["nucleus", "cyotosol"]
 
-            #check if segmentation names already exist if so delete
-            for seg_names in segmentation_names:
-                path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME, "labels", seg_names)
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                    self.log(f"removed existing {seg_names} segmentation from ome.zarr")
+                #check if segmentation names already exist if so delete
+                for seg_names in segmentation_names:
+                    path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME, "labels", seg_names)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                        self.log(f"removed existing {seg_names} segmentation from ome.zarr")
 
-            #reading labels
-            if labels is None:
-                path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+                #reading labels
+                if labels is None:
+                    path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+                    
+                    with h5py.File(path_labels, "r") as hf:
+                        labels = hf["labels"][:]
                 
-                with h5py.File(path_labels, "r") as hf:
-                    labels = hf["labels"][:]
-            
-            segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
+                segmentations = [np.expand_dims(seg, axis = 0) for seg in labels]
 
-            for seg, name in zip(segmentations, segmentation_names):
-                write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
-                write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
+                for seg, name in zip(segmentations, segmentation_names):
+                    write_labels(labels = seg.astype("uint16"), group = group, name = name, axes = "cyx")
+                    write_label_metadata(group = group, name = f"labels/{name}", colors = [{"label-value": 0, "rgba": [0, 0, 0, 0]}])
 
-            self.log("finished saving segmentation results to ome.zarr")
+                self.log("finished saving segmentation results to ome.zarr")
+            else:
+                self.log("Not saving shard segmentation into ome.zarr. Will only save completely assembled image.")
+                pass
         else:
-            self.log("Not saving shard segmentation into ome.zarr. Will only save completely assembled image.")
-            pass
+            self.log("save_zarr attribute not found")
 
     def load_maps_from_disk(self):
         """Tries to load all maps which were defined in ``self.maps`` and returns the current state of processing.
@@ -380,6 +386,8 @@ class ShardedSegmentation(Segmentation):
         
         output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         
+        input_image = input_image.astype("uint16")
+
         with h5py.File(output, "w") as hf:
 
             hdf_channels = hf.create_dataset(
@@ -391,7 +399,6 @@ class ShardedSegmentation(Segmentation):
 
         self.log("Input image added to .h5. Provides data source for reading shard information.")
 
-    
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
 
@@ -715,6 +722,7 @@ class TimecourseSegmentation(Segmentation):
             for index in self.index:
                 self.current_index = index
                 input_image = hdf_input[index, :, :, :]
+
                 self.log(f"Segmentation on index {index} started.")
                 try:
                     _result = super().__call__(input_image)

@@ -437,8 +437,7 @@ class WGASegmentation(BaseSegmentation):
         return channels, segmentation
 
     def process(self, input_image):
-        # self.directory = super().get_directory(super())
-
+        
         self.maps = {
             "normalized": None,
             "median": None,
@@ -534,6 +533,7 @@ class DAPISegmentation(BaseSegmentation):
         return (channels, segmentation)
 
     def process(self, input_image):
+
         self.maps = {
             "normalized": None,
             "median": None,
@@ -658,8 +658,6 @@ class DAPISegmentationCellpose(BaseSegmentation):
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
     method = DAPISegmentationCellpose
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
 
 
 class CytosolSegmentationCellpose(BaseSegmentation):
@@ -860,6 +858,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache() 
 
     def process(self, input_image):
+
         # initialize location to save masks to
         self.maps = {
             "normalized": None,
