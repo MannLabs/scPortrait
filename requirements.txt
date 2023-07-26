@@ -15,6 +15,7 @@ zarr
 ome_zarr
 alphabase
 aicspylibczi
+aicsimageio
 shapely
 rasterio
 #to be installed previously via conda
