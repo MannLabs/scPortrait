@@ -919,6 +919,16 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         elif "model_path" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model_path"]
             model = self._read_cellpose_model("custom", model_name, use_GPU)
+        
+        if "model_channels" in self.config["cytosol_segmentation"].keys():
+            model_channels = self.config["cytosol_segmentation"]["model_channels"]
+        else:
+            model_channels = [2, 1]
+
+        if "diameter" in self.config["cytosol_segmentation"].keys():
+            diameter = self.config["cytosol_segmentation"]["diameter"]
+        else:
+            diameter = None
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
 
@@ -928,7 +938,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         )
 
         self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
-        masks = model.eval([input_image], diameter=None, channels=[2, 1])[0]
+        masks = model.eval([input_image], diameter=diameter, channels=model_channels)[0]
         masks = np.array(masks)  # convert to array
 
         self.maps["cytosol_segmentation"] = masks.reshape(
