@@ -18,6 +18,7 @@ aicspylibczi
 aicsimageio
 shapely
 rasterio
+mahotas
 #to be installed previously via conda
 #numba
 #cellpose
