@@ -7,6 +7,7 @@ import csv
 from functools import partial
 from multiprocessing import Pool
 import h5py
+import sys
 from tqdm import tqdm
 from itertools import compress
 
@@ -60,6 +61,7 @@ class HDF5CellExtraction(ProcessingStep):
         #extract required information for generating datasets
         self.get_compression_type()
         self.get_classes_path()
+        self.get_normalization()
 
         self.save_index_to_remove = []
         
@@ -71,6 +73,50 @@ class HDF5CellExtraction(ProcessingStep):
     def get_classes_path(self):
         self.classes_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR, "classes.csv")
         return self.classes_path
+    
+    def get_normalization(self):
+        global norm_function, MinMax_function
+
+        if "normalization_range" in self.config:
+            self.normalization = self.config["normalization_range"]
+        else:
+            self.normalization = True
+        
+        if self.normalization == True:
+            def norm_function(img):
+                return(percentile_normalization(img))
+            
+            def MinMax_function(img):
+                return(MinMax(img))
+        
+        elif isinstance(self.normalization, tuple):
+            lower, upper = self.normalization
+            
+            def norm_function(img, lower = lower, upper = upper):
+                return(percentile_normalization(img, lower, upper))
+            
+            def MinMax_function(img):
+                return(MinMax(img))
+        
+        elif self.normalization is None:
+            def norm_function(img):
+                return(img)
+            
+            def MinMax_function(img):
+                img = img/65535 #convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
+                return(img)
+        
+        elif self.normalization == "None": #add additional check if if None is included as a string
+            def norm_function(img):
+                return(img)
+            
+            def MinMax_function(img):
+                img = img/65535 #convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
+                return(img)
+            
+        else:
+            self.log("Incorrect type of normalization_range defined.")
+            sys.exit("Incorrect type of normalization_range defined.")
 
     def get_channel_info(self):
         with h5py.File(self.input_segmentation_path, 'r') as hf:
@@ -229,13 +275,15 @@ class HDF5CellExtraction(ProcessingStep):
         #save single cell images
         _tmp_single_cell_data[save_index] = stack
         _tmp_single_cell_index[save_index] = [save_index, index]
-
+            
     def _extract_classes(self, input_segmentation_path, px_center, arg):
         """
         Processing for each invidual cell that needs to be run for each center.
         """
+        global norm_function, MinMax_function
+
         save_index, index, image_index, label_info = self._get_label_info(arg) #label_info not used in base case but relevant for flexibility for other classes
-    
+
         #generate some progress output every 10000 cells
         #relevant for benchmarking of time
         if save_index % 100 == 0:
@@ -276,9 +324,9 @@ class HDF5CellExtraction(ProcessingStep):
                 else:
                     channel_nucleus = hdf_channels[image_index, 0, window_y, window_x]
                 
-                channel_nucleus = percentile_normalization(channel_nucleus, 0.001, 0.999)
+                channel_nucleus = norm_function(channel_nucleus)
                 channel_nucleus = channel_nucleus * nuclei_mask_extended
-                channel_nucleus = MinMax(channel_nucleus)
+                channel_nucleus = MinMax_function(channel_nucleus)
 
                 if n_channels >= 2:
                     
@@ -299,17 +347,18 @@ class HDF5CellExtraction(ProcessingStep):
                     # channel 3: cellmask
                     
                     if image_index is None:
-                        channel_wga = hdf_channels[1, window_y, window_x]
+                        channel_cytosol = hdf_channels[1, window_y, window_x]
                     else:
-                        channel_wga = hdf_channels[image_index, 1,window_y,window_x]
+                        channel_cytosol = hdf_channels[image_index, 1,window_y,window_x]
 
-                    channel_wga = percentile_normalization(channel_wga)
-                    channel_wga = channel_wga*cell_mask_extended
+                    channel_cytosol = norm_function(channel_cytosol)
+                    channel_cytosol = channel_cytosol*cell_mask_extended
+                    channel_cytosol = MinMax_function(channel_cytosol)
                 
                 if n_channels == 1:
                     required_maps = [nuclei_mask, channel_nucleus]
                 else:
-                    required_maps = [nuclei_mask, cell_mask, channel_nucleus, channel_wga]
+                    required_maps = [nuclei_mask, cell_mask, channel_nucleus, channel_cytosol]
                 
                 #extract variable feature channels
                 feature_channels = []
@@ -317,10 +366,10 @@ class HDF5CellExtraction(ProcessingStep):
                 if image_index is None:
                     if hdf_channels.shape[0] > 2:  
                         for i in range(2, hdf_channels.shape[0]):
-                            feature_channel = hdf_channels[i, window_y, window_x]   
-                            feature_channel = percentile_normalization(feature_channel)
+                            feature_channel = hdf_channels[i, window_y, window_x]
+                            feature_channel = norm_function(feature_channel)
                             feature_channel = feature_channel*cell_mask_extended
-                            feature_channel = MinMax(feature_channel)
+                            feature_channel = MinMax_function(feature_channel)
                             
                             feature_channels.append(feature_channel)
         
@@ -328,9 +377,9 @@ class HDF5CellExtraction(ProcessingStep):
                     if hdf_channels.shape[1] > 2:
                         for i in range(2, hdf_channels.shape[1]):
                             feature_channel = hdf_channels[image_index, i, window_y, window_x]
-                            feature_channel = percentile_normalization(feature_channel)
+                            feature_channel = norm_function(feature_channel)
                             feature_channel = feature_channel*cell_mask_extended
-                            feature_channel = MinMax(feature_channel)
+                            feature_channel = MinMax_function(feature_channel)
                             
                             feature_channels.append(feature_channel)
                 
