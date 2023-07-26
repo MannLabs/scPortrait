@@ -6,6 +6,44 @@ from skimage.feature import peak_local_max
 from scipy.ndimage import distance_transform_edt
 from mahotas import sobel
 
+def _normalize_image(im, lower_value, upper_value):
+    """
+    Normalize an input 2D image (np.array) based on input values.
+    
+    Parameters
+    ----------
+    im : np.array
+        Numpy array of shape (height, width).
+    lower_value : int
+        Lower image value used for normalization, all lower values will be clipped to 0.
+    upper_value : int
+        Upper image value used for normalization, all higher values will be clipped to 1.
+
+    Returns
+    -------
+    out_im : np.array
+        Normalized Numpy array.
+    
+    Example
+    -------
+    >>> img = np.random.rand(4, 4)
+    >>> norm_img = _normalize_image(img, 200, 15000)
+    """
+
+    # Compute inter-percentile range (IPR)                                     
+    IPR = upper_value - lower_value
+
+    # Normalize the image
+    out_im = im - lower_value 
+    
+    if IPR != 0: #add check to make sure IPR is not 0
+        out_im = out_im / IPR
+    
+    # Clip values outside [0, 1]
+    out_im = np.clip(out_im, 0, 1)
+            
+    return out_im
+
 def _percentile_norm(im, lower_percentile, upper_percentile):
     """
     Normalize an input 2D image (np.array) based on the defined percentiles.
@@ -36,17 +74,7 @@ def _percentile_norm(im, lower_percentile, upper_percentile):
     lower_value = np.quantile(np.ravel(im),lower_percentile)
     upper_value = np.quantile(np.ravel(im),upper_percentile)
 
-    # Compute inter-percentile range (IPR)                                     
-    IPR = upper_value - lower_value
-
-    # Normalize the image
-    out_im = im - lower_value 
-    
-    if IPR != 0: #add check to make sure IPR is not 0
-        out_im = out_im / IPR
-    
-    # Clip values outside [0, 1]
-    out_im = np.clip(out_im, 0, 1)
+    out_im = _normalize_image(im, lower_value, upper_value)
             
     return out_im
 
@@ -238,7 +266,8 @@ def MinMax(inarr):
         return inarr
     
 def EDF(image):
-    """ Calculate Extended Depth of Field for the given input image Zstack.
+    """ Calculate Extended Depth of Field for the given input image Z-stack.
+    Based on implementation here: https://mahotas.readthedocs.io/en/latest/edf.html#id3
 
     Parameters
     ----------
