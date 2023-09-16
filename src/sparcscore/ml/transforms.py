@@ -7,9 +7,14 @@ import torchvision.transforms as T
 
 class RandomRotation(object):
     """
-    Randomly rotate input image in 90 degree steps.
-    """
+    Randomly rotates input image in 90 degree steps.
 
+    Args:
+        choices (int): Number of possible rotations.
+
+    Returns:
+        Rotated image.
+    """
     def __init__(self, choices=4, include_zero=True):
         angles = np.linspace(0, 360, choices + 1)
         angles = angles[:-1]
@@ -27,9 +32,15 @@ class RandomRotation(object):
 
 class GaussianNoise(object):
     """
-    Add gaussian noise to the input image.
-    """
+    Add Gaussian noise to the input image.
 
+    Args:
+        sigma (float): Standard deviation of the Gaussian distribution.
+        channels (list): List of channel indices to add noise to.
+
+    Returns:
+        Image with added Gaussian noise.
+    """
     def __init__(self, sigma=0.1, channels=[]):
         self.sigma = sigma
         self.channels = channels
@@ -54,9 +65,16 @@ class GaussianNoise(object):
 
 class GaussianBlur(object):
     """
-    Apply a gaussian blur to the input image.
-    """
+    Applies Gaussian blur to the input image.
 
+    Args:
+        kernel_size (list): List of kernel sizes to randomly select from. 
+        sigma (tuple): Tuple of sigma values to randomly select from.
+        channels (list): List of channel indices to blur.
+
+    Returns:
+        Image with added Gaussian blur.
+    """
     def __init__(
             self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 0.2), channels=[]
     ):
@@ -78,12 +96,18 @@ class GaussianBlur(object):
 
 class ChannelReducer(object):
     """
-    can reduce an imaging dataset dataset to 5, 3 or 1 channel
-    5: nuclei_mask, cell_mask, channel_nucleus, channel_cellmask, channel_of_interest
-    3: nuclei_mask, cell_mask, channel_of_interestå
-    1: channel_of_interestå
-    """
+    Reduces the number of channels in the input image to 5, 3 or 1 channel.
 
+    5: nuclei_mask, cell_mask, channel_nucleus, channel_cellmask, channel_of_interest
+    3: nuclei_mask, cell_mask, channel_of_interest
+    1: channel_of_interest
+
+    Args:
+        channels (int): Number of channels to keep.
+        
+    Returns:
+        Image with reduced number of channels.
+    """
     def __init__(self, channels=5):
         self.channels = channels
 
@@ -98,9 +122,15 @@ class ChannelReducer(object):
 
 class ChannelSelector(object):
     """
-    select the channel used for prediction.
-    """
+    Selects the channels of interest from the input image.
 
+    Args:
+        channels (list): List of channel indices to select.
+        num_channels (int): Number of channels in the input image.
+    
+    Returns:
+        Image with only the selected channels.
+    """
     def __init__(self, channels=[0, 1, 2, 3, 4], num_channels=5):
         if not np.max(channels) < num_channels:
             raise ValueError("highest channel index exceeds channel numb")
@@ -112,9 +142,14 @@ class ChannelSelector(object):
 
 class ImageDownsampler(object):
     """
-    Downsample the image to a given size.
-    """
+    Downsamples the image to a given size.
 
+    Args:
+        size (int): Desired image size.
+
+    Returns:
+        Downsampled image.
+    """
     def __init__(self, size):
         self.size = size
 
