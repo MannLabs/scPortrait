@@ -26,6 +26,7 @@ from tqdm.auto import tqdm
 
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
+
     Attributes:
         maps (dict(str)): Segmentation workflows based on the :class:`.Segmentation` class can use maps for saving and loading checkpoints and perform. Maps can be numpy arrays
 
@@ -34,9 +35,7 @@ class Segmentation(ProcessingStep):
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
 
         identifier (int, default ``None``): Only set if called by :class:`ShardedSegmentation`. Unique index of the shard.
-
         window (list(tuple), default ``None``): Only set if called by :class:`ShardedSegmentation`. Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-
         input_path (str, default ``None``): Only set if called by :class:`ShardedSegmentation`. Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
 
     Example:
@@ -59,7 +58,6 @@ class Segmentation(ProcessingStep):
                     self.save_map("map1")
 
     """
-
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
     DEFAULT_FILTER_FILE = "classes.csv"
     PRINT_MAPS_ON_DEBUG = True
@@ -89,18 +87,13 @@ class Segmentation(ProcessingStep):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         Args:
             identifier (int): Unique index of the shard.
-
             window (list(tuple)): Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-
             input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
-
         """
-
         self.identifier = identifier
         self.window = window
         self.input_path = input_path
@@ -110,9 +103,7 @@ class Segmentation(ProcessingStep):
         """Wrapper function for calling a sharded segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
-
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
 
         with h5py.File(self.input_path, "r") as hf:
@@ -141,7 +132,6 @@ class Segmentation(ProcessingStep):
         Args:
             channels (np.array): Numpy array of shape ``(height, width)`` or``(channels, height, width)``. Channels are all data which are saved as floating point values e.g. images.
             labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
-
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
 
         """
@@ -691,12 +681,10 @@ class TimecourseSegmentation(Segmentation):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
-
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         Args:
             index (int): Unique indexes of the elements that need to be segmented.
-
             input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
         """
         self.index = index
@@ -706,8 +694,7 @@ class TimecourseSegmentation(Segmentation):
         """Wrapper function for calling a sharded segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
         global _tmp_seg
@@ -738,13 +725,13 @@ class TimecourseSegmentation(Segmentation):
         labels,
         classes,
     ):
-        """Saves the results of a segmentation at the end of the process by transferring it to the initialized
+        """
+        Saves the results of a segmentation at the end of the process by transferring it to the initialized
         memory mapped array
 
         Args:
             labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
-
         """
         global _tmp_seg
         
@@ -982,7 +969,6 @@ class MultithreadedSegmentation(TimecourseSegmentation):
 
     def process(self):
         # global _tmp_seg
-
         input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         with h5py.File(input_path, "r") as hf:

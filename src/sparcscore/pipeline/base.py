@@ -5,16 +5,15 @@ import shutil
 
 
 class Logable(object):
-    """object which can create log entries.
+    """
+    Object which can create log entries.
 
     Args:
         debug (bool, default ``False``): When set to ``True`` log entries will be printed to the console.
 
     Attributes:
         directory (str): A directory must be set in every descendant before log can be called.
-
         DEFAULT_LOG_NAME (str, default ``processing.log``): Default log file name.
-
         DEFAULT_FORMAT (str): Date and time format used for logging. See `datetime.strftime <https://docs.python.org/3/library/datetime.html#datetime.date.strftime>`_.
     """
 
@@ -80,19 +79,13 @@ class Logable(object):
 class ProcessingStep(Logable):
     """Processing step living in its own subdirectory of the project.
 
-    Args:
+    Attributes:
         config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
-
         directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`vipercore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
-
         intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
-
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
-
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
-
     """
-
     def __init__(
             self, config, directory, project_location, debug=False, intermediate_output=False, overwrite=True
     ):
@@ -109,18 +102,13 @@ class ProcessingStep(Logable):
     def __call__(
             self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
     ):
-        """Call the processing step.
-
-        object which can create log entries.
+        """
+        Call the processing step.
 
         Args:
-
             intermediate_output (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True intermediate outputs will be saved where applicable.
-
             debug (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True debug outputs will be printed where applicable.
-
             overwrite (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True, the processing step directory will be completely deleted and newly created when called.
-
         """
 
         # set flags if provided
@@ -153,18 +141,11 @@ class ProcessingStep(Logable):
     ):
         """Call the empty processing step.
 
-        object which can create log entries.
-
         Args:
-
             intermediate_output (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True intermediate outputs will be saved where applicable.
-
             debug (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True debug outputs will be printed where applicable.
-
             overwrite (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True, the processing step directory will be completely deleted and newly created when called.
-
         """
-
         # set flags if provided
         self.debug = debug if debug is not None else self.debug
         self.overwrite = overwrite if overwrite is not None else self.overwrite
@@ -196,7 +177,6 @@ class ProcessingStep(Logable):
 
         Args:
             key (str): Name of the parameter.
-
             value: Value of the parameter.
         """
 
