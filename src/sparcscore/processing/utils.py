@@ -10,21 +10,17 @@ def plot_image(array, size = (10,10), save_name="", cmap="magma", **kwargs):
     This function displays a 2D array using matplotlib and can save
     the resulting image as a PNG file.
 
-    Parameters
-    ----------
-    array : np.array
-        Input 2D numpy array to be plotted.
-    size : tuple of int, optional
-        Figure size in inches, by default (10, 10).
-    save_name : str, optional
-        Name of the output file, without extension. If not provided, image will not be saved, by default "".
-    cmap : str, optional
-        Color map used to display the array, by default "magma".
-    **kwargs : dict
-        Additional keyword arguments to be passed to `ax.imshow`.
-
-    Example
-    -------
+    Args:
+        array (np.array): Input 2D numpy array to be plotted.
+        size (tuple of int, optional): Figure size in inches, by default (10, 10).
+        save_name (str, optional): Name of the output file, without extension. If not provided, image will not be saved, by default "".
+        cmap (str, optional): Color map used to display the array, by default "magma".
+        **kwargs: Additional keyword arguments to be passed to `ax.imshow`.
+    
+    Returns:
+        None: The function will display the image but does not return any values.
+    
+    Example:
     >>> array = np.random.rand(10, 10)
     >>> plot_image(array, size=(5, 5))
     """
@@ -52,31 +48,17 @@ def visualize_class(class_ids, seg_map, background ,*args, **kwargs):
     This function takes in class IDs and a segmentation map, and creates an output visualization
     where the specified classes are highlighted on top of the provided background image.
 
-    Parameters
-    ----------
-    class_ids : array-like
-        A list or array of integers representing the class IDs to be highlighted.
+    Args:
+        class_ids (array-like): A list or array of integers representing the class IDs to be highlighted.
+        seg_map (2D array-like): A 2D array representing the segmentation map, where each value corresponds to a class ID.
+        background (2D/3D array-like): Background image (2D or 3D) on which the classes will be highlighted. Its size should match that of `seg_map`.
+        *args: Any additional positional arguments that are passed to the underlying plotting functions.
+        **kwargs: Any additional keyword arguments that are passed underlying plotting functions.
 
-    seg_map : 2D array-like
-        A 2D array representing the segmentation map, where each value corresponds to a class ID.
-
-    background : 2D/3D array-like
-        Background image (2D or 3D) on which the classes will be highlighted. Its size should match
-        that of `seg_map`.
-
-    *args : additional positional arguments
-        Any additional positional arguments that are passed to the underlying plotting functions.
-
-    **kwargs : additional keyword arguments
-        Any additional keyword arguments that are passed underlying plotting functions.
-
-    Returns
-    -------
-    None
-        The function will display the highlighted image but does not return any values.
-
-    Example
-    -------
+    Returns:
+        None: The function will display the highlighted image but does not return any values.
+    
+    Example:
     >>> class_ids = [1, 2]
     >>> seg_map = np.array([[0, 1, 0], [1, 2, 1], [2, 0, 1]])
     >>> background = np.random.random((3, 3)) * 255
@@ -101,19 +83,16 @@ def visualize_class(class_ids, seg_map, background ,*args, **kwargs):
 def download_testimage(folder):
     """
     Download a set of test images to a provided folder path.
+
+    This function downloads a set of test images from Zenodo and saves them to a provided folder path.
+
+    Args:
+        folder (str): The path of the folder where the test images will be saved.
     
-    Parameters
-    ----------
-    folder : string
-        The path of the folder where the test images will be saved.
+    Returns:
+        returns (list): A list containing the local file paths of the downloaded images.
 
-    Returns
-    -------
-    returns : list
-        A list containing the local file paths of the downloaded images.
-
-    Example
-    -------
+    Example:
     >>> folder = "test_images"
     >>> downloaded_images = download_testimage(folder)
     Successfully downloaded testimage_dapi.tiff from https://zenodo.org/record/5701474/files/testimage_dapi.tiff?download=1
@@ -150,22 +129,16 @@ def flatten(l):
     This function takes in a list of lists (nested lists) and returns a single list
     containing all the elements from the input lists.
 
-    Parameters
-    ----------
-    l : list of lists
-        A list containing one or more lists as its elements.
+    Args:
+        l (list of lists): A list containing one or more lists as its elements.
 
-    Returns
-    -------
-    flattened_list : list
-        A single list containing all elements from the input lists.
+    Returns:
+        flattened_list (list): A single list containing all elements from the input lists.
 
-    Example
-    -------
+    Example:
     >>> nested_list = [[1, 2, 3], [4, 5], [6, 7, 8, 9]]
     >>> flatten(nested_list)
     [1, 2, 3, 4, 5, 6, 7, 8, 9]
-
     """
     # Flatten the input list using list comprehension
     return [item for sublist in l for item in sublist]
