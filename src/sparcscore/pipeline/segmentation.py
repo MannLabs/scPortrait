@@ -443,6 +443,18 @@ class ShardedSegmentation(Segmentation):
                 upper_y = (y + 1) * shard_size[0]
                 upper_x = (x + 1) * shard_size[1]
 
+                #add px overlap to each shard
+                lower_y = lower_y - self.config["overlap_px"]
+                lower_x = lower_x - self.config["overlap_px"]
+                upper_y = upper_y + self.config["overlap_px"]
+                upper_x = upper_x + self.config["overlap_px"]
+
+                #make sure that each limit stays within the slides
+                if lower_y < 0:
+                    lower_y = 0
+                if lower_x < 0:
+                    lower_x = 0
+
                 if last_row:
                     upper_y = image_size[0]
 
@@ -450,7 +462,9 @@ class ShardedSegmentation(Segmentation):
                     upper_x = image_size[1]
 
                 shard = (slice(lower_y, upper_y), slice(lower_x, upper_x))
+                print(shard)
                 _sharding_plan.append(shard)
+
         return _sharding_plan
 
     def resolve_sharding(self, sharding_plan):
@@ -510,6 +524,7 @@ class ShardedSegmentation(Segmentation):
 
         filtered_classes_combined = []
         edge_classes_combined = []
+
         for i, window in enumerate(sharding_plan):
             self.log(f"Stitching tile {i}")
 
@@ -532,6 +547,17 @@ class ShardedSegmentation(Segmentation):
             shifted_map, edge_labels = shift_labels(
                 local_hdf_labels, class_id_shift, return_shifted_labels=True
             )
+            
+            orig_input = hdf_labels[:, window[0], window[1]]
+            shifted_map = np.where((orig_input != 0) & (shifted_map == 0), orig_input, shifted_map) 
+            #since shards are computed with overlap there potentially alreadty exist segmentations in the selected area that we wish to keep
+            # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the 
+            # new ones from the second shard
+            # this will result in cell ids that are missing in the file but does not matter as all cell ids will be unique
+            # any ids that were on the shard edges will be removed
+
+            #potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
+            # for other segmentation methods this could cause issues
 
             hdf_labels[:, window[0], window[1]] = shifted_map
 
@@ -592,7 +618,6 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolved sharding plan.")
 
-
         #add segmentation results to ome.zarr
         self.save_zarr = True
 
@@ -607,7 +632,7 @@ class ShardedSegmentation(Segmentation):
 
         # Add section here that cleans up the results from the tiles and deletes them to save memory
         self.log("Deleting intermediate tile results to free up storage space")
-        shutil.rmtree(self.shard_directory)
+        shutil.rmtree(self.shard_directory, ignore_errors=True)
 
     def process(self, input_image):
         self.save_zarr = False

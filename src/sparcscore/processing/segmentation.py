@@ -387,7 +387,7 @@ def _return_edge_labels(input_map):
     
     return list(full_union)
 
-def shift_labels(input_map, shift, return_shifted_labels=False):
+def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labels = True):
     """
     Shift the labels of a given labeled map (2D or 3D numpy array) by a specific value.
     Return the shifted map and the labels that are in contact with the edges of the canvas.
@@ -403,6 +403,8 @@ def shift_labels(input_map, shift, return_shifted_labels=False):
     return_shifted_labels : bool, optional
         If True, return the edge labels after shifting (default is False). 
         If False will return the edge labels before shifting.
+    remove_edge_labels : bool, default = True
+        If True the edge classes are removed from the shifted map before returning the results.
 
     Returns
     -------
@@ -441,6 +443,13 @@ def shift_labels(input_map, shift, return_shifted_labels=False):
             
     if return_shifted_labels:
         edge_label = [label + shift for label in edge_label]
+
+    if remove_edge_labels:
+        if return_shifted_labels:
+            shifted_map = np.where(np.isin(shifted_map, edge_label), 0, shifted_map)
+        else:
+            _edge_label = [label + shift for label in edge_label]
+            shifted_map = np.where(np.isin(shifted_map, _edge_label), 0, shifted_map)
         
     return shifted_map, list(set(edge_label))
 

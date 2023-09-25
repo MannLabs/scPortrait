@@ -5,6 +5,7 @@ from skimage.filters import gaussian
 from skimage.feature import peak_local_max
 from scipy.ndimage import distance_transform_edt
 from mahotas import sobel
+import xarray as xr
 
 def _normalize_image(im, lower_value, upper_value):
     """
@@ -118,7 +119,22 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
         raise ValueError("Input dimensions should be (height, width) or (channels, height, width).")
 
     return im
-    
+
+def downsample_img(img, N=2):
+    """
+    Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels. 
+    Takes a numpy array image as input and returns a numpy array as uint16.
+
+    Parameters
+    ----------
+    img : array
+        image to downsample
+    N : int, default = 2
+        number of pixels that should be binned together using mean between pixels
+    """
+    downsampled = xr.DataArray(img, dims=['c', 'x', 'y']).coarsen(c = 1, x= N, y= N, boundary = "exact").mean()
+    downsampled = (downsampled/downsampled.max()*65535).astype("uint16")
+    return(np.array(downsampled))    
 
 @jit(nopython=True, parallel = True) # Set "nopython" mode for best performance, equivalent to @njit
 def rolling_window_mean(array, size, scaling = False):
