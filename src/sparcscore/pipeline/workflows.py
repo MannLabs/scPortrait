@@ -23,6 +23,7 @@ import torch
 import gc
 import matplotlib.pyplot as plt
 import skfmm
+import time
 
 from functools import partial
 from multiprocessing import Pool
@@ -707,10 +708,15 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             model_name = self.config["nucleus_segmentation"]["model_path"]
             model = self._read_cellpose_model("custom", model_name, use_GPU)
 
+        if "diameter" in self.config["nucleus_segmentation"].keys():
+            diameter = self.config["nucleus_segmentation"]["diameter"]
+        else:
+            diameter = None
+
         self.log(f"Segmenting nuclei using the following model: {model_name}")
 
         masks_nucleus = model.eval(
-            [input_image], diameter=None, channels=[1, 0]
+            [input_image], diameter=diameter, channels=[1, 0]
         )[0]
         
         masks_nucleus = np.array(masks_nucleus)  # convert to array
@@ -728,9 +734,14 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             model_name = self.config["cytosol_segmentation"]["model_path"]
             model = self._read_cellpose_model("custom", model_name, use_GPU)
 
+        if "diameter" in self.config["cytosol_segmentation"].keys():
+            diameter = self.config["cytosol_segmentation"]["diameter"]
+        else:
+            diameter = None
+
         self.log(f"Segmenting cytosol using the following model: {model_name}")
         masks_cytosol = model.eval(
-            [input_image], diameter=None, channels=[2, 1]
+            [input_image], diameter=diameter, channels=[2, 1]
         )[0]
 
         masks_cytosol = np.array(masks_cytosol)  # convert to array
@@ -745,14 +756,15 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_nucleus_unfiltered = masks_nucleus.copy()
             masks_cytosol_unfiltered = masks_cytosol.copy()
 
-        all_nucleus_ids = np.unique(masks_nucleus)
-        all_nucleus_ids = np.delete(all_nucleus_ids, 0)
+        #log start time of cell filtering to track
+        start = time.time()
 
+        all_nucleus_ids = np.unique(masks_nucleus)[1:]
         nucleus_cytosol_pairs = {}
 
         for nucleus_id in all_nucleus_ids:
             # get the nucleus and set the background to 0 and the nucleus to 1
-            nucleus = np.where(masks_nucleus == nucleus_id, 1, 0)
+            nucleus = (masks_nucleus == nucleus_id)
             # now get the coordinates of the nucleus
             nucleus_pixels = np.nonzero(nucleus)
 
@@ -826,7 +838,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 )
                 masks_cytosol = np.where(condition, nucleus_id, masks_cytosol)
                 updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
-
+        
+        end = time.time()
+        self.log(f"Time required for filtering generated masks in seconds: {end - start}")
+        
         if self.debug:
             # plot nucleus and cytosol masks before and after filtering
             fig, axs = plt.subplots(2, 2, figsize=(8, 8))
