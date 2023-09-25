@@ -24,6 +24,7 @@ import gc
 import matplotlib.pyplot as plt
 import skfmm
 import time
+from collections import defaultdict
 
 from functools import partial
 from multiprocessing import Pool
@@ -769,15 +770,14 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             nucleus_pixels = np.nonzero(nucleus)
 
             # check if those indices are not background in the cytosol mask
-            potential_cytosol = masks_cytosol[nucleus_pixels]
-            potential_cytosol = np.all(potential_cytosol != 0)
+            potential_cytosol = masks_cytosol[nucleus_pixels.astype("bool")]
 
-            if potential_cytosol:
+            if np.all(potential_cytosol != 0):
                 unique_cytosol, counts = np.unique(
-                    masks_cytosol[nucleus_pixels], return_counts=True
+                    potential_cytosol, return_counts=True
                 )
                 all_counts = np.sum(counts)
-                cytosol_proportions = np.divide(counts, all_counts)
+                cytosol_proportions = counts / all_counts
 
                 if np.any(cytosol_proportions >= self.config["filtering_threshold"]):
                     # get the cytosol_id with max proportion
@@ -787,22 +787,18 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                     nucleus_cytosol_pairs[nucleus_id] = cytosol_id
                 else:
                     nucleus_cytosol_pairs[nucleus_id] = 0
-            else:
-                continue
 
         # check if there are any cytosol masks that are assigned to multiple nuclei
-        unique_pairs = list(set(nucleus_cytosol_pairs.values()))
-        if len(unique_pairs) != len(nucleus_cytosol_pairs):
-            # invert dictionary to get all cytosol values that are assigned to more than one nucleus
-            rev_nucleus_cytosol_pairs = {}
-            for nucleus, cytosol in nucleus_cytosol_pairs.items():
-                rev_nucleus_cytosol_pairs.setdefault(cytosol, set()).add(nucleus)
+        cytosol_count = defaultdict(int)
 
-            # if there are multiple nuclei assigned to one cytosol, set all cytosol values to 0
-            for cytosol, nuclei in rev_nucleus_cytosol_pairs.items():
-                if len(nuclei) > 1:
-                    for nucleus in nuclei:
-                        nucleus_cytosol_pairs[nucleus] = 0
+        # Count the occurrences of each cytosol value
+        for cytosol in nucleus_cytosol_pairs.values():
+            cytosol_count[cytosol] += 1
+        
+        # Find cytosol values assigned to more than one nucleus
+        for nucleus, cytosol in nucleus_cytosol_pairs.items():
+            if cytosol_count[cytosol] > 1:
+                nucleus_cytosol_pairs[nucleus] = 0
 
         # get unique cytosol ids that are not in the lookup table
         all_cytosol_ids = set(np.unique(masks_cytosol))
@@ -812,7 +808,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # set all cytosol ids that are not present in lookup table to 0 in the cytosol mask
         for cytosol_id in not_used_cytosol_ids:
-            masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)
+            masks_cytosol[masks_cytosol == cytosol_id] = 0
 
         # get unique nucleus ids that are not in the lookup table
         all_nucleus_ids = set(np.unique(masks_nucleus))
@@ -822,21 +818,19 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # set all nucleus ids that are not present in lookup table to 0 in the nucleus mask
         for nucleus_id in not_used_nucleus_ids:
-            masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
+            masks_nucleus[masks_nucleus == nucleus_id] = 0
 
         # now we have all the nucleus cytosol pairs we can filter the masks
         updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
         for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
             if cytosol_id == 0:
-                masks_nucleus = np.where(
-                    masks_nucleus == nucleus_id, 0, masks_nucleus
-                )  # set the nucleus to 0
+                masks_nucleus[masks_nucleus == nucleus_id] = 0  # set the nucleus to 0
             else:
                 # set the cytosol pixels to the nucleus_id if not previously updated
                 condition = np.logical_and(
                     masks_cytosol == cytosol_id, ~updated_cytosol_mask
                 )
-                masks_cytosol = np.where(condition, nucleus_id, masks_cytosol)
+                masks_cytosol[condition] = nucleus_id
                 updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
         
         end = time.time()
@@ -899,7 +893,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
     method = CytosolSegmentationCellpose
 
-class CytosolSegmentationDownsamplingCellpose(BaseSegmentation):
+class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -951,183 +945,7 @@ class CytosolSegmentationDownsamplingCellpose(BaseSegmentation):
         if segmentation.shape[2] !=channels.shape[2]:
             sys.exit("Error. Segmentation mask and image have different shapes")
 
-        return channels, segmentation
-
-    def cellpose_segmentation(self, input_image):
-        # clean up old cached variables to free up GPU memory
-        gc.collect()
-        torch.cuda.empty_cache()  
-
-        # check that image is int
-        input_image = input_image.astype(np.uint16)
-
-        # check if GPU is available
-        if torch.cuda.is_available():
-            use_GPU = True
-        else:
-            use_GPU = False
-
-        # currently no real acceleration through using GPU as we can't load batches
-        self.log(f"GPU Status for segmentation: {use_GPU}")
-
-        # load correct segmentation model for nuclei
-        if "model" in self.config["nucleus_segmentation"].keys():
-            model_name = self.config["nucleus_segmentation"]["model"]
-            model = self._read_cellpose_model("pretrained", model_name, use_GPU)
-        elif "model_path" in self.config["nucleus_segmentation"].keys():
-            model_name = self.config["nucleus_segmentation"]["model_path"]
-            model = self._read_cellpose_model("custom", model_name, use_GPU)
-
-        self.log(f"Segmenting nuclei using the following model: {model_name}")
-
-        masks_nucleus = model.eval(
-            [input_image], diameter=None, channels=[1, 0]
-        )[0]
-        
-        masks_nucleus = np.array(masks_nucleus)  # convert to array
-
-        #manually delete model and perform gc to free up memory on GPU
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()  
-
-        # load correct segmentation model for cytosol
-        if "model" in self.config["cytosol_segmentation"].keys():
-            model_name = self.config["cytosol_segmentation"]["model"]
-            model = self._read_cellpose_model("pretrained", model_name, use_GPU)
-        elif "model_path" in self.config["cytosol_segmentation"].keys():
-            model_name = self.config["cytosol_segmentation"]["model_path"]
-            model = self._read_cellpose_model("custom", model_name, use_GPU)
-
-        self.log(f"Segmenting cytosol using the following model: {model_name}")
-        masks_cytosol = model.eval(
-            [input_image], diameter=None, channels=[2, 1]
-        )[0]
-
-        masks_cytosol = np.array(masks_cytosol)  # convert to array
-
-        #manually delete model and perform gc to free up memory on GPU
-        del model
-        gc.collect()
-        torch.cuda.empty_cache() 
-
-        if self.debug:
-            # save unfiltered masks for visualization of filtering process
-            masks_nucleus_unfiltered = masks_nucleus.copy()
-            masks_cytosol_unfiltered = masks_cytosol.copy()
-
-        all_nucleus_ids = np.unique(masks_nucleus)
-        all_nucleus_ids = np.delete(all_nucleus_ids, 0)
-
-        nucleus_cytosol_pairs = {}
-
-        for nucleus_id in all_nucleus_ids:
-            # get the nucleus and set the background to 0 and the nucleus to 1
-            nucleus = np.where(masks_nucleus == nucleus_id, 1, 0)
-            # now get the coordinates of the nucleus
-            nucleus_pixels = np.nonzero(nucleus)
-
-            # check if those indices are not background in the cytosol mask
-            potential_cytosol = masks_cytosol[nucleus_pixels]
-            potential_cytosol = np.all(potential_cytosol != 0)
-
-            if potential_cytosol:
-                unique_cytosol, counts = np.unique(
-                    masks_cytosol[nucleus_pixels], return_counts=True
-                )
-                all_counts = np.sum(counts)
-                cytosol_proportions = np.divide(counts, all_counts)
-
-                if np.any(cytosol_proportions >= self.config["filtering_threshold"]):
-                    # get the cytosol_id with max proportion
-                    cytosol_id = unique_cytosol[
-                        np.argmax(cytosol_proportions >= self.config["filtering_threshold"])
-                    ]
-                    nucleus_cytosol_pairs[nucleus_id] = cytosol_id
-                else:
-                    nucleus_cytosol_pairs[nucleus_id] = 0
-            else:
-                continue
-
-        # check if there are any cytosol masks that are assigned to multiple nuclei
-        unique_pairs = list(set(nucleus_cytosol_pairs.values()))
-        if len(unique_pairs) != len(nucleus_cytosol_pairs):
-            # invert dictionary to get all cytosol values that are assigned to more than one nucleus
-            rev_nucleus_cytosol_pairs = {}
-            for nucleus, cytosol in nucleus_cytosol_pairs.items():
-                rev_nucleus_cytosol_pairs.setdefault(cytosol, set()).add(nucleus)
-
-            # if there are multiple nuclei assigned to one cytosol, set all cytosol values to 0
-            for cytosol, nuclei in rev_nucleus_cytosol_pairs.items():
-                if len(nuclei) > 1:
-                    for nucleus in nuclei:
-                        nucleus_cytosol_pairs[nucleus] = 0
-
-        # get unique cytosol ids that are not in the lookup table
-        all_cytosol_ids = set(np.unique(masks_cytosol))
-        all_cytosol_ids.discard(0)
-        used_cytosol_ids = set(nucleus_cytosol_pairs.values())
-        not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids
-
-        # set all cytosol ids that are not present in lookup table to 0 in the cytosol mask
-        for cytosol_id in not_used_cytosol_ids:
-            masks_cytosol = np.where(masks_cytosol == cytosol_id, 0, masks_cytosol)
-
-        # get unique nucleus ids that are not in the lookup table
-        all_nucleus_ids = set(np.unique(masks_nucleus))
-        all_nucleus_ids.discard(0)
-        used_nucleus_ids = set(nucleus_cytosol_pairs.keys())
-        not_used_nucleus_ids = all_nucleus_ids - used_nucleus_ids
-
-        # set all nucleus ids that are not present in lookup table to 0 in the nucleus mask
-        for nucleus_id in not_used_nucleus_ids:
-            masks_nucleus = np.where(masks_nucleus == nucleus_id, 0, masks_nucleus)
-
-        # now we have all the nucleus cytosol pairs we can filter the masks
-        updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
-        for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
-            if cytosol_id == 0:
-                masks_nucleus = np.where(
-                    masks_nucleus == nucleus_id, 0, masks_nucleus
-                )  # set the nucleus to 0
-            else:
-                # set the cytosol pixels to the nucleus_id if not previously updated
-                condition = np.logical_and(
-                    masks_cytosol == cytosol_id, ~updated_cytosol_mask
-                )
-                masks_cytosol = np.where(condition, nucleus_id, masks_cytosol)
-                updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
-
-        if self.debug:
-            # plot nucleus and cytosol masks before and after filtering
-            fig, axs = plt.subplots(2, 2, figsize=(8, 8))
-            axs[0, 0].imshow(masks_nucleus_unfiltered[0])
-            axs[0, 0].axis("off")
-            axs[0, 0].set_title("before filtering", fontsize=6)
-            axs[0, 1].imshow(masks_nucleus[0])
-            axs[0, 1].axis("off")
-            axs[0, 1].set_title("after filtering", fontsize=6)
-
-            axs[1, 0].imshow(masks_cytosol_unfiltered[0])
-            axs[1, 0].axis("off")
-            axs[1, 1].imshow(masks_cytosol[0])
-            axs[1, 1].axis("off")
-            fig.tight_layout()
-            fig.show()
-            del fig  # delete figure after showing to free up memory again
-
-        # first when the masks are finalized save them to the maps
-        self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
-            masks_nucleus.shape[1:]
-        )  # need to add reshape to save in proper format for HDF5
-
-        self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
-            masks_cytosol.shape[1:]
-        )  # need to add reshape to save in proper format for HDF5
-
-        del masks_nucleus, masks_cytosol, updated_cytosol_mask, all_nucleus_ids, used_nucleus_ids
-        gc.collect()
-        torch.cuda.empty_cache() 
+        return channels, segmentation 
 
     def process(self, input_image):
 
