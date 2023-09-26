@@ -19,6 +19,7 @@ aicsimageio
 shapely
 rasterio
 mahotas
+imagesize
 #to be installed previously via conda
 #numba
 #cellpose
