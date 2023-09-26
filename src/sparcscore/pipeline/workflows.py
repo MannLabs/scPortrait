@@ -1133,6 +1133,21 @@ class Cytosol_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+class Cytosol_Cellpose_Downsampling_TimecourseSegmentation(TimecourseSegmentation):
+    """
+    Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
+    No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
+    """
+
+    class Cytosol_Segmentation_Downsampling_Cellpose_Timecourse(
+        CytosolSegmentationDownsamplingCellpose, TimecourseSegmentation
+    ):
+        method = CytosolSegmentationDownsamplingCellpose
+
+    method = Cytosol_Segmentation_Downsampling_Cellpose_Timecourse
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 class CytosolOnly_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
     """
@@ -1161,6 +1176,20 @@ class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegment
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+class Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation(MultithreadedSegmentation):
+    
+    class Cytosol_Segmentation_Downsampling_Cellpose_Timecourse(
+        CytosolSegmentationDownsamplingCellpose, TimecourseSegmentation
+    ):
+        method = CytosolSegmentationDownsamplingCellpose
+
+    method = Cytosol_Segmentation_Downsampling_Cellpose_Timecourse
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
 
 class Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation(
