@@ -868,25 +868,34 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache() 
 
     def process(self, input_image):
+        from alphabase.io import tempmmap
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
 
         # initialize location to save masks to
         self.maps = {
-            "normalized": None,
-            "nucleus_segmentation": None,
-            "cytosol_segmentation": None,
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
+            "nucleus_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16),
         }
 
         # could add a normalization step here if so desired
         self.maps["normalized"] = input_image
+        
+        del input_image
+        gc.collect()
 
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(input_image)
+        self.cellpose_segmentation(self.maps["normalized"])
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
+        
+        #clean up memory
+        del channels, segmentation, all_classes
+        gc.collect()
 
         return results
 
@@ -949,22 +958,13 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
     def process(self, input_image):
 
-        # initialize location to save masks to
-        self.maps = {
-            "normalized": None,
-            "nucleus_segmentation": None,
-            "cytosol_segmentation": None,
-        }
-
-        # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image.copy()
-        _size = self.maps["normalized"].shape
+        _size = input_image.shape
         self.log(f"Input image size {_size}")
 
-        #perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
         N = self.config["downsampling_factor"]
+        self.log(f"Performing Cellpose Segmentation on Downsampled image. Downsampling input image by {N}X{N}")
 
-        #check if N fits perfectly into image shape
+        #check if N fits perfectly into image shape if not calculate how much we need to pad
         _, x, y = _size
         if x % N == 0:
             pad_x = (0, 0)
@@ -976,8 +976,25 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         else:
             pad_y = (0, N - y%N)
 
-        self.log(f"Performing Cellpose Segmentation on Downsampled image. Downsampling input image by {N}X{N}")
+        downsampled_image_size = (2, _size[1]+pad_x[1], _size[2]+pad_y[1]) 
+
+        #initialize memory mapped numpy arrays to save results into
+        from alphabase.io import tempmmap
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+
+        # initialize location to save masks to
+        self.maps = {
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
+            "nucleus_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16),
+            "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16),
+        }
+
+        # could add a normalization step here if so desired
+        #perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
+        self.maps["normalized"] = input_image.copy()
+        _size = self.maps["normalized"].shape
         self.log(f"input image size: {input_image.shape}")
+
         input_image = input_image[:2, :, :] #only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
         self.log(f"input image size after removing excess channels: {input_image.shape}")
         input_image = np.pad(input_image, ((0, 0), pad_x, pad_y))
