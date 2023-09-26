@@ -56,6 +56,11 @@ class Logable(object):
 
         for line in lines:
             log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
+
+            #check that log path exists if not create
+            if not os.path.isdir(self.directory):
+                os.makedirs(self.directory)
+                
             with open(log_path, "a") as myfile:
                 myfile.write(self.get_timestamp() + line + " \n")
 
