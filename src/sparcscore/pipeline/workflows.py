@@ -770,7 +770,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             nucleus_pixels = np.nonzero(nucleus)
 
             # check if those indices are not background in the cytosol mask
-            potential_cytosol = masks_cytosol[nucleus_pixels.astype("bool")]
+            potential_cytosol = masks_cytosol[nucleus_pixels]
 
             if np.all(potential_cytosol != 0):
                 unique_cytosol, counts = np.unique(
