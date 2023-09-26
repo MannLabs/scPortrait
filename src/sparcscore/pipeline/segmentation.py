@@ -23,6 +23,8 @@ from ome_zarr.writer import write_labels, write_label_metadata
 # to show progress
 from tqdm.auto import tqdm
 
+#to perform garbage collection
+import gc
 
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
@@ -117,6 +119,23 @@ class Segmentation(ProcessingStep):
 
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
+
+            #use a memory mapped numpy array to save the input image to better utilize memory consumption
+            from alphabase.io import tempmmap
+            TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+
+            #calculate shape of required datacontainer
+            c, _, _ = hdf_input.shape
+            x1 = self.window[0].start
+            x2 = self.window[0].stop
+            y1 = self.window[1].start
+            y2 = self.window[1].stop
+
+            x = x2 - x1
+            y = y2 - y1
+
+            #initialize directory and load data
+            input_image = tempmmap.array(shape = (c, x, y), dtype = float)
             input_image = hdf_input[:, self.window[0], self.window[1]]
 
         if input_image.dtype != float:
@@ -135,6 +154,12 @@ class Segmentation(ProcessingStep):
             except Exception:
                 self.log(traceback.format_exc())
 
+        #cleanup generated temp dir and variables
+        del input_image
+        gc.collect()
+
+        shutil.rmtree(TEMP_DIR_NAME)
+
     def save_segmentation(self, channels, labels, classes):
         """Saves the results of a segmentation at the end of the process.
 
@@ -150,9 +175,7 @@ class Segmentation(ProcessingStep):
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
 
-        channels = (
-            np.expand_dims(channels, axis=0) if len(channels.shape) == 2 else channels
-        )
+        channels = (np.expand_dims(channels, axis=0) if len(channels.shape) == 2 else channels)
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
 
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
@@ -178,7 +201,6 @@ class Segmentation(ProcessingStep):
             myfile.write(to_write)
 
         self.log("=== finished segmentation ===")
-
         self.save_segmentation_zarr(labels = labels)
 
     def save_segmentation_zarr(self, labels = None):
@@ -634,6 +656,8 @@ class ShardedSegmentation(Segmentation):
         self.log("Deleting intermediate tile results to free up storage space")
         shutil.rmtree(self.shard_directory, ignore_errors=True)
 
+        gc.collect()
+
     def process(self, input_image):
         self.save_zarr = False
         self.save_input_image(input_image)
@@ -664,6 +688,7 @@ class ShardedSegmentation(Segmentation):
         )
 
         del input_image #remove from memory to free up space
+        gc.collect() #perform garbage collection
 
         with Pool(processes=self.config["threads"]) as pool:
             results = list(
@@ -675,11 +700,15 @@ class ShardedSegmentation(Segmentation):
             pool.close()
             pool.join()
             print("All segmentations are done.", flush=True)
+        
+        #free up memory
+        del shard_list
+        gc.collect()
 
         self.log("Finished parallel segmentation")
-
         self.resolve_sharding(sharding_plan)
 
+        #make sure to cleanup temp directories
         self.log("=== finished segmentation === ")
 
 
@@ -836,6 +865,7 @@ class TimecourseSegmentation(Segmentation):
         shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
         del _tmp_seg, self.TEMP_DIR_NAME
+        gc. collect()
 
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
         if np.issubdtype(array.dtype.type, np.integer):
@@ -878,27 +908,21 @@ class TimecourseSegmentation(Segmentation):
             for i in tqdm(
                 range(0, hdf_labels.shape[0]),
                 total=hdf_labels.shape[0],
-                desc="Adjusting Indexes",
-            ):
+                desc="Adjusting Indexes",):
+
                 individual_hdf_labels = hdf_labels[i, :, :, :]
                 num_shapes = np.max(individual_hdf_labels)
                 cr = np.unique(individual_hdf_labels)
 
                 filtered_classes = [int(el) for el in list(cr)]
-                shifted_map, edge_labels = shift_labels(
-                    individual_hdf_labels, class_id_shift, return_shifted_labels=True
-                )
+                shifted_map, edge_labels = shift_labels(individual_hdf_labels, class_id_shift, return_shifted_labels=True)
                 filtered_classes = np.unique(shifted_map)
 
                 edge_labels = set(edge_labels)
-                final_classes = [
-                    item for item in filtered_classes if item not in edge_labels
-                ]
+                final_classes = [item for item in filtered_classes if item not in edge_labels]
 
                 hdf_labels[i, :, :] = shifted_map
-                hdf_classes[i] = np.array(final_classes, dtype="int32").reshape(
-                    1, 1, -1
-                )
+                hdf_classes[i] = np.array(final_classes, dtype="int32").reshape(1, 1, -1)
 
                 # save all cells in general
                 filtered_classes_combined += [
@@ -1053,6 +1077,7 @@ class MultithreadedSegmentation(TimecourseSegmentation):
 
         # cleanup variables to make sure memory is cleared up again
         del results 
+        gc.collect()
 
     def initialize_shard_list(self, segmentation_list, input_path):
         _shard_list = []
