@@ -758,6 +758,7 @@ class TimecourseProject(Project):
         super().__init__(*args, **kwargs)
 
     def load_input_from_array(self, img, label, overwrite=False):
+        """img needs to be in the format: (tiles, C, X, Y). Channels need to be in the order: nucleus, cytosol, other channels """
         # check if already exists if so throw error message
         if not os.path.isdir(
                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
