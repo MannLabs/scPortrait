@@ -988,6 +988,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             "nucleus_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16),
             "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16),
         }
+        self.log("Created memory mapped temp arrays to store")
 
         # could add a normalization step here if so desired
         #perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
@@ -996,9 +997,12 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         self.log(f"input image size: {input_image.shape}")
 
         input_image = input_image[:2, :, :] #only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
+        gc.collect()
+        
         self.log(f"input image size after removing excess channels: {input_image.shape}")
         input_image = np.pad(input_image, ((0, 0), pad_x, pad_y))
         _size_padding = input_image.shape
+        
         self.log(f"Performing image padding to ensure that image is compatible with downsample kernel size. Original image was {_size}, padded image is {_size_padding}")
         input_image = downsample_img(input_image, N= N)
         self.log(f"Downsampled image size {input_image.shape}")

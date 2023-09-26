@@ -116,7 +116,7 @@ class Segmentation(ProcessingStep):
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
-        self.log(f"Beginning Sharding of Shard with the slicing {self.window}")
+        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
         
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
@@ -136,13 +136,10 @@ class Segmentation(ProcessingStep):
             y = y2 - y1
 
             #initialize directory and load data
-            self.log(f"Generating a memory mapped temp array with the dimensions {(c, x, y)}")
-            input_image = tempmmap.array(shape = (c, x, y), dtype = float)
-            input_image = hdf_input[:, self.window[0], self.window[1]]
+            self.log(f"Generating a memory mapped temp array with the dimensions {(2, x, y)}")
+            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16)
+            input_image = hdf_input[:2, self.window[0], self.window[1]]
             self.log(f"Input image loaded and mapped to memory.")
-
-        if input_image.dtype != float:
-            input_image = input_image.astype(float)
 
         #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
@@ -161,8 +158,6 @@ class Segmentation(ProcessingStep):
         del input_image
         gc.collect()
 
-        shutil.rmtree(TEMP_DIR_NAME)
-
     def save_segmentation(self, channels, labels, classes):
         """Saves the results of a segmentation at the end of the process.
 
@@ -178,22 +173,23 @@ class Segmentation(ProcessingStep):
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
 
-        channels = (np.expand_dims(channels, axis=0) if len(channels.shape) == 2 else channels)
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
 
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
-        hf = h5py.File(map_path, "w")
+        hf = h5py.File(map_path, "a")
 
         hf.create_dataset(
             "labels",
             data=labels,
             chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
         )
+        #also save channels
         hf.create_dataset(
             "channels",
             data=channels,
             chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
         )
+
         hf.close()
 
         # save classes
@@ -380,6 +376,15 @@ class Segmentation(ProcessingStep):
 
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+    
+    def process(self, input_image):
+        self.save_zarr = True
+        self.save_input_image(input_image)
+
+        self.log("Finished segmentation")
+
+        #make sure to cleanup temp directories
+        self.log("=== finished segmentation === ")
 
 
 class ShardedSegmentation(Segmentation):
@@ -406,7 +411,7 @@ class ShardedSegmentation(Segmentation):
             )
         
         self.save_zarr = False
-
+    
     def save_input_image(self, input_image):
         
         output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
@@ -423,6 +428,43 @@ class ShardedSegmentation(Segmentation):
             )
 
         self.log("Input image added to .h5. Provides data source for reading shard information.")
+
+    def save_segmentation(self, channels, labels, classes):
+        """Saves the results of a segmentation at the end of the process. For the sharded segmentation no channels are passed because they have already been saved
+
+        Args:
+            labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
+
+            classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
+
+        """
+        self.log("saving segmentation")
+
+        # size (C, H, W) is expected
+        # dims are expanded in case (H, W) is passed
+
+        labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
+
+        map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        hf = h5py.File(map_path, "w")
+
+        hf.create_dataset(
+            "labels",
+            data=labels,
+            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+        )
+
+        hf.close()
+
+        # save classes
+        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+
+        self.log("=== finished segmentation ===")
+        self.save_segmentation_zarr(labels = labels)
 
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
@@ -1054,7 +1096,6 @@ class MultithreadedSegmentation(TimecourseSegmentation):
 
         # initialize temp object to write segmentations too
         self._initialize_tempmmap_array()
-
 
         segmentation_list = self.initialize_shard_list(indexes, input_path=input_path)
 
