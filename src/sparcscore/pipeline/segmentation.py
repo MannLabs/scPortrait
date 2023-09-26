@@ -116,7 +116,8 @@ class Segmentation(ProcessingStep):
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
-
+        self.log(f"Beginning Sharding of Shard with the slicing {self.window}")
+        
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
 
@@ -135,8 +136,10 @@ class Segmentation(ProcessingStep):
             y = y2 - y1
 
             #initialize directory and load data
+            self.log(f"Generating a memory mapped temp array with the dimensions {(c, x, y)}")
             input_image = tempmmap.array(shape = (c, x, y), dtype = float)
             input_image = hdf_input[:, self.window[0], self.window[1]]
+            self.log(f"Input image loaded and mapped to memory.")
 
         if input_image.dtype != float:
             input_image = input_image.astype(float)
@@ -997,6 +1000,7 @@ class TimecourseSegmentation(Segmentation):
         current_shard = self.method(
             self.config,
             self.directory,
+            project_location = self.project_location,
             debug=self.debug,
             overwrite=self.overwrite,
             intermediate_output=self.intermediate_output,
