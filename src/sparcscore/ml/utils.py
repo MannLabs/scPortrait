@@ -48,7 +48,7 @@ def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, v
     val_dataset = []
     
     #check to make sure we have more than one occurance of a dataset (otherwise it will throw an error)
-    if np.sum(pd.Series(class_list).value_counts() > 1) == 0:
+    if np.sum(pd.Series(class_labels).value_counts() > 1) == 0:
         for dataset, label, fraction in zip(list_of_datasets, class_labels, dataset_fraction):
             print(dataset, label, 1)
             train_size = floor(train_per_class)
