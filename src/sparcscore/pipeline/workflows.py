@@ -27,7 +27,7 @@ import time
 from collections import defaultdict
 
 from functools import partial
-from multiprocessing import Pool
+from multiprocessing import Pool, current_process, Queue
 
 from skimage.filters import median
 from skimage.morphology import binary_erosion, disk, dilation, erosion
@@ -685,6 +685,21 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         return channels, segmentation
 
     def cellpose_segmentation(self, input_image):
+        try:
+            print(self.queue)
+            self.log("found queue")
+        except:
+            self.log("cant find queue")
+        try:
+            gpu_id = self.queue.get()
+            ident = current_process().ident
+            self.log(f'{ident}: starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+
         # clean up old cached variables to free up GPU memory
         gc.collect()
         torch.cuda.empty_cache()  
@@ -693,8 +708,12 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         input_image = input_image.astype(np.uint16)
 
         # check if GPU is available
+        
         if torch.cuda.is_available():
-            use_GPU = True
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
         else:
             use_GPU = False
 
@@ -866,6 +885,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         del masks_nucleus, masks_cytosol, updated_cytosol_mask, all_nucleus_ids, used_nucleus_ids
         gc.collect()
         torch.cuda.empty_cache() 
+
+        if status == "multi_GPU":
+            self.queue.put(gpu_id)
 
     def process(self, input_image):
         from alphabase.io import tempmmap

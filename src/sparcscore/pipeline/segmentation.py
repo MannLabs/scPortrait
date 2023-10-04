@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import csv
 import h5py
 from functools import partial
-from multiprocessing import Pool
+from multiprocessing import Pool, current_process, Queue
 import shutil
+import torch
 
 import traceback
 from PIL import Image
@@ -116,6 +117,13 @@ class Segmentation(ProcessingStep):
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
+
+        try:
+            print(self.queue)
+            self.log("queue found")
+        except:
+            self.log("queue not found.")
+    
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
         
         with h5py.File(self.input_path, "r") as hf:
@@ -734,8 +742,32 @@ class ShardedSegmentation(Segmentation):
 
         del input_image #remove from memory to free up space
         gc.collect() #perform garbage collection
+        #check that that number of GPUS is actually available 
+        nGPUS = self.config["nGPUs"]
+        available_GPUs = torch.cuda.device_count()
+        processes_per_GPU = self.config["threads"]
 
-        with Pool(processes=self.config["threads"]) as pool:
+        if available_GPUs != self.config["nGPUs"]:
+            self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+        
+        if available_GPUs >= 1:
+            n_processes = processes_per_GPU * available_GPUs  
+        else:
+            n_processes = self.config["threads"]
+            available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+        #initialize a queue 
+        global queue
+        queue = Queue()
+
+        def init_function(queue):
+            self.method.call_as_shard.queue = queue
+        
+        for gpu_ids in range(available_GPUs):
+            for _ in range(processes_per_GPU):
+                queue.put(gpu_ids)
+
+        with Pool(processes=n_processes, initializer = init_function, initargs=[queue]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, shard_list),
