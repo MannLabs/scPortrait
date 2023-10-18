@@ -21,13 +21,13 @@ rasterio
 mahotas
 imagesize
 #to be installed previously via conda
-#numba
-#cellpose
-#torch
-#pytorch-lightning
-#torchvision
-#opencv
-#scikit-image
-#scikit-fmm
-#scipy
-#mahotas
+numba
+cellpose
+torch
+pytorch-lightning
+torchvision
+opencv
+scikit-image
+scikit-fmm
+scipy
+mahotas
