@@ -14,53 +14,33 @@ from sparcscore.ml.models import VGG1, VGG2, CAEBase, _VGG1, _VGG2
 
 class MultilabelSupervisedModel(pl.LightningModule):
     """
-    A pytorch lightning network module to use a multi-label supervised Model. 
+    A Pytorch Lightning network module to use a multi-label supervised model. 
 
-    Parameters
-    ----------
-    type : str, optional, default = "VGG2"
-        Network architecture to used in model. Architectures are defined in sparcspy.ml.models
-        Valid options: "VGG1", "VGG2", "VGG1_old", "VGG2_old".
-    kwargs : dict
-        Additional parameters passed to the model.
+    Args:
+        type (str, optional): Network architecture to be used in the model. Architectures are defined 
+            in sparcspy.ml.models. Valid options: "VGG1", "VGG2", "VGG1_old", "VGG2_old". Defaults to "VGG2".
+        **kwargs: Additional parameters passed to the model.
 
-    Attributes
-    ----------
-    network : torch.nn.Module
-        The selected network architecture.
-    train_metrics : torchmetrics.MetricCollection
-        MetricCollection for evaluating model on training data.
-    val_metrics : torchmetrics.MetricCollection
-        MetricCollection for evaluating model on validation data.
-    test_metrics : torchmetrics.MetricCollection
-        MetricCollection for evaluating model on test data.
-    
-    Methods
-    -------
-    forward(x)
-        perform forward pass of model.
-    configure_optimizers()
-        Optimization function
-    on_train_epoch_end()
-        Callback function after each training epoch
-    on_validation_epoch_end()
-        Callback function after each validation epoch
-    confusion_plot(matrix)
-        Generate confusion matrix plot
-    training_step(batch, batch_idx)
-        Perform a single training step
-    validation_step(batch, batch_idx)
-        Perform a single validation step
-    test_step(batch, batch_idx)
-        Perform a single test step
-    test_epoch_end(outputs)
-        Callback function after testing epochs
+    Attributes:
+        network (torch.nn.Module): The selected network architecture.
+        train_metrics (torchmetrics.MetricCollection): MetricCollection for evaluating the model on training data.
+        val_metrics (torchmetrics.MetricCollection): MetricCollection for evaluating the model on validation data.
+        test_metrics (torchmetrics.MetricCollection): MetricCollection for evaluating the model on test data.
+
+    Methods:
+        forward(x): Perform the forward pass of the model.
+        configure_optimizers(): Optimization function.
+        on_train_epoch_end(): Callback function after each training epoch.
+        on_validation_epoch_end(): Callback function after each validation epoch.
+        confusion_plot(matrix): Generate a confusion matrix plot.
+        training_step(batch, batch_idx): Perform a single training step.
+        validation_step(batch, batch_idx): Perform a single validation step.
+        test_step(batch, batch_idx): Perform a single test step.
+        test_epoch_end(outputs): Callback function after testing epochs.
     """
-
-    def __init__(self, type = "VGG2", **kwargs):
+    def __init__(self, type="VGG2", **kwargs):
         super().__init__()
-        
-        
+
         self.save_hyperparameters()
         
         if type == "VGG1":
@@ -129,7 +109,6 @@ class MultilabelSupervisedModel(pl.LightningModule):
         pass
         
     def confusion_plot(self, matrix):
-        
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111)       
         cax = ax.matshow(matrix,cmap="magma")    
@@ -154,67 +133,55 @@ class MultilabelSupervisedModel(pl.LightningModule):
         return data
         
     def on_train_epoch_end(self):
-        
         metrics = self.train_metrics.compute()
-        
 
         img = self.confusion_plot(metrics["ConfusionMatrix"].detach().cpu())
         self.logger.experiment.add_image('confusion', img,self.current_epoch, dataformats="NHWC") 
         
         for i, label in enumerate(self.hparams["class_labels"]):
-        
             self.log("precision_train/{}".format(label), metrics["Precision"][i])
             self.log("recall_train/{}".format(label), metrics["Recall"][i])
             self.log("accurac_train/{}".format(label), metrics["Accuracy"][i])
         
-        # Reseting internal state such that metric ready for new data
+        # Resetting internal state such that metric ready for new data
         self.train_metrics.reset()
 
     
     def on_validation_epoch_end(self):
-        
         metrics = self.val_metrics.compute()
         
-        for i, label in enumerate(self.hparams["class_labels"]):
-        
+        for i, label in enumerate(self.hparams["class_labels"]):        
             self.log("precision_val/{}".format(label), metrics["Precision"][i])
             self.log("recall_val/{}".format(label), metrics["Recall"][i])
             self.log("accurac_val/{}".format(label), metrics["Accuracy"][i])
         
-        # Reseting internal state such that metric ready for new data
+        # Resetting internal state such that metric ready for new data
         self.val_metrics.reset()
         
     
     def training_step(self, batch, batch_idx):
         data, label = batch
-        
         data, label = data.cuda(), label.cuda()
-        
+
         output = self.network(data)
         loss = F.nll_loss(output, label)
-        
+
         # log accuracy metrics
         non_log = torch.exp(output)
-        
         self.train_metrics(non_log, label)
-        
-        
         self.log('loss/train', loss, prog_bar=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
         data, label = batch
-        
         data, label = data.cuda(), label.cuda()
-        
+
         output = self.network(data)
         loss = F.nll_loss(output, label)
 
-        #accuracy metrics
+        # accuracy metrics
         non_log = torch.exp(output)    
-        
-        self.val_metrics(non_log, label)
-        
+        self.val_metrics(non_log, label)       
         self.log('loss/val', loss, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
@@ -232,7 +199,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
         return {'test_loss': loss}
 
     def test_epoch_end(self, outputs):
-        #use same metrics as in validation
+        # use same metrics as in validation
         metrics = self.test_metrics.compute()
         
         for i, label in enumerate(self.hparams["class_labels"]):
@@ -339,7 +306,6 @@ class GeneralModel(pl.LightningModule):
         output = self.network(data)
         loss = F.nll_loss(output, label)
     
-
         #accuracy metrics
         non_log = torch.exp(output)    
         
@@ -382,11 +348,10 @@ class AutoEncoderModel(pl.LightningModule):
     def on_train_epoch_end(self,outputs):
         
         pass
-        #tensorboard = self.logger.experiment
-        #tensorboard.add_image()
+        # tensorboard = self.logger.experiment
+        # tensorboard.add_image()
         
     def training_step(self, batch, batch_idx):     
-        
         opt = self.optimizers()
         opt.zero_grad()
     
@@ -396,7 +361,6 @@ class AutoEncoderModel(pl.LightningModule):
         input_golgi_channel = images[:,3:4,:,:]
         
         output = self.network(images)
-        
         
         loss = self.loss(output, input_golgi_channel)    
         
@@ -420,7 +384,6 @@ class AutoEncoderModel(pl.LightningModule):
 
         
     def validation_step(self, batch, batch_idx):     
-        
         opt = self.optimizers()
         opt.zero_grad()
     
@@ -430,7 +393,6 @@ class AutoEncoderModel(pl.LightningModule):
         input_golgi_channel = images[:,3:4,:,:]
         
         output = self.network(images)
-        
         
         loss = self.loss(output, input_golgi_channel)    
 
@@ -452,28 +414,19 @@ class AutoEncoderModel(pl.LightningModule):
         return loss
     
     def sample_plot(self, input_sample, output_sample, label_sample):
-        
         fig, axs = plt.subplots(6, len(label_sample), figsize=(15, 10))
         
         for i in range(len(label_sample)):
-    
             label = int(label_sample[i].item())
-
-           
             channels = input_sample[i]
-
             axs[0,i].set_title(self.hparams["class_labels"][label])
-
             for j in range(6):
-
                 if j <2:
                     color = "gray"
                 else:
                     color = "magma"
-
                 if j < 5:
                     c = channels[j]
-
                 else:
                     c = output_sample[i,0]
 
@@ -542,7 +495,6 @@ class AEModel(pl.LightningModule):
         input_golgi_channel = images[:,3:4,:,:]
         
         output = self.network(images)
-        
         
         loss = self.loss(output, input_golgi_channel)    
         self.manual_backward(loss)

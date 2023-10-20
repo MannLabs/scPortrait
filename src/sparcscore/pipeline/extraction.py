@@ -278,7 +278,7 @@ class HDF5CellExtraction(ProcessingStep):
             
     def _extract_classes(self, input_segmentation_path, px_center, arg):
         """
-        Processing for each invidual cell that needs to be run for each center.
+        Processing for each individual cell that needs to be run for each center.
         """
         global norm_function, MinMax_function
 
@@ -397,14 +397,10 @@ class HDF5CellExtraction(ProcessingStep):
         """
         Process function to run the extraction method.
 
-        Parameters
-        ----------
-        input_segmentation_path: str
-            Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
-        filtered_classes_path: str
-            Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
+        Args:
+            input_segmentation_path (str): Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
+            filtered_classes_path (str): Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
 
-        
         Important:
         
             If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation. 
@@ -725,14 +721,12 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         """
         Process function to run the extraction method. 
 
-        Parameters
-        ----------
-        input_segmentation_path: str
-            Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
-        filtered_classes_path: str
-            Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
+        Args:
+            input_segmentation_path: str
+                Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
+            filtered_classes_path: str
+                Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
 
-        
         Important:
         
             If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation. 

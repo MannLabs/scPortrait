@@ -32,42 +32,26 @@ class Project(Logable):
     """
     Project base class used to create a SPARCSpy project.
 
-    Parameters
-    ----------
-    location_path : str
-        Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
-    config_path : str, optional, default ""
-        Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-    intermediate_output : bool, default False
-        When set to True intermediate outputs will be saved where applicable.
-    debug : bool, default False
-        When set to True debug outputs will be printed where applicable.
-    overwrite : bool, default False
-        When set to True, the processing step directory will be completely deleted and newly created when called.
-    segmentation_f : Class, default None
-        Class containing segmentation workflow.
-    extraction_f : Class, default None
-        Class containing extraction workflow.
-    classification_f : Class, default None
-        Class containing classification workflow.
-    selection_f : Class, default None
-        Class containing selection workflow.
-
-    Attributes
-    ----------
-    DEFAULT_CONFIG_NAME : str, default "config.yml"
-        Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
-    DEFAULT_SEGMENTATION_DIR_NAME : str, default "segmentation"
-        Default foldername for the segmentation process.
-    DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
-        Default foldername for the extraction process.
-    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-        Default foldername for the classification process.
-    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
-        Default foldername for the selection process.
-
+    Args:
+        location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
+        config_path (str, optional, default ""): Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+        intermediate_output (bool, default False): When set to True intermediate outputs will be saved where applicable.
+        debug (bool, default False): When set to True debug outputs will be printed where applicable.
+        overwrite (bool, default False): When set to True, the processing step directory will be completely deleted and newly created when called.
+        segmentation_f (Class, default None): Class containing segmentation workflow.
+        extraction_f (Class, default None): Class containing extraction workflow.
+        classification_f (Class, default None): Class containing classification workflow.
+        selection_f (Class, default None): Class containing selection workflow.
+    
+    Attributes:
+        DEFAULT_CONFIG_NAME (str, default "config.yml"): Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
+        DEFAULT_SEGMENTATION_DIR_NAME (str, default "segmentation"): Default foldername for the segmentation process.
+        DEFAULT_EXTRACTION_DIR_NAME (str, default "extraction"): Default foldername for the extraction process.
+        DEFAULT_CLASSIFICATION_DIR_NAME (str, default "selection"): Default foldername for the classification process.
+        DEFAULT_SELECTION_DIR_NAME (str, default "classification"): Default foldername for the selection process.
+        DEFAULT_INPUT_IMAGE_NAME (str, default "input_image.ome.zarr"): Default filename for the input image.
+        channel_colors (list(str)): List of colors used for the channel visualization in the segmentation output.
     """
-
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
@@ -251,13 +235,10 @@ class Project(Logable):
 
     def _load_config_from_file(self, file_path):
         """
-        loads config from file and writes it to self.config
+        Loads config from file and writes it to self.config
 
-        Parameters
-        ----------
-        file_path : str
-            Path to the config.yml file that should be loaded.
-
+        Args:
+            file_path (str): Path to the config.yml file that should be loaded.
         """
         self.log(f"Loading config from {file_path}")
         if not os.path.isfile(file_path):
@@ -304,22 +285,9 @@ class Project(Logable):
         """
         Load input image from a number of files.
 
-        Parameters
-        ----------
-        file_paths : list(str)
-            List containing paths to each channel like
-            [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
-            Expects a list of file paths with length “input_channel” as
-            defined in the config.yml. Input data is NOT copied to the
-            project folder by default. Different segmentation functions
-            especially tiled segmentations might copy the input.
-
-        crop : list(tuple), optional
-            When set, it can be used to crop the input image. The first
-            element refers to the first dimension of the image and so on.
-            For example use “[(0,1000),(0,2000)]” to crop the image to
-            1000 px height and 2000 px width from the top left corner.
-
+        Args:
+            file_paths (list(str)): List containing paths to each channel like [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”]. Expects a list of file paths with length “input_channel” as defined in the config.yml. Input data is NOT copied to the project folder by default. Different segmentation functions especially tiled segmentations might copy the input.
+            crop (list(tuple), optional): When set, it can be used to crop the input image. The first element refers to the first dimension of the image and so on. For example use “[(0,1000),(0,2000)]” to crop the image to 1000 px height and 2000 px width from the top left corner.
         """
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
@@ -366,17 +334,9 @@ class Project(Logable):
         """
         Load input image from an already loaded numpy array.
 
-        Parameters
-        ----------
-        array : numpy.ndarray
-            Numpy array of shape “[channels, height, width]”.
-
-        remap : list(int), optional
-            Define remapping of channels. For example use “[1, 0, 2]”
-            to change the order of the first and the second channel.
-            The expected order is Nucleus Channel, Cellmembrane Channel
-            followed by other channels.
-
+        Args:
+            array (numpy.ndarray): Numpy array of shape “[channels, height, width]”.
+            remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
         """
         # input data is not copied to the project folder
         if self.config is None:
@@ -409,23 +369,12 @@ class Project(Logable):
     def load_input_from_czi(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
         """Load image input from .czi file
 
-        Parameters
-        ----------
-
-        czi_path : path
-            path to .czi file that should be loaded
-        intensity_rescale : boolean | default = True
-            boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile.
-        scene : int or None | default = None
-            integer indicating which scene should be selected if the .czi contains several
-        z_stack_projection : int or "maximum_intensity_projection" or "EDF"
-            if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer 
-            is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods.
-        remap : list(int), optional
-            Define remapping of channels. For example use “[1, 0, 2]”
-            to change the order of the first and the second channel.
-            The expected order is Nucleus Channel, Cellmembrane Channel
-            followed by other channels.
+        Args:
+            czi_path (path): path to .czi file that should be loaded
+            intensity_rescale (bool, optional): boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.
+            scene (int, optional): integer indicating which scene should be selected if the .czi contains several. Defaults to None.
+            z_stack_projection (int or "maximum_intensity_projection" or "EDF"): if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.
+            remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
         """
         import aicspylibczi
 
@@ -509,23 +458,12 @@ class Project(Logable):
     def load_input_from_czi_2(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
         """Load image input from .czi file. Slower than CZI 1 use that function instead.
 
-        Parameters
-        ----------
-
-        czi_path : path
-            path to .czi file that should be loaded
-        intensity_rescale : boolean | default = True
-            boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile.
-        scene : int or None | default = None
-            integer indicating which scene should be selected if the .czi contains several
-        z_stack_projection : int or "maximum_intensity_projection" or "EDF"
-            if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer 
-            is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods.
-        remap : list(int), optional
-            Define remapping of channels. For example use “[1, 0, 2]”
-            to change the order of the first and the second channel.
-            The expected order is Nucleus Channel, Cellmembrane Channel
-            followed by other channels.
+        Args:
+            czi_path (path): path to .czi file that should be loaded
+            intensity_rescale (bool, optional): boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.
+            scene (int, optional): integer indicating which scene should be selected if the .czi contains several. Defaults to None.
+            z_stack_projection (int or "maximum_intensity_projection" or "EDF"): if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.
+            remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
         """
         from aicsimageio.aics_image import AICSImage
 
@@ -715,43 +653,25 @@ class TimecourseProject(Project):
     Timecourse Project used to create a SPARCSpy project for datasets that have multiple timepoints
     over the same field of view (add additional dimension in comparision to base SPARCSpy project).
 
-    Parameters
-    ----------
-    location_path : str
-        Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
-    config_path : str, optional, default ""
-        Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-    intermediate_output : bool, default False
-        When set to True intermediate outputs will be saved where applicable.
-    debug : bool, default False
-        When set to True debug outputs will be printed where applicable.
-    overwrite : bool, default False
-        When set to True, the processing step directory will be completely deleted and newly created when called.
-    segmentation_f : Class, default None
-        Class containing segmentation workflow.
-    extraction_f : Class, default None
-        Class containing extraction workflow.
-    classification_f : Class, default None
-        Class containing classification workflow.
-    selection_f : Class, default None
-        Class containing selection workflow.
-
-    Attributes
-    ----------
-    DEFAULT_CONFIG_NAME : str, default "config.yml"
-        Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
-    DEFAULT_INPUT_IMAGE_NAME: str, default "input_segmentation.h5"
-        Default file name for loading the input image.
-    DEFAULT_SEGMENTATION_DIR_NAME : str, default "segmentation"
-        Default foldername for the segmentation process.
-    DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
-        Default foldername for the extraction process.
-    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-        Default foldername for the classification process.
-    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
-        Default foldername for the selection process.
+    Args:
+        location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
+        config_path (str, optional): Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+        intermediate_output (bool, optional): When set to True intermediate outputs will be saved where applicable. Defaults to False.
+        debug (bool, optional): When set to True debug outputs will be printed where applicable. Defaults to False.
+        overwrite (bool, optional): When set to True, the processing step directory will be completely deleted and newly created when called. Defaults to False.
+        segmentation_f (Class, optional): Class containing segmentation workflow. Defaults to None.
+        extraction_f (Class, optional): Class containing extraction workflow. Defaults to None.
+        classification_f (Class, optional): Class containing classification workflow. Defaults to None.
+        selection_f (Class, optional): Class containing selection workflow. Defaults to None.
+    
+    Attributes:
+        DEFAULT_CONFIG_NAME (str): Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
+        DEFAULT_INPUT_IMAGE_NAME (str): Default file name for loading the input image.
+        DEFAULT_SEGMENTATION_DIR_NAME (str): Default foldername for the segmentation process.
+        DEFAULT_EXTRACTION_DIR_NAME (str): Default foldername for the extraction process.
+        DEFAULT_CLASSIFICATION_DIR_NAME (str): Default foldername for the classification process.
+        DEFAULT_SELECTION_DIR_NAME (str): Default foldername for the selection process.
     """
-
     DEFAULT_INPUT_IMAGE_NAME = "input_segmentation.h5"
 
     def __init__(self, *args, **kwargs):
@@ -1026,6 +946,13 @@ class TimecourseProject(Project):
         """
         Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
         Assumes that stitched images for all files have already been assembled.
+
+        Args:
+            input_dir (str): path to directory containing the stitched images
+            channels (list(str)): list of strings indicating which channels should be loaded
+            timepoints (list(str)): list of strings indicating which timepoints should be loaded
+            plate_layout (str): path to csv file containing the plate layout
+            overwrite (bool, optional): boolean indicating if existing files should be overwritten. Defaults to False.
         """
 
         # check if already exists if so throw error message
@@ -1261,6 +1188,19 @@ class TimecourseProject(Project):
     ):
         """
         Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing after merging all the regions from each teampoint in each well.
+
+        Args:
+            input_dir (str): path to directory containing the stitched images
+            channels (list(str)): list of strings indicating which channels should be loaded
+            timepoints (list(str)): list of strings indicating which timepoints should be loaded
+            plate_layout (str): path to csv file containing the plate layout
+            img_size (int, optional): size of the images that should be generated. Defaults to 1080.
+            stitching_channel (str, optional): channel that should be used for stitching. Defaults to "Alexa488".
+            overlap (float, optional): overlap between stitched images. Defaults to 0.1.
+            max_shift (int, optional): maximum shift between stitched images. Defaults to 10.
+            overwrite (bool, optional): boolean indicating if existing files should be overwritten. Defaults to False.
+            nucleus_channel (str, optional): channel that should be used for nucleus segmentation. Defaults to "DAPI".
+            cytosol_channel (str, optional): channel that should be used for cytosol segmentation. Defaults to "Alexa488".
         """
         from sparcstools.stitch import generate_stitched
 
@@ -1541,7 +1481,7 @@ class TimecourseProject(Project):
 
     def extract(self, *args, **kwargs):
         """
-        extract single cells from a timecourse project with the defined extraction method.
+        Extract single cells from a timecourse project with the defined extraction method.
         """
 
         if self.extraction_f == None:
