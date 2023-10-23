@@ -70,6 +70,7 @@ pip install -e .
 
 SPARCSpy was created by Georg Wallmann, Sophia Mädler and Niklas Schmacke in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann) and [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) in 2023.
 SPARCSpy is actively developed with support from the labs of Matthias Mann, Veit Hornung and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab).
+
 If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1):
 
 SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
