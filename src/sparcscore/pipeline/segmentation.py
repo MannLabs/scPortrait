@@ -108,12 +108,6 @@ class Segmentation(ProcessingStep):
         Important:
             This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
-
-        try:
-            print(self.queue)
-            self.log("queue found")
-        except:
-            self.log("queue not found.")
     
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
         
@@ -746,18 +740,18 @@ class ShardedSegmentation(Segmentation):
             n_processes = self.config["threads"]
             available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
 
-        #initialize a queue 
-        global queue
-        queue = Queue()
-
-        def init_function(queue):
-            self.method.call_as_shard.queue = queue
-        
+        #initialize a list of available GPUs
+        gpu_id_list = []
         for gpu_ids in range(available_GPUs):
             for _ in range(processes_per_GPU):
-                queue.put(gpu_ids)
+                gpu_id_list.append(gpu_ids)
+        
+        def initializer_function(gpu_id_list):
+            current_process().gpu_id_list = gpu_id_list
 
-        with Pool(processes=n_processes, initializer = init_function, initargs=[queue]) as pool:
+        self.log(f"Beginning segmentation on {available_GPUs}.")
+        
+        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, shard_list),
