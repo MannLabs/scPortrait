@@ -726,6 +726,7 @@ class ShardedSegmentation(Segmentation):
 
         del input_image #remove from memory to free up space
         gc.collect() #perform garbage collection
+        
         #check that that number of GPUS is actually available 
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
@@ -1116,15 +1117,42 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         self.log(f"Beginning segmentation with {n_threads} threads.")
         self.log(f"A total of {len(segmentation_list)} processes need to be executed.")
 
-        with Pool(processes=self.config["threads"]) as pool:
+        #check that that number of GPUS is actually available 
+        nGPUS = self.config["nGPUs"]
+        available_GPUs = torch.cuda.device_count()
+        processes_per_GPU = self.config["threads"]
+
+        if available_GPUs != self.config["nGPUs"]:
+            self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+        
+        if available_GPUs >= 1:
+            n_processes = processes_per_GPU * available_GPUs  
+        else:
+            n_processes = self.config["threads"]
+            available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+        #initialize a list of available GPUs
+        gpu_id_list = []
+        for gpu_ids in range(available_GPUs):
+            for _ in range(processes_per_GPU):
+                gpu_id_list.append(gpu_ids)
+        
+        def initializer_function(gpu_id_list):
+            current_process().gpu_id_list = gpu_id_list
+
+        self.log(f"Beginning segmentation on {available_GPUs}.")
+        
+        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, segmentation_list),
                     total=len(indexes),
                 )
             )
+            pool.close()
+            pool.join()
             print("All segmentations are done.", flush=True)
-
+        
         self.log("Finished parallel segmentation")
         self.log("Transferring results to array.")
 
