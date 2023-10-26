@@ -610,17 +610,36 @@ class DAPISegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            gpu_id = gpu_id_list[cpu_id]
+            self.log(f'starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+        
         gc.collect()
-        torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
+        torch.cuda.empty_cache() 
+        
+         # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
         input_image = input_image.astype("int64")
 
         # check if GPU is available
         if torch.cuda.is_available():
-            use_GPU = True
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
         else:
-            use_GPU = False  # currently no real acceleration through using GPU as we can't load batches
+            use_GPU = False
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
@@ -708,7 +727,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         input_image = input_image.astype(np.uint16)
 
         # check if GPU is available
-        
         if torch.cuda.is_available():
             if status == "multi_GPU":
                 use_GPU = f"cuda:{gpu_id}"
