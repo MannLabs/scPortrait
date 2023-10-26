@@ -13,3 +13,4 @@ dependencies:
     - scikit-fmm
     - sphinx-argparse
     - hilbertcurve
+    - mahotas
