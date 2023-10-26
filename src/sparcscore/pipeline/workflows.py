@@ -956,14 +956,26 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         cyto_seg  = dilation(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
 
         #combine masks into one stack
-        segmentation = np.stack([nuc_seg, cyto_seg]).astype("uint32")
+        segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
         del cyto_seg, nuc_seg
         
         #rescale segmentation results to original size
         x_trim = x - channels.shape[1]
         y_trim = y - channels.shape[2]
+        print(segmentation.shape)
 
-        segmentation = segmentation[:, :-x_trim, :-y_trim]
+        #if no padding was performed then we need to keep the same dimensions
+        if x_trim > 0:
+            if y_trim > 0:
+                segmentation = segmentation[:, :-x_trim, :-y_trim]
+            else:
+                segmentation = segmentation[:, :-x_trim, :]
+        else:
+            if y_trim > 0:
+                segmentation = segmentation[:, :, :-y_trim]
+            else:
+                segmentation = segmentation
+
         print(segmentation.shape)
 
         self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
