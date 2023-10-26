@@ -728,6 +728,9 @@ class ShardedSegmentation(Segmentation):
         gc.collect() #perform garbage collection
         
         #check that that number of GPUS is actually available 
+        if "nGPUS" not in self.config.keys():
+            self.config["nGPUs"] = torch.cuda.device_count()
+            
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
         processes_per_GPU = self.config["threads"]
@@ -1118,11 +1121,14 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         self.log(f"A total of {len(segmentation_list)} processes need to be executed.")
 
         #check that that number of GPUS is actually available 
+        if "nGPUS" not in self.config.keys():
+            self.config["nGPUs"] = torch.cuda.device_count()
+
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
         processes_per_GPU = self.config["threads"]
 
-        if available_GPUs != self.config["nGPUs"]:
+        if available_GPUs < self.config["nGPUs"]:
             self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
         
         if available_GPUs >= 1:
