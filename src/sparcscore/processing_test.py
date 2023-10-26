@@ -357,7 +357,7 @@ def test_logable_log():
 def test_processing_step_init():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir, debug=True)
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir, debug=True)
 
         assert processing_step.debug
         assert config == processing_step.config
@@ -365,7 +365,7 @@ def test_processing_step_init():
 def test_processing_step_register_parameter():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir)
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir)
 
         # Test registering a new parameter
         processing_step.register_parameter('setting2', 'value2')
@@ -375,9 +375,8 @@ def test_processing_step_register_parameter():
 def test_processing_step_get_directory():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir)
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir)
         assert temp_dir == processing_step.get_directory()
-
 
 
 #general test to check that testing is working
