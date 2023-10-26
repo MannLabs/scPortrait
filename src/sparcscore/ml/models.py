@@ -7,10 +7,15 @@ import torch
 
 class VGGBase(nn.Module): 
     """
-    Base Implementation of VGG Model Architecture. Can be implemented with varying number of 
+    Base implementation of VGG Model Architecture. Can be implemented with varying number of 
     convolutional neural layers and fully connected layers.
+
+    Args:
+        nn (Module): Pytorch Module
+
+    Returns:
+        nn.Module: Pytorch Module
     """
-    
     cfgs = {
         'A': [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
         'B': [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M", 512, "M"],
@@ -24,24 +29,18 @@ class VGGBase(nn.Module):
     }
 
     def make_layers(self, cfg, in_channels, batch_norm = True):
-
-        """Create sequential models layers according to the chosen configuration provided in 
+        """
+        Create sequential models layers according to the chosen configuration provided in 
         cfg with optional batch normalization for the CNN.
 
-        Parameters
-        ----------
-        cfg : list
-            A list of integers and “M” representing the specific
-            VGG architecture.
-        in_channels : int
-            Number of input channels for the first convolutional layer.
-        batch_norm : bool, optional, default=True
-            Whether to include batch normalization layers, by default True.
+        Args: 
+            cfg (list): A list of integers and “M” representing the specific
+            VGG architecture of the CNN
+            in_channels (int): Number of input channels
+            batch_norm (bool, optional): Whether to use batch normalization. Defaults to True.
 
-        Returns
-        -------
-        nn.Sequential
-            A sequential model representing the VGG architecture.
+        Returns:
+            nn.Sequential: A sequential model representing the VGG architecture.
         """
         layers = []
         for v in cfg:
@@ -81,22 +80,16 @@ class VGGBase(nn.Module):
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
 
-        Parameters
-        ----------
-        cfg : list
-            A list of integers and “M” representing the specific
-            VGG architecture of the CNN
-        cfg_MLP : list
-            A list of integers and “M” representing the specific
+        Args:
+            cfg_MLP (list): A list of integers and “M” representing the specific
             VGG architecture of the MLP
+            cfg (list): A list of integers and “M” representing the specific
+            VGG architecture of the CNN
 
-        Returns
-        -------
-        nn.Sequential
-            A sequential model representing the VGG architecture.
+        Returns: 
+            nn.Sequential: A sequential model representing the MLP architecture.
         """
-        
-        #get output feature size of CNN with chosen configuration
+        # get output feature size of CNN with chosen configuration
         in_features = int(cfg[-2]) * 2 * 2
         
         layers = []
@@ -131,7 +124,6 @@ class VGG1(VGGBase):
     """
     Instance of VGGBase with the model architecture 1.
     """
-    
     def __init__(self,
                 cfg = "B",
                 cfg_MLP = "A",
@@ -154,9 +146,8 @@ class VGG1(VGGBase):
 
 class VGG2(VGGBase):
     """
-    Instance of VGGBase with the model architecture 1.
+    Instance of VGGBase with the model architecture 2.
     """
-    
     def __init__(self,
                 cfg = "B",
                 cfg_MLP = "B",
@@ -181,9 +172,8 @@ class VGG2(VGGBase):
 
 class CAEBase(nn.Module):
     """
-    Model Structure N
+    Base implementation of CAE Model Architecture.
     """
-
     en_cfgs = {
         'A': [16, "M", 32, "M", 64, "M", 128, "M", 256, "M", 512, "M"],
         'A_deep': [32, "M", 64, "M", 128, "M", 256, "M", 512, 512, "M", 512, 512, "M"],
@@ -289,6 +279,9 @@ class CAEBase(nn.Module):
 ### VAE Model Architecture
 
 class VAEBase(nn.Module):
+    """
+    Base implementation of VAE Model Architecture. 
+    """
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -361,17 +354,11 @@ class VAEBase(nn.Module):
         Encodes the input by passing through the encoder network
         and returns the latent codes.
 
-        Parameters
-        ----------
-        input : torch.Tensor
-            Input tensor to the encoder with dimensions [N x C x H x W].
+        Args:
+            input (torch.Tensor): Input tensor to the encoder with dimensions [N x C x H x W].
 
-        Returns
-        -------
-        list
-            A list containing mean and log variance components of
-            the latent Gaussian distribution.
-
+        Returns:
+            list: A list containing mean and log variance components of the latent Gaussian distribution.
         """
         result = self.encoder(input)
 
@@ -388,16 +375,11 @@ class VAEBase(nn.Module):
         """
         Maps the given latent codes onto the image space.
 
-        Parameters
-        ----------
-        z : torch.Tensor
-            Latent code tensor with dimensions [B x D].
+        Args:
+            z (torch.Tensor): Latent code tensor with dimensions [B x D].
 
-        Returns
-        -------
-        torch.Tensor
-            Reconstructed tensor with dimensions [B x C x H x W].
-
+        Returns:
+            torch.Tensor: Reconstructed tensor with dimensions [B x C x H x W].
         """
         result = self.decoder_input(z)
         result = result.view(-1, 512, 1, 1)
@@ -407,21 +389,14 @@ class VAEBase(nn.Module):
 
     def reparameterize(self, mu, logvar):
         """
-        Reparameterization trick to sample from N(mu, var) from
-        N(0,1).
+        Reparameterization trick to sample from N(mu, var) from N(0,1).
 
-        Parameters
-        ----------
-        mu : torch.Tensor
-            Mean of the latent Gaussian with dimensions [B x D].
-        logvar : torch.Tensor
-            Log variance of the latent Gaussian with dimensions [B x D].
-        
-        Returns
-        -------
-        torch.Tensor
-            Reparameterized tensor with dimensions [B x D].
-
+        Args:
+            mu (torch.Tensor): Mean of the latent Gaussian with dimensions [B x D].
+            logvar (torch.Tensor): Log variance of the latent Gaussian with dimensions [B x D].
+            
+        Returns:
+            torch.Tensor: Reparameterized tensor with dimensions [B x D].
         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
@@ -435,24 +410,18 @@ class VAEBase(nn.Module):
         Then, the reparameterization trick is applied to generate the latent vector z.
         Finally, z is passed through the decoder to generate the reconstructed input.
 
-        Parameters
-        ----------
-        input : torch.Tensor
-            The input tensor to be passed through the VAE model.
-        **kwargs
-            Arbitrary keyword arguments.
+        Args:
+            input (torch.Tensor): The input tensor to be passed through the VAE model.
+            **kwargs: Arbitrary keyword arguments.
 
-        Returns
-        -------
-        list
-            A list containing the reconstructed input, mean, and log variance.
-
+        Returns:
+            list: A list containing the reconstructed input, mean and log variance.
         """
         mu, log_var = self.encode(input)
         z = self.reparameterize(mu, log_var)
         return  [self.decode(z), mu, log_var]
     
-    def loss_function(self,target, output,
+    def loss_function(self, target, output,
                       *args, 
                       **kwargs):
         r"""
@@ -461,24 +430,15 @@ class VAEBase(nn.Module):
         .. math::
             KL(N(\mu, \sigma), N(0, 1)) =  \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
 
-        Parameters
-        ----------
-        target : torch.Tensor
-            The target tensor.
-        output : tuple
-            A tuple containing the reconstructed tensor, mean, and log variance.
-        *args
-            Variable length argument list.
-        **kwargs
-            Arbitrary keyword arguments.
+        Args:
+            target (torch.Tensor): The target tensor.
+            output (tuple): A tuple containing the reconstructed tensor, mean, and log variance.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.            
 
-        Returns
-        -------
-        dict
-            A dictionary containing the total loss, reconstruction loss, and KL divergence loss. 
-        
+        Returns:
+            dict: A dictionary containing the total loss, reconstruction loss, and KL divergence loss. 
         """
-
         recons = output[0]
         mu = output[1]
         log_var = output[2]

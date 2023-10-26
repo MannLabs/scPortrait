@@ -28,6 +28,7 @@ from collections import defaultdict
 
 from functools import partial
 from multiprocessing import Pool
+import multiprocessing
 
 from skimage.filters import median
 from skimage.morphology import binary_erosion, disk, dilation, erosion
@@ -609,17 +610,36 @@ class DAPISegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            gpu_id = gpu_id_list[cpu_id]
+            self.log(f'starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+        
         gc.collect()
-        torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
+        torch.cuda.empty_cache() 
+        
+         # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
         input_image = input_image.astype("int64")
 
         # check if GPU is available
         if torch.cuda.is_available():
-            use_GPU = True
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
         else:
-            use_GPU = False  # currently no real acceleration through using GPU as we can't load batches
+            use_GPU = False
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
@@ -685,6 +705,20 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         return channels, segmentation
 
     def cellpose_segmentation(self, input_image):
+
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            gpu_id = gpu_id_list[cpu_id]
+            self.log(f'starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+            
         # clean up old cached variables to free up GPU memory
         gc.collect()
         torch.cuda.empty_cache()  
@@ -694,7 +728,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # check if GPU is available
         if torch.cuda.is_available():
-            use_GPU = True
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
         else:
             use_GPU = False
 
@@ -937,14 +974,26 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         cyto_seg  = dilation(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
 
         #combine masks into one stack
-        segmentation = np.stack([nuc_seg, cyto_seg]).astype("uint32")
+        segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
         del cyto_seg, nuc_seg
         
         #rescale segmentation results to original size
         x_trim = x - channels.shape[1]
         y_trim = y - channels.shape[2]
+        print(segmentation.shape)
 
-        segmentation = segmentation[:, :-x_trim, :-y_trim]
+        #if no padding was performed then we need to keep the same dimensions
+        if x_trim > 0:
+            if y_trim > 0:
+                segmentation = segmentation[:, :-x_trim, :-y_trim]
+            else:
+                segmentation = segmentation[:, :-x_trim, :]
+        else:
+            if y_trim > 0:
+                segmentation = segmentation[:, :, :-y_trim]
+            else:
+                segmentation = segmentation
+
         print(segmentation.shape)
 
         self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")

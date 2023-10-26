@@ -96,12 +96,12 @@ def test_shift_labels():
                                      [ 0,  0, 13]])
     expected_edge_labels = [1, 3]
 
-    shifted_map, edge_labels = shift_labels(input_map, shift)
+    shifted_map, edge_labels = shift_labels(input_map, shift, remove_edge_labels = False)
     
     expected_edge_labels_with_shift = np.array(expected_edge_labels) + shift
 
-    shifted_map_with_shift, edge_labels_with_shift = shift_labels(input_map, shift, return_shifted_labels = True)
-
+    shifted_map_with_shift, edge_labels_with_shift = shift_labels(input_map, shift, return_shifted_labels = True, remove_edge_labels = False)
+    
     assert np.array_equal(shifted_map, expected_shifted_map)
     assert np.array_equal(shifted_map, shifted_map_with_shift)
     assert set(edge_labels) == set(expected_edge_labels)
@@ -122,10 +122,18 @@ def test_shift_labels():
                                          [ 0, 13,  0]]])
     expected_edge_labels = [1,2, 3]
 
-    shifted_map_3d, edge_labels_3d = shift_labels(input_map_3d, shift)
+    shifted_map_3d, edge_labels_3d = shift_labels(input_map_3d, shift, remove_edge_labels = False)
+
 
     assert np.array_equal(shifted_map_3d, expected_shifted_map_3d)
     assert set(edge_labels_3d) == set(expected_edge_labels)
+    
+    #test if removing edge labels works
+    shifted_map_removed_edge_labels, edge_labels = shift_labels(input_map, shift, remove_edge_labels = True)
+    expected_shifted_map_removed_edge_labels = np.array([[0,  0,  0],
+                                                         [ 0, 12,  0],
+                                                         [ 0,  0, 0]])
+    assert np.array_equal(shifted_map_removed_edge_labels, expected_shifted_map_removed_edge_labels)
 
 
 
@@ -357,7 +365,7 @@ def test_logable_log():
 def test_processing_step_init():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir, debug=True)
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir, debug=True)
 
         assert processing_step.debug
         assert config == processing_step.config
@@ -365,7 +373,7 @@ def test_processing_step_init():
 def test_processing_step_register_parameter():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir)
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir)
 
         # Test registering a new parameter
         processing_step.register_parameter('setting2', 'value2')
@@ -375,9 +383,8 @@ def test_processing_step_register_parameter():
 def test_processing_step_get_directory():
     config = {'setting1': 'value1'}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(config, temp_dir)
-        assert temp_dir == processing_step.get_directory()
-
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir)
+        assert f"{temp_dir}/test_step" == processing_step.get_directory()
 
 
 #general test to check that testing is working

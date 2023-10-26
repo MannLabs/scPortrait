@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import csv
 import h5py
 from functools import partial
-from multiprocessing import Pool
+from multiprocessing import Pool, current_process, Queue
 import shutil
+import torch
 
 import traceback
 from PIL import Image
@@ -28,6 +29,7 @@ import gc
 
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
+
     Attributes:
         maps (dict(str)): Segmentation workflows based on the :class:`.Segmentation` class can use maps for saving and loading checkpoints and perform. Maps can be numpy arrays
 
@@ -36,9 +38,7 @@ class Segmentation(ProcessingStep):
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
 
         identifier (int, default ``None``): Only set if called by :class:`ShardedSegmentation`. Unique index of the shard.
-
         window (list(tuple), default ``None``): Only set if called by :class:`ShardedSegmentation`. Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-
         input_path (str, default ``None``): Only set if called by :class:`ShardedSegmentation`. Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
 
     Example:
@@ -61,7 +61,6 @@ class Segmentation(ProcessingStep):
                     self.save_map("map1")
 
     """
-
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
     DEFAULT_FILTER_FILE = "classes.csv"
     PRINT_MAPS_ON_DEBUG = True
@@ -91,18 +90,13 @@ class Segmentation(ProcessingStep):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         Args:
             identifier (int): Unique index of the shard.
-
             window (list(tuple)): Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-
             input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
-
         """
-
         self.identifier = identifier
         self.window = window
         self.input_path = input_path
@@ -112,10 +106,9 @@ class Segmentation(ProcessingStep):
         """Wrapper function for calling a sharded segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
-
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
+    
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
         
         with h5py.File(self.input_path, "r") as hf:
@@ -164,7 +157,6 @@ class Segmentation(ProcessingStep):
         Args:
             channels (np.array): Numpy array of shape ``(height, width)`` or``(channels, height, width)``. Channels are all data which are saved as floating point values e.g. images.
             labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
-
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
 
         """
@@ -734,8 +726,36 @@ class ShardedSegmentation(Segmentation):
 
         del input_image #remove from memory to free up space
         gc.collect() #perform garbage collection
+        
+        #check that that number of GPUS is actually available 
+        if "nGPUS" not in self.config.keys():
+            self.config["nGPUs"] = torch.cuda.device_count()
+            
+        nGPUS = self.config["nGPUs"]
+        available_GPUs = torch.cuda.device_count()
+        processes_per_GPU = self.config["threads"]
 
-        with Pool(processes=self.config["threads"]) as pool:
+        if available_GPUs != self.config["nGPUs"]:
+            self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+        
+        if available_GPUs >= 1:
+            n_processes = processes_per_GPU * available_GPUs  
+        else:
+            n_processes = self.config["threads"]
+            available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+        #initialize a list of available GPUs
+        gpu_id_list = []
+        for gpu_ids in range(available_GPUs):
+            for _ in range(processes_per_GPU):
+                gpu_id_list.append(gpu_ids)
+        
+        def initializer_function(gpu_id_list):
+            current_process().gpu_id_list = gpu_id_list
+
+        self.log(f"Beginning segmentation on {available_GPUs}.")
+        
+        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, shard_list),
@@ -790,12 +810,10 @@ class TimecourseSegmentation(Segmentation):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
-
             This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         Args:
             index (int): Unique indexes of the elements that need to be segmented.
-
             input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
         """
         self.index = index
@@ -805,8 +823,7 @@ class TimecourseSegmentation(Segmentation):
         """Wrapper function for calling a sharded segmentation.
 
         Important:
-
-            This function is intented for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
 
         """
         global _tmp_seg
@@ -837,13 +854,13 @@ class TimecourseSegmentation(Segmentation):
         labels,
         classes,
     ):
-        """Saves the results of a segmentation at the end of the process by transferring it to the initialized
+        """
+        Saves the results of a segmentation at the end of the process by transferring it to the initialized
         memory mapped array
 
         Args:
             labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
-
         """
         global _tmp_seg
         
@@ -1077,7 +1094,6 @@ class MultithreadedSegmentation(TimecourseSegmentation):
 
     def process(self):
         # global _tmp_seg
-
         input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         with h5py.File(input_path, "r") as hf:
@@ -1104,15 +1120,45 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         self.log(f"Beginning segmentation with {n_threads} threads.")
         self.log(f"A total of {len(segmentation_list)} processes need to be executed.")
 
-        with Pool(processes=self.config["threads"]) as pool:
+        #check that that number of GPUS is actually available 
+        if "nGPUS" not in self.config.keys():
+            self.config["nGPUs"] = torch.cuda.device_count()
+
+        nGPUS = self.config["nGPUs"]
+        available_GPUs = torch.cuda.device_count()
+        processes_per_GPU = self.config["threads"]
+
+        if available_GPUs < self.config["nGPUs"]:
+            self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+        
+        if available_GPUs >= 1:
+            n_processes = processes_per_GPU * available_GPUs  
+        else:
+            n_processes = self.config["threads"]
+            available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+        #initialize a list of available GPUs
+        gpu_id_list = []
+        for gpu_ids in range(available_GPUs):
+            for _ in range(processes_per_GPU):
+                gpu_id_list.append(gpu_ids)
+        
+        def initializer_function(gpu_id_list):
+            current_process().gpu_id_list = gpu_id_list
+
+        self.log(f"Beginning segmentation on {available_GPUs}.")
+        
+        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, segmentation_list),
                     total=len(indexes),
                 )
             )
+            pool.close()
+            pool.join()
             print("All segmentations are done.", flush=True)
-
+        
         self.log("Finished parallel segmentation")
         self.log("Transferring results to array.")
 
