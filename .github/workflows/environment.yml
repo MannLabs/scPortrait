@@ -14,3 +14,4 @@ dependencies:
     - sphinx-argparse
     - hilbertcurve
     - mahotas
+    - xarray
