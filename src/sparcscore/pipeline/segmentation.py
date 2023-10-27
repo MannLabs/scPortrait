@@ -730,9 +730,11 @@ class ShardedSegmentation(Segmentation):
         #check that that number of GPUS is actually available 
         if "nGPUS" not in self.config.keys():
             self.config["nGPUs"] = torch.cuda.device_count()
-            
+
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
+        self.log(f"found {available_GPUs} GPUs.")
+        
         processes_per_GPU = self.config["threads"]
 
         if available_GPUs != self.config["nGPUs"]:
