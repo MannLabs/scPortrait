@@ -16,12 +16,18 @@ import io
 from contextlib import redirect_stdout
 
 class MLClusterClassifier:
-
     """
     Class for classifying single cells using a pre-trained machine learning model.
     This class takes a pre-trained model and uses it to classify single_cells,
-    using the model’s forward function or encoder function, depending on the
-    user’s choice. The classification results are saved to a TSV file.
+    using the model's forward function or encoder function, depending on the
+    user's choice. The classification results are saved to a TSV file.
+
+    Attributes:
+        config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
+        directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`vipercore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
+        intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
+        debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
+        overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
     
     DEFAULT_LOG_NAME = "processing.log" 
@@ -36,21 +42,14 @@ class MLClusterClassifier:
                  overwrite=False,
                  intermediate_output = True):
         
-        """ Class is initiated to classify extracted single cells.
+        """
+        Class is initiated to classify extracted single cells.
 
-        Parameters
-        ----------
-        config : dict
-            Configuration for the extraction passed over from the :class:`pipeline.Dataset`.
-
-        output_directory : str
-            Directory for the extraction log and results. Will be created if not existing yet.
-
-        debug : bool, optional, default=False
-            Flag used to output debug information and map images.
-
-        overwrite : bool, optional, default=False
-            Flag used to recalculate all images, not yet implemented.
+        Args:
+            config (dict): Configuration for the extraction passed over from the :class:`pipeline.Dataset`.
+            output_directory (str): Directory for the extraction log and results. Will be created if not existing yet.
+            debug (bool, optional, default=False): Flag used to output debug information and map images.
+            overwrite (bool, optional, default=False): Flag used to recalculate all images, not yet implemented.
         """
 
         self.debug = debug
@@ -133,27 +132,23 @@ class MLClusterClassifier:
         """ 
         Function called to perform classification on the provided HDF5 dataset.
 
-        Parameters
-        ----------
-            extraction_dir : str
-                directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            accessory : list
-                list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project
-            size : int, default = 0
-                How many cells should be selected for inference. Default is 0, then all cells are  selected.
+        Args:
+            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of 
+            a project processing workflow this argument will be provided automatically.
+            accessory (list): List containing accessory datasets on which inference should be performed in addition to the cells 
+            contained within the current project.
+            size (int, optional): How many cells should be selected for inference. Default is 0, which means all cells are selected.
+            project_dataloader (HDF5SingleCellDataset, optional): Dataloader for the project dataset. Default is HDF5SingleCellDataset.
+            accessory_dataloader (HDF5SingleCellDataset, optional): Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
-        Returns
-        -------
-            Writes results to tsv files located in the project directory.
+        Returns:
+            None: Results are written to tsv files located in the project directory.
 
         Important:
-        
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
             class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project 
             class will automaticly provide the most recent segmentation forward together with the supplied parameters.
-    
-                    
-                    
+       
         Example:
             
             .. code-block:: python
@@ -163,7 +158,6 @@ class MLClusterClassifier:
                 
                 accessory = ([], [], [])
                 project.classify(accessory = accessory)
-
 
         Note:
             
@@ -196,7 +190,7 @@ class MLClusterClassifier:
                     #name of the classifier used for saving the classification results to a directory
                     screen_label: "Autophagy_15h_classifier1"
                     
-                    # list of which inference methods shoudl be performed
+                    # list of which inference methods should be performed
                     # available: "forward" and "encoder"
                     # if "forward": images are passed through all layers of the modela nd the final inference results are written to file
                     # if "encoder": activations at the end of the CNN is written to file
@@ -221,7 +215,6 @@ class MLClusterClassifier:
         accessory_sizes, accessory_labels, accessory_paths = accessory
         
         self.log(f"{len(accessory_sizes)} different accessory datasets specified")
-        
         
         # Load model and parameters
         network_dir = self.config["network"]
@@ -322,7 +315,7 @@ class MLClusterClassifier:
         # classify samples
         dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=True)
         
-        self.log(f"log transfrom: {self.config['log_transform']}")
+        self.log(f"log transform: {self.config['log_transform']}")
         
         #extract which inferences to make from config file
         encoders = self.config["encoders"]
@@ -339,7 +332,7 @@ class MLClusterClassifier:
         # 2. saves the results to file
         
         data_iter = iter(dataloader)        
-        self.log(f"start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
+        self.log(f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
         with torch.no_grad():
 
             x, label, class_id = next(data_iter)

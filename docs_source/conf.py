@@ -38,7 +38,7 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-autodoc_mock_imports = ['numpy', 'matplotlib','lxml','skimage', 'svgelements',"torch","h5py","skfmm", "scipy", "numba"]
+autodoc_mock_imports = ['numpy', 'matplotlib', 'lxml', 'skimage', 'svgelements', 'torch', 'h5py', 'skfmm', 'scipy', 'numba']
 
 # -- Options for HTML output -------------------------------------------------
 

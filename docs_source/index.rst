@@ -25,4 +25,10 @@ bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
    pages/ecosystem/ 
    pages/sparcscmd
    pages/module
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Pipeline
+
+   pages/pipeline/segmentation
    
