@@ -571,6 +571,24 @@ class Project(Logable):
                 raise ValueError("No input image loaded and no file found to load image from.")
         elif self.input_image is not None:
             self.segmentation_f(self.input_image, *args, **kwargs)
+    
+    def complete_segmentation(self, *args, **kwargs):
+
+        """complete an aborted or failed segmentation run.
+        """
+        self.log("completing incomplete segmentation")
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+        
+        elif self.input_image is None:
+            self.log("No input image loaded. Trying to read file from disk.")
+            try:
+                self.load_input_image()
+                self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
+            except:
+                raise ValueError("No input image loaded and no file found to load image from.")
+        elif self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
 
     def extract(self, *args, **kwargs):
         """

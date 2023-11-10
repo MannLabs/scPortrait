@@ -27,6 +27,8 @@ from tqdm.auto import tqdm
 #to perform garbage collection
 import gc
 
+import sys
+
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
 
@@ -478,6 +480,27 @@ class ShardedSegmentation(Segmentation):
             _shard_list.append(current_shard)
 
         return _shard_list
+    
+    def initialize_shard_list_incomplete(self, sharding_plan, incomplete_indexes):
+        _shard_list = []
+
+        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        self.input_path = input_path
+
+        for i, window in zip(incomplete_indexes, sharding_plan):
+            local_shard_directory = os.path.join(self.shard_directory, str(i))
+            current_shard = self.method(
+                self.config,
+                local_shard_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                intermediate_output=self.intermediate_output,
+            )
+            current_shard.initialize_as_shard(i, window, self.input_path, zarr_status = False)
+            _shard_list.append(current_shard)
+
+        return _shard_list
 
     def calculate_sharding_plan(self, image_size):
         _sharding_plan = []
@@ -521,7 +544,6 @@ class ShardedSegmentation(Segmentation):
                     upper_x = image_size[1]
 
                 shard = (slice(lower_y, upper_y), slice(lower_x, upper_x))
-                print(shard)
                 _sharding_plan.append(shard)
 
         return _sharding_plan
@@ -734,7 +756,7 @@ class ShardedSegmentation(Segmentation):
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
         self.log(f"found {available_GPUs} GPUs.")
-        
+
         processes_per_GPU = self.config["threads"]
 
         if available_GPUs != self.config["nGPUs"]:
@@ -778,6 +800,117 @@ class ShardedSegmentation(Segmentation):
         #make sure to cleanup temp directories
         self.log("=== finished segmentation === ")
 
+    def complete_segmentation(self, input_image):
+
+        self.save_zarr = False
+        self.save_input_image(input_image)
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+
+        #check to make sure that the shard directory exisits, if not exit and return error
+        if not os.path.isdir(self.shard_directory):
+            sys.exit("No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method.")
+
+        #check to see which tiles are incomplete
+        tile_directories = os.listdir(self.shard_directory)
+        incomplete_indexes=[]
+        for tile in tile_directories:
+            if not os.path.isfile(f"{self.shard_directory}/{tile}/classes.csv"):
+                incomplete_indexes.append(int(tile))
+                self.log(f"Shard with ID {tile} not completed.") 
+        
+        # calculate sharding plan
+        self.image_size = input_image.shape[1:]
+
+        if self.config["shard_size"] >= np.prod(self.image_size):
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used.")
+
+            sharding_plan = [
+                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
+            ]
+        else:
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
+            sharding_plan = self.calculate_sharding_plan(self.image_size)
+        
+        #check to make sure that calculated sharding plan matches to existing sharding results
+        if len(sharding_plan) != len(tile_directories):
+            sys.exit("Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results.")
+
+        #select only those shards that did not complete successfully for further processing
+        sharding_plan_complete = sharding_plan
+
+        if len(incomplete_indexes) == 0:
+            if os.path.isfile(f"{self.directory}/classes.csv"):
+                self.log("All segmentations already done")
+            else:
+                self.log("Segmentations already completed. Performing Stitching of individual tiles.")
+                self.resolve_sharding(sharding_plan_complete)
+
+                #make sure to cleanup temp directories
+                self.log("=== completed segmentation === ")
+        else:
+            sharding_plan = [shard for i, shard in enumerate(sharding_plan) if i in incomplete_indexes]
+            self.log(f"Adjusted sharding plan to only proceed with the {len(incomplete_indexes)} incomplete shards.")
+
+            shard_list = self.initialize_shard_list_incomplete(sharding_plan, incomplete_indexes)
+            self.log(
+                f"sharding plan with {len(sharding_plan)} elements generated"
+            )
+
+            del input_image #remove from memory to free up space
+            gc.collect() #perform garbage collection
+            
+            #check that that number of GPUS is actually available 
+            if "nGPUS" not in self.config.keys():
+                self.config["nGPUs"] = torch.cuda.device_count()
+
+            nGPUS = self.config["nGPUs"]
+            available_GPUs = torch.cuda.device_count()
+            self.log(f"found {available_GPUs} GPUs.")
+
+            processes_per_GPU = self.config["threads"]
+
+            if available_GPUs != self.config["nGPUs"]:
+                self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+            
+            if available_GPUs >= 1:
+                n_processes = processes_per_GPU * available_GPUs  
+            else:
+                n_processes = self.config["threads"]
+                available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+            #initialize a list of available GPUs
+            gpu_id_list = []
+            for gpu_ids in range(available_GPUs):
+                for _ in range(processes_per_GPU):
+                    gpu_id_list.append(gpu_ids)
+            
+            def initializer_function(gpu_id_list):
+                current_process().gpu_id_list = gpu_id_list
+
+            self.log(f"Beginning segmentation on {available_GPUs}.")
+            
+            with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
+                results = list(
+                    tqdm(
+                        pool.imap(self.method.call_as_shard, shard_list),
+                        total=len(shard_list),
+                    )
+                )
+                pool.close()
+                pool.join()
+                print("All segmentations are done.", flush=True)
+            
+            #free up memory
+            del shard_list
+            gc.collect()
+
+            self.log("Finished parallel segmentation of missing shards")
+            self.resolve_sharding(sharding_plan_complete)
+
+            #make sure to cleanup temp directories
+            self.log("=== completed segmentation === ")
 
 class TimecourseSegmentation(Segmentation):
     """Segmentation helper class used for creating segmentation workflows working with timecourse data."""
