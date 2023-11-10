@@ -57,25 +57,24 @@ def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, v
             test_dataset.append(test)
             val_dataset.append(val)
     else: 
-    
-    for dataset, label, fraction in zip(list_of_datasets, class_labels, dataset_fraction):
-        train_size = floor(train_per_class * fraction)
-        test_size = floor(test_per_class * fraction)
-        val_size = floor(val_per_class * fraction)
-        
-        residual_size = len(dataset) - train_size - test_size - val_size
-        
-        if residual_size < 0:
-            raise ValueError(
-                f"Dataset with length {len(dataset)} is too small to be split into test set of size {test_size}, "
-                f"train set of size {train_size}, and validation set of size {val_size}. "
-                f"Use a smaller test and trainset."
-            )
-        
-        train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
-        train_dataset.append(train)
-        test_dataset.append(test)
-        val_dataset.append(val)
+        for dataset, label, fraction in zip(list_of_datasets, class_labels, dataset_fraction):
+            train_size = floor(train_per_class * fraction)
+            test_size = floor(test_per_class * fraction)
+            val_size = floor(val_per_class * fraction)
+            
+            residual_size = len(dataset) - train_size - test_size - val_size
+            
+            if residual_size < 0:
+                raise ValueError(
+                    f"Dataset with length {len(dataset)} is too small to be split into test set of size {test_size}, "
+                    f"train set of size {train_size}, and validation set of size {val_size}. "
+                    f"Use a smaller test and trainset."
+                )
+            
+            train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
+            train_dataset.append(train)
+            test_dataset.append(test)
+            val_dataset.append(val)
     
     train_dataset = torch.utils.data.ConcatDataset(train_dataset)
     test_dataset = torch.utils.data.ConcatDataset(test_dataset)

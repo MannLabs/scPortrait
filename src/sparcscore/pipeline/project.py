@@ -110,7 +110,7 @@ class Project(Logable):
         if not os.path.isdir(self.project_location):
             os.makedirs(self.project_location)
         else:
-            warnings.warn("Theres already a directory in the location path")
+            warnings.warn("There is already a directory in the location path")
 
         # handle configuration file
         new_config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)

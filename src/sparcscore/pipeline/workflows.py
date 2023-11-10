@@ -44,12 +44,28 @@ class BaseSegmentation(Segmentation):
         super().__init__(*args, **kwargs)
 
     def _normalization(self, input_image):
-        self.log("Started with normalized map")
-        self.maps["normalized"] = percentile_normalization(
-            input_image,
-            self.config["lower_quantile_normalization"],
-            self.config["upper_quantile_normalization"],
-        )
+        self.log("Starting with normalized map")
+        if type(self.config["lower_quantile_normalization"]) == float:
+            self.log("Normalizing each channel to the same range")
+            self.maps["normalized"] = percentile_normalization(
+                input_image,
+                self.config["lower_quantile_normalization"],
+                self.config["upper_quantile_normalization"],
+            )
+        else:
+            if len(self.config["lower_quantile_normalization"])!= input_image.shape[0]:
+                sys.exit("please specify normalization range for each input channel")
+            self.log("Normalizing each channel individually.")
+            normalized = []
+            for i in range(input_image.shape[0]):
+                lower = self.config["lower_quantile_normalization"][i]
+                upper = self.config["upper_quantile_normalization"][i]
+                normalized.append(percentile_normalization(
+                input_image[i],
+                lower,
+                upper,
+            ))
+            self.maps["normalized"] = np.array(normalized)
         self.save_map("normalized")
         self.log("Normalized map created")
 
