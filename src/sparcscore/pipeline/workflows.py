@@ -1225,7 +1225,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         else:
             channels = np.stack(required_maps).astype(np.uint16)
         
-        _seg_size = self.maps["nucleus_segmentation"].shape
+        _seg_size = self.maps["cytosol_segmentation"].shape
         self.log(f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}")
         
         _, x, y = size_padding
@@ -1323,7 +1323,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         self.cellpose_segmentation(input_image)
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = np.unique(self.maps["nucleus_segmentation"])
+        all_classes = np.unique(self.maps["cytosol_segmentation"])
 
         channels, segmentation = self._finalize_segmentation_results(size_padding = _size_padding)
         results = self.save_segmentation(channels, segmentation, all_classes)
