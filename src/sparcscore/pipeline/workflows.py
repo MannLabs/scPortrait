@@ -1108,14 +1108,36 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            gpu_id = gpu_id_list[cpu_id]
+            self.log(f'starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+    
         gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
-        input_image = input_image.astype("int64")
+        input_image = input_image.astype(np.uint16)
 
         # check if GPU is available
-        use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.cuda.is_available():
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
+        else:
+            use_GPU = False
+
+        # currently no real acceleration through using GPU as we can't load batches
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         # load correct segmentation model for cytosol
@@ -1138,13 +1160,10 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
 
-        # get size of input_image
-        self.log(
-            f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
-        )
 
-        self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
-        masks = model.eval([input_image], diameter=diameter, channels=model_channels)[0]
+        masks = model.eval(
+            [input_image], diameter=diameter, channels=model_channels
+            )[0]
         masks = np.array(masks)  # convert to array
 
         self.maps["cytosol_segmentation"] = masks.reshape(
@@ -1152,27 +1171,42 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         )  # add reshape to match shape to HDF5 shape
 
         #manually delete model and perform gc to free up memory on GPU
-        del model
+        del model, masks
         gc.collect()
         torch.cuda.empty_cache()  
 
     def process(self, input_image):
+
+        from alphabase.io import tempmmap
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+
         # initialize location to save masks to
-        self.maps = {"normalized": None, "cytosol_segmentation": None}
+        self.maps = {
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16),
+        }
 
         # could add a normalization step here if so desired
         self.maps["normalized"] = input_image
+        
+        #delete input image to prevent overloading memory
+        del input_image
+        gc.collect()
 
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(input_image)
+        self.cellpose_segmentation(self.maps["normalized"])
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["cytosol_segmentation"])
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
-        return results
+        
+        #clean up memory
+        del channels, segmentation, all_classes
+        gc.collect()
 
+        return results
 
 class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
     method = CytosolOnlySegmentationCellpose
