@@ -1112,14 +1112,36 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
+
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            gpu_id = gpu_id_list[cpu_id]
+            self.log(f'starting process on GPU {gpu_id}')
+            status = "multi_GPU"
+        except:
+            gpu_id = 0
+            self.log(f'running on default GPU.')
+            status = "single_GPU"
+    
         gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
-        input_image = input_image.astype("int64")
+        input_image = input_image.astype(np.uint16)
 
         # check if GPU is available
-        use_GPU = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.cuda.is_available():
+            if status == "multi_GPU":
+                use_GPU = f"cuda:{gpu_id}"
+            else:
+                use_GPU = True
+        else:
+            use_GPU = False
+
+        # currently no real acceleration through using GPU as we can't load batches
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         # load correct segmentation model for cytosol
@@ -1142,13 +1164,10 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         self.log(f"Segmenting cytosol using the following model: {model_name}")
 
-        # get size of input_image
-        self.log(
-            f"size of input image: {torch.tensor(input_image).element_size() * torch.tensor(input_image).nelement()}"
-        )
 
-        self.log(f"memory usage #1: {torch.cuda.mem_get_info()}")
-        masks = model.eval([input_image], diameter=diameter, channels=model_channels)[0]
+        masks = model.eval(
+            [input_image], diameter=diameter, channels=model_channels
+            )[0]
         masks = np.array(masks)  # convert to array
 
         self.maps["cytosol_segmentation"] = masks.reshape(
@@ -1156,16 +1175,153 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         )  # add reshape to match shape to HDF5 shape
 
         #manually delete model and perform gc to free up memory on GPU
-        del model
+        del model, masks
         gc.collect()
         torch.cuda.empty_cache()  
 
     def process(self, input_image):
+
+        from alphabase.io import tempmmap
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+
         # initialize location to save masks to
-        self.maps = {"normalized": None, "cytosol_segmentation": None}
+        self.maps = {
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16),
+        }
 
         # could add a normalization step here if so desired
         self.maps["normalized"] = input_image
+        
+        #delete input image to prevent overloading memory
+        del input_image
+        gc.collect()
+
+        # self.log("Starting Cellpose DAPI Segmentation.")
+        self.cellpose_segmentation(self.maps["normalized"])
+
+        # currently no implemented filtering steps to remove nuclei outside of specific thresholds
+        all_classes = np.unique(self.maps["cytosol_segmentation"])
+
+        channels, segmentation = self._finalize_segmentation_results()
+        results = self.save_segmentation(channels, segmentation, all_classes)
+        
+        #clean up memory
+        del channels, segmentation, all_classes
+        gc.collect()
+
+        return results
+
+class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
+    method = CytosolOnlySegmentationCellpose
+
+class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCellpose):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _finalize_segmentation_results(self, size_padding):
+        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
+
+        # Feature maps are all further channel which contain phenotypes needed for the classification
+        if self.maps["normalized"].shape[0] > 2:
+            feature_maps = [element for element in self.maps["normalized"][2:]]
+            channels = np.stack(required_maps + feature_maps).astype(np.uint16)
+        else:
+            channels = np.stack(required_maps).astype(np.uint16)
+        
+        _seg_size = self.maps["cytosol_segmentation"].shape
+        self.log(f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}")
+        
+        _, x, y = size_padding
+        segmentation_size = (x, y) #return to same size as original input image but adjust number of channels expected
+
+        cyto_seg = self.maps["cytosol_segmentation"]
+        cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(self.config["downsampling_factor"], axis=1)
+
+        #perform erosion and dilation for smoothing
+        cyto_seg = erosion(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        cyto_seg  = dilation(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+
+        #combine masks into one stack
+        segmentation = np.stack([cyto_seg, cyto_seg]).astype(np.uint32)
+        del cyto_seg
+        
+        #rescale segmentation results to original size
+        x_trim = x - channels.shape[1]
+        y_trim = y - channels.shape[2]
+
+        #if no padding was performed then we need to keep the same dimensions
+        if x_trim > 0:
+            if y_trim > 0:
+                segmentation = segmentation[:, :-x_trim, :-y_trim]
+            else:
+                segmentation = segmentation[:, :-x_trim, :]
+        else:
+            if y_trim > 0:
+                segmentation = segmentation[:, :, :-y_trim]
+            else:
+                segmentation = segmentation
+
+        print(segmentation.shape)
+
+        self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
+
+        if segmentation.shape[1] != channels.shape[1]:
+            sys.exit("Error. Segmentation mask and image have different shapes")
+        if segmentation.shape[2] !=channels.shape[2]:
+            sys.exit("Error. Segmentation mask and image have different shapes")
+
+        return channels, segmentation 
+
+    def process(self, input_image):
+
+        _size = input_image.shape
+        self.log(f"Input image size {_size}")
+
+        N = self.config["downsampling_factor"]
+        self.log(f"Performing Cellpose Segmentation on Downsampled image. Downsampling input image by {N}X{N}")
+
+        #check if N fits perfectly into image shape if not calculate how much we need to pad
+        _, x, y = _size
+        if x % N == 0:
+            pad_x = (0, 0)
+        else:
+            pad_x = (0, N - x%N)
+        
+        if y % N == 0:
+            pad_y = (0, 0)
+        else:
+            pad_y = (0, N - y%N)
+
+        downsampled_image_size = (2, _size[1]+pad_x[1], _size[2]+pad_y[1]) 
+
+        #initialize memory mapped numpy arrays to save results into
+        from alphabase.io import tempmmap
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+
+        # initialize location to save masks to
+        self.maps = {
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
+             "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16),
+        }
+        self.log("Created memory mapped temp arrays to store")
+
+        # could add a normalization step here if so desired
+        #perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
+        self.maps["normalized"] = input_image.copy()
+        _size = self.maps["normalized"].shape
+        self.log(f"input image size: {input_image.shape}")
+
+        input_image = input_image[:2, :, :] #only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
+        gc.collect()
+        
+        self.log(f"input image size after removing excess channels: {input_image.shape}")
+        input_image = np.pad(input_image, ((0, 0), pad_x, pad_y))
+        _size_padding = input_image.shape
+        
+        self.log(f"Performing image padding to ensure that image is compatible with downsample kernel size. Original image was {_size}, padded image is {_size_padding}")
+        input_image = downsample_img(input_image, N= N)
+        self.log(f"Downsampled image size {input_image.shape}")
 
         # self.log("Starting Cellpose DAPI Segmentation.")
         self.cellpose_segmentation(input_image)
@@ -1173,13 +1329,13 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["cytosol_segmentation"])
 
-        channels, segmentation = self._finalize_segmentation_results()
+        channels, segmentation = self._finalize_segmentation_results(size_padding = _size_padding)
         results = self.save_segmentation(channels, segmentation, all_classes)
+
         return results
 
-
-class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
-    method = CytosolOnlySegmentationCellpose
+class Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose(ShardedSegmentation):
+    method = CytosolOnly_Segmentation_Downsampling_Cellpose
 
 
 class WGA_TimecourseSegmentation(TimecourseSegmentation):
