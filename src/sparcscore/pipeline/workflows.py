@@ -860,8 +860,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids
 
         # set all cytosol ids that are not present in lookup table to 0 in the cytosol mask
-        for cytosol_id in not_used_cytosol_ids:
-            masks_cytosol[masks_cytosol == cytosol_id] = 0
+        ###speedup of 40X approximately in a small test case with an array of 10000x10000 and 400 cytosol ids to remove
+        masks_cytosol = np.where(np.isin(masks_cytosol, not_used_cytosol_ids), 0, masks_cytosol)
+        # for cytosol_id in not_used_cytosol_ids:
+        #     masks_cytosol[masks_cytosol == cytosol_id] = 0
 
         # get unique nucleus ids that are not in the lookup table
         all_nucleus_ids = set(np.unique(masks_nucleus))
@@ -870,8 +872,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         not_used_nucleus_ids = all_nucleus_ids - used_nucleus_ids
 
         # set all nucleus ids that are not present in lookup table to 0 in the nucleus mask
-        for nucleus_id in not_used_nucleus_ids:
-            masks_nucleus[masks_nucleus == nucleus_id] = 0
+        ###speedup of 40X approximately in a small test case with an array of 10000x10000 and 400 cytosol ids to remove
+        masks_nucleus = np.where(np.isin(masks_nucleus, not_used_nucleus_ids), 0, masks_nucleus)
+        # for nucleus_id in not_used_nucleus_ids:
+        #     masks_nucleus[masks_nucleus == nucleus_id] = 0
 
         # now we have all the nucleus cytosol pairs we can filter the masks
         updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
@@ -1024,7 +1028,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
     def process(self, input_image):
 
         _size = input_image.shape
-        self.log(f"Input image size {_size}")
+        self.log(f"Input image size {_size} in position {self.window}")
 
         N = self.config["downsampling_factor"]
         self.log(f"Performing Cellpose Segmentation on Downsampled image. Downsampling input image by {N}X{N}")
