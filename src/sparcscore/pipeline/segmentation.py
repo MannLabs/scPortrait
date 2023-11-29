@@ -111,7 +111,7 @@ class Segmentation(ProcessingStep):
             This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
     
-        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
+        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}") 
         
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
@@ -139,6 +139,7 @@ class Segmentation(ProcessingStep):
         #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
             try:
+                self.log(f"Beginning segmentation on shard in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
             except Exception:
                 self.log(traceback.format_exc())
@@ -152,6 +153,13 @@ class Segmentation(ProcessingStep):
         #cleanup generated temp dir and variables
         del input_image
         gc.collect()
+
+        #write out window location
+        self.log(f"Writing out window location to file at {self.directory}/window.csv")
+        with open(f"{self.directory}/window.csv", "w") as f:
+            f.write(f"{self.window}\n")  
+        
+        self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
     def save_segmentation(self, channels, labels, classes):
         """Saves the results of a segmentation at the end of the process.
@@ -503,6 +511,20 @@ class ShardedSegmentation(Segmentation):
         return _shard_list
 
     def calculate_sharding_plan(self, image_size):
+        #save sharding plan to file
+        sharding_plan_path = f"{self.directory}/sharding_plan.csv"
+
+        if os.path.isfile(sharding_plan_path):
+            self.log(f"sharding plan already found in directory {sharding_plan_path}.")
+            if self.overwrite:
+                self.log("Overwriting existing sharding plan.")
+                os.remove(sharding_plan_path)
+            else:
+                self.log("Reading existing sharding plan from file.")
+                with open(sharding_plan_path, "r") as f:
+                    _sharding_plan = [eval(line) for line in f.readlines()]
+                    return(_sharding_plan)
+
         _sharding_plan = []
         side_size = np.floor(np.sqrt(int(self.config["shard_size"])))
         shards_side = np.round(image_size / side_size).astype(int)
@@ -545,7 +567,13 @@ class ShardedSegmentation(Segmentation):
 
                 shard = (slice(lower_y, upper_y), slice(lower_x, upper_x))
                 _sharding_plan.append(shard)
-
+    
+        #write out newly generated sharding plan
+        with open(sharding_plan_path, "w") as f:
+            for shard in _sharding_plan:
+                f.write(f"{shard}\n")
+        self.log(f"Sharding plan written to file at {sharding_plan_path}")
+        
         return _sharding_plan
 
     def resolve_sharding(self, sharding_plan):
@@ -613,6 +641,17 @@ class ShardedSegmentation(Segmentation):
             local_output = os.path.join(local_shard_directory, self.DEFAULT_OUTPUT_FILE)
             local_classes = os.path.join(local_shard_directory, "classes.csv")
 
+            #check to make sure windows match
+            with open(f"{local_shard_directory}/window.csv", "r") as f:
+                window_local =  eval(f.read())
+            if window_local != window:
+                self.log("Sharding plans do not match. Aborting run.")
+                self.log("Sharding plan found locally: ", window_local)
+                self.log("Sharding plan found in sharding plan: ", window)
+                sys.exit("sharding plans do not match!")
+            else:
+                self.log("Local sharding plan matches global sharding plan.")
+
             cr = csv.reader(open(local_classes, "r"))
             filtered_classes = [int(el[0]) for el in list(cr)]
             filtered_classes_combined += [
@@ -630,15 +669,25 @@ class ShardedSegmentation(Segmentation):
             )
             
             orig_input = hdf_labels[:, window[0], window[1]]
+
+            if orig_input.shape != shifted_map.shape:
+                print("Shapes do not match")
+                print("window", window[0], window[1])
+                print("shifted_map shape:", shifted_map.shape)
+                print("orig_input shape:", orig_input.shape)
+
+                #dirty fix to get this to run until we can implement a better solution
+                shifted_map = np.zeros(orig_input.shape)
+            
             shifted_map = np.where((orig_input != 0) & (shifted_map == 0), orig_input, shifted_map) 
-            #since shards are computed with overlap there potentially alreadty exist segmentations in the selected area that we wish to keep
+            #since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
             # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the 
             # new ones from the second shard
             # this will result in cell ids that are missing in the file but does not matter as all cell ids will be unique
             # any ids that were on the shard edges will be removed
 
             #potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
-            # for other segmentation methods this could cause issues
+            # for ocdther segmentation methods this could cause issues
 
             hdf_labels[:, window[0], window[1]] = shifted_map
 
@@ -741,6 +790,12 @@ class ShardedSegmentation(Segmentation):
             self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
             sharding_plan = self.calculate_sharding_plan(self.image_size)
 
+        #save sharding plan to file to be able to reload later
+        self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+        with open(f"{self.directory}/sharding_plan.csv", "w") as f:
+            for shard in sharding_plan:
+                f.write(f"{shard}\n")
+
         shard_list = self.initialize_shard_list(sharding_plan)
         self.log(
             f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
@@ -777,7 +832,7 @@ class ShardedSegmentation(Segmentation):
         def initializer_function(gpu_id_list):
             current_process().gpu_id_list = gpu_id_list
 
-        self.log(f"Beginning segmentation on {available_GPUs}.")
+        self.log(f"Beginning segmentation on {available_GPUs} GPUs.")
         
         with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
@@ -831,7 +886,12 @@ class ShardedSegmentation(Segmentation):
         else:
             target_size = self.config["shard_size"]
             self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
-            sharding_plan = self.calculate_sharding_plan(self.image_size)
+            
+            #read sharding plan from file
+            with open(f"{self.directory}/sharding_plan.csv", "r") as f:
+                sharding_plan = [eval(line) for line in f.readlines()]
+            
+            self.log(f"Sharding plan read from file {self.directory}/sharding_plan.csv")
         
         #check to make sure that calculated sharding plan matches to existing sharding results
         if len(sharding_plan) != len(tile_directories):
