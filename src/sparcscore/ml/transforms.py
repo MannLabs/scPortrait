@@ -41,9 +41,9 @@ class GaussianNoise(object):
     Returns:
         Image with added Gaussian noise.
     """
-    def __init__(self, sigma=0.1, channels=[]):
+    def __init__(self, sigma=0.1, channels_to_exclude=[]):
         self.sigma = sigma
-        self.channels = channels
+        self.channels = channels_to_exclude
 
     def __call__(self, tensor):
         if self.sigma != 0:
@@ -54,10 +54,10 @@ class GaussianNoise(object):
             )
 
             # remove noise for masked channels
-
-            for channel in range(tensor.shape[0]):
-                if channel not in self.channels:
-                    sampled_noise[channel, :, :] = 0
+            if len(tensor.shape) == 3:
+                for channel in range(tensor.shape[0]):
+                    if channel in self.channels:
+                        sampled_noise[channel, :, :] = 0
 
             tensor = tensor + sampled_noise
         return tensor
@@ -76,7 +76,7 @@ class GaussianBlur(object):
         Image with added Gaussian blur.
     """
     def __init__(
-            self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 0.2), channels=[]
+            self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 2), channels=[]
     ):
         self.kernel_size = kernel_size
         self.sigma = sigma
