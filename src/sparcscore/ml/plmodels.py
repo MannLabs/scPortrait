@@ -38,31 +38,43 @@ class MultilabelSupervisedModel(pl.LightningModule):
         test_step(batch, batch_idx): Perform a single test step.
         test_epoch_end(outputs): Callback function after testing epochs.
     """
-    def __init__(self, type="VGG2", **kwargs):
+    def __init__(self, model_type="VGG2", **kwargs):
         super().__init__()
 
         self.save_hyperparameters()
+
+        #initialize metrics
+        if self.hparams["num_classes"] == 2:
+            task_type = "binary"
+        elif self.hparams["num_classes"] > 2:
+            task_type = "multiclass"
+        else:
+            raise ValueError("No num_classes specified in hparams")
         
-        if type == "VGG1":
+        #initialize metrics to track
+        self.accuracy = torchmetrics.Accuracy(task = task_type,  )
+        self.aucroc = torchmetrics.AUROC(task = task_type, thresholds = None)
+        
+        if model_type == "VGG1":
             self.network = VGG1(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
                                     dimensions=128,
                                     num_classes=self.hparams["num_classes"])
-        elif type == "VGG2":
+        elif model_type == "VGG2":
             self.network = VGG2(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
                                     dimensions=128,
                                     num_classes=self.hparams["num_classes"])
         
         ## add deprecated type for backward compatability
-        elif type == "VGG1_old":
+        elif model_type == "VGG1_old":
             self.network = _VGG1(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
                                     dimensions=128,
                                     num_classes=self.hparams["num_classes"])
         
         ## add deprecated type for backward compatability
-        elif type == "VGG2_old":
+        elif model_type == "VGG2_old":
             self.network = _VGG2(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
                                     dimensions=128,
@@ -70,24 +82,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
         else:
             sys.exit("Incorrect network architecture specified. Please check that MultilabelSupervisedModel type parameter is set to key present in method.")
         
-        self.train_metrics = torchmetrics.MetricCollection([torchmetrics.Precision("binary", average="none",num_classes=self.hparams["num_classes"]), 
-                                                            torchmetrics.Recall("binary", average="none",num_classes=self.hparams["num_classes"]),
-                                                            torchmetrics.Accuracy("binary", average=None,num_classes=self.hparams["num_classes"]),
-                                                            torchmetrics.ConfusionMatrix("binary", num_classes=self.hparams["num_classes"], normalize="true")]) 
-        
-        self.val_metrics = torchmetrics.MetricCollection([torchmetrics.Precision("binary", average="none",num_classes=self.hparams["num_classes"]), 
-                                                          torchmetrics.Recall("binary", average="none",num_classes=self.hparams["num_classes"]),
-                                                          torchmetrics.Accuracy("binary", average=None,num_classes=self.hparams["num_classes"])])
-        
-        self.test_metrics = torchmetrics.MetricCollection([torchmetrics.Precision("binary", average="none",num_classes=self.hparams["num_classes"]), 
-                                                          torchmetrics.Recall("binary", average="none",num_classes=self.hparams["num_classes"]),
-                                                          torchmetrics.Accuracy("binary", average=None,num_classes=self.hparams["num_classes"])])
-        
-    def on_train_start(self):
-        self.logger.log_hyperparams(self.hparams, {"precision/train": 0,"recall/train": 0,"precision/val": 0,"recall/val": 0})
-    
     def forward(self, x):
-        
         return self.network(x)
     
     def configure_optimizers(self):
@@ -101,124 +96,55 @@ class MultilabelSupervisedModel(pl.LightningModule):
         else:
             raise ValueError("No optimizier specified in hparams")
         return optimizer
-    
-    def on_train_epoch_start(self):
-        pass
-        
-    def on_validation_epoch_start(self):
-        pass
-        
-    def confusion_plot(self, matrix):
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)       
-        cax = ax.matshow(matrix,cmap="magma")    
-
-        ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
-        ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
-        
-        ax.set_xticklabels([''] +self.hparams["class_labels"], rotation = -45)
-        ax.set_yticklabels([''] +self.hparams["class_labels"])
-        
-        ax.set_xlabel('prediction')
-        ax.set_ylabel('ground truth')
-    
-        fig.tight_layout()
-        
-        fig.canvas.draw()
-        
-        data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        data = np.expand_dims(data, axis=0)
-        
-        return data
-        
-    def on_train_epoch_end(self):
-        metrics = self.train_metrics.compute()
-
-        img = self.confusion_plot(metrics["ConfusionMatrix"].detach().cpu())
-        self.logger.experiment.add_image('confusion', img,self.current_epoch, dataformats="NHWC") 
-        
-        for i, label in enumerate(self.hparams["class_labels"]):
-            self.log("precision_train/{}".format(label), metrics["Precision"][i])
-            self.log("recall_train/{}".format(label), metrics["Recall"][i])
-            self.log("accurac_train/{}".format(label), metrics["Accuracy"][i])
-        
-        # Resetting internal state such that metric ready for new data
-        self.train_metrics.reset()
-
-    
-    def on_validation_epoch_end(self):
-        metrics = self.val_metrics.compute()
-        
-        for i, label in enumerate(self.hparams["class_labels"]):        
-            self.log("precision_val/{}".format(label), metrics["Precision"][i])
-            self.log("recall_val/{}".format(label), metrics["Recall"][i])
-            self.log("accurac_val/{}".format(label), metrics["Accuracy"][i])
-        
-        # Resetting internal state such that metric ready for new data
-        self.val_metrics.reset()
-        
-    
+           
     def training_step(self, batch, batch_idx):
         data, label = batch
-        data, label = data.cuda(), label.cuda()
 
-        output = self.network(data)
-        loss = F.nll_loss(output, label)
+        #calculate loss
+        output_softmax = self.network(data)
+        loss = F.nll_loss(output_softmax, label)
 
-        # log accuracy metrics
-        non_log = torch.exp(output)
-        self.train_metrics(non_log, label)
-        self.log('loss/train', loss, prog_bar=True)
-        return loss
+       #calculate accuracy
+        probabilities = torch.exp(output_softmax)
+        pred_labels = torch.argmax(probabilities, dim=1)
+        acc = self.accuracy(pred_labels, label)
+
+        self.log('loss/train', loss, prog_bar=True, on_epoch=True, sync_dist=True)
+        self.log('acc/train', acc, prog_bar = True, on_epoch=True, sync_dist=True)
+        
+        return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
     
     def validation_step(self, batch, batch_idx):
         data, label = batch
-        data, label = data.cuda(), label.cuda()
 
-        output = self.network(data)
-        loss = F.nll_loss(output, label)
+        output_softmax = self.network(data)
+        loss = F.nll_loss(output_softmax, label)
 
-        # accuracy metrics
-        non_log = torch.exp(output)    
-        self.val_metrics(non_log, label)       
-        self.log('loss/val', loss, prog_bar=True)
+        #calculate accuracy
+        probabilities = torch.exp(output_softmax) #we use the logsoftmax so we need to take the exp to get the actual probabilities
+        pred_labels = torch.argmax(probabilities, dim=1) #then we can select the predicted label taking a 0.5 threshold for binary classification, for multiclass problems it simply selects the most likely class
+        acc = self.accuracy(pred_labels, label)
+
+        self.log('loss/val', loss, prog_bar=True, on_epoch=True, sync_dist=True)
+        self.log('acc/val', acc, prog_bar = True, on_epoch=True, sync_dist=True)
+
+        return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
 
     def test_step(self, batch, batch_idx):
-        # OPTIONAL
         data, label = batch
-        data, label = data.cuda(), label.cuda()
 
-        output = self.network(data)
-        loss = F.nll_loss(output, label)
+        output_softmax = self.network(data)
+        loss = F.nll_loss(output_softmax, label)
 
-        non_log = torch.exp(output)    
-        self.test_metrics(non_log, label)
-        self.log('loss/test', loss, prog_bar=True)
+        #calculate accuracy
+        probabilities = torch.exp(output_softmax)
+        pred_labels = torch.argmax(probabilities, dim=1)
+        acc = self.accuracy(pred_labels, label)
 
-        return {'test_loss': loss}
+        self.log('loss/test', loss, prog_bar=True, on_epoch=True, sync_dist=True)
+        self.log('acc/test', acc, prog_bar=True, on_epoch=True, sync_dist=True)
 
-    def test_epoch_end(self, outputs):
-        # use same metrics as in validation
-        metrics = self.test_metrics.compute()
-        
-        for i, label in enumerate(self.hparams["class_labels"]):
-            self.log("precision_test/{}".format(label), metrics["Precision"][i])
-            self.log("recall_test/{}".format(label), metrics["Recall"][i])
-            self.log("accurac_test/{}".format(label), metrics["Accuracy"][i])
-
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-        logs = {'test_loss': avg_loss}
-
-        for i, label in enumerate(self.hparams["class_labels"]):
-            logs["precision_test/{}".format(label)] = metrics["Precision"][i]
-            logs["recall_test/{}".format(label)] = metrics["Recall"][i]
-            logs["accurac_test/{}".format(label)] = metrics["Accuracy"][i]
-        
-        logs["log"] = logs
-        logs["progress_bar"] = logs
-        return logs
-
+        return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
 
 # implemented models for future use currently not applied to SPARCSpy
 
@@ -345,8 +271,7 @@ class AutoEncoderModel(pl.LightningModule):
     def on_validation_epoch_start(self):
          pass
         
-    def on_train_epoch_end(self,outputs):
-        
+    def on_train_epoch_end(self,outputs): 
         pass
         # tensorboard = self.logger.experiment
         # tensorboard.add_image()
