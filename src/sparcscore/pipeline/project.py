@@ -270,7 +270,9 @@ class Project(Logable):
 
     def load_input_image(self):
         path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        
         # read the image data
+        self.log(f"trying to read file from {path}")
         loc = parse_url(path, mode="r")
         zarr_reader = Reader(loc).zarr
 
