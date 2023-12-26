@@ -58,6 +58,9 @@ class MLClusterClassifier:
         self.config = config
         self.intermediate_output = intermediate_output
         self.project_location = project_location
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
         
         # Create segmentation directory
         self.directory = path
@@ -75,7 +78,11 @@ class MLClusterClassifier:
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if self.filtered_dataset is not None:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -415,8 +422,11 @@ class CellFeaturizer:
         self.config = config
         self.intermediate_output = intermediate_output
         self.project_location = project_location
-        
-        # Create segmentation directory
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
+
+        # Create classification directory
         self.directory = path
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -432,7 +442,11 @@ class CellFeaturizer:
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if self.filtered_dataset is not None:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)

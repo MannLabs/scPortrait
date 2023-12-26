@@ -609,7 +609,10 @@ class Project(Logable):
         Classify extracted single cells with the defined classification method.
         """
 
-        input_extraction = self.extraction_f.get_output_path()
+        if hasattr(self, 'filtered_dataset'):
+            input_extraction = self.extraction_f.get_output_path().replace("/data/single_cells.h5", f"/filtered_data/{self.filtered_dataset}/single_cells.h5")
+        else:
+            input_extraction = self.extraction_f.get_output_path()
 
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
