@@ -819,6 +819,7 @@ class ShardedSegmentation(Segmentation):
         
         if available_GPUs >= 1:
             n_processes = processes_per_GPU * available_GPUs  
+            self.log(f"Proceeding in segmentation with {n_processes} number of processes.")
         else:
             n_processes = self.config["threads"]
             available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
