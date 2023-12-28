@@ -724,10 +724,15 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         try:
             current = multiprocessing.current_process()
+            self.log(f"current process: {current}")
             cpu_name = current.name
+            self.log(f"cpu name: {cpu_name}")
             gpu_id_list = current.gpu_id_list
+            self.log(f"gpu id list: {gpu_id_list}")
             cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            self.log("cpu id: {cpu_id}")
             gpu_id = gpu_id_list[cpu_id]
+            self.log("gpu id: {gpu_id}")
             self.log(f'starting process on GPU {gpu_id}')
             status = "multi_GPU"
         except:
