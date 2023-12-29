@@ -816,17 +816,17 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         
         start = time.time()
 
-        timing_info.append(("1. Time when started the whole approach", start))
+        timing_info.append(("start_time", "Time when started the segmentation run", start))
 
         all_nucleus_ids = np.unique(masks_nucleus)[1:]
         nucleus_cytosol_pairs = {}
 
         self.log(f"Number of nuclei to filter: {len(all_nucleus_ids)}")
 
+        ### STEP 1: filter cells based on having a matching cytosol mask
         current_time = time.time()
-
-        timing_info.append(("2. Time when started filtering cells (for nucleus_id in all_nucleus_ids)", current_time))
-
+        timing_info.append(("start_time", "Time when starting filtering cells (for nucleus_id in all_nucleus_ids) = STEP 1", current_time))
+    
         for nucleus_id in all_nucleus_ids:
             time_in_the_loop = time.time()
 
@@ -835,14 +835,14 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             # now get the coordinates of the nucleus
             nucleus_pixels = np.nonzero(nucleus)
 
-            timing_info.append((f"3. Time required for getting nucleus pixels in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
+            timing_info.append(("STEP 1.1", f"Time required for getting nucleus pixels in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
 
             time_in_the_loop = time.time()
 
             # check if those indices are not background in the cytosol mask
             potential_cytosol = masks_cytosol[nucleus_pixels]
 
-            timing_info.append((f"4. Time required for getting potential cytosol pixels in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
+            timing_info.append(("STEP 1.2", f"Time required for getting potential cytosol pixels in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
 
             if np.all(potential_cytosol != 0):
                 time_in_the_loop = time.time()
@@ -853,7 +853,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 all_counts = np.sum(counts)
                 cytosol_proportions = counts / all_counts
 
-                timing_info.append((f"5. Time required for getting unique cytosol pixels and calculating their proportions in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
+                timing_info.append(("STEP 1.3", f"Time required for getting unique cytosol pixels and calculating their proportions in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
 
                 if np.any(cytosol_proportions >= self.config["filtering_threshold"]):
                     time_in_the_loop = time.time()
@@ -866,33 +866,37 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 else:
                     nucleus_cytosol_pairs[nucleus_id] = 0
 
-                timing_info.append((f"6. Time required for getting cytosol_id with max proportion in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
+                timing_info.append(("STEP 1.4", f"Time required for getting cytosol_id with max proportion in seconds for nucleus {nucleus_id}", time.time() - time_in_the_loop))
         
-        timing_info.append(("7. Time required for filtering cells (for nucleus_id in all_nucleus_ids) in seconds", time.time() - current_time))
+        timing_info.append(("STEP 1",  "Time required for filtering cells (for nucleus_id in all_nucleus_ids) in seconds", time.time() - current_time))
+
+        ### STEP 2: count the occurrences of each cytosol value
+        new_time = time.time()
+        timing_info.append(("start_time", "Time when started counting the occurences of each cytosol id = STEP 2", new_time))
 
         # check if there are any cytosol masks that are assigned to multiple nuclei
         cytosol_count = defaultdict(int)
-
-        new_time = time.time()
-
-        timing_info.append(("8. Time when started counting the occurences of each cytosol id", new_time))
 
         # Count the occurrences of each cytosol value
         for cytosol in nucleus_cytosol_pairs.values():
             cytosol_count[cytosol] += 1
         
-        timing_info.append(("9. Time required for counting the occurences of each cytosol id in seconds", time.time() - new_time))
+        timing_info.append(("STEP 2", "Time required for counting the occurences of each cytosol id in seconds", time.time() - new_time))
         
+        ### STEP 3: filter cytosol ids that are assigned to more than one nucleus
         new_time = time.time()
-    
+        timing_info.append(("start_time", "Time when started finding cytosol ids assigned to more than one nucleus = STEP 3", new_time))
+
         # Find cytosol values assigned to more than one nucleus
         for nucleus, cytosol in nucleus_cytosol_pairs.items():
             if cytosol_count[cytosol] > 1:
                 nucleus_cytosol_pairs[nucleus] = 0
         
-        timing_info.append(("10. Time required for filtering cytosol ids that are assigned to more than one nucleus in seconds", time.time() - new_time))
+        timing_info.append(("STEP 3", "Time required for filtering cytosol ids that are assigned to more than one nucleus in seconds", time.time() - new_time))
 
+        ### STEP 4: filter cytosol masks that are not in the lookup table
         new_time = time.time()
+        timing_info.append(("start_time", "Time when started filtering cytosol masks that are not in the lookup table = STEP 4", new_time))
 
         # get unique cytosol ids that are not in the lookup table
         all_cytosol_ids = set(np.unique(masks_cytosol))
@@ -904,9 +908,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         for cytosol_id in not_used_cytosol_ids:
             masks_cytosol[masks_cytosol == cytosol_id] = 0
         
-        timing_info.append(("11. Time required for filtering cytosol masks that are not in the lookup table in seconds", time.time() - new_time))
+        timing_info.append(("STEP 4", "Time required for filtering cytosol masks that are not in the lookup table in seconds", time.time() - new_time))
 
+        ### STEP 5: filter nucleus masks that are not in the lookup table
         new_time = time.time()
+        timing_info.append(("start_time", "Time when started filtering nucleus masks that are not in the lookup table = STEP 5", new_time))
 
         # get unique nucleus ids that are not in the lookup table
         all_nucleus_ids = set(np.unique(masks_nucleus))
@@ -918,9 +924,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         for nucleus_id in not_used_nucleus_ids:
             masks_nucleus[masks_nucleus == nucleus_id] = 0
         
-        timing_info.append(("12. Time required for filtering nucleus masks that are not in the lookup table in seconds", time.time() - new_time))
+        timing_info.append(("STEP 5", "Time required for filtering nucleus masks that are not in the lookup table in seconds", time.time() - new_time))
 
+        ### STEP 6: filter cytosol masks that are not in the lookup table
         new_time = time.time()
+        timing_info.append(("Time when started updating masks = STEP 6", new_time))
 
         # now we have all the nucleus cytosol pairs we can filter the masks
         updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
@@ -935,16 +943,17 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 masks_cytosol[condition] = nucleus_id
                 updated_cytosol_mask = np.logical_or(updated_cytosol_mask, condition)
         
-        timing_info.append(("13. Time required for filtering cytosol masks that are not in the lookup table in seconds", time.time() - new_time))
+        timing_info.append(("STEP 6", "Time required for filtering cytosol masks that are not in the lookup table in seconds", time.time() - new_time))
         
         end = time.time()
 
-        timing_info.append(("14. Time required for filtering generated masks in seconds", end - start))
-        
+        timing_info.append(("All STEPS", "Time required for filtering generated masks in seconds", end - start))
         self.log(f"Time required for filtering generated masks in seconds: {end - start}")
 
-        df_timing = pd.DataFrame(timing_info, columns=["Step", "Time (s)"])
-        
+        #generate a dataframe with the time logging information and write out to file
+        df_timing = pd.DataFrame(timing_info, columns=["Step", "description", "Time (s)"])
+        df_timing.to_csv(f"{self.project_location}/segmentation/timing_info_{self.identifier}.csv", index=False)
+
         if self.debug:
             # plot nucleus and cytosol masks before and after filtering
             fig, axs = plt.subplots(2, 2, figsize=(8, 8))
