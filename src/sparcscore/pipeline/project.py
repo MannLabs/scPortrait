@@ -270,7 +270,9 @@ class Project(Logable):
 
     def load_input_image(self):
         path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        
         # read the image data
+        self.log(f"trying to read file from {path}")
         loc = parse_url(path, mode="r")
         zarr_reader = Reader(loc).zarr
 
@@ -571,6 +573,24 @@ class Project(Logable):
                 raise ValueError("No input image loaded and no file found to load image from.")
         elif self.input_image is not None:
             self.segmentation_f(self.input_image, *args, **kwargs)
+    
+    def complete_segmentation(self, *args, **kwargs):
+
+        """complete an aborted or failed segmentation run.
+        """
+        self.log("completing incomplete segmentation")
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+        
+        elif self.input_image is None:
+            self.log("No input image loaded. Trying to read file from disk.")
+            try:
+                self.load_input_image()
+                self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
+            except:
+                raise ValueError("No input image loaded and no file found to load image from.")
+        elif self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
 
     def extract(self, *args, **kwargs):
         """
@@ -591,7 +611,10 @@ class Project(Logable):
         Classify extracted single cells with the defined classification method.
         """
 
-        input_extraction = self.extraction_f.get_output_path()
+        if hasattr(self, 'filtered_dataset'):
+            input_extraction = self.extraction_f.get_output_path().replace("/data/single_cells.h5", f"/filtered_data/{self.filtered_dataset}/single_cells.h5")
+        else:
+            input_extraction = self.extraction_f.get_output_path()
 
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))

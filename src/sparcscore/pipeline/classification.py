@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 import torch
+from torch.masked import masked_tensor
 
 from sparcscore.ml.datasets import HDF5SingleCellDataset
 from sparcscore.ml.transforms import ChannelSelector
@@ -57,6 +58,9 @@ class MLClusterClassifier:
         self.config = config
         self.intermediate_output = intermediate_output
         self.project_location = project_location
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
         
         # Create segmentation directory
         self.directory = path
@@ -74,7 +78,11 @@ class MLClusterClassifier:
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if self.filtered_dataset is not None:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -414,8 +422,11 @@ class CellFeaturizer:
         self.config = config
         self.intermediate_output = intermediate_output
         self.project_location = project_location
-        
-        # Create segmentation directory
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
+
+        # Create classification directory
         self.directory = path
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -431,7 +442,11 @@ class CellFeaturizer:
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if self.filtered_dataset is not None:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -537,26 +552,6 @@ class CellFeaturizer:
 
                     #batch size to pass to GPU
                     batch_size: 900
-
-                    #path to pytorch checkpoint that should be used for inference
-                    network: "path/to/model/"
-                    
-                    #classifier architecture implemented in SPARCSpy
-                    # choose one of VGG1, VGG2, VGG1_old, VGG2_old
-                    classifier_architecture: "VGG2_old"
-
-                    #if more than one checkpoint is provided in the network directory which checkpoint should be chosen
-                    # should either be "max" or a numeric value indicating the epoch number
-                    epoch: "max"
-
-                    #name of the classifier used for saving the classification results to a directory
-                    screen_label: "Autophagy_15h_classifier1"
-                    
-                    # list of which inference methods shoudl be performed
-                    # available: "forward" and "encoder"
-                    # if "forward": images are passed through all layers of the modela nd the final inference results are written to file
-                    # if "encoder": activations at the end of the CNN is written to file
-                    encoders: ["forward", "encoder"]
                     
                     # on which device inference should be performed
                     # for speed should be "cuda"
@@ -579,8 +574,7 @@ class CellFeaturizer:
         self.log(f"{len(accessory_sizes)} different accessory datasets specified")
         
         # generate project dataset dataloader
-        # transforms like noise, random rotations, channel selection are still hardcoded
-        t = transforms.Compose([ChannelSelector([self.config["channel_classification"]])])
+        t = transforms.Compose([])
                 
         self.log(f"loading {extraction_dir}")
         
@@ -617,19 +611,45 @@ class CellFeaturizer:
         self.log(out)
             
         # classify samples
-        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=True)
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=False)
         self.inference(dataloader)
 
-    def calculate_statistics(self, img):   
-        print(img.shape)
+    def calculate_statistics(self, img, channel = -1):   
+        #get batch size
         N, _, _, _ = img.shape
-        mean = img.view(N, -1).mean(1, keepdim = True)
-        median = img.view(N, -1).quantile(q = 0.5, dim = 1, keepdim = True)
-        quant75 = img.view(N, -1).quantile(q = 0.75, dim = 1, keepdim = True)
-        quant25 = img.view(N, -1).quantile(q = 0.25, dim = 1, keepdim = True)
-        results = torch.concat([mean, median, quant75, quant25], 1)
+        
+        #calculate area statistics
+        nucleus_mask = img[:, 0] > 0 
+        nucleus_area = nucleus_mask.view(N, -1 ).sum(1, keepdims = True)
+        cytosol_mask = img[:, 1] > 0 
+        cytosol_area = cytosol_mask.view(N, -1 ).sum(1, keepdims = True)
+        
+        #select channel to calculate summary statistics over
+        img_selected = img[:, channel]
+        mean = img_selected.view(N, -1).mean(1, keepdim = True)
+        median = img_selected.view(N, -1).quantile(q = 0.5, dim = 1, keepdim = True)
+        quant75 = img_selected.view(N, -1).quantile(q = 0.75, dim = 1, keepdim = True)
+        quant25 = img_selected.view(N, -1).quantile(q = 0.25, dim = 1, keepdim = True)
+        
+        #calculate more complex statistics
+        summed_intensity_nucleus_area = masked_tensor(img_selected, nucleus_mask).view(N, -1).sum(1).reshape((N, 1)).to_tensor(0)
+        summed_intensity_nucleus_area_normalized = summed_intensity_nucleus_area/nucleus_area
+        summed_intensity_cytosol_area = img_selected.view(N, -1 ).sum(1, keepdims = True)
+        summed_intensity_cytosol_area_normalized = summed_intensity_cytosol_area/cytosol_area
+        
+        #generate results tensor with all values and return
+        results = torch.concat([nucleus_area, 
+                                cytosol_area,
+                                mean, 
+                                median, 
+                                quant75, 
+                                quant25, 
+                                summed_intensity_nucleus_area, 
+                                summed_intensity_cytosol_area, 
+                                summed_intensity_nucleus_area_normalized, 
+                                summed_intensity_cytosol_area_normalized ], 1)
         return(results)
-    
+
     def inference(self, 
                   dataloader):
         
@@ -641,7 +661,7 @@ class CellFeaturizer:
         with torch.no_grad():
 
             x, label, class_id = next(data_iter)
-            r = self.calculate_statistics(x)
+            r = self.calculate_statistics(x, channel = self.config["channel_classification"])
             result = r
 
             for i in range(len(dataloader)-1):
@@ -649,7 +669,7 @@ class CellFeaturizer:
                     self.log(f"processing batch {i}")
                 x, l, id = next(data_iter)
 
-                r = self.calculate_statistics(x)
+                r = self.calculate_statistics(x, channel = self.config["channel_classification"])
                 result = torch.cat((result, r), 0)
                 label = torch.cat((label, l), 0)
                 class_id = torch.cat((class_id, id), 0)
@@ -658,7 +678,16 @@ class CellFeaturizer:
         class_id = class_id.numpy()
         
         # save inferred activations / predictions
-        result_labels = ["mean", "median", "quant75", "quant25"]
+        result_labels = ["nucleus_area", 
+                         "cytosol_area", 
+                         "mean", 
+                         "median", 
+                         "quant75", 
+                         "quant25", 
+                         "summed_intensity_nucleus_area", 
+                         "summed_intensity_cytosol_area", 
+                         "summed_intensity_nucleus_area_normalized", 
+                         "summed_intensity_cytosol_area_normalized"]
         
         dataframe = pd.DataFrame(data=result, columns=result_labels)
         dataframe["label"] = label
