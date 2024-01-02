@@ -420,11 +420,11 @@ class BaseSegmentation(Segmentation):
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][0]
         )
     
-    def _read_cellpose_model(self, modeltype, name, use_GPU):
+    def _read_cellpose_model(self, modeltype, name, use_GPU, device):
         if modeltype == "pretrained":
-            model = models.Cellpose(model_type=name, gpu=use_GPU)
+            model = models.Cellpose(model_type=name, gpu=use_GPU, device = device)
         elif modeltype == "custom":
-            model = models.CellposeModel(pretrained_model = name, gpu=use_GPU)
+            model = models.CellposeModel(pretrained_model = name, gpu=use_GPU, device = device)
         return model
     
     def return_empty_mask(self, input_image):
@@ -653,10 +653,18 @@ class DAPISegmentationCellpose(BaseSegmentation):
         if torch.cuda.is_available():
             if status == "multi_GPU":
                 use_GPU = f"cuda:{gpu_id}"
+                device = torch.device(use_GPU)
             else:
                 use_GPU = True
+                device = torch.device("cuda")
+        #add M1 mac support
+        elif torch.backends.mps.is_available():
+            use_GPU = True
+            device = torch.device("mps")
+            self.log(f"Using MPS backend for segmentation.")
         else:
             use_GPU = False
+            device = torch.device("cpu")
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
@@ -752,21 +760,30 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         if torch.cuda.is_available():
             if status == "multi_GPU":
                 use_GPU = f"cuda:{gpu_id}"
+                device = torch.device(use_GPU)
             else:
                 use_GPU = True
+                device = torch.device("cuda")
+        #add M1 mac support
+        elif torch.backends.mps.is_available():
+            use_GPU = True
+            device = torch.device("mps")
+            self.log(f"Using MPS backend for segmentation.")
         else:
             use_GPU = False
+            device = torch.device("cpu")
 
         # currently no real acceleration through using GPU as we can't load batches
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
+
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
             model_name = self.config["nucleus_segmentation"]["model"]
-            model = self._read_cellpose_model("pretrained", model_name, use_GPU)
+            model = self._read_cellpose_model("pretrained", model_name, use_GPU, device = device)
         elif "model_path" in self.config["nucleus_segmentation"].keys():
             model_name = self.config["nucleus_segmentation"]["model_path"]
-            model = self._read_cellpose_model("custom", model_name, use_GPU)
+            model = self._read_cellpose_model("custom", model_name, use_GPU, device = device)
 
         if "diameter" in self.config["nucleus_segmentation"].keys():
             diameter = self.config["nucleus_segmentation"]["diameter"]
@@ -789,10 +806,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # load correct segmentation model for cytosol
         if "model" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model"]
-            model = self._read_cellpose_model("pretrained", model_name, use_GPU)
+            model = self._read_cellpose_model("pretrained", model_name, use_GPU, device = device)
         elif "model_path" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model_path"]
-            model = self._read_cellpose_model("custom", model_name, use_GPU)
+            model = self._read_cellpose_model("custom", model_name, use_GPU, device = device)
 
         if "diameter" in self.config["cytosol_segmentation"].keys():
             diameter = self.config["cytosol_segmentation"]["diameter"]
@@ -1206,10 +1223,18 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         if torch.cuda.is_available():
             if status == "multi_GPU":
                 use_GPU = f"cuda:{gpu_id}"
+                device = torch.device(use_GPU)
             else:
                 use_GPU = True
+                device = torch.device("cuda")
+        #add M1 mac support
+        elif torch.backends.mps.is_available():
+            use_GPU = True
+            device = torch.device("mps")
+            self.log(f"Using MPS backend for segmentation.")
         else:
             use_GPU = False
+            device = torch.device("cpu")
 
         # currently no real acceleration through using GPU as we can't load batches
         self.log(f"GPU Status for segmentation: {use_GPU}")
@@ -1217,10 +1242,10 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         # load correct segmentation model for cytosol
         if "model" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model"]
-            model = self._read_cellpose_model("pretrained", model_name, use_GPU)
+            model = self._read_cellpose_model("pretrained", model_name, use_GPU, device = device)
         elif "model_path" in self.config["cytosol_segmentation"].keys():
             model_name = self.config["cytosol_segmentation"]["model_path"]
-            model = self._read_cellpose_model("custom", model_name, use_GPU)
+            model = self._read_cellpose_model("custom", model_name, use_GPU, device = device)
         
         if "model_channels" in self.config["cytosol_segmentation"].keys():
             model_channels = self.config["cytosol_segmentation"]["model_channels"]
