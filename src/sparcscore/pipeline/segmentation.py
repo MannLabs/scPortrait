@@ -180,11 +180,26 @@ class Segmentation(ProcessingStep):
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         hf = h5py.File(map_path, "a")
 
+        #check if data container already exists and if so delete
+        if "labels" in hf.keys():
+                del hf["labels"]
+                self.log(
+                    "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
+
         hf.create_dataset(
             "labels",
             data=labels,
             chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
         )
+
+        #check if data container already exists and if so delete
+        if "channels" in hf.keys():
+                del hf["channels"]
+                self.log(
+                    "channels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
+
         #also save channels
         hf.create_dataset(
             "channels",
@@ -449,6 +464,13 @@ class ShardedSegmentation(Segmentation):
 
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         hf = h5py.File(map_path, "w")
+        
+        #check if data container already exists and if so delete
+        if "labels" in hf.keys():
+                del hf["labels"]
+                self.log(
+                    "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
 
         hf.create_dataset(
             "labels",
