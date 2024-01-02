@@ -1,5 +1,8 @@
 #generated project folders in example datasets
 project/
+dev_project/
+development.ipynb
+config_test.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
