@@ -571,6 +571,8 @@ class Project(Logable):
                 self.segmentation_f(self.input_image, *args, **kwargs)
             except:
                 raise ValueError("No input image loaded and no file found to load image from.")
+            self.segmentation_f(self.input_image, *args, **kwargs)
+
         elif self.input_image is not None:
             self.segmentation_f(self.input_image, *args, **kwargs)
     
@@ -589,6 +591,8 @@ class Project(Logable):
                 self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
             except:
                 raise ValueError("No input image loaded and no file found to load image from.")
+            self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
+
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
 
