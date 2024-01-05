@@ -57,7 +57,16 @@ class HDF5CellExtraction(ProcessingStep):
         base_directory = self.directory.replace("/extraction", "")
 
         self.input_segmentation_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_SEGMENTATION_FILE)
-        self.filtered_classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "classes.csv")
+        
+        #get path to filtered classes
+        if os.path.isfile(os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "needs_filtering.txt")):
+            try:
+                self.filtered_classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "filtered/filtered_classes.csv")
+            except:
+                raise ValueError("Need to run segmentation_filtering method ")
+        else:
+            self.filtered_classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "classes.csv")
+
         self.output_path = os.path.join(self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_DATA_FILE)
 
         #extract required information for generating datasets
@@ -163,7 +172,11 @@ class HDF5CellExtraction(ProcessingStep):
     def get_classes(self, filtered_classes_path):
         self.log(f"Loading filtered classes from {filtered_classes_path}")
         cr = csv.reader(open(filtered_classes_path,'r'),    )
-        filtered_classes = [int(float(el[0])) for el in list(cr)]
+
+        if "filtered_classes.csv" in filtered_classes_path:
+            filtered_classes = [el[0] for el in list(cr)] #do not do int transform here as we expect a str of format "nucleus_id:cytosol_id"
+        else:
+            filtered_classes = [int(float(el[0])) for el in list(cr)]
 
         self.log("Loaded {} filtered classes".format(len(filtered_classes)))
         filtered_classes = np.unique(filtered_classes) #make sure they are all unique
@@ -171,7 +184,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("After removing duplicates {} filtered classes remain.".format(len(filtered_classes)))
 
         class_list = list(filtered_classes)
-        if 0 in class_list: class_list.remove(0)
+        if 0 in class_list: class_list.remove(0) #remove background if still listed
         self.num_classes = len(class_list)
 
         return(class_list)
@@ -290,6 +303,14 @@ class HDF5CellExtraction(ProcessingStep):
 
         index, save_index, cell_id, image_index, label_info = self._get_label_info(arg) #label_info not used in base case but relevant for flexibility for other classes
 
+        if type(cell_id) == str:
+            nucleus_id, cytosol_id = cell_id.split(":")
+            nucleus_id = int(float(nucleus_id)) #convert to int for further processing
+            cytosol_id = int(float(cytosol_id)) #convert to int for further processing
+        else:
+            nucleus_id = cell_id
+            cytosol_id = cell_id
+
         #generate some progress output every 10000 cells
         #relevant for benchmarking of time
         if save_index % 10000 == 0:
@@ -321,7 +342,7 @@ class HDF5CellExtraction(ProcessingStep):
                 else:
                     nuclei_mask = hdf_labels[image_index, 0, window_y, window_x]
 
-                nuclei_mask = np.where(nuclei_mask == cell_id, 1, 0)
+                nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
 
                 nuclei_mask_extended = gaussian(nuclei_mask, preserve_range=True, sigma=5)
                 nuclei_mask = gaussian(nuclei_mask, preserve_range=True, sigma=1)
@@ -344,7 +365,7 @@ class HDF5CellExtraction(ProcessingStep):
                     else:
                         cell_mask = hdf_labels[image_index, 1,window_y,window_x]
 
-                    cell_mask = np.where(cell_mask == cell_id, 1, 0).astype(int)
+                    cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
 
                     cell_mask_extended = dilation(cell_mask, footprint=disk(6))

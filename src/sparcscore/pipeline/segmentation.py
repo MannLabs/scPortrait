@@ -37,6 +37,7 @@ class Segmentation(ProcessingStep):
 
         DEFAULT_OUTPUT_FILE (str, default ``segmentation.h5``)
         DEFAULT_FILTER_FILE (str, default ``classes.csv``)
+        DEFAULT_FILTER_ADDTIONAL_FILE (str, default ``filtered_classes.csv``)
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
 
         identifier (int, default ``None``): Only set if called by :class:`ShardedSegmentation`. Unique index of the shard.
@@ -65,6 +66,7 @@ class Segmentation(ProcessingStep):
     """
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
     DEFAULT_FILTER_FILE = "classes.csv"
+    DEFAULT_FILTER_ADDTIONAL_FILE = "needs_additional_filtering.txt"
     PRINT_MAPS_ON_DEBUG = True
 
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
@@ -223,7 +225,21 @@ class Segmentation(ProcessingStep):
         # save classes
         self.save_classes(classes)
 
+        #check filter status in config 
+        if "filter_status" in self.config.keys():
+            filter_status = self.config["filter_status"]
+        else:
+            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
 
+        if not filter_status:
+            #define path where the empty file should be generated
+            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
+
+            with open(filtered_path, "w") as myfile:
+                myfile.write("\n")
+            
+            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
+        
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels = labels)
 
@@ -992,6 +1008,11 @@ class ShardedSegmentation(Segmentation):
 
             #make sure to cleanup temp directories
             self.log("=== completed segmentation === ")
+
+
+#############################################
+###### TIMECOURSE/BATCHED METHODS ###########
+#############################################          
 
 class TimecourseSegmentation(Segmentation):
     """Segmentation helper class used for creating segmentation workflows working with timecourse data."""
