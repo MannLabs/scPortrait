@@ -88,6 +88,17 @@ class Segmentation(ProcessingStep):
         self.window = None
         self.input_path = None
 
+    def save_classes(self, classes):
+        
+        #define path where classes should be saved
+        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+        self.log(f"Saved cell_id classes to file {filtered_path}.")
+
     def initialize_as_shard(self, identifier, window, input_path, zarr_status = True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
@@ -210,11 +221,8 @@ class Segmentation(ProcessingStep):
         hf.close()
 
         # save classes
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+        self.save_classes(classes)
 
-        to_write = "\n".join([str(i) for i in list(classes)])
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
 
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels = labels)
@@ -394,16 +402,6 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
     
-    def process(self, input_image):
-        self.save_zarr = True
-        self.save_input_image(input_image)
-
-        self.log("Finished segmentation")
-
-        #make sure to cleanup temp directories
-        self.log("=== finished segmentation === ")
-
-
 class ShardedSegmentation(Segmentation):
     """object which can create log entries.
 
@@ -1295,7 +1293,6 @@ class TimecourseSegmentation(Segmentation):
         #adjust segmentation indexes
         self.adjust_segmentation_indexes()
         self.log("Adjusted Indexes.")
-
 
 class MultithreadedSegmentation(TimecourseSegmentation):
     DEFAULT_OUTPUT_FILE = "input_segmentation.h5"

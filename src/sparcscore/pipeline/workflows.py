@@ -772,10 +772,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         else:
             use_GPU = False
             device = torch.device("cpu")
-
-        # currently no real acceleration through using GPU as we can't load batches
+        
         self.log(f"GPU Status for segmentation: {use_GPU}")
-
 
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
