@@ -841,10 +841,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         #check to see if the cells should be filtered within the segmentation run
         if "filter_status" in self.config.keys():
             filter_status = self.config["filter_status"]
-            print(filter_status)
         else:
             filter_status = True
-            print(filter_status)
 
         if filter_status:
             ##########################
