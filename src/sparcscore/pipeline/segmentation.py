@@ -681,12 +681,11 @@ class ShardedSegmentation(Segmentation):
             with open(f"{local_shard_directory}/window.csv", "r") as f:
                 window_local =  eval(f.read())
             if window_local != window:
-                self.log("Sharding plans do not match. Aborting run.")
-                self.log("Sharding plan found locally: ", window_local)
-                self.log("Sharding plan found in sharding plan: ", window)
-                sys.exit("sharding plans do not match!")
-            else:
-                self.log("Local sharding plan matches global sharding plan.")
+                self.log("Sharding plans do not match.")
+                self.log(f"Sharding plan found locally: {window_local}")
+                self.log(f"Sharding plan found in sharding plan: {window}")
+                self.log("Reading sharding window from local file and proceeding with that.")
+                window = window_local
 
             cr = csv.reader(open(local_classes, "r"))
             filtered_classes = [int(el[0]) for el in list(cr)]
