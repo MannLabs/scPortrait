@@ -191,27 +191,6 @@ class HDF5CellExtraction(ProcessingStep):
         shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
         del self.TEMP_DIR_NAME, _tmp_single_cell_data, _tmp_single_cell_index 
-    
-    def _write_cell(self, i, file, output_data, output_index):
-        filetype = file.split(".")[-1]
-        filename = file.split(".")[0]
-  
-        if filetype == "npy":
-            class_id = int(filename)
-
-            if i % 10000 == 0:
-                self.log(f"Collecting dataset {i}")
-
-            current_cell = os.path.join(self.extraction_cache, file)
-            output_data[i] = np.load(current_cell)
-            output_index[i] = np.array([i, class_id])
-            index_addition = 1
-
-        else:
-            self.log(f"Non .npy file found {filename}, output hdf might contain missing values")
-            index_addition = 0
-        
-        return(index_addition)
 
     def _get_label_info(self, arg):
         save_index, index = arg
@@ -286,13 +265,12 @@ class HDF5CellExtraction(ProcessingStep):
                     else:
                         cell_mask = hdf_labels[image_index, 1,window_y,window_x]
 
-                    cell_mask = np.where(cell_mask == index,1,0).astype(int)
+                    cell_mask = np.where(cell_mask == index, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
 
-                    cell_mask_extended = dilation(cell_mask,footprint=disk(6))
 
-                    cell_mask =  gaussian(cell_mask,preserve_range=True,sigma=1)   
-                    cell_mask_extended = gaussian(cell_mask_extended,preserve_range=True,sigma=5)
+                    cell_mask =  gaussian(cell_mask, preserve_range=True, sigma=1)   
+                    cell_mask_extended = gaussian(cell_mask_extended, preserve_range=True, sigma=5)
 
                     # channel 3: cellmask
                     
@@ -302,7 +280,7 @@ class HDF5CellExtraction(ProcessingStep):
                         channel_wga = hdf_channels[image_index, 1,window_y,window_x]
 
                     channel_wga = percentile_normalization(channel_wga)
-                    channel_wga = channel_wga*cell_mask_extended
+                    channel_wga = channel_wga * cell_mask_extended
                 
                 if n_channels == 1:
                     required_maps = [nuclei_mask, channel_nucleus]
