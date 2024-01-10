@@ -629,6 +629,18 @@ class Project(Logable):
         input_segmentation = self.segmentation_f.get_output()
         self.segmentation_filtering_f(input_segmentation, *args, **kwargs)
 
+    def complete_filter_segmentation(self, *args, **kwargs):
+
+        """complete an aborted or failed segmentation filtering run.
+        """
+        self.log("completing incomplete segmentation filtering")
+
+        if self.segmentation_filtering_f is None:
+            raise ValueError("No filtering method for refining segmentation masks defined.")
+        
+        input_segmentation = self.segmentation_f.get_output()
+        self.segmentation_filtering_f.complete_filter_segmentation(input_segmentation, *args, **kwargs)
+
     def extract(self, *args, **kwargs):
         """
         Extract single cells with the defined extraction method.
