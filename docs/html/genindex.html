@@ -41,6 +41,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="pages/ecosystem.html">SPARCSpy Ecosystem</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
@@ -242,7 +249,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#id1">configure_optimizers() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">[1]</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">configure_optimizers() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.confusion_plot">confusion_plot() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
@@ -250,9 +257,9 @@
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.contact_filter_lambda">contact_filter_lambda() (in module sparcscore.processing.segmentation)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation">CytosolCellposeTimecourseSegmentation (class in sparcscore.pipeline.workflows)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation">Cytosol_Cellpose_TimecourseSegmentation (class in sparcscore.pipeline.workflows)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse (class in sparcscore.pipeline.workflows)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse (class in sparcscore.pipeline.workflows)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.CytosolSegmentationCellpose">CytosolSegmentationCellpose (class in sparcscore.pipeline.workflows)</a>
 </li>
@@ -352,12 +359,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#sparcscore.ml.models.VGGBase.forward">forward() (sparcscore.ml.models.VGGBase method)</a>
-
-      <ul>
-        <li><a href="pages/module/ml.html#id0">(sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.forward">[1]</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.forward">forward() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -450,18 +453,20 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.max_level">max_level (sparcscore.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.method">method (sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation attribute)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.method">method (sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation attribute)</a>
 
       <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">(sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse attribute)</a>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">(sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse attribute)</a>
 </li>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.method">(sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation attribute)</a>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.method">(sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation attribute)</a>
 </li>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">(sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse attribute)</a>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">(sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse attribute)</a>
 </li>
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedWGATimecourseSegmentation.method">(sparcscore.pipeline.workflows.MultithreadedWGATimecourseSegmentation attribute)</a>
 </li>
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedWGATimecourseSegmentation.WGASegmentation_Timecourse.method">(sparcscore.pipeline.workflows.MultithreadedWGATimecourseSegmentation.WGASegmentation_Timecourse attribute)</a>
+</li>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose.method">(sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose attribute)</a>
 </li>
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentation.method">(sparcscore.pipeline.workflows.ShardedDAPISegmentation attribute)</a>
 </li>
@@ -476,10 +481,10 @@
       </ul></li>
       <li><a href="pages/module/processing.html#sparcscore.processing.preprocessing.MinMax">MinMax() (in module sparcscore.processing.preprocessing)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.MLClusterClassifier">MLClusterClassifier (class in sparcscore.pipeline.classification)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.MLClusterClassifier">MLClusterClassifier (class in sparcscore.pipeline.classification)</a>
+</li>
       <li>
     module
 
@@ -505,9 +510,9 @@
       </ul></li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel">MultilabelSupervisedModel (class in sparcscore.ml.plmodels)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation">MultithreadedCytosolCellposeTimecourseSegmentation (class in sparcscore.pipeline.workflows)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation (class in sparcscore.pipeline.workflows)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse (class in sparcscore.pipeline.workflows)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse (class in sparcscore.pipeline.workflows)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.MultithreadedSegmentation">MultithreadedSegmentation (class in sparcscore.pipeline.segmentation)</a>
 </li>
@@ -533,17 +538,11 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#id2">on_train_epoch_end() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end">[1]</a>
-</li>
-      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_start">on_train_epoch_start() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
-</li>
-      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_train_start">on_train_start() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end">on_train_epoch_end() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#id3">on_validation_epoch_end() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end">[1]</a>
-</li>
-      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_start">on_validation_epoch_start() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end">on_validation_epoch_end() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.preprocessing.origins_from_distance">origins_from_distance() (in module sparcscore.processing.preprocessing)</a>
 </li>
@@ -635,6 +634,8 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.select_channel">select_channel (sparcscore.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose">ShardedCytosolSegmentationCellpose (class in sparcscore.pipeline.workflows)</a>
+</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentation">ShardedDAPISegmentation (class in sparcscore.pipeline.workflows)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentationCellpose">ShardedDAPISegmentationCellpose (class in sparcscore.pipeline.workflows)</a>
@@ -724,7 +725,7 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.test_metrics">test_metrics (sparcscore.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id6">test_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.test_step">[1]</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.test_step">test_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.extraction.TimecourseHDF5CellExtraction">TimecourseHDF5CellExtraction (class in sparcscore.pipeline.extraction)</a>
 </li>
@@ -736,7 +737,7 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.train_metrics">train_metrics (sparcscore.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id4">training_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.training_step">[1]</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.training_step">training_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.transform">transform (sparcscore.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
@@ -748,7 +749,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.val_metrics">val_metrics (sparcscore.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id5">validation_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.validation_step">[1]</a>
+      <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.validation_step">validation_step() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.models.VGG1">VGG1 (class in sparcscore.ml.models)</a>
 </li>
@@ -788,7 +789,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann, Niklas Schmacke.</p>
+    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann and Niklas Schmacke.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

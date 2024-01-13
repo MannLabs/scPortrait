@@ -13,13 +13,13 @@
 import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("../src/vipercore"))
+sys.path.insert(0, os.path.abspath("../src/sparcscore"))
 
 # -- Project information -----------------------------------------------------
 
 project = 'SPARCSpy'
-copyright = '2023 Sophia Mädler, Georg Wallmann, Niklas Schmacke'
-author = 'Sophia Mädler, Georg Wallmann, Niklas Schmacke'
+copyright = '2023 Sophia Mädler, Georg Wallmann and Niklas Schmacke'
+author = 'Sophia Mädler, Georg Wallmann and Niklas Schmacke'
 
 # -- General configuration ---------------------------------------------------
 
@@ -38,7 +38,7 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-autodoc_mock_imports = ['numpy', 'matplotlib','lxml','skimage', 'svgelements',"torch","h5py","skfmm", "scipy", "numba"]
+autodoc_mock_imports = ['numpy', 'matplotlib','lxml','skimage', 'svgelements',"torch", "h5py", "skfmm", "scipy", "numba", "torchvision", "torch", "pytorch_lightning", "torchmetrics", "pandas", "zarr", "ome_zarr", "cv2", "cellpose"]
 
 # -- Options for HTML output -------------------------------------------------
 

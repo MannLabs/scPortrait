@@ -6,11 +6,11 @@ SPARCSpy workflow
 
 The SPARCSpy workflow consists of 4 steps:
 
-  1. **Segmentation**: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected (see :ref:`segmentation_methods`).
+  1. **Segmentation**: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
   
   2. **Extraction**: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
   
-  3. **Classification**: Each individual cell in the extracted single-cell dataset is classified using the specified classification method (see :ref:`classification_methods`). Multiple classification runs can be performed on the same dataset using different classification methods.
+  3. **Classification**: Each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
   
   4. **Selection**: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
 
@@ -52,7 +52,7 @@ If we zoomed in on the corner of the segmentation mask of a nucleus, the segment
 | |pic4|                | |pic5|                |
 +-----------------------+-----------------------+
 
-In this example the depicted cell has the ``cell id`` 205. The ``cell id``s assigned during the segmentation process are permanent: They are preserved throughout a SPARCSpy run. This allows you to trace individual cells back to the original input image.
+In this example the depicted cell has the ``cell id`` 205. The ``cell id`` s assigned during the segmentation process are permanent: They are preserved throughout a SPARCSpy run. This allows you to trace individual cells back to the original input image.
 
 Extraction
 ==========

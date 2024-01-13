@@ -52,11 +52,9 @@ Currently SPARCSpy depends on a developer version of alphabase so please install
 
    pip install git+https://github.com/MannLabs/alphabase
 
+SPARCSpy also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`_.
 Once these steps are completed you can proceed to install the SPARCSpy package via pip:
 
 .. code:: 
 
    pip install -e .
-
-In case you wish to export shapes for excision on a Leica LMD please also install the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library into the same conda environment
-following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`_.

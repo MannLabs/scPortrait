@@ -44,7 +44,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../ecosystem.html">SPARCSpy Ecosystem</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../ecosystem/installation.html">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">Walkthrough the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ecosystem/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
@@ -953,6 +960,17 @@ followed by other channels.</p></li>
 <dd></dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedCytosolSegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose" title="Permalink to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose.method">
+<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose.method" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.CytosolSegmentationCellpose" title="sparcscore.pipeline.workflows.CytosolSegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.CytosolSegmentationCellpose</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.workflows.WGATimecourseSegmentation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">WGATimecourseSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.WGATimecourseSegmentation" title="Permalink to this definition"></a></dt>
 <dd><p>Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
@@ -999,47 +1017,47 @@ No intermediate results are saved and everything is written to one .hdf5 file.</
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">CytosolCellposeTimecourseSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">Cytosol_Cellpose_TimecourseSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation" title="Permalink to this definition"></a></dt>
 <dd><p>Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
 No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CytosolSegmentationCellpose_Timecourse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CytosolSegmentationCellpose_Timecourse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="Permalink to this definition"></a></dt>
 <dd><dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">
+<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method" title="Permalink to this definition"></a></dt>
 <dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.CytosolSegmentationCellpose" title="sparcscore.pipeline.workflows.CytosolSegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.CytosolSegmentationCellpose</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.method" title="Permalink to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.CytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse</span></code></a></p>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.method">
+<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.method" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">MultithreadedCytosolCellposeTimecourseSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.workflows.</span></span><span class="sig-name descname"><span class="pre">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation" title="Permalink to this definition"></a></dt>
 <dd><dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CytosolSegmentationCellpose_Timecourse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CytosolSegmentationCellpose_Timecourse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="Permalink to this definition"></a></dt>
 <dd><dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method">
+<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse.method" title="Permalink to this definition"></a></dt>
 <dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.CytosolSegmentationCellpose" title="sparcscore.pipeline.workflows.CytosolSegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.CytosolSegmentationCellpose</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.method" title="Permalink to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.MultithreadedCytosolCellposeTimecourseSegmentation.CytosolSegmentationCellpose_Timecourse</span></code></a></p>
+<dt class="sig sig-object py" id="sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.method">
+<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.method" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse" title="sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation.CytosolSegmentationCellpose_Timecourse</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
@@ -1380,7 +1398,7 @@ class will automaticly provide the most recent segmentation forward together wit
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann, Niklas Schmacke.</p>
+    <p>&#169; Copyright 2023 Sophia Mädler, Georg Wallmann and Niklas Schmacke.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
