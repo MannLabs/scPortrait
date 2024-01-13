@@ -14,13 +14,15 @@ colorama
 zarr
 ome_zarr
 alphabase
+pandas
+
 #to be installed previously via conda
-#numba
-#cellpose
-#torch
-#pytorch-lightning
-#torchvision
-#opencv
-#scikit-image
-#scikit-fmm
-#scipy
+numba
+cellpose
+torch
+pytorch-lightning
+torchvision
+opencv
+scikit-image
+scikit-fmm
+scipy
