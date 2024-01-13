@@ -8,4 +8,5 @@ This section will give you an overview of the SPARCSpy Ecosystem and make you fa
    :caption: Ecosystem:
 
    ecosystem/installation
+   ecosystem/computational_workflow
    notebooks/example_sparcspy_project.ipynb
