@@ -268,6 +268,7 @@ class HDF5CellExtraction(ProcessingStep):
                     cell_mask = np.where(cell_mask == index, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
 
+                    cell_mask_extended = dilation(cell_mask, footprint=disk(6))
 
                     cell_mask =  gaussian(cell_mask, preserve_range=True, sigma=1)   
                     cell_mask_extended = gaussian(cell_mask_extended, preserve_range=True, sigma=5)
