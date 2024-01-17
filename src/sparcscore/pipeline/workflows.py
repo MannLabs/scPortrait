@@ -214,8 +214,7 @@ class BaseSegmentation(Segmentation):
         px_center = np.round(center_nuclei).astype(int)
         for i, center in enumerate(px_center[1:]):
             marker[center[0],center[1]] = i+1
-
-        wga_labels = watershed(self.maps["travel_time"], marker, mask=self.maps["wga_mask"]==0)
+        wga_labels = watershed(self.maps["travel_time"], marker.astype(np.int64), mask=(self.maps["wga_mask"]==0).astype(np.int64))
         self.maps["watershed"] = np.where(self.maps["wga_mask"]> 0.5,0,wga_labels)
         
         if self.debug:
