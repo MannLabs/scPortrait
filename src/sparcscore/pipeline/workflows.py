@@ -434,7 +434,7 @@ class DAPISegmentation(BaseSegmentation):
             
         channels = np.stack(required_maps+feature_maps).astype("float64")
                     
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("int32")
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]).astype("uint64") #nucleus map needs to be duplicated to preserve downstream compatability with extraction
         return(channels, segmentation)
     
     def process(self, input_image):
@@ -496,7 +496,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         else:
             channels = np.stack(required_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint64")
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]).astype("uint64") #nucleus map needs to be duplicated to preserve downstream compatability with extraction
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
