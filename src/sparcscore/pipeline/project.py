@@ -54,6 +54,7 @@ class Project(Logable):
     """
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
+    DEFAULT_SEGMENTATION_FILTERING_DIR_NAME = "segmentation/filtering"
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
     DEFAULT_SELECTION_DIR_NAME = "selection"
@@ -79,6 +80,7 @@ class Project(Logable):
             debug=False,
             overwrite=False,
             segmentation_f=None,
+            segmentation_filtering_f = None,
             extraction_f=None,
             classification_f=None,
             selection_f=None,
@@ -91,6 +93,7 @@ class Project(Logable):
         self.intermediate_output = intermediate_output
 
         self.segmentation_f = segmentation_f
+        self.segmentation_filtering_f = segmentation_filtering_f
         self.extraction_f = extraction_f
         self.classification_f = classification_f
         self.selection_f = selection_f
@@ -159,6 +162,26 @@ class Project(Logable):
             )
         else:
             self.segmentation_f = None
+
+        # ==== setup filtering of segmentation ====
+        if segmentation_filtering_f is not None:
+            if segmentation_filtering_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {segmentation_filtering_f.__name__} is missing from the config file"
+                )
+
+            filter_seg_directory = os.path.join(
+                self.project_location, self.DEFAULT_SEGMENTATION_FILTERING_DIR_NAME
+            )
+            
+            self.segmentation_filtering_f = segmentation_filtering_f(
+                self.config[segmentation_filtering_f.__name__],
+                filter_seg_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                intermediate_output=self.intermediate_output,
+            )
 
         # === setup extraction ===
         if extraction_f is not None:
@@ -270,7 +293,9 @@ class Project(Logable):
 
     def load_input_image(self):
         path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        
         # read the image data
+        self.log(f"trying to read file from {path}")
         loc = parse_url(path, mode="r")
         zarr_reader = Reader(loc).zarr
 
@@ -566,11 +591,55 @@ class Project(Logable):
             self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-                self.segmentation_f(self.input_image, *args, **kwargs)
             except:
                 raise ValueError("No input image loaded and no file found to load image from.")
+            self.segmentation_f(self.input_image, *args, **kwargs)
+
         elif self.input_image is not None:
             self.segmentation_f(self.input_image, *args, **kwargs)
+    
+    def complete_segmentation(self, *args, **kwargs):
+
+        """complete an aborted or failed segmentation run.
+        """
+        self.log("completing incomplete segmentation")
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+        
+        elif self.input_image is None:
+            self.log("No input image loaded. Trying to read file from disk.")
+            try:
+                self.load_input_image()
+            except:
+                raise ValueError("No input image loaded and no file found to load image from.")
+            self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
+
+        elif self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
+    
+    def filter_segmentation(self, *args, **kwargs):
+        """execute workflow to run filtering on generated segmentation masks to only select those cells that
+        fulfill the filtering criteria
+        """
+        self.log("Filtering generated segmentation masks for cells that fulfill the required criteria")
+
+        if self.segmentation_filtering_f is None:
+            raise ValueError("No filtering method for refining segmentation masks defined.")
+        
+        input_segmentation = self.segmentation_f.get_output()
+        self.segmentation_filtering_f(input_segmentation, *args, **kwargs)
+
+    def complete_filter_segmentation(self, *args, **kwargs):
+
+        """complete an aborted or failed segmentation filtering run.
+        """
+        self.log("completing incomplete segmentation filtering")
+
+        if self.segmentation_filtering_f is None:
+            raise ValueError("No filtering method for refining segmentation masks defined.")
+        
+        input_segmentation = self.segmentation_f.get_output()
+        self.segmentation_filtering_f.complete_filter_segmentation(input_segmentation, *args, **kwargs)
 
     def extract(self, *args, **kwargs):
         """
@@ -591,7 +660,10 @@ class Project(Logable):
         Classify extracted single cells with the defined classification method.
         """
 
-        input_extraction = self.extraction_f.get_output_path()
+        if hasattr(self, 'filtered_dataset'):
+            input_extraction = self.extraction_f.get_output_path().replace("/data/single_cells.h5", f"/filtered_data/{self.filtered_dataset}/single_cells.h5")
+        else:
+            input_extraction = self.extraction_f.get_output_path()
 
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))

@@ -115,6 +115,23 @@ def downsample_img(img, N=2):
     downsampled = (downsampled/downsampled.max()*65535).astype("uint16")
     return(np.array(downsampled))    
 
+def downsample_img_pxs(img, N=2):
+    """
+    Function to downsample an image in shape CXY equivalent to taking every N'th pixel from each dimension. 
+    Channels are preserved as is. This does not use any interpolation and is therefore faster than the mean 
+    method but is less precise.
+
+    Parameters
+    ----------
+    img : array
+        image to downsample
+    N : int, default = 2
+        the nth pixel to take from each dimension
+    """
+
+    downsampled = img[:,0:-1:N,0:-1:N] 
+    return(downsampled)  
+
 @jit(nopython=True, parallel = True) # Set "nopython" mode for best performance, equivalent to @njit
 def rolling_window_mean(array, size, scaling = False):
     """

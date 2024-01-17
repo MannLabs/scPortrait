@@ -1,9 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-
-# reactivate if we want to switch to layers being generated with OrderedDict to get better naming conventions
-# from collections import OrderedDict
+from collections import OrderedDict
 
 class VGGBase(nn.Module): 
     """
@@ -24,8 +22,8 @@ class VGGBase(nn.Module):
     }
 
     cfgs_MLP = {
-        'A': [2048, "M", 1024, "M", 2],
-        'B': [1024, "M", 512, "M", 256, "M", 512, 512, "M", 512, 512, "M", 512, "M"],
+        'A': [2048, "M", 1024, "M",],
+        'B': [1024, "M", 512, "M", 256, "M",],
     }
 
     def make_layers(self, cfg, in_channels, batch_norm = True):
@@ -43,37 +41,19 @@ class VGGBase(nn.Module):
             nn.Sequential: A sequential model representing the VGG architecture.
         """
         layers = []
+        i = 0
         for v in cfg:
             if v == "M":
-                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+                layers += [(f"maxpool{i}", nn.MaxPool2d(kernel_size=2, stride=2))]
             else:
-            
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
                 if batch_norm:
-                    layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
+                    layers += [(f"conv{i}", conv2d), (f"batchnorm{i}", nn.BatchNorm2d(v)), (f"relu{i}", nn.ReLU(inplace=True))]
                 else:
-                    layers += [conv2d, nn.ReLU(inplace=True)]
+                    layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
                 in_channels = v
-        return nn.Sequential(*layers)
-
-        # Alternative code for making the layers named in a better way for easier access to intermediate outputs
-        # Potentially update to in later version? Problem that it won't work with the currently trained versions of the classifiers
-        # Maybe we can port this from one type to another
-
-        # layers = []
-        # i = 0
-        # for v in cfg:
-        #     if v == "M":
-        #         layers += [(f"maxpool{i}", nn.MaxPool2d(kernel_size=2, stride=2))]
-        #     else:
-        #         conv2d = nn.Conv2d(1, v, kernel_size=3, padding=1)
-        #         if batch_norm:
-        #             layers += [(f"conv{i}", conv2d), (f"batchnorm{i}", nn.BatchNorm2d(v)), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         else:
-        #             layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         in_channels = v
-        #         i +=1
-        # return nn.Sequential(OrderedDict(layers))
+                i +=1
+        return nn.Sequential(OrderedDict(layers))
     
     def make_layers_MLP(self, cfg_MLP, cfg):
         """
@@ -93,16 +73,21 @@ class VGGBase(nn.Module):
         in_features = int(cfg[-2]) * 2 * 2
         
         layers = []
+        i = 0
         for out_features in cfg_MLP:
             if out_features == "M":
-                layers += [nn.ReLU(True)]
-                layers += [nn.Dropout()]           
+                layers += [(f"MLP_relu{i}", nn.ReLU(True)), (f"MLP_dropout{i}", nn.Dropout())]
+                i+=1         
             else:
-                linear = nn.Linear(in_features, out_features)
+                linear = (f"MLP_linear{i}", nn.Linear(in_features, out_features))
                 layers += [linear]
                 in_features = out_features
-              
-        return nn.Sequential(*layers)
+                
+        #add final layer with number of classes
+        linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
+        layers += [linear]    
+        
+        return nn.Sequential(OrderedDict(layers))
 
     def forward(self, x):
         x = self.norm(x)
@@ -119,7 +104,6 @@ class VGGBase(nn.Module):
         x = self.features(x)
         return torch.flatten(x, 1)
 
-
 class VGG1(VGGBase):
     """
     Instance of VGGBase with the model architecture 1.
@@ -128,12 +112,15 @@ class VGG1(VGGBase):
                 cfg = "B",
                 cfg_MLP = "A",
                 dimensions = 196,
-                in_channels = 5,
+                in_channels = 1,
                 num_classes = 2,
                 ):
         
         super(VGG1, self).__init__()
-        
+
+        #save num_clases for use in making MLP head
+        self.num_classes = num_classes
+
         self.norm = nn.BatchNorm2d(in_channels)
         self.softmax = nn.LogSoftmax(dim=1)
         
@@ -152,12 +139,15 @@ class VGG2(VGGBase):
                 cfg = "B",
                 cfg_MLP = "B",
                 dimensions = 196,
-                in_channels = 5,
+                in_channels = 1,
                 num_classes = 2,
                 ):
         
         super(VGG2, self).__init__()
         
+        #save num_clases for use in making MLP head
+        self.num_classes = num_classes
+
         self.norm = nn.BatchNorm2d(in_channels)
         self.softmax = nn.LogSoftmax(dim=1)
         
@@ -478,8 +468,6 @@ class VAEBase(nn.Module):
         return model
     
 
-
-
 #### DEPRECATED FUNCTIONS FOR BACKWARD COMPATABILITY
 
 class _VGG1(nn.Module):
@@ -526,9 +514,6 @@ class _VGG1(nn.Module):
             nn.Linear(1024, num_classes),
         )
         
-        
-        
-
     def forward(self, x):
         x = self.norm(x)
         x = self.features(x)
@@ -572,22 +557,7 @@ class _VGG1(nn.Module):
         x = self.classifier_3(x)
         return x
 
-    def make_layers(self, cfg, in_channels, batch_norm = True):
-        # layers = []
-        # i = 0
-        # for v in cfg:
-        #     if v == "M":
-        #         layers += [(f"maxpool{i}", nn.MaxPool2d(kernel_size=2, stride=2))]
-        #     else:
-        #         conv2d = nn.Conv2d(1, v, kernel_size=3, padding=1)
-        #         if batch_norm:
-        #             layers += [(f"conv{i}", conv2d), (f"batchnorm{i}", nn.BatchNorm2d(v)), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         else:
-        #             layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         in_channels = v
-        #         i +=1
-        # return nn.Sequential(OrderedDict(layers))
-        
+    def make_layers(self, cfg, in_channels, batch_norm = True):       
         layers = []
         for v in cfg:
             if v == "M":
@@ -615,7 +585,6 @@ class _VGG2(nn.Module):
         'E': [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
     }
     
-    
     def __init__(self,
                 cfg = "B",
                 dimensions = 196,
@@ -627,7 +596,6 @@ class _VGG2(nn.Module):
         super(_VGG2, self).__init__()
         
         self.norm = nn.BatchNorm2d(in_channels)
-        
         #self.avgpool = nn.AdaptiveAvgPool2d((4, 4))
         
         self.softmax = nn.LogSoftmax(dim=1)
@@ -653,9 +621,8 @@ class _VGG2(nn.Module):
         self.classifier_4 = nn.Sequential( 
             nn.ReLU(True),
             nn.Dropout(),
-            nn.Linear(256, 2),
+            nn.Linear(256, num_classes),
         )
-        
 
     def forward(self, x):
         x = self.norm(x)
@@ -710,8 +677,7 @@ class _VGG2(nn.Module):
         x = self.classifier_3(x)
         x = self.classifier_4(x)
         return x
-
-    
+  
     def make_layers(self, cfg, in_channels, batch_norm = True):
         layers = []
         for v in cfg:
@@ -727,22 +693,6 @@ class _VGG2(nn.Module):
                 in_channels = v
         return nn.Sequential(*layers)
         
-        # layers = []
-        # i = 0
-        # for v in cfg:
-        #     if v == "M":
-        #         layers += [(f"maxpool{i}", nn.MaxPool2d(kernel_size=2, stride=2))]
-        #     else:
-        #         conv2d = nn.Conv2d(1, v, kernel_size=3, padding=1)
-        #         if batch_norm:
-        #             layers += [(f"conv{i}", conv2d), (f"batchnorm{i}", nn.BatchNorm2d(v)), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         else:
-        #             layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
-        #         in_channels = v
-        #         i +=1
-        # return nn.Sequential(OrderedDict(layers))
-
-        
-    def vgg(cfg, in_channels,  **kwargs):
+    def vgg(self, cfg, in_channels,  **kwargs):
         model = _VGG1(make_layers(cfgs[cfg], in_channels), **kwargs)
         return model

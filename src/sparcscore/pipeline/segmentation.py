@@ -27,6 +27,8 @@ from tqdm.auto import tqdm
 #to perform garbage collection
 import gc
 
+import sys
+
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
 
@@ -35,6 +37,7 @@ class Segmentation(ProcessingStep):
 
         DEFAULT_OUTPUT_FILE (str, default ``segmentation.h5``)
         DEFAULT_FILTER_FILE (str, default ``classes.csv``)
+        DEFAULT_FILTER_ADDTIONAL_FILE (str, default ``filtered_classes.csv``)
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
 
         identifier (int, default ``None``): Only set if called by :class:`ShardedSegmentation`. Unique index of the shard.
@@ -63,6 +66,7 @@ class Segmentation(ProcessingStep):
     """
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
     DEFAULT_FILTER_FILE = "classes.csv"
+    DEFAULT_FILTER_ADDTIONAL_FILE = "needs_additional_filtering.txt"
     PRINT_MAPS_ON_DEBUG = True
 
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
@@ -85,6 +89,17 @@ class Segmentation(ProcessingStep):
         self.identifier = None
         self.window = None
         self.input_path = None
+
+    def save_classes(self, classes):
+        
+        #define path where classes should be saved
+        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+        self.log(f"Saved cell_id classes to file {filtered_path}.")
 
     def initialize_as_shard(self, identifier, window, input_path, zarr_status = True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
@@ -109,7 +124,7 @@ class Segmentation(ProcessingStep):
             This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
     
-        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
+        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}") 
         
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
@@ -137,6 +152,7 @@ class Segmentation(ProcessingStep):
         #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
             try:
+                self.log(f"Beginning segmentation on shard in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
             except Exception:
                 self.log(traceback.format_exc())
@@ -150,6 +166,13 @@ class Segmentation(ProcessingStep):
         #cleanup generated temp dir and variables
         del input_image
         gc.collect()
+
+        #write out window location
+        self.log(f"Writing out window location to file at {self.directory}/window.csv")
+        with open(f"{self.directory}/window.csv", "w") as f:
+            f.write(f"{self.window}\n")  
+        
+        self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
     def save_segmentation(self, channels, labels, classes):
         """Saves the results of a segmentation at the end of the process.
@@ -170,11 +193,26 @@ class Segmentation(ProcessingStep):
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         hf = h5py.File(map_path, "a")
 
+        #check if data container already exists and if so delete
+        if "labels" in hf.keys():
+                del hf["labels"]
+                self.log(
+                    "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
+
         hf.create_dataset(
             "labels",
             data=labels,
             chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
         )
+
+        #check if data container already exists and if so delete
+        if "channels" in hf.keys():
+                del hf["channels"]
+                self.log(
+                    "channels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
+
         #also save channels
         hf.create_dataset(
             "channels",
@@ -185,12 +223,23 @@ class Segmentation(ProcessingStep):
         hf.close()
 
         # save classes
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+        self.save_classes(classes)
 
-        to_write = "\n".join([str(i) for i in list(classes)])
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
+        #check filter status in config 
+        if "filter_status" in self.config.keys():
+            filter_status = self.config["filter_status"]
+        else:
+            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
 
+        if not filter_status:
+            #define path where the empty file should be generated
+            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
+
+            with open(filtered_path, "w") as myfile:
+                myfile.write("\n")
+            
+            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
+        
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels = labels)
 
@@ -369,16 +418,6 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
     
-    def process(self, input_image):
-        self.save_zarr = True
-        self.save_input_image(input_image)
-
-        self.log("Finished segmentation")
-
-        #make sure to cleanup temp directories
-        self.log("=== finished segmentation === ")
-
-
 class ShardedSegmentation(Segmentation):
     """object which can create log entries.
 
@@ -439,6 +478,13 @@ class ShardedSegmentation(Segmentation):
 
         map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         hf = h5py.File(map_path, "w")
+        
+        #check if data container already exists and if so delete
+        if "labels" in hf.keys():
+                del hf["labels"]
+                self.log(
+                    "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                )
 
         hf.create_dataset(
             "labels",
@@ -478,8 +524,43 @@ class ShardedSegmentation(Segmentation):
             _shard_list.append(current_shard)
 
         return _shard_list
+    
+    def initialize_shard_list_incomplete(self, sharding_plan, incomplete_indexes):
+        _shard_list = []
+
+        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        self.input_path = input_path
+
+        for i, window in zip(incomplete_indexes, sharding_plan):
+            local_shard_directory = os.path.join(self.shard_directory, str(i))
+            current_shard = self.method(
+                self.config,
+                local_shard_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                intermediate_output=self.intermediate_output,
+            )
+            current_shard.initialize_as_shard(i, window, self.input_path, zarr_status = False)
+            _shard_list.append(current_shard)
+
+        return _shard_list
 
     def calculate_sharding_plan(self, image_size):
+        #save sharding plan to file
+        sharding_plan_path = f"{self.directory}/sharding_plan.csv"
+
+        if os.path.isfile(sharding_plan_path):
+            self.log(f"sharding plan already found in directory {sharding_plan_path}.")
+            if self.overwrite:
+                self.log("Overwriting existing sharding plan.")
+                os.remove(sharding_plan_path)
+            else:
+                self.log("Reading existing sharding plan from file.")
+                with open(sharding_plan_path, "r") as f:
+                    _sharding_plan = [eval(line) for line in f.readlines()]
+                    return(_sharding_plan)
+
         _sharding_plan = []
         side_size = np.floor(np.sqrt(int(self.config["shard_size"])))
         shards_side = np.round(image_size / side_size).astype(int)
@@ -521,9 +602,14 @@ class ShardedSegmentation(Segmentation):
                     upper_x = image_size[1]
 
                 shard = (slice(lower_y, upper_y), slice(lower_x, upper_x))
-                print(shard)
                 _sharding_plan.append(shard)
-
+    
+        #write out newly generated sharding plan
+        with open(sharding_plan_path, "w") as f:
+            for shard in _sharding_plan:
+                f.write(f"{shard}\n")
+        self.log(f"Sharding plan written to file at {sharding_plan_path}")
+        
         return _sharding_plan
 
     def resolve_sharding(self, sharding_plan):
@@ -591,6 +677,16 @@ class ShardedSegmentation(Segmentation):
             local_output = os.path.join(local_shard_directory, self.DEFAULT_OUTPUT_FILE)
             local_classes = os.path.join(local_shard_directory, "classes.csv")
 
+            #check to make sure windows match
+            with open(f"{local_shard_directory}/window.csv", "r") as f:
+                window_local =  eval(f.read())
+            if window_local != window:
+                self.log("Sharding plans do not match.")
+                self.log(f"Sharding plan found locally: {window_local}")
+                self.log(f"Sharding plan found in sharding plan: {window}")
+                self.log("Reading sharding window from local file and proceeding with that.")
+                window = window_local
+
             cr = csv.reader(open(local_classes, "r"))
             filtered_classes = [int(el[0]) for el in list(cr)]
             filtered_classes_combined += [
@@ -608,15 +704,25 @@ class ShardedSegmentation(Segmentation):
             )
             
             orig_input = hdf_labels[:, window[0], window[1]]
+
+            if orig_input.shape != shifted_map.shape:
+                print("Shapes do not match")
+                print("window", window[0], window[1])
+                print("shifted_map shape:", shifted_map.shape)
+                print("orig_input shape:", orig_input.shape)
+
+                #dirty fix to get this to run until we can implement a better solution
+                shifted_map = np.zeros(orig_input.shape)
+            
             shifted_map = np.where((orig_input != 0) & (shifted_map == 0), orig_input, shifted_map) 
-            #since shards are computed with overlap there potentially alreadty exist segmentations in the selected area that we wish to keep
+            #since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
             # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the 
             # new ones from the second shard
             # this will result in cell ids that are missing in the file but does not matter as all cell ids will be unique
             # any ids that were on the shard edges will be removed
 
             #potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
-            # for other segmentation methods this could cause issues
+            # for ocdther segmentation methods this could cause issues
 
             hdf_labels[:, window[0], window[1]] = shifted_map
 
@@ -719,6 +825,12 @@ class ShardedSegmentation(Segmentation):
             self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
             sharding_plan = self.calculate_sharding_plan(self.image_size)
 
+        #save sharding plan to file to be able to reload later
+        self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+        with open(f"{self.directory}/sharding_plan.csv", "w") as f:
+            for shard in sharding_plan:
+                f.write(f"{shard}\n")
+
         shard_list = self.initialize_shard_list(sharding_plan)
         self.log(
             f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
@@ -730,9 +842,11 @@ class ShardedSegmentation(Segmentation):
         #check that that number of GPUS is actually available 
         if "nGPUS" not in self.config.keys():
             self.config["nGPUs"] = torch.cuda.device_count()
-            
+
         nGPUS = self.config["nGPUs"]
         available_GPUs = torch.cuda.device_count()
+        self.log(f"found {available_GPUs} GPUs.")
+
         processes_per_GPU = self.config["threads"]
 
         if available_GPUs != self.config["nGPUs"]:
@@ -740,6 +854,7 @@ class ShardedSegmentation(Segmentation):
         
         if available_GPUs >= 1:
             n_processes = processes_per_GPU * available_GPUs  
+            self.log(f"Proceeding in segmentation with {n_processes} number of processes.")
         else:
             n_processes = self.config["threads"]
             available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
@@ -753,7 +868,7 @@ class ShardedSegmentation(Segmentation):
         def initializer_function(gpu_id_list):
             current_process().gpu_id_list = gpu_id_list
 
-        self.log(f"Beginning segmentation on {available_GPUs}.")
+        self.log(f"Beginning segmentation on {available_GPUs} GPUs.")
         
         with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
@@ -776,6 +891,127 @@ class ShardedSegmentation(Segmentation):
         #make sure to cleanup temp directories
         self.log("=== finished segmentation === ")
 
+    def complete_segmentation(self, input_image):
+
+        self.save_zarr = False
+        self.save_input_image(input_image)
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+
+        #check to make sure that the shard directory exisits, if not exit and return error
+        if not os.path.isdir(self.shard_directory):
+            sys.exit("No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method.")
+
+        #check to see which tiles are incomplete
+        tile_directories = os.listdir(self.shard_directory)
+        incomplete_indexes=[]
+        for tile in tile_directories:
+            if not os.path.isfile(f"{self.shard_directory}/{tile}/classes.csv"):
+                incomplete_indexes.append(int(tile))
+                self.log(f"Shard with ID {tile} not completed.") 
+        
+        # calculate sharding plan
+        self.image_size = input_image.shape[1:]
+
+        if self.config["shard_size"] >= np.prod(self.image_size):
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used.")
+
+            sharding_plan = [
+                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
+            ]
+        else:
+            target_size = self.config["shard_size"]
+            self.log(f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used.")
+            
+            #read sharding plan from file
+            with open(f"{self.directory}/sharding_plan.csv", "r") as f:
+                sharding_plan = [eval(line) for line in f.readlines()]
+            
+            self.log(f"Sharding plan read from file {self.directory}/sharding_plan.csv")
+        
+        #check to make sure that calculated sharding plan matches to existing sharding results
+        if len(sharding_plan) != len(tile_directories):
+            sys.exit("Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results.")
+
+        #select only those shards that did not complete successfully for further processing
+        sharding_plan_complete = sharding_plan
+
+        if len(incomplete_indexes) == 0:
+            if os.path.isfile(f"{self.directory}/classes.csv"):
+                self.log("All segmentations already done")
+            else:
+                self.log("Segmentations already completed. Performing Stitching of individual tiles.")
+                self.resolve_sharding(sharding_plan_complete)
+
+                #make sure to cleanup temp directories
+                self.log("=== completed segmentation === ")
+        else:
+            sharding_plan = [shard for i, shard in enumerate(sharding_plan) if i in incomplete_indexes]
+            self.log(f"Adjusted sharding plan to only proceed with the {len(incomplete_indexes)} incomplete shards.")
+
+            shard_list = self.initialize_shard_list_incomplete(sharding_plan, incomplete_indexes)
+            self.log(
+                f"sharding plan with {len(sharding_plan)} elements generated"
+            )
+
+            del input_image #remove from memory to free up space
+            gc.collect() #perform garbage collection
+            
+            #check that that number of GPUS is actually available 
+            if "nGPUS" not in self.config.keys():
+                self.config["nGPUs"] = torch.cuda.device_count()
+
+            nGPUS = self.config["nGPUs"]
+            available_GPUs = torch.cuda.device_count()
+            self.log(f"found {available_GPUs} GPUs.")
+
+            processes_per_GPU = self.config["threads"]
+
+            if available_GPUs != self.config["nGPUs"]:
+                self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
+            
+            if available_GPUs >= 1:
+                n_processes = processes_per_GPU * available_GPUs  
+            else:
+                n_processes = self.config["threads"]
+                available_GPUs = 1 #default to 1 GPU if non are available and a CPU only method is run
+
+            #initialize a list of available GPUs
+            gpu_id_list = []
+            for gpu_ids in range(available_GPUs):
+                for _ in range(processes_per_GPU):
+                    gpu_id_list.append(gpu_ids)
+            
+            def initializer_function(gpu_id_list):
+                current_process().gpu_id_list = gpu_id_list
+
+            self.log(f"Beginning segmentation on {available_GPUs}.")
+            
+            with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
+                results = list(
+                    tqdm(
+                        pool.imap(self.method.call_as_shard, shard_list),
+                        total=len(shard_list),
+                    )
+                )
+                pool.close()
+                pool.join()
+                print("All segmentations are done.", flush=True)
+            
+            #free up memory
+            del shard_list
+            gc.collect()
+
+            self.log("Finished parallel segmentation of missing shards")
+            self.resolve_sharding(sharding_plan_complete)
+
+            #make sure to cleanup temp directories
+            self.log("=== completed segmentation === ")
+
+
+#############################################
+###### TIMECOURSE/BATCHED METHODS ###########
+#############################################          
 
 class TimecourseSegmentation(Segmentation):
     """Segmentation helper class used for creating segmentation workflows working with timecourse data."""
@@ -1077,7 +1313,6 @@ class TimecourseSegmentation(Segmentation):
         #adjust segmentation indexes
         self.adjust_segmentation_indexes()
         self.log("Adjusted Indexes.")
-
 
 class MultithreadedSegmentation(TimecourseSegmentation):
     DEFAULT_OUTPUT_FILE = "input_segmentation.h5"
