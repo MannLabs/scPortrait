@@ -3,6 +3,7 @@ project/
 dev_project/
 development.ipynb
 config_test.yml
+segmentation_workflows/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
