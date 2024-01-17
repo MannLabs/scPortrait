@@ -853,7 +853,8 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
         print("no cells in image. Only contains background.")
         #return empty arrays
         return None, None, None
-
+    
+    num_classes = int(num_classes) #add explicit conversion to int to ensure that numba can type the function correctly
     points_class = np.zeros((num_classes,), dtype = nb.uint32)
     center = np.zeros((num_classes, 2, ))
     ids = np.zeros((num_classes,))
