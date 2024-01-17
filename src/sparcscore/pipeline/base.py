@@ -75,7 +75,7 @@ class Logable(object):
     
 class ProcessingStep(Logable):
     
-    """Processing step living in its own subdirectory of the project.
+    """Processing step. Can load a configuration file and create a subdirectory under the project class for the processing step.
         
     Args:
         config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
