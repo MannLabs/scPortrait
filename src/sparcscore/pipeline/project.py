@@ -30,7 +30,8 @@ from ome_zarr.reader import Reader
 
 class Project(Logable):
     """
-    Project base class used to create a SPARCSpy project.
+        Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
+    to a directory on the file system which contains all of the project inputs as well as the generated outputs.
 
     Args:
         location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
@@ -308,11 +309,12 @@ class Project(Logable):
 
     def load_input_from_file(self, file_paths, crop=[(0, -1), (0, -1)]):
         """
-        Load input image from a number of files.
+        Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
 
         Args:
-            file_paths (list(str)): List containing paths to each channel like [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”]. Expects a list of file paths with length “input_channel” as defined in the config.yml. Input data is NOT copied to the project folder by default. Different segmentation functions especially tiled segmentations might copy the input.
+            file_paths (list(str)): List containing paths to each channel like [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”]. Expects a list of file paths with length “input_channel” as defined in the config.yml.
             crop (list(tuple), optional): When set, it can be used to crop the input image. The first element refers to the first dimension of the image and so on. For example use “[(0,1000),(0,2000)]” to crop the image to 1000 px height and 2000 px width from the top left corner.
+
         """
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
@@ -358,6 +360,9 @@ class Project(Logable):
     def load_input_from_array(self, array, remap=None):
         """
         Load input image from an already loaded numpy array.
+        The numpy array needs to have the following shape: CXY. 
+        The channels need to be in the following order: nucleus, cellmembrane channel, 
+        other channnels or a remapping needs to be defined.
 
         Args:
             array (numpy.ndarray): Numpy array of shape “[channels, height, width]”.
@@ -722,8 +727,10 @@ class Project(Logable):
 
 class TimecourseProject(Project):
     """
-    Timecourse Project used to create a SPARCSpy project for datasets that have multiple timepoints
-    over the same field of view (add additional dimension in comparision to base SPARCSpy project).
+    TimecourseProject class used to create a SPARCSpy project for datasets that have multiple fields of view that should be processed and analysed together. 
+    It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>`,
+    it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>` class,
+    it requires the use of specialized processing classes that are able to handle this additional dimensionality.
 
     Args:
         location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
@@ -750,7 +757,25 @@ class TimecourseProject(Project):
         super().__init__(*args, **kwargs)
 
     def load_input_from_array(self, img, label, overwrite=False):
-        """img needs to be in the format: (tiles, C, X, Y). Channels need to be in the order: nucleus, cytosol, other channels """
+        """
+        Function to load imaging data from an array into the TimecourseProject.
+        
+        The provided array needs to fullfill the following conditions:
+        - shape: NCYX
+        - all images need to have the same dimensions and the same number of channels
+        - channels need to be in the following order: nucleus, cytosol other channels
+        - dtype uint16.
+
+        Parameters
+        ----------
+        img : numpy.ndarray
+            Numpy array of shape “[num_images, channels, height, width]”.
+        label : numpy.ndarray
+            Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: "image_index", "unique_image_identifier", "..."
+        overwrite : bool, default False
+            If set to True, the function will overwrite the existing input image.
+        """
+
         # check if already exists if so throw error message
         if not os.path.isdir(
                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
@@ -801,7 +826,45 @@ class TimecourseProject(Project):
             img_size=1080,
             overwrite=False):
         """
-        Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
+        Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.
+    
+        Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_.
+
+        In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
+        using the well notation ``RowXX_WellXX``:
+
+        .. csv-table::
+            :header: "Well", "Condition1", "Condition2", ...
+            :widths: auto
+
+            "RowXX_WellXX", "A", "B", ...
+
+        A tab needs to be used as a seperator and the file saved as a .tsv file.
+
+        Parameters
+        ----------
+        input_dir : str
+            Path to the directory containing the sorted images from the opera phenix.
+        channels : list(str)
+            List containing the names of the channels that should be loaded.
+        timepoints : list(str)
+            List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
+        plate_layout : str
+            Path to the plate layout file. For the format please see above.
+        img_size : int, default 1080
+            Size of the images that should be loaded. All images will be cropped to this size.
+        overwrite : bool, default False
+            If set to True, the function will overwrite the existing input image.
+
+        Example
+        -------
+        >>> channels = ["DAPI", "Alexa488", "mCherry"]
+        >>> timepoints = ["Timepoint"+str(x).zfill(3) for x in list(range(1, 3))]
+        >>> input_dir = "path/to/sorted/outputs/from/sparcstools"
+        >>> plate_layout = "plate_layout.tsv"
+
+        >>> project.load_input_from_files(input_dir = input_dir,  channels = channels,  timepoints = timepoints, plate_layout = plate_layout, overwrite = True)
+        
         """
 
         # check if already exists if so throw error message
@@ -1259,21 +1322,39 @@ class TimecourseProject(Project):
             cytosol_channel="Alexa488",
     ):
         """
-        Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing after merging all the regions from each teampoint in each well.
+        Function to load timecourse experiments recorded with an opera phenix into a TimecourseProject. In addition to loading the images, 
+        this wrapper function also stitches images acquired in the same well (this assumes that the tiles were aquired with overlap and in a rectangular shape)
+        using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_. Implementation of this function is currently still slow for many wells/timepoints as stitching 
+        is handled consecutively and not in parallel. This will be fixed in the future.
 
-        Args:
-            input_dir (str): path to directory containing the stitched images
-            channels (list(str)): list of strings indicating which channels should be loaded
-            timepoints (list(str)): list of strings indicating which timepoints should be loaded
-            plate_layout (str): path to csv file containing the plate layout
-            img_size (int, optional): size of the images that should be generated. Defaults to 1080.
-            stitching_channel (str, optional): channel that should be used for stitching. Defaults to "Alexa488".
-            overlap (float, optional): overlap between stitched images. Defaults to 0.1.
-            max_shift (int, optional): maximum shift between stitched images. Defaults to 10.
-            overwrite (bool, optional): boolean indicating if existing files should be overwritten. Defaults to False.
-            nucleus_channel (str, optional): channel that should be used for nucleus segmentation. Defaults to "DAPI".
-            cytosol_channel (str, optional): channel that should be used for cytosol segmentation. Defaults to "Alexa488".
+        Parameters
+        ----------
+        input_dir : str
+            Path to the directory containing the sorted images from the opera phenix.
+        channels : list(str)
+            List containing the names of the channels that should be loaded.
+        timepoints : list(str)
+            List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
+        plate_layout : str
+            Path to the plate layout file. For the format please see above.
+        img_size : int, default 1080
+            Size of the images that should be loaded. All images will be cropped to this size.
+        stitching_channel : str, default "Alexa488"
+            string indicated on which channel the stitching should be calculated.
+        overlap : float, default 0.1
+            float indicating the overlap between the tiles that were aquired.
+        max_shift : int, default 10
+            int indicating the maximum shift that is allowed when stitching the tiles. If a calculated shift is larger than this threshold
+            between two tiles then the position of these tiles is not updated and is set according to the calculated position based on the overlap.
+        overwrite : bool, default False
+            If set to True, the function will overwrite the existing input image.
+        nucleus_channel : str, default "DAPI"
+            string indicating the channel that should be used for the nucleus channel.
+        cytosol_channel : str, default "Alexa488"
+            string indicating the channel that should be used for the cytosol channel.
+        
         """
+
         from sparcstools.stitch import generate_stitched
 
         # check if already exists if so throw error message
