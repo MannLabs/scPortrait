@@ -41,16 +41,16 @@ class MLClusterClassifier:
         Parameters
         ----------
         config : dict
-            Configuration for the extraction passed over from the :class:`pipeline.Dataset`.
+            Configuration for the extraction passed over from the :class:`pipeline.Project`.
 
-        output_directory : str
+        path : str
             Directory for the extraction log and results. Will be created if not existing yet.
 
         debug : bool, optional, default=False
             Flag used to output debug information and map images.
 
         overwrite : bool, optional, default=False
-            Flag used to recalculate all images, not yet implemented.
+            Flag used to overwrite existing results.
         """
 
         self.debug = debug
@@ -148,8 +148,8 @@ class MLClusterClassifier:
         Important:
         
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
-            class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project 
-            class will automaticly provide the most recent segmentation forward together with the supplied parameters.
+            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project 
+            class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
     
                     
                     
@@ -334,6 +334,7 @@ class MLClusterClassifier:
     def inference(self, 
                   dataloader, 
                   model_fun):
+        
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
         
@@ -380,10 +381,24 @@ class MLClusterClassifier:
 class CellFeaturizer:
 
     """
-    Class for classifying single cells using a pre-trained machine learning model.
-    This class takes a pre-trained model and uses it to classify single_cells,
-    using the model’s forward function or encoder function, depending on the
-    user’s choice. The classification results are saved to a TSV file.
+    Class for extracting general image features from SPARCS single-cell image datasets. 
+    The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
+
+    The features which are calculated are:
+
+    - area of the nucleus in px,
+    - area of the cytosol in px,
+    - mean intensity of chosen channel
+    - median intensity of chosen channel, 
+    - 75% quantile of chosen channel,
+    - 25% quantile of chosen channel, 
+    - summed intensity of the chosen channel in the region labeled as nucleus,
+    - summed intensity of the chosen channel in the region labeled as cyotosl,
+    - summed intensity of the chosen channel in the region labelled as nucleus normalized to the nucleus area,
+    - summed intensity of the chosen channel in the region labelled as cytosol normalized to the cytosol area, nucleus_area
+
+    The features are outputed in this order in the tsv file.
+    
     """
     
     DEFAULT_LOG_NAME = "processing.log" 
@@ -397,14 +412,14 @@ class CellFeaturizer:
                  overwrite=False,
                  intermediate_output = True):
         
-        """ Class is initiated to classify extracted single cells.
+        """ Class is initiated to featurize extracted single cells.
 
         Parameters
         ----------
         config : dict
-            Configuration for the extraction passed over from the :class:`pipeline.Dataset`.
+            Configuration for the extraction passed over from the :class:`pipeline.Project`.
 
-        output_directory : str
+        path : str
             Directory for the extraction log and results. Will be created if not existing yet.
 
         debug : bool, optional, default=False
@@ -491,7 +506,7 @@ class CellFeaturizer:
                  project_dataloader=HDF5SingleCellDataset, 
                  accessory_dataloader=HDF5SingleCellDataset):
         """ 
-        Function called to perform classification on the provided HDF5 dataset.
+        Function called to perform featurization on the provided HDF5 dataset.
 
         Parameters
         ----------
@@ -500,7 +515,7 @@ class CellFeaturizer:
             accessory : list
                 list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project
             size : int, default = 0
-                How many cells should be selected for inference. Default is 0, then all cells are  selected.
+                How many cells should be selected for inference. Default is 0, then all cells are selected.
 
         Returns
         -------
@@ -509,10 +524,9 @@ class CellFeaturizer:
         Important:
         
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
-            class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project 
-            class will automaticly provide the most recent segmentation forward together with the supplied parameters.
-    
-                    
+            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project 
+            class will automaticly provide the most recent extraction results together with the supplied parameters.
+                 
                     
         Example:
             
@@ -524,27 +538,29 @@ class CellFeaturizer:
                 accessory = ([], [], [])
                 project.classify(accessory = accessory)
 
-
         Note:
             
             The following parameters are required in the config file:
             
             .. code-block:: yaml
-            
-                MLClusterClassifier:
-                    # channel number on which the classification should be performed
-                    channel_classification: 4
-                    
-                    #number of threads to use for dataloader
-                    threads: 24 
-                    dataloader_worker: 24
 
+                CellFeaturizer:
+                    # channel number on which the featurization should be performed
+                    channel_classification: 4
+
+                    #number of threads to use for dataloader
+                    dataloader_worker: 0 #needs to be 0 if using cpu
+                    
                     #batch size to pass to GPU
                     batch_size: 900
                     
                     # on which device inference should be performed
                     # for speed should be "cuda"
-                    inference_device: "cuda"
+                    inference_device: "cpu"
+
+                    #label under which the results should be saved
+                    screen_label: "Ch3_Featurization"
+
         """
         
         # is called with the path to the segmented image
