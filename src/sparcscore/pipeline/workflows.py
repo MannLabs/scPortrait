@@ -780,8 +780,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         else:
             filter_status = True
 
-        self.log(f"Filtering status: {filter_status}")
-
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
             model_name = self.config["nucleus_segmentation"]["model"]
@@ -845,7 +843,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_nucleus_unfiltered = masks_nucleus.copy()
             masks_cytosol_unfiltered = masks_cytosol.copy()
 
-        if filter_status:
+        if not filter_status:
+            self.log("No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed")
+        
+        else:
             ##########################
             ### Perform Cell Filtering
             ##########################    
@@ -1030,9 +1031,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             #cleanup memory by deleting no longer required variables
             del updated_cytosol_mask, all_nucleus_ids, used_nucleus_ids
-        else:
-            self.log("No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed")
-        
+
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
             masks_nucleus.shape[1:]

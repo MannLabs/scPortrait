@@ -100,6 +100,27 @@ class Segmentation(ProcessingStep):
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
         self.log(f"Saved cell_id classes to file {filtered_path}.")
+    
+    def check_filter_status(self):
+          
+        #check filter status in config 
+        if "filter_status" in self.config.keys():
+            filter_status = self.config["filter_status"]
+        else:
+            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
+
+        self.log(f"Filtering status for this segmentation is set to {filter_status}.")
+        
+        if not filter_status:
+            #define path where the empty file should be generated
+            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
+
+            with open(filtered_path, "w") as myfile:
+                myfile.write("\n")
+            
+            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
+        elif filter_status:
+            self.log("Filtering has been performed during segmentation. Nucleus and Cytosol IDs match. No additional steps are required.")
 
     def initialize_as_shard(self, identifier, window, input_path, zarr_status = True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
@@ -223,23 +244,9 @@ class Segmentation(ProcessingStep):
         hf.close()
 
         # save classes
+        self.check_filter_status()
         self.save_classes(classes)
 
-        #check filter status in config 
-        if "filter_status" in self.config.keys():
-            filter_status = self.config["filter_status"]
-        else:
-            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
-
-        if not filter_status:
-            #define path where the empty file should be generated
-            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
-
-            with open(filtered_path, "w") as myfile:
-                myfile.write("\n")
-            
-            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
-        
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels = labels)
 
@@ -494,21 +501,7 @@ class ShardedSegmentation(Segmentation):
 
         hf.close()
 
-        #check filter status in config 
-        if "filter_status" in self.config.keys():
-            filter_status = self.config["filter_status"]
-        else:
-            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
-
-        if not filter_status:
-            #define path where the empty file should be generated
-            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
-
-            with open(filtered_path, "w") as myfile:
-                myfile.write("\n")
-            
-            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
-        
+        self.check_filter_status()
         self.save_classes(classes)
 
         self.log("=== finished segmentation ===")
@@ -757,13 +750,12 @@ class ShardedSegmentation(Segmentation):
         self.log("Number of classes after removing shard edges:")
         self.log(len(classes_after_edges))
 
-        # save newly generated class list
-        # print filtered classes
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
-        to_write = "\n".join([str(i) for i in list(classes_after_edges)])
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
+        #check filtering classes to ensure that segmentation run is properly tagged
+        self.check_filter_status()
 
+        # save newly generated class list
+        self.save_classes(classes_after_edges)
+    
         # sanity check of class reconstruction
         if self.debug:
             all_classes = set(hdf_labels[:].flatten())
@@ -1258,12 +1250,7 @@ class TimecourseSegmentation(Segmentation):
             self.log(len(classes_after_edges))
 
             # save newly generated class list
-            # print filtered classes
-            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
-            to_write = "\n".join([str(i) for i in list(classes_after_edges)])
-
-            with open(filtered_path, "w") as myfile:
-                myfile.write(to_write)
+            self.save_classes(classes_after_edges)
 
             # sanity check of class reconstruction
             if self.debug:

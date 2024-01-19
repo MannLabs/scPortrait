@@ -484,7 +484,8 @@ class HDF5CellExtraction(ProcessingStep):
 
         Args:
             input_segmentation_path (str): Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
-            filtered_classes_path (str): Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            filtered_classes_path (str): Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.
+            
 
         Important:
         
@@ -576,6 +577,7 @@ class HDF5CellExtraction(ProcessingStep):
                 
             del length
 
+        print("filtered_classes_path:", filtered_classes_path)
         class_list = self.get_classes(filtered_classes_path)    
         lookup_saveindex = self.generate_save_index_lookup(class_list)           
         
@@ -591,7 +593,6 @@ class HDF5CellExtraction(ProcessingStep):
         _cell_ids = list(compress(_cell_ids, filter))
 
         #update number of classes
-
         self.log(f"Number of classes found in filtered classes list {len(class_list)} vs number of classes for which centers were calculated {len(_cell_ids)}")
         self.num_classes = len(_cell_ids)
         
@@ -819,8 +820,8 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             input_segmentation_path: str
                 Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
             filtered_classes_path: str
-                Path of the filtered classes resulting from segementation. If this class is used as part of a project processing workflow this argument will be provided automatically.
-
+                Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.
+            
         Important:
         
             If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation. 
