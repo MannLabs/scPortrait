@@ -64,10 +64,12 @@ class HDF5CellExtraction(ProcessingStep):
         if os.path.isfile(os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "needs_filtering.txt")):
             try:
                 self.classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_FILTERED_CLASSES_FILE)
+                self.log(f"Loading classes from filtered classes path: {self.classes_path}")
             except:
                 raise ValueError("Need to run segmentation_filtering method ")
         else:
             self.classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_CLASSES_FILE)
+            self.log(f"Loading classes from default classes path: {self.classes_path}")
 
         self.output_path = os.path.join(self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_DATA_FILE)
 
@@ -168,11 +170,11 @@ class HDF5CellExtraction(ProcessingStep):
     def get_classes(self, filtered_classes_path):
 
         if filtered_classes_path is not None:
+            self.log(f"Loading classes from provided filtered classes path: {filtered_classes_path}")
             path = filtered_classes_path
         else:
             path = self.classes_path
         
-        self.log(f"Loading classes from {path}")
         cr = csv.reader(open(path,'r'),    )
 
         if "filtered" in path:
@@ -476,7 +478,7 @@ class HDF5CellExtraction(ProcessingStep):
                 self.save_index_to_remove.append(save_index)
                 return([save_index])
     
-    def process(self, input_segmentation_path, filtered_classes_path):
+    def process(self, input_segmentation_path, filtered_classes_path = None):
         """
         Process function to run the extraction method.
 
