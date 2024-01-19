@@ -521,7 +521,7 @@ class HDF5CellExtraction(ProcessingStep):
         Process function to run the extraction method.
 
         Args:
-            input_segmentation_path (str): Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
+            input_segmentation_path (str): Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow this argument will be provided automatically.
             filtered_classes_path (str): Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.
             
 
@@ -567,9 +567,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.get_channel_info() # needs to be called here after the segmentation is completed
         self.setup_output()
         self.parse_remapping()
-        
-        # setup cache
-        self._initialize_tempmmap_array()
 
         self.log("Started extraction")
         self.log("Loading segmentation data from {input_segmentation_path}")
@@ -586,12 +583,8 @@ class HDF5CellExtraction(ProcessingStep):
 
         px_centers, _cell_ids = self._calculate_centers(hdf_labels)
             
-        print("filtered_classes_path:", filtered_classes_path)
+        #get classes to extract
         class_list = self.get_classes(filtered_classes_path)    
-        lookup_saveindex = self.generate_save_index_lookup(class_list)           
-        
-        #make into set to improve computational efficiency
-        #needs to come after generating lookup index otherwise it will throw an error message
         class_list = set(class_list)
         
         #filter cell ids found using center into those that we actually want to extract
@@ -603,8 +596,14 @@ class HDF5CellExtraction(ProcessingStep):
 
         #update number of classes
         self.log(f"Number of classes found in filtered classes list {len(class_list)} vs number of classes for which centers were calculated {len(_cell_ids)}")
-        self.num_classes = len(_cell_ids)
+        class_list = _cell_ids
+        del _cell_ids, filter
+
+        self.num_classes = len(class_list)
         
+        # setup cache
+        self._initialize_tempmmap_array()
+
         #start extraction
         self.verbalise_extraction_info()
 
@@ -612,7 +611,10 @@ class HDF5CellExtraction(ProcessingStep):
         start = timeit.default_timer()
 
         f = partial(self._extract_classes, input_segmentation_path, px_centers)
-        args = self._get_arg(_cell_ids, lookup_saveindex)
+        
+        #generate cell pairings to extract
+        lookup_saveindex = self.generate_save_index_lookup(class_list)  
+        args = self._get_arg(class_list, lookup_saveindex)
 
         with Pool(processes = self.config["threads"]) as pool:
             x = list(tqdm(pool.imap(f, args), total = len(args)))

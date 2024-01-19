@@ -655,10 +655,7 @@ class Project(Logable):
             raise ValueError("No extraction method defined")
 
         input_segmentation = self.segmentation_f.get_output()
-        input_dir = os.path.join(
-            self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "classes.csv"
-        )
-        self.extraction_f(input_segmentation, input_dir, *args, **kwargs)
+        self.extraction_f(input_segmentation, *args, **kwargs)
 
     def classify(self, *args, **kwargs):
         """
