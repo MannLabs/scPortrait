@@ -38,6 +38,8 @@ class HDF5CellExtraction(ProcessingStep):
     DEFAULT_DATA_FILE = "single_cells.h5"
     DEFAULT_SEGMENTATION_DIR = "segmentation"
     DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
+    DEFAULT_CLASSES_FILE = "classes.csv"
+    DEFAULT_FILTERED_CLASSES_FILE = "filtered/filtered_classes.csv"
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = False
 
@@ -61,29 +63,23 @@ class HDF5CellExtraction(ProcessingStep):
         #get path to filtered classes
         if os.path.isfile(os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "needs_filtering.txt")):
             try:
-                self.filtered_classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "filtered/filtered_classes.csv")
+                self.classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_FILTERED_CLASSES_FILE)
             except:
                 raise ValueError("Need to run segmentation_filtering method ")
         else:
-            self.filtered_classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, "classes.csv")
+            self.classes_path = os.path.join(base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_CLASSES_FILE)
 
         self.output_path = os.path.join(self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_DATA_FILE)
 
         #extract required information for generating datasets
         self.get_compression_type()
-        self.get_classes_path()
         self.get_normalization()
 
         self.save_index_to_remove = []
-        
                   
     def get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
         return(self.compression_type)
-
-    def get_classes_path(self):
-        self.classes_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR, "classes.csv")
-        return self.classes_path
     
     def get_normalization(self):
         global norm_function, MinMax_function
@@ -170,18 +166,24 @@ class HDF5CellExtraction(ProcessingStep):
             self.remap = [int(el.strip()) for el in char_list]
 
     def get_classes(self, filtered_classes_path):
-        self.log(f"Loading filtered classes from {filtered_classes_path}")
-        cr = csv.reader(open(filtered_classes_path,'r'),    )
 
-        if "filtered_classes.csv" in filtered_classes_path:
+        if filtered_classes_path is not None:
+            path = filtered_classes_path
+        else:
+            path = self.classes_path
+        
+        self.log(f"Loading classes from {path}")
+        cr = csv.reader(open(path,'r'),    )
+
+        if "filtered" in path:
             filtered_classes = [el[0] for el in list(cr)] #do not do int transform here as we expect a str of format "nucleus_id:cytosol_id"
         else:
             filtered_classes = [int(float(el[0])) for el in list(cr)]
 
-        self.log("Loaded {} filtered classes".format(len(filtered_classes)))
+        self.log("Loaded {} classes".format(len(filtered_classes)))
         filtered_classes = np.unique(filtered_classes) #make sure they are all unique
         filtered_classes.astype(np.uint64)
-        self.log("After removing duplicates {} filtered classes remain.".format(len(filtered_classes)))
+        self.log("After removing duplicates {} classes remain.".format(len(filtered_classes)))
 
         class_list = list(filtered_classes)
         if 0 in class_list: class_list.remove(0) #remove background if still listed
@@ -806,7 +808,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                 self.log(f"label_info: {label_info}")
                 self.log(f"index it should be: {_tmp_single_cell_index[index][2]}")
     
-    def process(self, input_segmentation_path, filtered_classes_path):
+    def process(self, input_segmentation_path, filtered_classes_path = None):
         
         """
         Process function to run the extraction method. 
