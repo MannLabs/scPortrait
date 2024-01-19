@@ -494,12 +494,22 @@ class ShardedSegmentation(Segmentation):
 
         hf.close()
 
-        # save classes
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+        #check filter status in config 
+        if "filter_status" in self.config.keys():
+            filter_status = self.config["filter_status"]
+        else:
+            filter_status = True #always assumes that filtering is performed by default. Needs to be manually turned off if not desired.
 
-        to_write = "\n".join([str(i) for i in list(classes)])
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
+        if not filter_status:
+            #define path where the empty file should be generated
+            filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_ADDTIONAL_FILE)
+
+            with open(filtered_path, "w") as myfile:
+                myfile.write("\n")
+            
+            self.log(f"Generated empty file at {filtered_path}. This marks that no filtering has been performed during segmentation and an additional step needs to be performed to populate this file with nucleus_id:cytosol_id matchings before running the extraction.")
+        
+        self.save_classes(classes)
 
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels = labels)
