@@ -78,6 +78,9 @@ class HDF5CellExtraction(ProcessingStep):
         self.get_normalization()
 
         self.save_index_to_remove = []
+
+        #set developer debug mode for super detailed output
+        self.deep_debug = False
                   
     def get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -308,10 +311,17 @@ class HDF5CellExtraction(ProcessingStep):
 
         index, save_index, cell_id, image_index, label_info = self._get_label_info(arg) #label_info not used in base case but relevant for flexibility for other classes
 
-        if type(cell_id) == str:
+        if self.deep_debug: print("celltype type:", type(cell_id))
+                                  
+        if isinstance(cell_id, str):
             nucleus_id, cytosol_id = cell_id.split(":")
             nucleus_id = int(float(nucleus_id)) #convert to int for further processing
             cytosol_id = int(float(cytosol_id)) #convert to int for further processing
+
+            if self.deep_debug:
+                print(f"cell_id: {cell_id}")
+                print(f"nucleus_id: {nucleus_id}")
+                print(f"cytosol_id: {cytosol_id}")
         else:
             nucleus_id = cell_id
             cytosol_id = cell_id
@@ -346,6 +356,11 @@ class HDF5CellExtraction(ProcessingStep):
                     nuclei_mask = hdf_labels[0, window_y, window_x]
                 else:
                     nuclei_mask = hdf_labels[image_index, 0, window_y, window_x]
+                
+                if self.deep_debug:
+                        x, y = nuclei_mask.shape
+                        center_nuclei = nuclei_mask[slice(x//2-5, x//2 + 5), slice(y//2-5, y//2 + 5)]
+                        print(center_nuclei)
 
                 nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
 
@@ -369,6 +384,11 @@ class HDF5CellExtraction(ProcessingStep):
                         cell_mask = hdf_labels[1,window_y,window_x]
                     else:
                         cell_mask = hdf_labels[image_index, 1,window_y,window_x]
+
+                    if self.deep_debug:
+                        x, y = nuclei_mask.shape
+                        center_cytosol = cell_mask[slice(x//2-5, x//2 + 5), slice(y//2-5, y//2 + 5)]
+                        print(center_cytosol)
 
                     cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
@@ -426,6 +446,8 @@ class HDF5CellExtraction(ProcessingStep):
                     if index % 300 == 0:
                         
                         print(f"Cell ID: {cell_id} has center at [{_px_center[0]}, {_px_center[1]}]")
+                        print("Nucleus ID", nucleus_id)
+                        print("Cytosol ID", cytosol_id)
 
                         plt.figure()
                         plt.imshow(nuclei_mask)
@@ -471,7 +493,7 @@ class HDF5CellExtraction(ProcessingStep):
                 if self.remap is not None:
                     stack = stack[self.remap]
 
-                self._save_cell_info(save_index, cell_id, image_index, label_info, stack) #to make more flexible for new datastructures with more labelling info
+                self._save_cell_info(save_index, nucleus_id, image_index, label_info, stack) #to make more flexible for new datastructures with more labelling info
                 return([])
             else:
                 if self.debug:
@@ -587,7 +609,7 @@ class HDF5CellExtraction(ProcessingStep):
         #get classes to extract
         class_list = self.get_classes(filtered_classes_path)
 
-        if isinstance(class_list[0], np.str_):
+        if isinstance(class_list[0], str):
             lookup_dict = {x.split(":")[0]:x.split(":")[1] for x in class_list}
             nuclei_ids = list(lookup_dict.keys())
             nuclei_ids = set(nuclei_ids)
@@ -598,14 +620,13 @@ class HDF5CellExtraction(ProcessingStep):
         _cell_ids = list(_cell_ids)
 
         filter = [str(x) in nuclei_ids for x in _cell_ids]
-        print(filter)
 
         px_centers = np.array(list(compress(px_centers, filter)))
         _cell_ids = list(compress(_cell_ids, filter))
 
         #generate new class list 
-        if type(class_list[0]) == str:
-            class_list = [f"{x}:{lookup_dict[x]}" for x in _cell_ids]
+        if isinstance(class_list[0], str):
+            class_list = [f"{x}:{lookup_dict[str(x)]}" for x in _cell_ids]
             del lookup_dict
         else:
             class_list = _cell_ids
