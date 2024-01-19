@@ -167,7 +167,7 @@ class HDF5CellExtraction(ProcessingStep):
             
             self.remap = [int(el.strip()) for el in char_list]
 
-    def get_classes(self, filtered_classes_path):
+    def get_classes(self, filtered_classes_path = None):
 
         if filtered_classes_path is not None:
             self.log(f"Loading classes from provided filtered classes path: {filtered_classes_path}")
@@ -478,6 +478,44 @@ class HDF5CellExtraction(ProcessingStep):
                 self.save_index_to_remove.append(save_index)
                 return([save_index])
     
+    def _calculate_centers(self, hdf_labels):
+        
+        #define locations to look for center and cell_ids files
+        center_path = os.path.join(self.directory, "center.pickle")
+        cell_ids_path = os.path.join(self.directory, "_cell_ids.pickle")
+
+        #check to see if file has already been calculated if so load it
+        if os.path.isfile(center_path) and os.path.isfile(cell_ids_path) and not self.overwrite:
+            self.log("Cached version found, loading")
+            with open(center_path, "rb") as input_file:
+                center_nuclei = cPickle.load(input_file)
+                px_centers = np.round(center_nuclei).astype(int)
+            with open(cell_ids_path, "rb") as input_file:
+                _cell_ids = cPickle.load(input_file)
+            
+            #delete variables to free up memory
+            del center_nuclei
+        
+        #perform calculation and save results to file
+        else:
+            self.log("Started class coordinate calculation")
+            center_nuclei, length, _cell_ids = numba_mask_centroid(hdf_labels[0].astype(np.uint32), debug=self.debug)
+            px_centers = np.round(center_nuclei).astype(int)
+            
+            self.log("Finished class coordinate calculation")
+            
+            with open(center_path, "wb") as output_file:
+                cPickle.dump(center_nuclei, output_file)
+            with open(cell_ids_path, "wb") as output_file:
+                cPickle.dump(_cell_ids, output_file)
+            with open(os.path.join(self.directory,"length.pickle"), "wb") as output_file:
+                cPickle.dump(length, output_file)
+
+            #delete variables to free up memory
+            del length, center_nuclei
+
+        return(px_centers, _cell_ids)
+    
     def process(self, input_segmentation_path, filtered_classes_path = None):
         """
         Process function to run the extraction method.
@@ -531,12 +569,8 @@ class HDF5CellExtraction(ProcessingStep):
         self.parse_remapping()
         
         # setup cache
-        self.uuid = str(uuid.uuid4())
-        self.extraction_cache = os.path.join(self.config["cache"],self.uuid)
-        if not os.path.isdir(self.extraction_cache):
-            os.makedirs(self.extraction_cache)
-            self.log("Created new extraction cache " + self.extraction_cache)
-            
+        self._initialize_tempmmap_array()
+
         self.log("Started extraction")
         self.log("Loading segmentation data from {input_segmentation_path}")
     
@@ -550,33 +584,8 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("Finished loading label data " + str(hdf_labels.shape))
         self.n_masks = hdf_labels.shape[0]
 
-        # Calculate centers
-        self.log("Checked class coordinates")
-        
-        center_path = os.path.join(self.directory, "center.pickle")
-        cell_ids_path = os.path.join(self.directory, "_cell_ids.pickle")
-
-        if os.path.isfile(center_path) and os.path.isfile(cell_ids_path) and not self.overwrite:
-            self.log("Cached version found, loading")
-            with open(center_path, "rb") as input_file:
-                center_nuclei = cPickle.load(input_file)
-                px_centers = np.round(center_nuclei).astype(int)
-            with open(cell_ids_path, "rb") as input_file:
-                _cell_ids = cPickle.load(input_file)
-        else:
-            self.log("Started class coordinate calculation")
-            center_nuclei, length, _cell_ids = numba_mask_centroid(hdf_labels[0].astype(np.uint32), debug=self.debug)
-            px_centers = np.round(center_nuclei).astype(int)
-            self.log("Finished class coordinate calculation")
-            with open(center_path, "wb") as output_file:
-                cPickle.dump(center_nuclei, output_file)
-            with open(cell_ids_path, "wb") as output_file:
-                cPickle.dump(_cell_ids, output_file)
-            with open(os.path.join(self.directory,"length.pickle"), "wb") as output_file:
-                cPickle.dump(length, output_file)
-                
-            del length
-
+        px_centers, _cell_ids = self._calculate_centers(hdf_labels)
+            
         print("filtered_classes_path:", filtered_classes_path)
         class_list = self.get_classes(filtered_classes_path)    
         lookup_saveindex = self.generate_save_index_lookup(class_list)           
@@ -595,9 +604,6 @@ class HDF5CellExtraction(ProcessingStep):
         #update number of classes
         self.log(f"Number of classes found in filtered classes list {len(class_list)} vs number of classes for which centers were calculated {len(_cell_ids)}")
         self.num_classes = len(_cell_ids)
-        
-        # setup cache
-        self._initialize_tempmmap_array()
         
         #start extraction
         self.verbalise_extraction_info()
@@ -625,7 +631,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)")
         self.log("Collecting cells...")
 
-        #make into set to improve computational efficiency
         #transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
