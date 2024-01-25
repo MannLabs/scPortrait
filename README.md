@@ -1,7 +1,7 @@
 [![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/SPARCSpy/html/index.html)](https://mannlabs.github.io/SPARCSpy/html/index.html)
 
-[graphical_abstract.pdf](https://github.com/MannLabs/SPARCSpy/files/14051120/graphical_abstract.pdf)
+![graphical_abstract](https://github.com/MannLabs/SPARCSpy/assets/15019107/846e3833-37f8-40b4-a00c-9c1dee1e2a94)
 
 SPARCSpy is a scalable toolkit to analyse SPARCS datasets. The python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
