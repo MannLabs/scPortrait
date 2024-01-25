@@ -3,7 +3,7 @@ SPARCSpy - image-based single cell analysis at scale in python
 
 SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
-.. image:: pages/images/graphical_abstract_without_title.pdf
+.. image:: pages/images/graphical_abstract_without_title.png
    :width: 100%
    :align: center
    :alt: graphical abstract

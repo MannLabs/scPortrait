@@ -5,7 +5,7 @@ Extraction
 
 The SPARCSpy framework is built around the idea of generating standardized single-cell image datasets. A SPARCSpy single cell image dataset consists of a collection of images for each cell containing both the segmentation masks and imaging channels of that particular cell. 
 
-.. image:: ../images/extraction_process.pdf 
+.. image:: ../images/extraction_process.png
     :width: 100%
     :align: center
 
@@ -26,6 +26,6 @@ For each cell, the extracted single-cell image dataset consists of a collection 
 
 Besides containing the images themselves, the single-cell image datasets also contain annotation information for each cell within the dataset. In the minimal form this consists of a ``cellID``, which is a unique numerical identifier assigned to each cell during segmentation. By directly linking single-cell images to the ``cellID`` of the extracted cell this allows you to trace individual extracted cells back to their original position in the input image to e.g. select them for subsequent laser microdissection or look at their localization. Depending on the extraction method used, the single-cell image dataset can also contain additional labelling information.
 
-.. image:: ../images/HDF5_data_containers.pdf
+.. image:: ../images/HDF5_data_containers.png
     :width: 100%
     :align: center

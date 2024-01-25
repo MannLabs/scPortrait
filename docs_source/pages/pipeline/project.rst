@@ -5,7 +5,7 @@ SPARCSpy Projects
 
 Within SPARCSpy, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the SPARCSpy processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific SPARCSpy run as well as the generated outputs. This directory also contains copies of the configuration file which specifies the parameters used for all methods associated with that run. This allows for easy reproducibility of results. 
 
-.. image:: ../images/project_structure.pdf
+.. image:: ../images/project_structure.png
     :width: 100%
     :align: center
     :alt: SPARCSpy project structure

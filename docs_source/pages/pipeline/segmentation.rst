@@ -142,7 +142,7 @@ This segmentation workflow is implemented to only run on the CPU. As such it can
 Nucleus Segmentation Algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: ../images/WGA_segmentation_nucleus.pdf
+.. image:: ../images/WGA_segmentation_nucleus.png
    :width: 100%
    :align: left
    :alt: Nuclear segmentation algorithm steps
@@ -151,7 +151,7 @@ Nucleus Segmentation Algorithm
 Cytosol Segmentation Algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: ../images/WGA_segmentation_cytosol.pdf
+.. image:: ../images/WGA_segmentation_cytosol.png
    :width: 100%
    :align: left
    :alt: Cytosol segmentation algorithm steps
@@ -190,7 +190,7 @@ This segmentation workflow aims to only segment nuclei. Based on a nuclear stain
 
 Nucleus Segmentation Algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. image:: ../images/WGA_segmentation_nucleus.pdf
+.. image:: ../images/WGA_segmentation_nucleus.png
    :width: 100%
    :align: center
    :alt: Nuclear segmentation algorithm steps
