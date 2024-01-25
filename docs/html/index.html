@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SPARCSpy - spatially resolved CRISPR screening tools in python &mdash; SPARCSpy  documentation</title>
+  <title>SPARCSpy - image-based single cell analysis at scale in python &mdash; SPARCSpy  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SPARCSpy Ecosystem" href="pages/ecosystem.html" /> 
+    <link rel="next" title="Quickstart" href="pages/quickstart.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -39,15 +39,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="pages/ecosystem.html">SPARCSpy Ecosystem</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/installation.html">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/computational_workflow.html">SPARCSpy workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#segmentation">Segmentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#classification">Classification</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/ecosystem/computational_workflow.html#selection">Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/quickstart/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
@@ -76,20 +76,103 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="pages/pipeline.html">SPARCSpy Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/project.html">SPARCSpy Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/project.html#project-classes">Project classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/project.html#project">1. Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/project.html#timecourseproject">2. TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/project.html#initializing-a-sparcspy-project">Initializing a SPARCSpy Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/project.html#loading-images-into-a-sparcspy-project">Loading Images into a SPARCSpy project</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/segmentation.html">Segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#id2">1. Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#shardedsegmentation">2. ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#timecoursesegmentation">3. TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#multithreadedsegmentation">4. MultithreadedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/segmentation.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#wga-segmentation">WGA segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#dapi-segmentation">DAPI segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#cytosol-cellpose-segmentation">Cytosol Cellpose segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#dapi-cellpose-segmentation">DAPI Cellpose segmentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/extraction.html">Extraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/extraction.html#extraction-classes">Extraction classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pages/example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html">Example Notebook Running SPARCSpy on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Example-loading-data-via-a-numpy-array">Example loading data via a numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/Example_Notebook_TimeCourse_Project.html#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="pages/sparcscmd.html">Command Line Tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-split">sparcs-split</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_split.html">sparcs-split</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_split.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_split.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_split.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-stat">sparcs-stat</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_stat.html">sparcs-stat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_stat.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_stat.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_stat.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-cleanup">sparcs-cleanup</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_cleanup.html">sparcs-cleanup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_cleanup.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_cleanup.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/sparcscmd/sparcs_cleanup.html#examples">Examples</a></li>
 </ul>
 </li>
 </ul>
@@ -113,7 +196,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id3">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -127,6 +210,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/pipeline.html#classification">classification</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#cellfeaturizer">CellFeaturizer</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/pipeline.html#selection">selection</a><ul>
@@ -163,7 +247,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">SPARCSpy - spatially resolved CRISPR screening tools in python</li>
+      <li class="breadcrumb-item active">SPARCSpy - image-based single cell analysis at scale in python</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -173,34 +257,66 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="sparcspy-spatially-resolved-crispr-screening-tools-in-python">
-<h1>SPARCSpy - spatially resolved CRISPR screening tools in python<a class="headerlink" href="#sparcspy-spatially-resolved-crispr-screening-tools-in-python" title="Permalink to this headline"></a></h1>
-<p>SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This python implementation efficiently segments individual cells, generates single-cell datasets  and provides tools for the efficient deep learning classification of their phenotypes and subsequent excision using Laser Microdissection.</p>
+  <section id="sparcspy-image-based-single-cell-analysis-at-scale-in-python">
+<h1>SPARCSpy - image-based single cell analysis at scale in python<a class="headerlink" href="#sparcspy-image-based-single-cell-analysis-at-scale-in-python" title="Permalink to this headline"></a></h1>
+<p>SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.</p>
+<a class="reference internal image-reference" href="_images/graphical_abstract_without_title.pdf"><img alt="graphical abstract" class="align-center" src="_images/graphical_abstract_without_title.pdf" style="width: 100%;" /></a>
 </section>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline"></a></h1>
-<p>Check the installation instructions <a class="reference internal" href="pages/ecosystem/installation.html#installation"><span class="std std-ref">here</span></a>.</p>
+<p>Check out the installation instructions <a class="reference internal" href="pages/quickstart/installation.html#installation"><span class="std std-ref">here</span></a>. You can validate your installation by running one of the example notebooks <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks">here</a>.</p>
+</section>
+<section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline"></a></h1>
+<p>You can check out our <a class="reference internal" href="pages/quickstart.html#quickstart"><span class="std std-ref">quickstart</span></a> guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth <a class="reference internal" href="pages/pipeline.html#pipeline"><span class="std std-ref">computational workflow</span></a> guide. In the github repository you can also find some <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks">tutorial notebooks</a> as well as <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/example_data">small example datasets</a> to get started with. If you encounter issues feel free to <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/issues">open up a git issue</a>.</p>
 </section>
 <section id="citing-our-work">
 <h1>Citing our Work<a class="headerlink" href="#citing-our-work" title="Permalink to this headline"></a></h1>
-<p>SPARCSpy was developed by Sophia Mädler, Georg Wallmann and Niklas Schmacke in the labs of Matthias Mann and Veit Hornung.
-If you use our code please cite the <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">following manuscript</a>:</p>
+<p>SPARCSpy was developed by Sophia Mädler, Georg Wallmann and Niklas Schmacke in the labs of <a class="reference external" href="https://www.biochem.mpg.de/de/mann">Matthias Mann</a> and <a class="reference external" href="https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html">Veit Hornung</a> in 2023. SPARCSpy is actively developed with support from the labs of Matthias Mann, Veit Hornung and <a class="reference external" href="https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab">Fabian Theis</a>.</p>
+<p>If you use our code please cite the <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">following manuscript</a>:</p>
 <p>SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
 Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
 bioRxiv 2023.06.01.542416; doi: <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">https://doi.org/10.1101/2023.06.01.542416</a></p>
+</section>
+<section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline"></a></h1>
+<p>We are excited for people to adapt and extend SPARCSpy to their needs. If you are interested in contributing to SPARCSpy, please reach out to the developers or open a pull request on our github repository.</p>
+</section>
+<section id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline"></a></h1>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="pages/ecosystem.html">SPARCSpy Ecosystem</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/installation.html">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/ecosystem/computational_workflow.html">SPARCSpy workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/quickstart/computational_workflow.html">SPARCSpy workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="pages/pipeline.html">SPARCSpy Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/project.html">SPARCSpy Projects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/segmentation.html">Segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/extraction.html">Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pages/example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#segmentation-workflows">Segmentation Workflows</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="pages/sparcscmd.html">Command Line Tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-split">sparcs-split</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-stat">sparcs-stat</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd.html#sparcs-cleanup">sparcs-cleanup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_split.html">sparcs-split</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_stat.html">sparcs-stat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/sparcscmd/sparcs_cleanup.html">sparcs-cleanup</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="pages/module.html">Module Documentation</a><ul>
@@ -217,7 +333,7 @@ bioRxiv 2023.06.01.542416; doi: <a class="reference external" href="https://doi.
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="pages/ecosystem.html" class="btn btn-neutral float-right" title="SPARCSpy Ecosystem" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="pages/quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

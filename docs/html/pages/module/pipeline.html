@@ -40,15 +40,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../ecosystem.html">SPARCSpy Ecosystem</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../ecosystem/installation.html">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../ecosystem/computational_workflow.html">SPARCSpy workflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#segmentation">Segmentation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#classification">Classification</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../ecosystem/computational_workflow.html#selection">Selection</a></li>
+              <p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
@@ -77,20 +77,105 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">SPARCSpy Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">SPARCSpy Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#project">1. Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#timecourseproject">2. TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#initializing-a-sparcspy-project">Initializing a SPARCSpy Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#loading-images-into-a-sparcspy-project">Loading Images into a SPARCSpy project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#calling-the-sparcspy-workflow">Calling the SPARCSpy workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#rerunning-specific-steps">Rerunning specific steps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/segmentation.html">Segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#id2">1. Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#shardedsegmentation">2. ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#timecoursesegmentation">3. TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#multithreadedsegmentation">4. MultithreadedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#wga-segmentation">WGA segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-segmentation">DAPI segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#cytosol-cellpose-segmentation">Cytosol Cellpose segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-cellpose-segmentation">DAPI Cellpose segmentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/extraction.html">Extraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#extraction-classes">Extraction classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html">Example Notebook Running SPARCSpy on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-loading-data-via-a-numpy-array">Example loading data via a numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../sparcscmd.html">Command Line Tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-split">sparcs-split</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_split.html">sparcs-split</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-stat">sparcs-stat</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_stat.html">sparcs-stat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#examples">Examples</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../sparcscmd.html#sparcs-cleanup">sparcs-cleanup</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#positional-arguments">Positional Arguments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../sparcscmd.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html">sparcs-cleanup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#examples">Examples</a></li>
 </ul>
 </li>
 </ul>
@@ -114,7 +199,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -128,6 +213,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#classification">classification</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#mlclusterclassifier">MLClusterClassifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cellfeaturizer">CellFeaturizer</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#selection">selection</a><ul>
@@ -181,8 +267,10 @@
 </div>
 <section id="base">
 <h2>base<a class="headerlink" href="#base" title="Permalink to this headline"></a></h2>
+<p>A collection of base classes from which other classes in the SPARCSpy environment can inherit that manage base functionalities like logging or directory creation.</p>
 <section id="logable">
 <h3>Logable<a class="headerlink" href="#logable" title="Permalink to this headline"></a></h3>
+<p>Base Class which generates framework for logging.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.base.Logable">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.base.</span></span><span class="sig-name descname"><span class="pre">Logable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.base.Logable" title="Permalink to this definition"></a></dt>
@@ -255,11 +343,12 @@
 </section>
 <section id="processingstep">
 <h3>ProcessingStep<a class="headerlink" href="#processingstep" title="Permalink to this headline"></a></h3>
+<p>Starting point for all processing steps. Reads a config file that contains the parameters used to set up a processing method and generates the folder structure necessary for saving the generated outputs.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.base.ProcessingStep">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.base.</span></span><span class="sig-name descname"><span class="pre">ProcessingStep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.base.ProcessingStep" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparcscore.pipeline.base.Logable" title="sparcscore.pipeline.base.Logable"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.base.Logable</span></code></a></p>
-<p>Processing step living in its own subdirectory of the project.</p>
+<p>Processing step. Can load a configuration file and create a subdirectory under the project class for the processing step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -305,13 +394,15 @@
 </section>
 <section id="project">
 <h2>project<a class="headerlink" href="#project" title="Permalink to this headline"></a></h2>
+<p>Within SPARCSpy, all operations are centered around the concept of a <code class="docutils literal notranslate"><span class="pre">Project</span></code>. A <code class="docutils literal notranslate"><span class="pre">Project</span></code> is a python class which manages all of the SPARCSpy processing steps and is the central element through which all operations are performed. Each <code class="docutils literal notranslate"><span class="pre">Project</span></code> directly maps to a directory on the file system which contains all of the inputs to a specific SPARCSpy run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see <a class="reference internal" href="../pipeline/project.html#projects"><span class="std std-ref">here</span></a> for more information.</p>
 <section id="id1">
 <h3>Project<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.Project">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.project.</span></span><span class="sig-name descname"><span class="pre">Project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">location_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraction_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparcscore.pipeline.base.Logable" title="sparcscore.pipeline.base.Logable"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.base.Logable</span></code></a></p>
-<p>Project base class used to create a SPARCSpy project.</p>
+<p>Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
+to a directory on the file system which contains all of the project inputs as well as the generated outputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -385,16 +476,14 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.load_input_from_file">
 <span class="sig-name descname"><span class="pre">load_input_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[(0,</span> <span class="pre">-</span> <span class="pre">1),</span> <span class="pre">(0,</span> <span class="pre">-</span> <span class="pre">1)]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.load_input_from_file" title="Permalink to this definition"></a></dt>
-<dd><p>Load input image from a number of files.</p>
+<dd><p>Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_paths</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing paths to each channel like
 [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
 Expects a list of file paths with length “input_channel” as
-defined in the config.yml. Input data is NOT copied to the
-project folder by default. Different segmentation functions
-especially tiled segmentations might copy the input.</p></li>
+defined in the config.yml.</p></li>
 <li><p><strong>crop</strong> (<em>list</em><em>(</em><em>tuple</em><em>)</em><em>, </em><em>optional</em>) – When set, it can be used to crop the input image. The first
 element refers to the first dimension of the image and so on.
 For example use “[(0,1000),(0,2000)]” to crop the image to
@@ -407,7 +496,10 @@ For example use “[(0,1000),(0,2000)]” to crop the image to
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.load_input_from_array">
 <span class="sig-name descname"><span class="pre">load_input_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.load_input_from_array" title="Permalink to this definition"></a></dt>
-<dd><p>Load input image from an already loaded numpy array.</p>
+<dd><p>Load input image from an already loaded numpy array.
+The numpy array needs to have the following shape: CXY.
+The channels need to be in the following order: nucleus, cellmembrane channel,
+other channnels or a remapping needs to be defined.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -454,8 +546,10 @@ followed by other channels.</p></li>
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.project.</span></span><span class="sig-name descname"><span class="pre">TimecourseProject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.project.Project</span></code></a></p>
-<p>Timecourse Project used to create a SPARCSpy project for datasets that have multiple timepoints
-over the same field of view (add additional dimension in comparision to base SPARCSpy project).</p>
+<p>TimecourseProject class used to create a SPARCSpy project for datasets that have multiple fields of view that should be processed and analysed together.
+It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base SPARCSpy <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a>,
+it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a> class,
+it requires the use of specialized processing classes that are able to handle this additional dimensionality.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -540,15 +634,18 @@ over the same field of view (add additional dimension in comparision to base SPA
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_array">
 <span class="sig-name descname"><span class="pre">load_input_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_array" title="Permalink to this definition"></a></dt>
-<dd><p>Load input image from an already loaded numpy array.</p>
+<dd><p>Function to load imaging data from an array into the TimecourseProject.</p>
+<p>The provided array needs to fullfill the following conditions:
+- shape: NCYX
+- all images need to have the same dimensions and the same number of channels
+- channels need to be in the following order: nucleus, cytosol other channels
+- dtype uint16.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>array</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[channels, height, width]”.</p></li>
-<li><p><strong>remap</strong> (<em>list</em><em>(</em><em>int</em><em>)</em><em>, </em><em>optional</em>) – Define remapping of channels. For example use “[1, 0, 2]”
-to change the order of the first and the second channel.
-The expected order is Nucleus Channel, Cellmembrane Channel
-followed by other channels.</p></li>
+<li><p><strong>img</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[num_images, channels, height, width]”.</p></li>
+<li><p><strong>label</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: “image_index”, “unique_image_identifier”, “…”</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
 </ul>
 </dd>
 </dl>
@@ -557,13 +654,76 @@ followed by other channels.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_files">
 <span class="sig-name descname"><span class="pre">load_input_from_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_files" title="Permalink to this definition"></a></dt>
-<dd><p>Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.</p>
+<dd><p>Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.</p>
+<p>Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the <a class="reference external" href="https://github.com/MannLabs/SPARCStools">sparcstools package</a>.</p>
+<p>In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
+using the well notation <code class="docutils literal notranslate"><span class="pre">RowXX_WellXX</span></code>:</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Well</p></th>
+<th class="head"><p>Condition1</p></th>
+<th class="head"><p>Condition2</p></th>
+<th class="head"><p>…</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>RowXX_WellXX</p></td>
+<td><p>A</p></td>
+<td><p>B</p></td>
+<td><p>…</p></td>
+</tr>
+</tbody>
+</table>
+<p>A tab needs to be used as a seperator and the file saved as a .tsv file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the directory containing the sorted images from the opera phenix.</p></li>
+<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the channels that should be loaded.</p></li>
+<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.</p></li>
+<li><p><strong>plate_layout</strong> (<em>str</em>) – Path to the plate layout file. For the format please see above.</p></li>
+<li><p><strong>img_size</strong> (<em>int</em><em>, </em><em>default 1080</em>) – Size of the images that should be loaded. All images will be cropped to this size.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">timepoints</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Timepoint&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/sorted/outputs/from/sparcstools&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plate_layout</span> <span class="o">=</span> <span class="s2">&quot;plate_layout.tsv&quot;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">project</span><span class="o">.</span><span class="n">load_input_from_files</span><span class="p">(</span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">input_dir</span><span class="p">,</span>  <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">,</span>  <span class="n">timepoints</span> <span class="o">=</span> <span class="n">timepoints</span><span class="p">,</span> <span class="n">plate_layout</span> <span class="o">=</span> <span class="n">plate_layout</span><span class="p">,</span> <span class="n">overwrite</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_files_and_merge">
 <span class="sig-name descname"><span class="pre">load_input_from_files_and_merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stitching_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Alexa488'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nucleus_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DAPI'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cytosol_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Alexa488'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_files_and_merge" title="Permalink to this definition"></a></dt>
-<dd><p>Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing after merging all the regions from each teampoint in each well.</p>
+<dd><p>Function to load timecourse experiments recorded with an opera phenix into a TimecourseProject. In addition to loading the images,
+this wrapper function also stitches images acquired in the same well (this assumes that the tiles were aquired with overlap and in a rectangular shape)
+using the <a class="reference external" href="https://github.com/MannLabs/SPARCStools">sparcstools package</a>. Implementation of this function is currently still slow for many wells/timepoints as stitching
+is handled consecutively and not in parallel. This will be fixed in the future.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the directory containing the sorted images from the opera phenix.</p></li>
+<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the channels that should be loaded.</p></li>
+<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.</p></li>
+<li><p><strong>plate_layout</strong> (<em>str</em>) – Path to the plate layout file. For the format please see above.</p></li>
+<li><p><strong>img_size</strong> (<em>int</em><em>, </em><em>default 1080</em>) – Size of the images that should be loaded. All images will be cropped to this size.</p></li>
+<li><p><strong>stitching_channel</strong> (<em>str</em><em>, </em><em>default &quot;Alexa488&quot;</em>) – string indicated on which channel the stitching should be calculated.</p></li>
+<li><p><strong>overlap</strong> (<em>float</em><em>, </em><em>default 0.1</em>) – float indicating the overlap between the tiles that were aquired.</p></li>
+<li><p><strong>max_shift</strong> (<em>int</em><em>, </em><em>default 10</em>) – int indicating the maximum shift that is allowed when stitching the tiles. If a calculated shift is larger than this threshold
+between two tiles then the position of these tiles is not updated and is set according to the calculated position based on the overlap.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
+<li><p><strong>nucleus_channel</strong> (<em>str</em><em>, </em><em>default &quot;DAPI&quot;</em>) – string indicating the channel that should be used for the nucleus channel.</p></li>
+<li><p><strong>cytosol_channel</strong> (<em>str</em><em>, </em><em>default &quot;Alexa488&quot;</em>) – string indicating the channel that should be used for the cytosol channel.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -584,8 +744,8 @@ followed by other channels.</p></li>
 </section>
 <section id="segmentation">
 <h2>segmentation<a class="headerlink" href="#segmentation" title="Permalink to this headline"></a></h2>
-<section id="id2">
-<h3>Segmentation<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
+<section id="id3">
+<h3>Segmentation<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.segmentation.Segmentation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.segmentation.</span></span><span class="sig-name descname"><span class="pre">Segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.segmentation.Segmentation" title="Permalink to this definition"></a></dt>
@@ -1191,8 +1351,7 @@ The Project class will automaticly provide the most recent segmentation forward 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.classification.</span></span><span class="sig-name descname"><span class="pre">MLClusterClassifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class for classifying single cells using a pre-trained machine learning model.
+<dd><p>Class for classifying single cells using a pre-trained machine learning model.
 This class takes a pre-trained model and uses it to classify single_cells,
 using the model’s forward function or encoder function, depending on the
 user’s choice. The classification results are saved to a TSV file.</p>
@@ -1215,8 +1374,8 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>If this class is used as part of a project processing workflow, the first argument will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code>
-class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project
-class will automaticly provide the most recent segmentation forward together with the supplied parameters.</p>
+class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
+class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.</p>
 </div>
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define acceossory dataset: additional hdf5 datasets that you want to perform an inference on</span>
@@ -1263,6 +1422,84 @@ class will automaticly provide the most recent segmentation forward together wit
 <span class="w">    </span><span class="c1"># on which device inference should be performed</span>
 <span class="w">    </span><span class="c1"># for speed should be &quot;cuda&quot;</span>
 <span class="w">    </span><span class="nt">inference_device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cuda&quot;</span>
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="cellfeaturizer">
+<h3>CellFeaturizer<a class="headerlink" href="#cellfeaturizer" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.classification.</span></span><span class="sig-name descname"><span class="pre">CellFeaturizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer" title="Permalink to this definition"></a></dt>
+<dd><p>Class for extracting general image features from SPARCS single-cell image datasets.
+The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.</p>
+<p>The features which are calculated are:</p>
+<ul class="simple">
+<li><p>area of the nucleus in px,</p></li>
+<li><p>area of the cytosol in px,</p></li>
+<li><p>mean intensity of chosen channel</p></li>
+<li><p>median intensity of chosen channel,</p></li>
+<li><p>75% quantile of chosen channel,</p></li>
+<li><p>25% quantile of chosen channel,</p></li>
+<li><p>summed intensity of the chosen channel in the region labeled as nucleus,</p></li>
+<li><p>summed intensity of the chosen channel in the region labeled as cyotosl,</p></li>
+<li><p>summed intensity of the chosen channel in the region labelled as nucleus normalized to the nucleus area,</p></li>
+<li><p>summed intensity of the chosen channel in the region labelled as cytosol normalized to the cytosol area, nucleus_area</p></li>
+</ul>
+<p>The features are outputed in this order in the tsv file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extraction_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.__call__" title="Permalink to this definition"></a></dt>
+<dd><p>Function called to perform featurization on the provided HDF5 dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>extraction_dir</strong> (<em>str</em>) – directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.</p></li>
+<li><p><strong>accessory</strong> (<em>list</em>) – list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project</p></li>
+<li><p><strong>size</strong> (<em>int</em><em>, </em><em>default = 0</em>) – How many cells should be selected for inference. Default is 0, then all cells are selected.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Writes results to tsv files located in the project directory.</p>
+</dd>
+</dl>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If this class is used as part of a project processing workflow, the first argument will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code>
+class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
+class will automaticly provide the most recent extraction results together with the supplied parameters.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define acceossory dataset: additional hdf5 datasets that you want to perform an inference on</span>
+<span class="c1"># leave empty if you only want to infere on all extracted cells in the current project</span>
+
+<span class="n">accessory</span> <span class="o">=</span> <span class="p">([],</span> <span class="p">[],</span> <span class="p">[])</span>
+<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span> <span class="o">=</span> <span class="n">accessory</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The following parameters are required in the config file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">CellFeaturizer</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># channel number on which the featurization should be performed</span>
+<span class="w">    </span><span class="nt">channel_classification</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+
+<span class="w">    </span><span class="c1">#number of threads to use for dataloader</span>
+<span class="w">    </span><span class="nt">dataloader_worker</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1">#needs to be 0 if using cpu</span>
+
+<span class="w">    </span><span class="c1">#batch size to pass to GPU</span>
+<span class="w">    </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">900</span>
+
+<span class="w">    </span><span class="c1"># on which device inference should be performed</span>
+<span class="w">    </span><span class="c1"># for speed should be &quot;cuda&quot;</span>
+<span class="w">    </span><span class="nt">inference_device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cpu&quot;</span>
+
+<span class="w">    </span><span class="c1">#label under which the results should be saved</span>
+<span class="w">    </span><span class="nt">screen_label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ch3_Featurization&quot;</span>
 </pre></div>
 </div>
 </div>

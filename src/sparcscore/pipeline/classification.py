@@ -378,7 +378,7 @@ class MLClusterClassifier:
         dataframe.to_csv(path)
 
 
-class CellFeaturizer:
+class CellFeaturizer():
 
     """
     Class for extracting general image features from SPARCS single-cell image datasets. 
