@@ -75,7 +75,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#looking-at-the-generated-results">looking at the generated results</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -127,7 +127,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#Generating-a-Segmentation">Generating a Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Extracting-single-cell-images">Extracting single-cell images</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -1410,8 +1410,8 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.0.2. T
 </div>
 </section>
 </section>
-<section id="Exporting-Cutting-countours-for-excision-on-the-LMD7">
-<h2>Exporting Cutting countours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-countours-for-excision-on-the-LMD7" title="Permalink to this headline"></a></h2>
+<section id="Exporting-Cutting-contours-for-excision-on-the-LMD7">
+<h2>Exporting Cutting contours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7" title="Permalink to this headline"></a></h2>
 <p>SPARCSpy directly interfaces with our other open-source python library <a class="reference external" href="https://github.com/MannLabs/py-lmd">py-lmd</a> to easily select and export cells for excision on a Leica LMD microscope.</p>
 <p>Of note: this will require that the cells have been plates on a LMD compatible surface (like a PPS slide). SPARCSpy can of course also simply be used for data analysis procedures, then ignore this last step.</p>
 <p>First we will select the cells we wish to excise based on their classification score. Here we have chosen a threadhold &gt;= 0.99999 for bin1 and a threshold &lt;= 0.9 for bin2.</p>

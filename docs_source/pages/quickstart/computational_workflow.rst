@@ -4,7 +4,7 @@
 SPARCSpy workflow
 *******************
 
-.. image:: ../images/sparcspy_workflow_steps.pdf
+.. image:: ../images/sparcspy_workflow_steps.png
    :width: 100%
    :align: center
    :alt: SPARCSpy workflow steps: Segmentation, Extraction, Classification, Selection 
