@@ -264,13 +264,15 @@
              
   <section id="A-walk-through-the-SPARCSpy-Ecosystem">
 <h1>A walk through the SPARCSpy Ecosystem<a class="headerlink" href="#A-walk-through-the-SPARCSpy-Ecosystem" title="Permalink to this headline"></a></h1>
-<p>This notebook will introduce you to the SPARCSpy ecosystem and give you a complete working example of how to use SPARCSpy.</p>
+<p>This notebook will introduce you to the SPARCSpy ecosystem and give you a complete working example of how to use SPARCSpy. It will walk you through the following steps of the SPARCSpy workflow: 1. <strong>segmentation</strong>: Generates masks for the segmentation of input images into individual cells 2. <strong>extraction</strong>: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel. 3. <strong>classification</strong>: The
+image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods. Here we utilize the pretrained binary classifier from the original <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">SPARCS manuscript</a> that identifies individual cells defective in a biological process called “autophagy”. 4. <strong>selection</strong>: Cutting
+instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an <code class="docutils literal notranslate"><span class="pre">.xml</span></code> file which can be loaded on a leica LMD microscope for automated cell excision.</p>
 <p>The data used in this notebook was previously stitched using the stitching workflow in <a class="reference external" href="https://github.com/MannLabs/SPARCStools">SPARCStools</a>. Please see the notebook <a class="reference external" href="https://mannlabs.github.io/SPARCStools/html/pages/notebooks/example_stitching_notebook.html">here</a>.</p>
 <section id="Import-Required-Libraries">
 <h2>Import Required Libraries<a class="headerlink" href="#Import-Required-Libraries" title="Permalink to this headline"></a></h2>
 <p>First we need to import all of the python functions we require to run the pipeline.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -279,9 +281,9 @@
 <span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="kn">from</span> <span class="nn">sparcscore.pipeline.project</span> <span class="kn">import</span> <span class="n">TimecourseProject</span><span class="p">,</span> <span class="n">Project</span>
-<span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">MultithreadedWGATimecourseSegmentation</span><span class="p">,</span> <span class="n">WGATimecourseSegmentation</span><span class="p">,</span> <span class="n">MultithreadedCytosolCellposeTimecourseSegmentation</span><span class="p">,</span> <span class="n">ShardedWGASegmentation</span><span class="p">,</span> <span class="n">ShardedDAPISegmentationCellpose</span><span class="p">,</span> <span class="n">WGASegmentation</span><span class="p">,</span> <span class="n">DAPISegmentationCellpose</span>
-<span class="kn">from</span> <span class="nn">sparcscore.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span><span class="p">,</span> <span class="n">TimecourseHDF5CellExtraction</span>
+<span class="kn">from</span> <span class="nn">sparcscore.pipeline.project</span> <span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
+<span class="kn">from</span> <span class="nn">sparcscore.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
 <span class="kn">from</span> <span class="nn">sparcscore.pipeline.classification</span> <span class="kn">import</span> <span class="n">MLClusterClassifier</span>
 <span class="kn">from</span> <span class="nn">sparcscore.pipeline.selection</span> <span class="kn">import</span> <span class="n">LMDSelection</span>
 </pre></div>
@@ -302,7 +304,7 @@
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;../../../example_data/example_1/project&quot;</span>
@@ -325,8 +327,8 @@
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 modifying config
-[01/06/2023 14:49:33] Loading config from /Users/sophia/Documents/GitHub/SPARCSpy/example_data/example_1/project/config.yml
-[01/06/2023 14:49:33] current run: 0
+[30/01/2024 11:59:34] Loading config from /Users/sophia/Documents/GitHub/SPARCSpy/example_data/example_1/project/config.yml
+[30/01/2024 11:59:34] current run: 0
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -334,7 +336,7 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:108: UserWarning: Theres already a directory in the location path
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:109: UserWarning: Theres already a directory in the location path
   warnings.warn(&#34;Theres already a directory in the location path&#34;)
 </pre></div></div>
 </div>
@@ -347,10 +349,11 @@ modifying config
 <li><p>you can load the images from numpy arrays that are already loaded into memory</p></li>
 </ol>
 <p>Here it is important that you load the channels in the following order: Nucleus, Cellmembrane, others</p>
+<p>In this particular example we are utilizing images from U2OS cells which are stained with Hoechst 33342 to visualize nuclei and express Lck-mNeon to visualize the cellular membrane and LC3B-mcherry, a fluroescently tagged protein relevant for visualizing the biological process of autophagy. The cells have not been stimulated to induce autophagy and should be autophagy defective.</p>
 <section id="Method-1:-loading-images-from-file">
 <h3>Method 1: loading images from file<a class="headerlink" href="#Method-1:-loading-images-from-file" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/stitched_images/stitching_test_DAPI.tif&quot;</span><span class="p">,</span>
@@ -372,8 +375,9 @@ modifying config
 </section>
 <section id="Method-2:-loading-images-from-numpy-array">
 <h3>Method 2: loading images from numpy array<a class="headerlink" href="#Method-2:-loading-images-from-numpy-array" title="Permalink to this headline"></a></h3>
+<p>To simulate the case where the images you want to load are already loaded as a numpy array, we first convert the images to a numpy array and then pass this array to the project instead of only providing the image paths.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
@@ -393,7 +397,7 @@ modifying config
 <h3>Looking at the loaded images<a class="headerlink" href="#Looking-at-the-loaded-images" title="Permalink to this headline"></a></h3>
 <p>The loaded images are accesible via the input_image parameter of the project and are saved as numpy arrays with the following structure (c, x, y)</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span>
@@ -401,7 +405,7 @@ modifying config
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -450,21 +454,24 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize input images as example</span>
 <span class="c1"># it is not recommended to execute this block with large input images as it will compute for some time</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">));</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">));</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;nuclear stain: Hoechst 33342&quot;</span><span class="p">)</span>
 
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;cellmembrane stain: Lck-mNeon&quot;</span><span class="p">)</span>
 
 <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Stain of interest 1: mcherry tagged LC3B&quot;</span><span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -518,6 +525,29 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
     chunk_size: 50
 </pre></div>
 </div>
+<p>By passing the parameter <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">=</span> <span class="pre">True</span></code> we tell SPARCSpy to also generate intermediate outputs which we can look at to see the different segmentation steps. It is only recommended to do this for debugging or visualization purposes as it will utilize more memory and be slower.</p>
+<p>For the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method the intermediate outputs that are displayed are the following:</p>
+<ol class="arabic simple">
+<li><p>percentile normalized input images for each of the three channels (3 images)</p></li>
+<li><p>median normalized input images (this slightl smooths the images for a better segmentation result) (3 images)</p></li>
+<li><p>histogram showing the intensity distribution for nuclear and cytosolic channel (2 plots)</p></li>
+<li><p>generated mask after applying nuclear thresholding</p></li>
+<li><p>nuclear thresholding mask with calculated centers for each detected nucleus</p></li>
+<li><p>fast marching map with nuclei centers indicated in red</p></li>
+<li><p>segmented individual nuclei (2 different visualizations)</p></li>
+<li><p>starting nucleus mask for filtering</p></li>
+<li><p>histrogram showing size distribution of segmented nuclei</p></li>
+<li><p>segmentation mask with too small nuclei shown in red</p></li>
+<li><p>segmentation mask with too large nuclei shown in red</p></li>
+<li><p>WGA thresholding mask</p></li>
+<li><p>WGA potential map</p></li>
+<li><p>WGA fast marching results</p></li>
+<li><p>Watershed results with nuclear centers shown in red</p></li>
+<li><p>WGA mask</p></li>
+<li><p>Cytosol size distribution</p></li>
+<li><p>cytosol mask with too small cells shown in red</p></li>
+<li><p>cytosol mask with too largec cells shown in red</p></li>
+</ol>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
 </pre></div>
@@ -889,10 +919,12 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nuclear Segmentation Mask&quot;</span><span class="p">)</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Cytosol Segmentation Mask&quot;</span><span class="p">)</span>
 <br/></pre></div>
 </div>
 </div>
@@ -1144,12 +1176,13 @@ extracting classes: 484it [00:02, 172.14it/s]
 &lt;KeysViewHDF5 [&#39;single_cell_data&#39;, &#39;single_cell_index&#39;]&gt;
 </pre></div></div>
 </div>
-<p>So if we want to look at the first cell in the dataset we can first check which cellid was assigned to this cell by looking at the 10th entry in the <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> dataset and then get the extracted single-cell images from the <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> dataset.</p>
+<p>So if we want to look at the nth cell in the dataset we can first check which cellid was assigned to this cell by looking at the nth entry in the <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> dataset and then get the extracted single-cell images from the <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> dataset.</p>
 <p>The extracted single-cell images represent the following information in this order:</p>
 <ol><ol class="arabic simple">
 <li><p>nucleus mask 2. cytosol mask 3. nucleus channel 4. cytosol channel 5. other channels</p></li>
 </ol>
-</ol><div class="nbinput docutils container">
+</ol><p>Here we will demonstrate with the 10th cell in the dataset.</p>
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
 </pre></div>
 </div>
@@ -1207,6 +1240,8 @@ cell id:  [10 11]
 </pre></div>
 </div>
 <p>Here e.g. we are using a pretrained model included within the SPARCSpy library <code class="docutils literal notranslate"><span class="pre">autophagy_classifier2.1</span></code> and are naming the results from this model <code class="docutils literal notranslate"><span class="pre">Autophagy_15h_classifier2.1</span></code>.</p>
+<p>Model overview:</p>
+<p><img alt="autophagy classification with example cells" class="no-scaled-link" src="../../_images/classifying_autophagy.png" style="width: 800px;" /></p>
 <p>The inference results will be written to a new folder generated under <code class="docutils literal notranslate"><span class="pre">classification</span></code> with this name.</p>
 <p>If we want to use a model we trained ourselves that is not yet included within the SPARCSpy library we can simply replace the network name in the config with the path to the checkpoint file generated by pytorch.</p>
 <div class="nbinput docutils container">
@@ -1408,6 +1443,14 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.0.2. T
 <img alt="../../_images/pages_notebooks_example_sparcspy_project_33_0.png" src="../../_images/pages_notebooks_example_sparcspy_project_33_0.png" />
 </div>
 </div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
 </section>
 </section>
 <section id="Exporting-Cutting-contours-for-excision-on-the-LMD7">
@@ -1577,7 +1620,7 @@ Optimization factor: 1.0x
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_sparcspy_project_41_7.png" src="../../_images/pages_notebooks_example_sparcspy_project_41_7.png" />
+<img alt="../../_images/pages_notebooks_example_sparcspy_project_42_7.png" src="../../_images/pages_notebooks_example_sparcspy_project_42_7.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1650,14 +1693,14 @@ Optimization factor: 1.0x
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_sparcspy_project_41_15.png" src="../../_images/pages_notebooks_example_sparcspy_project_41_15.png" />
+<img alt="../../_images/pages_notebooks_example_sparcspy_project_42_15.png" src="../../_images/pages_notebooks_example_sparcspy_project_42_15.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_sparcspy_project_41_16.png" src="../../_images/pages_notebooks_example_sparcspy_project_41_16.png" />
+<img alt="../../_images/pages_notebooks_example_sparcspy_project_42_16.png" src="../../_images/pages_notebooks_example_sparcspy_project_42_16.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
