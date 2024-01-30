@@ -29,6 +29,13 @@ Using class inheritance each segmentation workflow inherits from a segmentation 
 Segmentation classes
 --------------------
 
+SPARCSpy currently implements two different segmentation classes for each of the input data formats: a serialized segmentation class and a parallelized segmentation class. The serialized segmentation class is ideal for segmenting small input images on only one process. The parallelized segmentation classes can also process larger input images over multiple CPU cores.
+
+.. image:: ../images/segmentation_classes.png
+   :width: 100%
+   :align: center
+   :alt: Segmentation classes overview
+
 1. Segmentation
 +++++++++++++++
 
