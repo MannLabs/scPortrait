@@ -22,7 +22,7 @@ WGASegmentation:
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
     wga_segmentation:
-        threshold: 0.05 # treshold above which cytosol is detected
+        threshold: 0.15 # treshold above which cytosol is detected
         lower_quantile_normalization: 0.01
         upper_quantile_normalization: 0.99
         erosion: 2 # erosion and dilation are used for speckle removal and shrinking / dilation
