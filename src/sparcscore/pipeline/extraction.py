@@ -605,16 +605,16 @@ class HDF5CellExtraction(ProcessingStep):
         self.n_masks = hdf_labels.shape[0]
 
         px_centers, _cell_ids = self._calculate_centers(hdf_labels)
-            
+
         #get classes to extract
         class_list = self.get_classes(filtered_classes_path)
-
         if isinstance(class_list[0], str):
             lookup_dict = {x.split(":")[0]:x.split(":")[1] for x in class_list}
             nuclei_ids = list(lookup_dict.keys())
             nuclei_ids = set(nuclei_ids)
         else:
-            nuclei_ids = set(class_list)
+            nuclei_ids = set([str(x) for x in class_list])
+
         
         #filter cell ids found using center into those that we actually want to extract
         _cell_ids = list(_cell_ids)
