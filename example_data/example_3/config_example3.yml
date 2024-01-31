@@ -1,0 +1,96 @@
+---
+name: "Segmentation Workflow Examples"
+input_channels: 3
+output_channels: 5
+WGASegmentation:
+    input_channels: 3
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    lower_quantile_normalization:   0.001
+    upper_quantile_normalization:   0.999
+    median_filter_size:   4 # Size in pixels
+    nucleus_segmentation:
+        lower_quantile_normalization:   0.01 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
+        upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
+        median_block: 41 # Size of pixel disk used for median, should be uneven
+        median_step: 4
+        threshold: 0.2 # threshold above local median for nuclear segmentation
+        speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
+        peak_footprint: 7 # 
+        min_distance: 8 # minimum distance between two nucleis in pixel
+        dilation: 0 # final dilation of pixel mask       
+        min_size: 200 # minimum nucleus area in pixel
+        max_size: 5000 # maximum nucleus area in pixel
+        contact_filter: 0.5 # minimum nucleus contact with background
+    wga_segmentation:
+        threshold: 0.15 # treshold above which cytosol is detected
+        lower_quantile_normalization: 0.01
+        upper_quantile_normalization: 0.99
+        erosion: 2 # erosion and dilation are used for speckle removal and shrinking / dilation
+        dilation: 7 # for no change in size choose erosion = dilation, for larger cells increase the mask erosion
+        min_clip: 0
+        max_clip: 0.2
+        min_size: 200
+        max_size: 30000
+    chunk_size: 50
+DAPISegmentation:
+    input_channels: 3
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    lower_quantile_normalization:   0.001
+    upper_quantile_normalization:   0.999
+    median_filter_size:   4 # Size in pixels
+    nucleus_segmentation:
+        lower_quantile_normalization:   0.01 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
+        upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
+        median_block: 41 # Size of pixel disk used for median, should be uneven
+        median_step: 4
+        threshold: 0.2 # threshold above local median for nuclear segmentation
+        min_distance: 8 # minimum distance between two nucleis in pixel
+        peak_footprint: 7 # 
+        speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
+        dilation: 0 # final dilation of pixel mask       
+        min_size: 200 # minimum nucleus area in pixel
+        max_size: 5000 # maximum nucleus area in pixel
+        contact_filter: 0.5 # minimum nucleus contact with background
+    chunk_size: 50
+CytosolSegmentationCellpose:
+    input_channels: 2
+    output_masks: 2
+    shard_size: 120000000 # maxmimum number of pixel per tile
+    overlap_px: 100
+    nGPUs: 1
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    threads: 1 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+    cache: "."
+    lower_quantile_normalization:   0.001
+    upper_quantile_normalization:   0.999
+    median_filter_size: 6 # Size in pixels
+    nucleus_segmentation:
+        model: "nuclei"
+    cytosol_segmentation:
+        model: "cyto2"
+    chunk_size: 50
+    filtering_threshold: 0.95
+DAPISegmentationCellpose:
+    input_channels: 2
+    output_masks: 2
+    shard_size: 120000000 # maxmimum number of pixel per tile
+    overlap_px: 100
+    nGPUs: 1
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    threads: 1 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+    cache: "."
+    lower_quantile_normalization:   0.001
+    upper_quantile_normalization:   0.999
+    median_filter_size: 6 # Size in pixels
+    nucleus_segmentation:
+        model: "nuclei"
+    chunk_size: 50
+HDF5CellExtraction:
+    compression: True
+    threads: 80 # threads used in multithreading
+    image_size: 128 # image size in pixel
+    normalization_range: None #turn of percentile normalization for cells -> otherwise normalise out differences for the alexa647 channel
+    cache: "."
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
+    hdf5_rdcc_w0: 1
+    hdf5_rdcc_nslots: 50000
