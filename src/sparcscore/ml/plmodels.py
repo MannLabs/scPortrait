@@ -59,10 +59,6 @@ class MultilabelSupervisedModel(pl.LightningModule):
     def __init__(self, model_type="VGG2", **kwargs):
         super().__init__()
 
-    def __init__(self, type = "VGG2", **kwargs):
-        super().__init__()
-        
-        
         self.save_hyperparameters()
 
         #initialize metrics
@@ -74,8 +70,8 @@ class MultilabelSupervisedModel(pl.LightningModule):
             raise ValueError("No num_classes specified in hparams")
         
         #initialize metrics to track
-        self.accuracy = torchmetrics.Accuracy(task = task_type,  )
-        self.aucroc = torchmetrics.AUROC(task = task_type, thresholds = None)
+        self.accuracy = torchmetrics.Accuracy(task = task_type, num_classes = self.hparams["num_classes"])
+        self.aucroc = torchmetrics.AUROC(task = task_type, thresholds = None, num_classes = self.hparams["num_classes"])
         
         if model_type == "VGG1":
             self.network = VGG1(in_channels=self.hparams["num_in_channels"],
