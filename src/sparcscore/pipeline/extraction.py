@@ -242,19 +242,10 @@ class HDF5CellExtraction(ProcessingStep):
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
     def _transfer_tempmmap_to_hdf5(self):
-        global _tmp_single_cell_data, _tmp_single_cell_index   
+        global _tmp_single_cell_data, _tmp_single_cell_index  
+        self.log("Transferring results to final HDF5 data container.") 
         
         self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
-
-        # #calculate number of rows that need to be removed when accounting for the cells that are to close to the image edges to extract
-        # n_cells_to_remove = len(self.save_index_to_remove)
-
-        # #adjust new dimensions of resulting final objects
-        # n_index, c_index = _tmp_single_cell_index.shape
-        # n_data, c_data, x_data, y_data = _tmp_single_cell_data.shape
-
-        # shape_single_cell_index = (n_index - n_cells_to_remove, c_index)
-        # shape_single_cell_data = (n_data - n_cells_to_remove, c_data, x_data, y_data)
 
         #generate final index of all of the rows that we wish to keep out of the original array
         keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
@@ -681,7 +672,6 @@ class HDF5CellExtraction(ProcessingStep):
 
         #generate final log entries
         self.log(f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)")
-        self.log("Collecting cells...")
 
         #transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
@@ -760,6 +750,8 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_single_cell_data, _tmp_single_cell_index   
+
+        self.log("Transferring results to final HDF5 data container.")
 
         self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
         self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data before removing cells to close to image edges")
@@ -926,9 +918,11 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
             for arg in tqdm(arg_list):
                 cell_ids, image_index, label_info = arg 
-                # print("image index:", image_index)
-                # print("cell ids", cell_ids)
-                # print("label info:", label_info)
+
+                if self.deep_debug:
+                    print("image index:", image_index)
+                    print("cell ids", cell_ids)
+                    print("label info:", label_info)
                 
                 input_image = hdf_labels[image_index, 0, :, :]
 
@@ -944,31 +938,61 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                         px_centers = np.round(center_nuclei).astype(int)
                         _cell_ids = list(_cell_ids)
 
-                        # #plotting results for debugging
-                        # import matplotlib.pyplot as plt
-                        # plt.figure(figsize = (10, 10))
-                        # plt.imshow(hdf_labels[image_index, 1, :, :])
-                        # plt.figure(figsize = (10, 10))
-                        # plt.imshow(hdf_labels[image_index, 0, :, :])
-                        # y, x = px_centers.T
-                        # plt.scatter(x, y, color = "red", s = 5)
+                        
+                        if self.deep_debug:
+                            #plotting results for debugging
+                            import matplotlib.pyplot as plt
+
+                            fig, axs = plt.subplots(1, 3, figsize = (20, 10))
+                            axs[0].imshow(hdf_labels[image_index, 0, :, :])
+                            axs[0].axis("off")
+                            axs[0].set_title("Input Image Nucleus Mask")
+                            
+                            axs[1].imshow(hdf_labels[image_index, 0, :, :])
+                            axs[1].axis("off")
+                            axs[1].set_title("Input Image Cytosol Mask")
+                            
+                            #show calculated centers
+                            y, x = px_centers.T
+                            axs[3].imshow(hdf_labels[image_index, 0, :, :])
+                            axs[3].axis("off")
+                            axs[3].scatter(x, y, color = "red", s = 5)
+                            axs[3].set_title("Nuclei masks with calculated centers overlayed.")
+
                         
                         #filter lists to only include those cells which passed the final filters (i.e remove border cells)
                         filter = [x in cell_ids for x in _cell_ids]
                         px_centers = np.array(list(compress(px_centers, filter)))
                         _cell_ids = list(compress(_cell_ids, filter))
-
-                        # #plotting results for debugging
-                        # y, x = px_centers.T
-                        # plt.scatter(x, y, color = "blue", s = 5)
-                        # plt.show()
+                        
+                        if self.deep_debug:
+                            #visualize the centers that pass the filtering thresholds
+                            y, x = px_centers.T
+                            axs[3].scatter(x, y, color = "blue", s = 5)
+                            
+                            #acutally display the figure
+                            fig.show()
+                            del fig, axs #remove figure to free up memory
 
                         for centers_index, cell_id in enumerate(_cell_ids):
                             save_index = lookup_saveindex.index.get_loc(cell_id)
                             self._extract_classes(input_segmentation_path, px_centers, (centers_index, save_index, cell_id, image_index, label_info))
                     else:
                         self.log(f"Image with the image_index {image_index} doesn't contain any cells. Skipping this image.")
-                        print(f"Error: image with the index {image_index} doesn't contain any cells!! Skipping this image.")
+
+                        if self.deep_debug:
+
+                            failed_image = hf.get(self.channel_label)[image_index, :, :, :]
+                            n_channels = failed_image.shape[0]
+
+                            fig, axs = plt.subplots(1, n_channels, figsize = (10*n_channels, 10))
+                            for i in range(n_channels):
+                                axs[i].imshow(failed_image[i, :, :])
+                                axs[i].axis("off")
+                                axs[i].set_title(f"Channel {i} from image with index {image_index} that did not result in any segmented cells")
+                            
+                            fig.show()
+                            del fig, axs #remove figure to free up memory
                         continue
 
             stop = timeit.default_timer()
@@ -977,6 +1001,5 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         rate = self.num_classes/duration
         self.log(f"Finished parallel extraction in {duration:.2f} seconds ({rate:.2f} cells / second)")
         
-        self.log("Collect cells")
         self._transfer_tempmmap_to_hdf5()
         self.log("Extraction completed.")
