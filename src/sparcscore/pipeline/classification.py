@@ -460,7 +460,7 @@ class CellFeaturizer:
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
 
-        if self.filtered_dataset is not None:
+        if hasattr(self, 'filtered_dataset'):
             self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
         else:
             self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
