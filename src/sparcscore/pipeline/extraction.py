@@ -317,7 +317,8 @@ class HDF5CellExtraction(ProcessingStep):
 
         index, save_index, cell_id, image_index, label_info = self._get_label_info(arg) #label_info not used in base case but relevant for flexibility for other classes
 
-        if self.deep_debug: print("celltype type:", type(cell_id))
+        if self.deep_debug: 
+            print("cellID type:", type(cell_id), "\n")
                                   
         if isinstance(cell_id, str):
             nucleus_id, cytosol_id = cell_id.split(":")
@@ -365,8 +366,8 @@ class HDF5CellExtraction(ProcessingStep):
                 
                 if self.deep_debug:
                         x, y = nuclei_mask.shape
-                        center_nuclei = nuclei_mask[slice(x//2-5, x//2 + 5), slice(y//2-5, y//2 + 5)]
-                        print(center_nuclei)
+                        center_nuclei = nuclei_mask[slice(x//2-3, x//2 + 3), slice(y//2-3, y//2 + 3)]
+                        print("center of nucleus array \n", center_nuclei, "\n")
 
                 nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
 
@@ -393,8 +394,8 @@ class HDF5CellExtraction(ProcessingStep):
 
                     if self.deep_debug:
                         x, y = nuclei_mask.shape
-                        center_cytosol = cell_mask[slice(x//2-5, x//2 + 5), slice(y//2-5, y//2 + 5)]
-                        print(center_cytosol)
+                        center_cytosol = cell_mask[slice(x//2-3, x//2 + 3), slice(y//2-3, y//2 + 3)]
+                        print("center of cytosol array \n", center_cytosol, "\n")
 
                     cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
