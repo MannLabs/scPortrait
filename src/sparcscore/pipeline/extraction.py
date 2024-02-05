@@ -184,20 +184,17 @@ class HDF5CellExtraction(ProcessingStep):
 
         if "filtered" in path:
             filtered_classes = [el[0] for el in list(cr)] #do not do int transform here as we expect a str of format "nucleus_id:cytosol_id"
-            filtered_classes = np.unique(filtered_classes)
+            filtered_classes = list(np.unique(filtered_classes))
         else:
             filtered_classes = [int(float(el[0])) for el in list(cr)]
-            filtered_classes = np.unique(filtered_classes) #make sure they are all unique
-            filtered_classes.astype(np.uint64)
+            filtered_classes = list(np.unique(filtered_classes).astype(np.uint64)) #make sure they are all unique
+            if 0 in filtered_classes: filtered_classes.remove(0) #remove background if still listed
 
-        self.log("Loaded {} classes".format(len(filtered_classes)))
-        
-        self.log("After removing duplicates {} classes remain.".format(len(filtered_classes)))
+        self.log(f"Loaded {len(filtered_classes)} cellIds to extract.")
+        self.log(f"After removing duplicates {len(filtered_classes)} cells remain.")
 
-        class_list = list(filtered_classes)
-        if 0 in class_list: class_list.remove(0) #remove background if still listed
-        self.num_classes = len(class_list)
-        return(class_list)
+        self.num_classes = len(filtered_classes)
+        return(filtered_classes)
     
     def generate_save_index_lookup(self, class_list):
         lookup = pd.DataFrame(index = class_list)
@@ -218,11 +215,11 @@ class HDF5CellExtraction(ProcessingStep):
         args = list(zip(range(len(cell_ids)), [lookup_saveindex.index.get_loc(x) for x in cell_ids], cell_ids))
         return(args)
 
-    def _initialize_tempmmap_array(self):
+    def _initialize_tempmmap_array(self, index_len = 2):
         #define as global variables so that this is also avaialable in other functions
         global _tmp_single_cell_data, _tmp_single_cell_index
 
-        self.single_cell_index_shape = (self.num_classes,2)
+        self.single_cell_index_shape = (self.num_classes, index_len)
         self.single_cell_data_shape = (self.num_classes,
                                         self.n_channels_output,
                                         self.config["image_size"],
@@ -234,21 +231,36 @@ class HDF5CellExtraction(ProcessingStep):
 
         #generate container for single_cell_data
         _tmp_single_cell_data = tempmmap.array(shape = self.single_cell_data_shape, dtype = np.float16)
-        _tmp_single_cell_index  = tempmmap.array(shape = self.single_cell_index_shape, dtype = np.int64)
 
+        if index_len == 2:
+            #assign dtype int to only save the index and the cell_id
+            _tmp_single_cell_index  = tempmmap.array(shape = self.single_cell_index_shape, dtype = np.int64)
+        else:
+            #use a regulary numpy array instead of a tempmmap array to be able to save strings as well as ints
+            _tmp_single_cell_index  = np.empty(self.single_cell_index_shape, dtype = "<U64") #need to use U64 here otherwise information potentially becomes truncated
+        
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_single_cell_data, _tmp_single_cell_index   
         
         self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
-        self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data before removing cells to close to image edges")
-        _tmp_single_cell_data = np.delete(_tmp_single_cell_data, self.save_index_to_remove, axis=0)
-        _tmp_single_cell_index = np.delete(_tmp_single_cell_index, self.save_index_to_remove, axis=0)
-        self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data after removing cells to close to image edges")
 
-        _, cell_ids = _tmp_single_cell_index[:].T
-        _tmp_single_cell_index[:] = list(zip(list(range(len(cell_ids))), cell_ids))
+        # #calculate number of rows that need to be removed when accounting for the cells that are to close to the image edges to extract
+        # n_cells_to_remove = len(self.save_index_to_remove)
+
+        # #adjust new dimensions of resulting final objects
+        # n_index, c_index = _tmp_single_cell_index.shape
+        # n_data, c_data, x_data, y_data = _tmp_single_cell_data.shape
+
+        # shape_single_cell_index = (n_index - n_cells_to_remove, c_index)
+        # shape_single_cell_data = (n_data - n_cells_to_remove, c_data, x_data, y_data)
+
+        #generate final index of all of the rows that we wish to keep out of the original array
+        keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
+        
+        #get cell_ids of the cells that were successfully extracted
+        _, cell_ids = _tmp_single_cell_index[keep_index].T
 
         self.log(f"Transferring extracted single cells to .hdf5")
 
@@ -273,15 +285,16 @@ class HDF5CellExtraction(ProcessingStep):
                 fig.show()
 
         with h5py.File(self.output_path, 'w') as hf:
-            hf.create_dataset('single_cell_index', data = _tmp_single_cell_index[:], dtype=np.int64) #increase to 64 bit otherwise information may become truncated
+            hf.create_dataset('single_cell_index', data = list(zip(list(range(len(cell_ids))), cell_ids)), dtype=np.int64) #increase to 64 bit otherwise information may become truncated
             self.log("index created.")
-            hf.create_dataset('single_cell_data', data = _tmp_single_cell_data[:], 
+            hf.create_dataset('single_cell_data', data = _tmp_single_cell_data[keep_index], 
                                                     chunks= (1,
                                                     1,
                                                     self.config["image_size"],
                                                     self.config["image_size"]),
                                             compression=self.compression_type,
                                             dtype=np.float16)  
+        
         
         #delete tempobjects (to cleanup directory)
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
@@ -511,7 +524,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         #check to see if file has already been calculated if so load it
         if os.path.isfile(center_path) and os.path.isfile(cell_ids_path) and not self.overwrite:
-            self.log("Cached version found, loading")
+            self.log("Cached version of calculated cell centers found, loading instead of recalculating.")
             with open(center_path, "rb") as input_file:
                 center_nuclei = cPickle.load(input_file)
                 px_centers = np.round(center_nuclei).astype(int)
@@ -523,11 +536,11 @@ class HDF5CellExtraction(ProcessingStep):
         
         #perform calculation and save results to file
         else:
-            self.log("Started class coordinate calculation")
+            self.log("Started cell coordinate calculation")
             center_nuclei, length, _cell_ids = numba_mask_centroid(hdf_labels[0].astype(np.uint32), debug=self.debug)
             px_centers = np.round(center_nuclei).astype(int)
             
-            self.log("Finished class coordinate calculation")
+            self.log("Finished cell coordinate calculation")
             
             with open(center_path, "wb") as output_file:
                 cPickle.dump(center_nuclei, output_file)
@@ -538,6 +551,8 @@ class HDF5CellExtraction(ProcessingStep):
 
             #delete variables to free up memory
             del length, center_nuclei
+
+            self.log(f"Cell coordinates saved to file {center_path} and cell Ids saved to file {cell_ids_path}.")
 
         return(px_centers, _cell_ids)
     
@@ -594,14 +609,12 @@ class HDF5CellExtraction(ProcessingStep):
         self.parse_remapping()
 
         self.log("Started extraction")
-        self.log("Loading segmentation data from {input_segmentation_path}")
+        self.log(f"Loading segmentation data from {input_segmentation_path}")
     
         hf = h5py.File(input_segmentation_path, 'r')
         hdf_channels = hf.get(self.channel_label)
         hdf_labels = hf.get(self.segmentation_label)
 
-        self.log(f"Using channel label {hdf_channels}")
-        self.log(f"Using segmentation label {hdf_labels}")
         self.log("Finished loading channel data " + str(hdf_channels.shape))
         self.log("Finished loading label data " + str(hdf_labels.shape))
         self.n_masks = hdf_labels.shape[0]
@@ -617,7 +630,6 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             nuclei_ids = set([str(x) for x in class_list])
 
-        
         #filter cell ids found using center into those that we actually want to extract
         _cell_ids = list(_cell_ids)
 
@@ -746,44 +758,25 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         arg_index, save_index, cell_id, image_index, label_info = arg
         return(arg_index, save_index, cell_id, image_index, label_info)  
 
-    def _initialize_tempmmap_array(self):
-        #define as global variables so that this is also avaialable in other functions
-        global _tmp_single_cell_data, _tmp_single_cell_index
-        
-        #import tempmmap module and reset temp folder location
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
-        #generate datacontainer for the single cell images
-        column_labels = ['index', "cellid"] + list(self.label_names.astype("U13"))[1:]
-        self.single_cell_index_shape =  (self.num_classes, len(column_labels))
-        self.single_cell_data_shape = (self.num_classes,
-                                                    self.n_channels_output,
-                                                    self.config["image_size"],
-                                                    self.config["image_size"])
-
-        #generate container for single_cell_data
-        print(self.single_cell_data_shape)
-        _tmp_single_cell_data = tempmmap.array(self.single_cell_data_shape, dtype = np.float16)
-
-        #generate container for single_cell_index
-        #cannot be a temmmap array with object type as this doesnt work for memory mapped arrays
-        #dt = h5py.special_dtype(vlen=str)
-        _tmp_single_cell_index  = np.empty(self.single_cell_index_shape, dtype = "<U64") #need to use U64 here otherwise information potentially becomes truncated
-        
-        #_tmp_single_cell_index  = tempmmap.array(self.single_cell_index_shape, dtype = "<U32")
-
-        self.TEMP_DIR_NAME = TEMP_DIR_NAME
-
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_single_cell_data, _tmp_single_cell_index   
 
         self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
         self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data before removing cells to close to image edges")
-        _tmp_single_cell_data = np.delete(_tmp_single_cell_data, self.save_index_to_remove, axis=0)
-        _tmp_single_cell_index = np.delete(_tmp_single_cell_index, self.save_index_to_remove, axis=0)
-        self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data after removing cells to close to image edges")
 
+        #calculate number of rows that need to be removed when accounting for the cells that are to close to the image edges to extract
+        n_cells_to_remove = len(self.save_index_to_remove)
+
+        #adjust new dimensions of resulting final objects
+        n_index, c_index = _tmp_single_cell_index.shape
+        n_data, c_data, x_data, y_data = _tmp_single_cell_data.shape
+
+        shape_single_cell_index = (n_index - n_cells_to_remove, c_index)
+        shape_single_cell_data = (n_data - n_cells_to_remove, c_data, x_data, y_data)
+
+        #generate final index of all of the rows that we wish to keep out of the original array
+        keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
+        
         #extract information about the annotation of cell ids
         column_labels = ['index', "cellid"] + list(self.label_names.astype("U13"))[1:]
         
@@ -796,24 +789,24 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             hf.create_dataset('label_names', data = column_labels, chunks=None, dtype = dt)
             
             #generate index data container
-            hf.create_dataset('single_cell_index_labelled', _tmp_single_cell_index.shape , chunks=None, dtype = dt)
+            hf.create_dataset('single_cell_index_labelled', shape_single_cell_index , chunks = None, dtype = dt)
             single_cell_labelled = hf.get("single_cell_index_labelled")
-            single_cell_labelled[:] = _tmp_single_cell_index[:]
+            single_cell_labelled[:] = _tmp_single_cell_index[keep_index]
 
-            hf.create_dataset('single_cell_index', (_tmp_single_cell_index.shape[0], 2), dtype="uint64")           
+            hf.create_dataset('single_cell_index', (shape_single_cell_index[0], 2), dtype="uint64")           
 
-            hf.create_dataset('single_cell_data',data =  _tmp_single_cell_data,
-                                                chunks=(1,
-                                                        1,
-                                                        self.config["image_size"],
-                                                        self.config["image_size"]),
-                                                compression=self.compression_type,
-                                                dtype="float16")
+            hf.create_dataset('single_cell_data', data =  _tmp_single_cell_data[keep_index],
+                                                    chunks=(1,
+                                                            1,
+                                                            self.config["image_size"],
+                                                            self.config["image_size"]),
+                                                    compression=self.compression_type,
+                                                    dtype="float16")
             
         self.log(f"Transferring exracted single cells to .hdf5")
         with h5py.File(self.output_path, 'a') as hf:
             #need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
-            index = _tmp_single_cell_index[:, 0:2]
+            index = _tmp_single_cell_index[keep_index, 0:2]
             _, cell_ids = index.T
             index = np.array(list(zip(range(len(cell_ids)), cell_ids)))
             index[index == ""] = "0" 
@@ -914,9 +907,12 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         complete_class_list = self.get_classes(filtered_classes_path)
         arg_list = self._get_arg()
         lookup_saveindex = self.generate_save_index_lookup(complete_class_list)
-
+        
+        #define column labels for the index
+        self.column_labels = ['index', "cellid"] + list(self.label_names.astype("U13"))[1:]
+        
         # setup cache
-        self._initialize_tempmmap_array()
+        self._initialize_tempmmap_array(index_len = len(self.column_labels))
 
         #start extraction
         self.log("Starting extraction.")
