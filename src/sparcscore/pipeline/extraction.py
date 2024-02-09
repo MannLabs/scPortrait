@@ -278,14 +278,21 @@ class HDF5CellExtraction(ProcessingStep):
         with h5py.File(self.output_path, 'w') as hf:
             hf.create_dataset('single_cell_index', data = list(zip(list(range(len(cell_ids))), cell_ids)), dtype=np.int64) #increase to 64 bit otherwise information may become truncated
             self.log("index created.")
-            hf.create_dataset('single_cell_data', data = _tmp_single_cell_data[keep_index], 
-                                                    chunks= (1,
-                                                    1,
-                                                    self.config["image_size"],
-                                                    self.config["image_size"]),
-                                            compression=self.compression_type,
-                                            dtype=np.float16)  
-        
+
+            _, c, x, y = _tmp_single_cell_data.shape
+            single_cell_data = hf.create_dataset('single_cell_data', 
+                                                 data = (len(keep_index, c, x, y)), 
+                                                 chunks= (1,
+                                                          1,
+                                                          self.config["image_size"],
+                                                          self.config["image_size"]),
+                                                  compression=self.compression_type,
+                                                 dtype=np.float16)  
+            
+            #populate dataset in loop to prevent loading of entire dataset into memory
+            #this is required to process large datasets to not run into memory issues
+            for ix, i in enumerate(keep_index):
+                single_cell_data[ix] = _tmp_single_cell_data[i]
         
         #delete tempobjects (to cleanup directory)
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
@@ -787,15 +794,21 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             single_cell_labelled[:] = _tmp_single_cell_index[keep_index]
 
             hf.create_dataset('single_cell_index', (shape_single_cell_index[0], 2), dtype="uint64")           
-
-            hf.create_dataset('single_cell_data', data =  _tmp_single_cell_data[keep_index],
-                                                    chunks=(1,
-                                                            1,
-                                                            self.config["image_size"],
-                                                            self.config["image_size"]),
-                                                    compression=self.compression_type,
-                                                    dtype="float16")
+            _, c, x, y = _tmp_single_cell_data.shape
+            single_cell_data = hf.create_dataset('single_cell_data', 
+                                                 data =  (len(keep_index), c, x, y),
+                                                 chunks=(1,
+                                                         1,
+                                                         self.config["image_size"],
+                                                         self.config["image_size"]),
+                                                 compression=self.compression_type,
+                                                 dtype="float16")
             
+            #populate dataset in loop to prevent loading of entire dataset into memory
+            #this is required to process large datasets to not run into memory issues
+            for ix, i in enumerate(keep_index):
+                single_cell_data[ix] = _tmp_single_cell_data[i]
+                
         self.log(f"Transferring exracted single cells to .hdf5")
         with h5py.File(self.output_path, 'a') as hf:
             #need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
