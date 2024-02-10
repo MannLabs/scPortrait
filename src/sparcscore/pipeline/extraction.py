@@ -281,7 +281,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset('single_cell_data', 
-                                                 data = (len(keep_index, c, x, y)), 
+                                                 data = (len(keep_index), c, x, y), 
                                                  chunks= (1,
                                                           1,
                                                           self.config["image_size"],
