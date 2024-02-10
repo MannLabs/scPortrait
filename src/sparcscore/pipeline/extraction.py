@@ -281,12 +281,12 @@ class HDF5CellExtraction(ProcessingStep):
 
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset('single_cell_data', 
-                                                 data = (len(keep_index), c, x, y), 
+                                                 shape = (len(keep_index), c, x, y), 
                                                  chunks= (1,
                                                           1,
                                                           self.config["image_size"],
                                                           self.config["image_size"]),
-                                                  compression=self.compression_type,
+                                                 compression=self.compression_type,
                                                  dtype=np.float16)  
             
             #populate dataset in loop to prevent loading of entire dataset into memory
@@ -796,7 +796,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             hf.create_dataset('single_cell_index', (shape_single_cell_index[0], 2), dtype="uint64")           
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset('single_cell_data', 
-                                                 data =  (len(keep_index), c, x, y),
+                                                 shape =  (len(keep_index), c, x, y),
                                                  chunks=(1,
                                                          1,
                                                          self.config["image_size"],
