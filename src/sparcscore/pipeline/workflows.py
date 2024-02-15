@@ -706,7 +706,6 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
     method = DAPISegmentationCellpose
 
 
-
 class CytosolSegmentationCellpose(BaseSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -738,11 +737,13 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             gpu_id_list = current.gpu_id_list
             self.log(f"gpu id list: {gpu_id_list}")
             cpu_id = int(cpu_name[cpu_name.find('-') + 1:]) - 1
+            lookup_id = cpu_id % len(gpu_id_list)
             self.log(f"cpu id: {cpu_id}")
-            gpu_id = gpu_id_list[cpu_id]
+            gpu_id = gpu_id_list[lookup_id]
             self.log(f"gpu id: {gpu_id}")
             self.log(f'starting process on GPU {gpu_id}')
             status = "multi_GPU"
+        
         except:
             gpu_id = 0
             self.log(f'running on default GPU.')
