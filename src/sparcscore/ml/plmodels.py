@@ -59,7 +59,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
     def __init__(self, model_type="VGG2", **kwargs):
         super().__init__()
 
-        
+        self.save_hyperparameters()
 
         #initialize metrics
         if self.hparams["num_classes"] == 2:
@@ -100,7 +100,6 @@ class MultilabelSupervisedModel(pl.LightningModule):
         else:
             sys.exit("Incorrect network architecture specified. Please check that MultilabelSupervisedModel type parameter is set to key present in method.")
         
-        self.save_hyperparameters()
         
     def forward(self, x):
         return self.network(x)
