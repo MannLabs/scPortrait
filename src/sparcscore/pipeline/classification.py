@@ -181,7 +181,7 @@ class MLClusterClassifier:
                     
                     #number of threads to use for dataloader
                     threads: 24 
-                    dataloader_worker: 24
+                    dataloader_worker_number: 24
 
                     #batch size to pass to GPU
                     batch_size: 900
@@ -323,7 +323,7 @@ class MLClusterClassifier:
         self.log(out)
             
         # classify samples
-        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=True)
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker_number"], shuffle=True)
         
         self.log(f"log transform: {self.config['log_transform']}")
         
@@ -390,6 +390,7 @@ class EnsembleClassifier(ProcessingStep):
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
     DEFAULT_LOG_NAME = "processing.log"
+    DEFAULT_FILE_NAME = "single_cells.h5"
 
     def __init__(self,
                  *args,
@@ -404,7 +405,7 @@ class EnsembleClassifier(ProcessingStep):
         self.ensemble_name = self.config["classification_label"]
 
         #generate directory where results should be saved
-        self.save_dir = os.path.join(self.directory, self.ensemble_name)
+        self.directory = os.path.join(self.directory, self.ensemble_name)
 
     def load_model(self, ckpt_path):
         self.log(f"Loading model from checkpoing: {ckpt_path}")
@@ -423,7 +424,7 @@ class EnsembleClassifier(ProcessingStep):
         #generate dataset
         self.log(f"Reading data from path: {extraction_dir}")
         px_size = self.config["input_image_px"]
-        t = transforms.Compose(transforms.Resize((px_size, px_size), antialias=True))    
+        t = transforms.Compose([transforms.Resize((px_size, px_size), antialias=True)])    
         self.log(f"Transforming input images to shape {px_size}x{px_size}")
 
         f = io.StringIO()
@@ -434,10 +435,10 @@ class EnsembleClassifier(ProcessingStep):
         dataloader = torch.utils.data.DataLoader(dataset,
                                                  batch_size=self.config["batch_size"], 
                                                  shuffle=False,
-                                                 num_workers=self.config["dataloader_workers"], 
+                                                 num_workers=self.config["dataloader_worker_number"], 
                                                  drop_last=False)
         
-        self.log(f"Dataloader generated with a batchsize of {self.config['batch_size']} and {self.config['dataloader_workers']} workers. Dataloader contains {len(dataloader)} entries.")
+        self.log(f"Dataloader generated with a batchsize of {self.config['batch_size']} and {self.config['dataloader_worker_number']} workers. Dataloader contains {len(dataloader)} entries.")
         return(dataloader)
     
     def get_gpu_memory_usage(self):
@@ -458,7 +459,7 @@ class EnsembleClassifier(ProcessingStep):
     def inference(self, dataloader, model_ensemble):
         
         data_iter = iter(dataloader)        
-        self.log(f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
+        self.log(f"Start processing {len(data_iter)} batches with {len(model_ensemble)} models from ensemble.")
         
         with torch.no_grad():
 
@@ -480,6 +481,7 @@ class EnsembleClassifier(ProcessingStep):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
                 x, l, id = next(data_iter)
+                x = x.to(self.config['inference_device'])
 
                 for ix, model_fun in enumerate(model_ensemble):
                     r = model_fun(x)
@@ -513,7 +515,7 @@ class EnsembleClassifier(ProcessingStep):
         new_order = columns_to_move + other_columns
         dataframe = dataframe[new_order]
 
-        path = os.path.join(self.save_dir, f"ensemble_inference_{self.ensemble_name}.csv")
+        path = os.path.join(self.directory, f"ensemble_inference_{self.ensemble_name}.csv")
         dataframe.to_csv(path, sep = ",")
 
         self.log(f"Results saved to file: {path}")
@@ -526,7 +528,7 @@ class EnsembleClassifier(ProcessingStep):
                     
                     #number of threads to use for dataloader
                     threads: 24 
-                    dataloader_worker: 24
+                    dataloader_worker_number: 24
 
                     #batch size to pass to GPU
                     batch_size: 900
@@ -547,9 +549,9 @@ class EnsembleClassifier(ProcessingStep):
 
         self.log("Starting Ensemble Classification")
 
-        if not os.path.isdir(self.save_dir):
-            os.makedirs(self.save_dir,  exist_ok=True)
-            self.log(f"Created new directory {self.save_dir} to save classification results to.")
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory,  exist_ok=True)
+            self.log(f"Created new directory {self.directory} to save classification results to.")
         
         #load models and generate ensemble
         model_ensemble = []
@@ -568,7 +570,7 @@ class EnsembleClassifier(ProcessingStep):
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
         #generate dataloader
-        dataloader = self.generate_dataloader(extraction_dir)
+        dataloader = self.generate_dataloader(f"{extraction_dir}/{self.DEFAULT_FILE_NAME}")
 
         #perform inference
         self.inference(dataloader = dataloader, model_ensemble = model_ensemble)
@@ -753,7 +755,7 @@ class CellFeaturizer:
                     channel_classification: 4
 
                     #number of threads to use for dataloader
-                    dataloader_worker: 0 #needs to be 0 if using cpu
+                    dataloader_worker_number: 0 #needs to be 0 if using cpu
                     
                     #batch size to pass to GPU
                     batch_size: 900
@@ -820,7 +822,7 @@ class CellFeaturizer:
         self.log(out)
             
         # classify samples
-        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=False)
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker_number"], shuffle=False)
         self.inference(dataloader)
 
     def calculate_statistics(self, img, channel = -1):   
