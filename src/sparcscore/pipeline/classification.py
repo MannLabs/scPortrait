@@ -62,7 +62,7 @@ class MLClusterClassifier:
         if "filtered_dataset" in config.keys():
             self.filtered_dataset = self.config["filtered_dataset"]
         
-        # Create segmentation directory
+        # Create classification directory
         self.directory = path
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -274,7 +274,7 @@ class MLClusterClassifier:
             
             #add log message to ensure that it is always 100% transparent which classifier is being used
             self.log(f"Using the following classifier checkpoint: {latest_checkpoint_path}")
-            hparam_path = os.path.join(network_dir,"hparams.yaml")
+            hparam_path = os.path.join(network_dir, "hparams.yaml")
             
             model = MultilabelSupervisedModel.load_from_checkpoint(latest_checkpoint_path, hparams_file=hparam_path, type = self.config["classifier_architecture"], map_location = self.config['inference_device'])
         
@@ -292,7 +292,7 @@ class MLClusterClassifier:
         # redirect stdout to capture dataset size
         f = io.StringIO()
         with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset([extraction_dir],[0],"/",transform=t,return_id=True)
+            dataset = HDF5SingleCellDataset([extraction_dir], [0], "/", transform=t, return_id=True)
             
             if size == 0:
                 size = len(dataset)
@@ -382,6 +382,196 @@ class MLClusterClassifier:
         dataframe.to_csv(path)
 
 
+from sparcscore.pipeline.base import ProcessingStep
+
+class EnsembleClassifier(ProcessingStep):
+    """
+    Class for classifying single cells using a pre-trained ensemble of machine learning models.
+    This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
+    """
+    DEFAULT_LOG_NAME = "processing.log"
+
+    def __init__(self,
+                 *args,
+                 **kwargs):
+        
+        super().__init__(*args, **kwargs)
+
+        #create directory if it does not yet exist
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory, exist_ok=True)
+
+        self.ensemble_name = self.config["classification_label"]
+
+        #generate directory where results should be saved
+        self.save_dir = os.path.join(self.directory, self.ensemble_name)
+
+    def load_model(self, ckpt_path):
+        self.log(f"Loading model from checkpoing: {ckpt_path}")
+        hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
+        model = MultilabelSupervisedModel.load_from_checkpoint(checkpoint_path = ckpt_path,
+                                                               hparams_file = hparams_path, 
+                                                               map_location = self.config['inference_device'])
+        model = model.eval()
+        model.to(self.config['inference_device'])
+        self.log(f"model loaded and transferred to device {self.config['inference_device']}")
+        
+        return (model)
+
+    def generate_dataloader(self, extraction_dir):
+
+        #generate dataset
+        self.log(f"Reading data from path: {extraction_dir}")
+        t = transforms.Compose(transforms.Resize((self.config["input_image_px"], self.config["input_image_px"]), antialias=True))    
+        self.log(f"Transforming input images to shape {self.config["input_image_px"]}x{self.config["input_image_px"]}")
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            dataset = HDF5SingleCellDataset([extraction_dir], [0], "/", transform=t, return_id=True, select_channel=self.config["channel_classification"])
+ 
+        #generate dataloader
+        dataloader = torch.utils.data.DataLoader(dataset,
+                                                 batch_size=self.config["batch_size"], 
+                                                 shuffle=False,
+                                                 num_workers=self.config["dataloader_workers"], 
+                                                 drop_last=False)
+        
+        self.log(f"Dataloader generated with a batchsize of {self.config['batch_size']} and {self.config['dataloader_workers']} workers. Dataloader contains {len(dataloader)} entries.")
+        return(dataloader)
+    
+    def get_gpu_memory_usage(self):
+        if self.config['inference_device'] == "cpu":
+            return None
+        else:
+            try:
+                memory_usage = []
+                for i in range(torch.cuda.device_count()):
+                    gpu_memory = torch.cuda.memory_reserved(i) / 1024**2  # Convert bytes to MiB
+                    memory_usage.append(gpu_memory)
+                results = {f"GPU_{i}": f"{memory_usage[i]} MiB" for i in range(len(memory_usage))}
+                return results
+            except Exception as e:
+                print("Error:", e)
+                return None
+            
+    def inference(self, dataloader, model_ensemble):
+        
+        data_iter = iter(dataloader)        
+        self.log(f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
+        
+        with torch.no_grad():
+
+            x, label, class_id = next(data_iter)
+            x = x.to(self.config['inference_device'])
+            
+            for ix, model_fun in enumerate(model_ensemble):
+                r = model_fun(x)
+                r = r.cpu().detach()
+
+                if ix == 0:
+                    _result = r
+                else:
+                    _result = torch.cat((_result, r), 1)
+            
+            result = _result
+
+            for i in range(len(dataloader)-1):
+                if i % 10 == 0:
+                    self.log(f"processing batch {i}")
+                x, l, id = next(data_iter)
+
+                for ix, model_fun in enumerate(model_ensemble):
+                    r = model_fun(x)
+                    r = r.cpu().detach()
+
+                    if ix == 0:
+                        _result = r
+                    else:
+                        _result = torch.cat((_result, r), 1)
+
+                result = torch.cat((result, _result), 0)
+                label = torch.cat((label, l), 0)
+                class_id = torch.cat((class_id, id), 0)
+
+        result = result.detach().numpy() 
+        label = label.numpy()
+        class_id = class_id.numpy()
+        
+        # save inferred activations / predictions
+        result_labels = []
+        for model in self.model_names:
+            _result_labels = [f"{model}_result_{i}" for i in range(r.shape[1])]
+            result_labels = result_labels + _result_labels
+        
+        dataframe = pd.DataFrame(data=result, columns=result_labels)
+        dataframe["cell_id"] = class_id.astype("int")
+
+        #reorder columns to make it more readable
+        columns_to_move = ['cell_id']
+        other_columns = [col for col in dataframe.columns if col not in columns_to_move]
+        new_order = columns_to_move + other_columns
+        dataframe = dataframe[new_order]
+
+        path = os.path.join(self.save_dir, f"ensemble_inference_{self.ensemble_name}.csv")
+        dataframe.to_csv(path, sep = ",")
+
+        self.log(f"Results saved to file: {path}")
+
+    def __call__(self, extraction_dir):
+        """
+        MLClusterClassifier:
+                    # channel number on which the classification should be performed
+                    channel_classification: 4
+                    
+                    #number of threads to use for dataloader
+                    threads: 24 
+                    dataloader_worker: 24
+
+                    #batch size to pass to GPU
+                    batch_size: 900
+
+                    #path to pytorch checkpoint that should be used for inference
+                    networks: {"model_name": "model_path"}
+
+                    #specify input size that the models expect, provided images will be rescaled to this size
+                    input_image_px: 128
+
+                    #label under which the results will be saved
+                    classification_label: "Autophagy_15h_classifier1"
+                    
+                    # on which device inference should be performed
+                    # for speed should be "cuda"
+                    inference_device: "cuda"
+        """
+
+        self.log("Starting Ensemble Classification")
+
+        if not os.path.isdir(self.save_dir):
+            os.makedirs(self.save_dir,  exist_ok=True)
+            self.log(f"Created new directory {self.save_dir} to save classification results to.")
+        
+        #load models and generate ensemble
+        model_ensemble = []
+        model_names = []
+
+        for model_name, model_path in self.config["networks"].items():
+            model = self.load_model(model_path)
+            model_ensemble.append(model.network.forward)
+            model_names.append(model_name)
+        
+        self.model_names = model_names
+
+        self.log(f"Model Ensemble generated with a total of {len(model_ensemble)} models.")
+        
+        memory_usage = self.get_gpu_memory_usage()
+        self.log(f"GPU memory usage after loading models: {memory_usage}")
+
+        #generate dataloader
+        dataloader = self.generate_dataloader(extraction_dir)
+
+        #perform inference
+        self.inference(dataloader = dataloader, model_ensemble = model_ensemble)
+    
 class CellFeaturizer:
 
     """
