@@ -422,8 +422,9 @@ class EnsembleClassifier(ProcessingStep):
 
         #generate dataset
         self.log(f"Reading data from path: {extraction_dir}")
-        t = transforms.Compose(transforms.Resize((self.config["input_image_px"], self.config["input_image_px"]), antialias=True))    
-        self.log(f"Transforming input images to shape {self.config["input_image_px"]}x{self.config["input_image_px"]}")
+        px_size = self.config["input_image_px"]
+        t = transforms.Compose(transforms.Resize((px_size, px_size), antialias=True))    
+        self.log(f"Transforming input images to shape {px_size}x{px_size}")
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -519,7 +520,7 @@ class EnsembleClassifier(ProcessingStep):
 
     def __call__(self, extraction_dir):
         """
-        MLClusterClassifier:
+        EnsembleClassifier:
                     # channel number on which the classification should be performed
                     channel_classification: 4
                     
