@@ -663,7 +663,7 @@ class Project(Logable):
         """
 
         if hasattr(self, 'filtered_dataset'):
-            input_extraction = self.extraction_f.get_output_path().replace("/data/single_cells.h5", f"/filtered_data/{self.filtered_dataset}/single_cells.h5")
+            input_extraction = self.extraction_f.get_output_path().replace("/data", f"/filtered_data/{self.filtered_dataset}")
         else:
             input_extraction = self.extraction_f.get_output_path()
 
