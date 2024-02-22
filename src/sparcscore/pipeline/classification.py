@@ -386,7 +386,6 @@ from sparcscore.pipeline.base import ProcessingStep
 
 class EnsembleClassifier(ProcessingStep):
     """
-    Class for classifying single cells using a pre-trained ensemble of machine learning models.
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
     DEFAULT_LOG_NAME = "processing.log"
@@ -522,19 +521,45 @@ class EnsembleClassifier(ProcessingStep):
 
     def __call__(self, extraction_dir):
         """
-        EnsembleClassifier:
+        Function called to perform classification on the provided HDF5 dataset.
+
+        Args:
+            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of 
+            a project processing workflow this argument will be provided automatically.
+
+        Returns:
+            None: Results are written to csv files located in the project directory.
+
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
+            class based on the previous single-cell extraction. Therefore, no parameters need to be provided         
+                    
+        Example:
+            
+            .. code-block:: python
+
+                project.classify()
+
+        Note:
+            
+            The following parameters are required in the config file:
+
+            .. code-block:: yaml
+
+                EnsembleClassifier:
                     # channel number on which the classification should be performed
                     channel_classification: 4
                     
                     #number of threads to use for dataloader
-                    threads: 24 
                     dataloader_worker_number: 24
 
                     #batch size to pass to GPU
                     batch_size: 900
 
                     #path to pytorch checkpoint that should be used for inference
-                    networks: {"model_name": "model_path"}
+                    networks:
+                        model1: "path/to/model1/"
+                        model2: "path/to/model2/"
 
                     #specify input size that the models expect, provided images will be rescaled to this size
                     input_image_px: 128
