@@ -764,23 +764,14 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
         self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data before removing cells to close to image edges")
 
-        #calculate number of rows that need to be removed when accounting for the cells that are to close to the image edges to extract
-        n_cells_to_remove = len(self.save_index_to_remove)
-
-        #adjust new dimensions of resulting final objects
-        n_index, c_index = _tmp_single_cell_index.shape
-        n_data, c_data, x_data, y_data = _tmp_single_cell_data.shape
-
-        shape_single_cell_index = (n_index - n_cells_to_remove, c_index)
-        shape_single_cell_data = (n_data - n_cells_to_remove, c_data, x_data, y_data)
-
         #generate final index of all of the rows that we wish to keep out of the original array
         keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
-        
+
         #extract information about the annotation of cell ids
         column_labels = ['index', "cellid"] + list(self.label_names.astype("U13"))[1:]
         
         self.log("Creating HDF5 file to save results to.")
+
         with h5py.File(self.output_path, 'w') as hf:
             #create special datatype for storing strings
             dt = h5py.special_dtype(vlen=str)
@@ -789,11 +780,12 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             hf.create_dataset('label_names', data = column_labels, chunks=None, dtype = dt)
             
             #generate index data container
-            hf.create_dataset('single_cell_index_labelled', shape_single_cell_index , chunks = None, dtype = dt)
-            single_cell_labelled = hf.get("single_cell_index_labelled")
-            single_cell_labelled[:] = _tmp_single_cell_index[keep_index]
+            index_labelled = _tmp_single_cell_index[keep_index]
+            index_labelled = pd.DataFrame(index_labelled)[1:].reset_index().values #need to reset the lookup index so that it goes up sequentially
+            
+            hf.create_dataset('single_cell_index_labelled', data = index_labelled, chunks = None, dtype = dt)
+            del index_labelled #cleanup to free up memory
 
-            hf.create_dataset('single_cell_index', (shape_single_cell_index[0], 2), dtype="uint64")           
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset('single_cell_data', 
                                                  shape =  (len(keep_index), c, x, y),
@@ -810,20 +802,22 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
                 
         self.log(f"Transferring exracted single cells to .hdf5")
+        
         with h5py.File(self.output_path, 'a') as hf:
+            
             #need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
             index = _tmp_single_cell_index[keep_index, 0:2]
             _, cell_ids = index.T
             index = np.array(list(zip(range(len(cell_ids)), cell_ids)))
-            index[index == ""] = "0" 
             index = index.astype("uint64")
-            hf["single_cell_index"][:] = index
 
+            hf.create_dataset('single_cell_index', data = index, dtype="uint64")           
+            del index
         #delete tempobjects (to cleanup directory)
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
         shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
-        del _tmp_single_cell_data, _tmp_single_cell_index, self.TEMP_DIR_NAME 
+        del _tmp_single_cell_data, _tmp_single_cell_index, self.TEMP_DIR_NAME
 
     def _save_cell_info(self, index, cell_id, image_index, label_info, stack):
         global _tmp_single_cell_data, _tmp_single_cell_index
@@ -951,7 +945,6 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                     if center_nuclei is not None:
                         px_centers = np.round(center_nuclei).astype(int)
                         _cell_ids = list(_cell_ids)
-
                         
                         if self.deep_debug:
                             #plotting results for debugging
@@ -972,7 +965,6 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                             axs[3].axis("off")
                             axs[3].scatter(x, y, color = "red", s = 5)
                             axs[3].set_title("Nuclei masks with calculated centers overlayed.")
-
                         
                         #filter lists to only include those cells which passed the final filters (i.e remove border cells)
                         filter = [x in cell_ids for x in _cell_ids]
