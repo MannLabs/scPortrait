@@ -782,7 +782,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             #generate index data container
             index_labelled = _tmp_single_cell_index[keep_index]
             index_labelled = pd.DataFrame(index_labelled)[1:].reset_index().values #need to reset the lookup index so that it goes up sequentially
-            index_labelled = index_labelled.astype("string")
+            index_labelled = index_labelled.astype(str)
 
             hf.create_dataset('single_cell_index_labelled', data = index_labelled, chunks = None, dtype = dt)
             del index_labelled #cleanup to free up memory
