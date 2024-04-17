@@ -177,15 +177,23 @@ class SingleOutputModel(pl.LightningModule):
         if model_type == "VGG2_single_output":
             self.network = VGG2_single_output(in_channels=self.hparams["num_in_channels"], cfg="B")
 
-        # Initialize metrics for regression
-        self.mse = torchmetrics.MeanSquaredError()
-        self.mae = torchmetrics.MeanAbsoluteError()
+        # Initialize metrics for regression model 
+        self.mse = torchmetrics.MeanSquaredError() # MSE metric for regression
+        self.mae = torchmetrics.MeanAbsoluteError() # MAE metric for regression
 
     def forward(self, x):
         return self.network(x)
     
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"])
+        if self.hparams["optimizer"] == "SGD":
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams["learning_rate"])
+        elif self.hparams["optimizer"] == "Adam":
+            #set weight decay to 0 if not specified in hparams 
+            if self.hparams["weight_decay"] is None:
+                self.hparams["weight_decay"] = 0
+            optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+        else:
+            raise ValueError("No optimizier specified in hparams")
         return optimizer
     
     def training_step(self, batch, batch_idx):
