@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from sparcscore.ml.models import VGG1, VGG2, CAEBase, _VGG1, _VGG2
+from sparcscore.ml.models import VGG1, VGG2, VGG2_single_output, CAEBase, _VGG1, _VGG2
 
 class MultilabelSupervisedModel(pl.LightningModule):
     """
@@ -167,6 +167,60 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
 # implemented models for future use currently not applied to SPARCSpy
 
+class SingleOutputModel(pl.LightningModule):
+
+    def __init__(self, model_type="VGG2_single_output", **kwargs):
+        super().__init__()
+        self.save_hyperparameters()
+    
+        # Define the regression model
+        if model_type == "VGG2_single_output":
+            self.network = VGG2_single_output(in_channels=self.hparams["num_in_channels"], cfg="B")
+
+        # Initialize metrics for regression
+        self.mse = torchmetrics.MeanSquaredError()
+        self.mae = torchmetrics.MeanAbsoluteError()
+
+    def forward(self, x):
+        return self.network(x)
+    
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"])
+        return optimizer
+    
+    def training_step(self, batch, batch_idx):
+        data, target = batch
+        output = self.network(data)
+        loss = F.mse_loss(output, target)
+
+        self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/train', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/train', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        data, target = batch
+        output = self.network(data)
+        loss = F.mse_loss(output, target)
+
+        self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/val', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/val', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+
+        return loss
+    
+    def test_step(self, batch, batch_idx):
+        data, target = batch
+        output = self.network(data)
+        loss = F.mse_loss(output, target)
+
+        self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/test', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/test', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+
+        return loss
+
 class GeneralModel(pl.LightningModule):
 
     def __init__(self, model, hparams):
@@ -190,8 +244,7 @@ class GeneralModel(pl.LightningModule):
     def on_train_start(self):
         self.logger.log_hyperparams(self.hp, {"precision/train": 0,"recall/train": 0,"precision/val": 0,"recall/val": 0})
     
-    def forward(self, x):
-        
+    def forward(self, x): 
         return self.network(x)
     
     def configure_optimizers(self):

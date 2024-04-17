@@ -55,7 +55,7 @@ class VGGBase(nn.Module):
                 i +=1
         return nn.Sequential(OrderedDict(layers))
     
-    def make_layers_MLP(self, cfg_MLP, cfg):
+    def make_layers_MLP(self, cfg_MLP, cfg, single_output = False):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
@@ -82,10 +82,13 @@ class VGGBase(nn.Module):
                 linear = (f"MLP_linear{i}", nn.Linear(in_features, out_features))
                 layers += [linear]
                 in_features = out_features
-                
-        #add final layer with number of classes
-        linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
-        layers += [linear]    
+        
+        if single_output:
+            linear = (f"MLP_linear_final", nn.Linear(in_features, 1))
+            layers += [linear]
+        else:
+            linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
+            layers += [linear]  
         
         return nn.Sequential(OrderedDict(layers))
 
@@ -94,7 +97,7 @@ class VGGBase(nn.Module):
         x = self.features(x)
 
         x = torch.flatten(x, 1)
-        
+
         x = self.classifier(x)
         x = self.softmax(x)
         return x
@@ -118,7 +121,7 @@ class VGG1(VGGBase):
         
         super(VGG1, self).__init__()
 
-        #save num_clases for use in making MLP head
+        #save num_classes for use in making MLP head
         self.num_classes = num_classes
 
         self.norm = nn.BatchNorm2d(in_channels)
@@ -145,7 +148,7 @@ class VGG2(VGGBase):
         
         super(VGG2, self).__init__()
         
-        #save num_clases for use in making MLP head
+        #save num_classes for use in making MLP head
         self.num_classes = num_classes
 
         self.norm = nn.BatchNorm2d(in_channels)
@@ -157,6 +160,41 @@ class VGG2(VGGBase):
     def vgg(cfg, in_channels,  **kwargs):
         model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
+
+class VGG2_single_output(VGGBase):
+    """
+    Instance of VGGBase with regression output.
+    """
+    def __init__(self,
+                cfg = "B",
+                cfg_MLP = "B",
+                dimensions = 196,
+                in_channels = 1,
+                num_classes = 2,
+                ):
+        
+        super(VGG2_single_output, self).__init__()
+        
+        #save num_classes for use in making MLP head
+        #self.num_classes = num_classes
+
+        self.norm = nn.BatchNorm2d(in_channels) 
+         
+        #self.softmax = nn.LogSoftmax(dim=1)
+        
+        self.features = self.make_layers(self.cfgs[cfg], in_channels)
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], single_output = True)
+        
+    def vgg(cfg, in_channels,  **kwargs):
+        model = VGG2_single_output(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
+        return model
+    
+    def forward(self, x):
+        x = self.norm(x)
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
 
 ### CAE Model Architecture
 
