@@ -165,7 +165,6 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
         return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
 
-# implemented models for future use currently not applied to SPARCSpy
 
 class SingleOutputModel(pl.LightningModule):
 
@@ -234,6 +233,8 @@ class SingleOutputModel(pl.LightningModule):
         self.log('mae/test', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
 
         return loss
+
+# implemented models for future use currently not applied to SPARCSpy
 
 class GeneralModel(pl.LightningModule):
 
