@@ -198,8 +198,10 @@ class SingleOutputModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         data, target = batch
-        output = self.network(data)
-        loss = F.mse_loss(output, target)
+        output = self.network(data) # Forward pass, only classification, no softmax
+        loss = F.mse_loss(output, target) # L2 loss
+
+        # accuracy metrics for regression???
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/train', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
@@ -212,6 +214,8 @@ class SingleOutputModel(pl.LightningModule):
         output = self.network(data)
         loss = F.mse_loss(output, target)
 
+         # accuracy metrics for regression???
+
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/val', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
         self.log('mae/val', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
@@ -222,6 +226,8 @@ class SingleOutputModel(pl.LightningModule):
         data, target = batch
         output = self.network(data)
         loss = F.mse_loss(output, target)
+
+         # accuracy metrics for regression???
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/test', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
