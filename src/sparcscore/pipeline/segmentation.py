@@ -802,7 +802,10 @@ class ShardedSegmentation(Segmentation):
         shutil.rmtree(self.shard_directory, ignore_errors=True)
 
         gc.collect()
-
+    
+    def initializer_function(self, gpu_id_list):
+            current_process().gpu_id_list = gpu_id_list
+            
     def process(self, input_image):
         self.save_zarr = False
         self.save_input_image(input_image)
@@ -866,13 +869,10 @@ class ShardedSegmentation(Segmentation):
         for gpu_ids in range(available_GPUs):
             for _ in range(processes_per_GPU):
                 gpu_id_list.append(gpu_ids)
-        
-        def initializer_function(gpu_id_list):
-            current_process().gpu_id_list = gpu_id_list
 
         self.log(f"Beginning segmentation on {available_GPUs} GPUs.")
         
-        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
+        with Pool(processes=n_processes, initializer=self.initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, shard_list),
@@ -983,13 +983,10 @@ class ShardedSegmentation(Segmentation):
             for gpu_ids in range(available_GPUs):
                 for _ in range(processes_per_GPU):
                     gpu_id_list.append(gpu_ids)
-            
-            def initializer_function(gpu_id_list):
-                current_process().gpu_id_list = gpu_id_list
 
             self.log(f"Beginning segmentation on {available_GPUs}.")
             
-            with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
+            with Pool(processes=n_processes, initializer=self.initializer_function, initargs=[gpu_id_list]) as pool:
                 results = list(
                     tqdm(
                         pool.imap(self.method.call_as_shard, shard_list),
@@ -1323,6 +1320,8 @@ class MultithreadedSegmentation(TimecourseSegmentation):
             raise AttributeError(
                 "No Segmentation method defined, please set attribute ``method``"
             )
+    def initializer_function(self, gpu_id_list):
+        current_process().gpu_id_list = gpu_id_list
 
     def process(self):
         # global _tmp_seg
@@ -1374,13 +1373,10 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         for gpu_ids in range(available_GPUs):
             for _ in range(processes_per_GPU):
                 gpu_id_list.append(gpu_ids)
-        
-        def initializer_function(gpu_id_list):
-            current_process().gpu_id_list = gpu_id_list
 
         self.log(f"Beginning segmentation on {available_GPUs}.")
         
-        with Pool(processes=n_processes, initializer=initializer_function, initargs=[gpu_id_list]) as pool:
+        with Pool(processes=n_processes, initializer=self.initializer_function, initargs=[gpu_id_list]) as pool:
             results = list(
                 tqdm(
                     pool.imap(self.method.call_as_shard, segmentation_list),
