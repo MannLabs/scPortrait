@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from sparcscore.ml.models import VGG1, VGG2, VGG2_single_output, CAEBase, _VGG1, _VGG2
+from sparcscore.ml.models import VGG1, VGG2, VGG2_regression, CAEBase, _VGG1, _VGG2
 
 class MultilabelSupervisedModel(pl.LightningModule):
     """
@@ -166,15 +166,15 @@ class MultilabelSupervisedModel(pl.LightningModule):
         return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
 
 
-class SingleOutputModel(pl.LightningModule):
+class RegressionModel(pl.LightningModule):
 
-    def __init__(self, model_type="VGG2_single_output", **kwargs):
+    def __init__(self, model_type="VGG2_regression", **kwargs):
         super().__init__()
         self.save_hyperparameters()
     
         # Define the regression model
-        if model_type == "VGG2_single_output":
-            self.network = VGG2_single_output(in_channels=self.hparams["num_in_channels"], cfg="B")
+        if model_type == "VGG2_regression":
+            self.network =  VGG2_regression(in_channels=self.hparams["num_in_channels"], cfg="B")
 
         # Initialize metrics for regression model 
         self.mse = torchmetrics.MeanSquaredError() # MSE metric for regression

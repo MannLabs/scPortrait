@@ -161,7 +161,7 @@ class VGG2(VGGBase):
         model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
 
-class VGG2_single_output(VGGBase):
+class VGG2_regression(VGGBase):
     """
     Instance of VGGBase with regression output.
     """
@@ -173,20 +173,14 @@ class VGG2_single_output(VGGBase):
                 num_classes = 2,
                 ):
         
-        super(VGG2_single_output, self).__init__()
-        
-        #save num_classes for use in making MLP head
-        #self.num_classes = num_classes
+        super(VGG2_regression, self).__init__()
 
         self.norm = nn.BatchNorm2d(in_channels) 
-         
-        #self.softmax = nn.LogSoftmax(dim=1)
-        
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
         self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], single_output = True)
         
     def vgg(cfg, in_channels,  **kwargs):
-        model = VGG2_single_output(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
+        model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
     
     def forward(self, x):
