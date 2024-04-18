@@ -191,8 +191,10 @@ class RegressionModel(pl.LightningModule):
             if self.hparams["weight_decay"] is None:
                 self.hparams["weight_decay"] = 0
             optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+        elif self.hparams["optimizer"] == "AdamW":
+            optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
         else:
-            raise ValueError("No optimizier specified in hparams")
+            raise ValueError("No optimizer specified in hparams")
         return optimizer
     
     def training_step(self, batch, batch_idx):
