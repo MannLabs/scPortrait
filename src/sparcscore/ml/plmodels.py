@@ -192,6 +192,9 @@ class RegressionModel(pl.LightningModule):
                 self.hparams["weight_decay"] = 0
             optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
         elif self.hparams["optimizer"] == "AdamW":
+            #set weight decay to 1e-2 if not specified in hparams 
+            if self.hparams["weight_decay"] is None:
+                self.hparams["weight_decay"] = 10 ** -2
             optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
         else:
             raise ValueError("No optimizer specified in hparams")
