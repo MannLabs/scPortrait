@@ -18,7 +18,7 @@ class LMDSelection(ProcessingStep):
         super().__init__(*args, **kwargs)
         
         
-    def process(self, hdf_location, cell_sets, calibration_marker):
+    def process(self, hdf_location, cell_sets, calibration_marker, name = None):
         """
         Process function for selecting cells and generating their XML.
         Under the hood this method relies on the pylmd library and utilizies its `SegmentationLoader` Class.
@@ -135,10 +135,11 @@ class LMDSelection(ProcessingStep):
             shape_collection.plot(calibration =True)
             shape_collection.stats()
         
-        try:
-            name = "_".join([cell_set['name'] for cell_set in cell_sets])
-        except:
-            name = 'selected_cells'
+        if name is None:
+            try:
+                name = "_".join([cell_set['name'] for cell_set in cell_sets])
+            except:
+                name = 'selected_cells'
             
         savename = name.replace(" ","_") + ".xml"
         savepath = os.path.join(self.directory, savename)
