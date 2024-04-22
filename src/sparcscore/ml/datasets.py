@@ -206,7 +206,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
     def __init__(self, 
                  dir_list: list[str], 
-                 target_values: list[float],
+                 target_col: list[int],
                  root_dir: str, 
                  max_level: int = 5, 
                  transform = None, 
@@ -215,7 +215,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
                  select_channel = None):
         
         self.root_dir = root_dir 
-        self.target_values = target_values
+        self.target_col = target_col
         self.dir_list = dir_list
         self.transform = transform
         self.select_channel = select_channel
@@ -225,9 +225,10 @@ class HDF5SingleCellDatasetRegression(Dataset):
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  # get full path
-            current_target = self.target_values[i] # get target value
+            
+            current_target = self.target_col[i] # get target value
+            
             filetype = directory.split(".")[-1] # get filetype
-
             if filetype in self.HDF_FILETYPES:
                 self.add_hdf_to_index(current_target, directory) # check if "directory" is a path to specific hdf5 and add to index
             else:
@@ -238,16 +239,19 @@ class HDF5SingleCellDatasetRegression(Dataset):
         self.stats() # print dataset stats at the end
  
         
-    def add_hdf_to_index(self, current_target, path):       
+    def add_hdf_to_index(self, target_col, path):       
         try:
             input_hdf = h5py.File(path, 'r') # read hdf5 file
             index_handle = input_hdf.get('single_cell_index') # get index handle
-
+            current_target = input_hdf.get('single_cell_index_labelled').asstr()[:, target_col] # get target value
+            current_target[current_target == ''] = np.nan # replace empty strings with nan
+            current_target = current_target.astype(float) # convert to float
+            
             handle_id = len(self.handle_list) # get handle id
             self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle
 
             for row in index_handle:
-                self.data_locator.append([current_target, handle_id] + list(row)) # append data locator with target, handle id, and row
+                self.data_locator.append([current_target, handle_id] + list(row)) # append data locator
         except:
             return
         
@@ -263,7 +267,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
                     self.add_hdf_to_index(current_target, os.path.join(path, file))  # add hdf5 files to index if filetype is supported
 
             for subdirectory in current_level_directories: # recursively scan subdirectories
-                self.scan_directory(subdirectory, current_target, levels_left-1) 
+                self.scan_directory(subdirectory, current_target, levels_left - 1) 
         else:
             return
     
@@ -271,17 +275,10 @@ class HDF5SingleCellDatasetRegression(Dataset):
         targets = [info[0] for info in self.data_locator]
         
         targets = np.array(targets, dtype=float)
-
-        mean_target = np.mean(targets)
-        median_target = np.median(targets)
-        std_target = np.std(targets)
         min_target = np.min(targets)
         max_target = np.max(targets)
 
         print(f"Total samples: {len(targets)}")
-        print(f"Mean of target values: {mean_target:.2f}")
-        print(f"Median of target values: {median_target:.2f}")
-        print(f"SD of targets: {std_target:.2f}")
         print(f"Min target: {min_target:.2f}")
         print(f"Max target: {max_target:.2f}")
         
