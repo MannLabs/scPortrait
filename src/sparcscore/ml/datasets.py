@@ -9,7 +9,7 @@ class HDF5SingleCellDataset(Dataset):
     """
     Class for handling SPARCSpy single cell datasets stored in HDF5 files.
 
-    This class provides a convenient interface for SPARCSpy formated hdf5 files containing single cell datasets. It supports loading data
+    This class provides a convenient interface for SPARCSpy formatted hdf5 files containing single cell datasets. It supports loading data
     from multiple hdf5 files within specified directories, applying transformations on the data, and returning
     the required information, such as label or id, along with the single cell data.
 
@@ -36,21 +36,21 @@ class HDF5SingleCellDataset(Dataset):
     Methods
     -------
     add_hdf_to_index(current_label, path)
-        Adds single cell data from the hdf5 file located at ‘path’ with the specified ‘current_label’ to the index.
+        Adds single cell data from the hdf5 file located at `path` with the specified `current_label` to the index.
     scan_directory(path, current_label, levels_left)
-        Scans directories for hdf5 files and adds their data to the index with the specified ‘current_label’.
+        Scans directories for hdf5 files and adds their data to the index with the specified `current_label`.
     stats()
         Prints dataset statistics including total count and count per label.
     len()
         Returns the total number of single cells in the dataset.
     getitem(idx)
-        Returns the data, label, and optional id/fake_id of the single cell specified by the index ‘idx’.
+        Returns the data, label, and optional id/fake_id of the single cell specified by the index `idx`.
 
     Examples
     --------
-    >>> hdf5_data = HDF5SingleCellDataset(dir_list=[‘data1.hdf5’, ‘data2.hdf5’],
+    >>> hdf5_data = HDF5SingleCellDataset(dir_list=[`data1.hdf5`, `data2.hdf5`],
     dir_labels=[0, 1],
-    root_dir=‘/path/to/data’,
+    root_dir=`/path/to/data`,
     transform=None,
     return_id=True)
     >>> len(hdf5_data)
@@ -65,7 +65,8 @@ class HDF5SingleCellDataset(Dataset):
 
     """
     
-    HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]
+    HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"] # supported hdf5 filetypes 
+
     def __init__(self, dir_list, 
                  dir_labels, 
                  root_dir, 
@@ -85,7 +86,7 @@ class HDF5SingleCellDataset(Dataset):
         
         self.select_channel = select_channel
         
-        # scan all directoreis
+        # scan all directories
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  
             current_label = self.dir_labels[i]
@@ -102,7 +103,6 @@ class HDF5SingleCellDataset(Dataset):
                 self.scan_directory(path, current_label, max_level)
         
         # print dataset stats at the end
-        
         self.return_id = return_id
         self.return_fake_id = return_fake_id
         self.stats()
@@ -150,10 +150,9 @@ class HDF5SingleCellDataset(Dataset):
         else:
             return
         
-    def stats(self):
-    
+    def stats(self): # print dataset statistics
         labels = [el[0] for el in self.data_locator]
-        
+
         print("Total: {}".format(len(labels)))
         
         for l in set(labels):
@@ -164,25 +163,23 @@ class HDF5SingleCellDataset(Dataset):
     
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
-            idx = idx.tolist()
+            idx = idx.tolist() # convert tensor to list
         
         # get the label, filename and directory for the current dataset
-        data_info = self.data_locator[idx]
+        data_info = self.data_locator[idx] 
         
         if self.select_channel is not None:
             cell_tensor = self.handle_list[data_info[1]][data_info[2], self.select_channel]
             t = torch.from_numpy(cell_tensor)
-            t = torch.unsqueeze(t,0)
-            
+            t = torch.unsqueeze(t, 0)
         else:
-            
             cell_tensor = self.handle_list[data_info[1]][data_info[2]]
             t = torch.from_numpy(cell_tensor)
-            
-        t = t.float()     
+    
+        t = t.float() # convert to float tensor
         
         if self.transform:
-            t = self.transform(t)
+            t = self.transform(t) # apply transformation
         """  
         if not list(t.shape) == list(torch.Size([1,128,128])):
             t = torch.zeros((1,128,128))
@@ -191,13 +188,17 @@ class HDF5SingleCellDataset(Dataset):
             raise ValueError("either return_id or return_fake_id should be set")
             
         if self.return_id:
-            
             ids = int(data_info[3])
-            sample = (t, torch.tensor(data_info[0]), torch.tensor(ids))
-        elif self.return_fake_id:
-            
-            sample = (t, torch.tensor(data_info[0]), torch.tensor(0))
+            sample = (t, torch.tensor(data_info[0]), torch.tensor(ids)) # return data, label, and id
+        elif self.return_fake_id: 
+            sample = (t, torch.tensor(data_info[0]), torch.tensor(0)) # return data, label, and fake id
         else:
-            sample = (t, torch.tensor(data_info[0]))
+            sample = (t, torch.tensor(data_info[0])) # return data and label
         
         return sample
+    
+
+class HDF5SingleCellDatasetRegression(Dataset):
+    """
+    Class for handling SPARCSpy single cell datasets stored in HDF5 files for regression tasks.
+    """
