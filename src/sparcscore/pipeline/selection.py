@@ -152,7 +152,7 @@ class LMDSelection(ProcessingStep):
         shape_collection.save(savepath)
         
         del segmentation
-        self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
-        shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
+        self.log(f"Tempmmap Folder location {TEMP_DIR_NAME} will now be removed.")
+        shutil.rmtree(TEMP_DIR_NAME, ignore_errors=True)
 
         self.log(f"Saved output at {savepath}")
