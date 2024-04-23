@@ -3,7 +3,8 @@ import os
 import numpy as np
 import h5py
 from lmd.lib import SegmentationLoader
-
+import shutil
+from alphabase.io import tempmmap
 
 class LMDSelection(ProcessingStep):
     """
@@ -121,11 +122,16 @@ class LMDSelection(ProcessingStep):
         # load segmentation from hdf5
         hf = h5py.File(hdf_location, 'r')
         hdf_labels = hf.get('labels')
+
+        #create memory mapped temporary array for saving the segmentation
+        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
+        c, x, y = hdf_labels.shape
+        segmentation = tempmmap.array(shape = (x, y), dtype = hdf_labels.dtype)
         segmentation = hdf_labels[self.config['segmentation_channel'],:,:]
         
         self.config['orientation_transform'] = np.array([[0, -1],[1, 0]])
         
-        sl = SegmentationLoader(config = self.config, verbose = self.debug)
+        sl = SegmentationLoader(config = self.config, verbose = self.debug, threads = self.config['threads_cell_sets'])
         
         shape_collection = sl(segmentation,
             cell_sets,
@@ -145,4 +151,8 @@ class LMDSelection(ProcessingStep):
         savepath = os.path.join(self.directory, savename)
         shape_collection.save(savepath)
         
+        del segmentation
+        self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
+        shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
+
         self.log(f"Saved output at {savepath}")
