@@ -781,7 +781,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             
             #generate index data container
             index_labelled = _tmp_single_cell_index[keep_index]
-            index_labelled = pd.DataFrame(index_labelled)[1:].reset_index().values #need to reset the lookup index so that it goes up sequentially
+            index_labelled = pd.DataFrame(index_labelled).iloc[:, 1:].reset_index(drop = True).values #need to reset the lookup index so that it goes up sequentially
             index_labelled = np.char.encode(index_labelled.astype(str))
 
             hf.create_dataset('single_cell_index_labelled', data = index_labelled, chunks = None, dtype = dt)
@@ -807,8 +807,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         with h5py.File(self.output_path, 'a') as hf:
             
             #need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
-            index = _tmp_single_cell_index[keep_index, 0:2]
-            _, cell_ids = index.T
+            cell_ids = _tmp_single_cell_index[keep_index, 1]
             index = np.array(list(zip(range(len(cell_ids)), cell_ids)))
             index = index.astype("uint64")
 
