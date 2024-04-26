@@ -726,17 +726,12 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             classes = hf.get("classes")
 
             results = pd.DataFrame(columns = ["tileids", "cellids"], index = range(labels.shape[0]))
-        
+
             self.log({"Extracting classes from each Segmentation Tile."})
-            # should be updated later when classes saved in segmentation automatically 
-            # currently not working because of issue with datatypes
-            
-            for i, tile_id in zip(labels.T[0], labels.T[1]):
-                #dirty fix for some strange problem with some of the datasets
-                #FIX THIS
-                if i == "":
-                    continue
-                cellids =list(classes[int(i)])
+            tile_ids = labels.T[1]
+
+            for i, tile_id in enumerate(tile_ids):
+                cellids =list(classes[i])
                 
                 #remove background
                 if 0 in cellids:
@@ -746,10 +741,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                 results.loc[int(i), "tileids"] = tile_id
 
         #map each cell id to tile id and generate a tuple which can be passed to later functions
-        return_results = [[(xset, i, results.loc[i, "tileids"]) for i, xset in enumerate(results.cellids)]]
-        return_results = flatten(return_results)
-        
-        #required format 
+        return_results = [(xset, i, results.loc[i, "tileids"]) for i, xset in enumerate(results.cellids)]
         return(return_results)
 
     def _get_label_info(self, arg):
