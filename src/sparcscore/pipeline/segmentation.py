@@ -99,6 +99,7 @@ class Segmentation(ProcessingStep):
 
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
+        
         self.log(f"Saved cell_id classes to file {filtered_path}.")
     
     def check_filter_status(self):
@@ -1209,33 +1210,32 @@ class TimecourseSegmentation(Segmentation):
 
                 individual_hdf_labels = hdf_labels[i, :, :, :]
                 num_shapes = np.max(individual_hdf_labels)
-                cr = np.unique(individual_hdf_labels)
-
-                filtered_classes = [int(el) for el in list(cr)]
                 shifted_map, edge_labels = shift_labels(individual_hdf_labels, class_id_shift, return_shifted_labels=True)
-                filtered_classes = np.unique(shifted_map)
+                hdf_labels[i, :, :] = shifted_map
 
-                edge_labels = set(edge_labels)
-                final_classes = [item for item in filtered_classes if item not in edge_labels]
+                if set(np.unique(shifted_map[0])) != set(np.unique(shifted_map[1])):
+                    self.log("Warning: Different classes in different segmentatio channels. Please report this example to the developers")
+                    self.log("set1 nucleus: set(np.unique(shifted_map[0]))")
+                    self.log("set2 cytosol: set(np.unique(shifted_map[1]))")
+
+                    self.log(f"{set(np.unique(shifted_map[1]))- set(np.unique(shifted_map[0]))} not in nucleus mask")
+                    self.log(f"{set(np.unique(shifted_map[0]))- set(np.unique(shifted_map[1]))} not in cytosol mask")
+
+                filtered_classes = set(np.unique(shifted_map[0])) - set([0]) #remove background class
+                final_classes = list(filtered_classes - set(edge_labels))
 
                 hdf_labels[i, :, :] = shifted_map
-                hdf_classes[i] = np.array(final_classes, dtype="int32").reshape(1, 1, -1)
+                hdf_classes[i] = np.array(final_classes, dtype="uint32").reshape(1, 1, -1)
 
                 # save all cells in general
-                filtered_classes_combined += [
-                    class_id for class_id in filtered_classes if class_id != 0
-                ]
-                edge_classes_combined += edge_labels
+                filtered_classes_combined.extend(filtered_classes)
+                edge_classes_combined.extend(edge_labels)
 
                 # adjust class_id shift
                 class_id_shift += num_shapes
 
             edge_classes_combined = set(edge_classes_combined)
-            classes_after_edges = [
-                item
-                for item in filtered_classes_combined
-                if item not in edge_classes_combined
-            ]
+            classes_after_edges =list(set(filtered_classes_combined) - edge_classes_combined)
 
             self.log("Number of filtered classes combined after segmentation:")
             self.log(len(filtered_classes_combined))
@@ -1255,6 +1255,10 @@ class TimecourseSegmentation(Segmentation):
                 if set(edge_classes_combined).issubset(set(all_classes)):
                     self.log(
                         "Sharding sanity check: edge classes are a full subset of all classes"
+                    )
+                elif len(set(all_classes)) - len(set(edge_classes_combined)) == len(set(classes_after_edges)):
+                    self.log(
+                        "Sharding sanity check: sum of edge classes and classes after edges is equal to all classes."
                     )
                 else:
                     self.log(
