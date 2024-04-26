@@ -764,6 +764,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             else:
                 use_GPU = True
                 device = torch.device("cuda")
+        
         #add M1 mac support
         elif torch.backends.mps.is_available():
             use_GPU = True
@@ -1123,7 +1124,6 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         #rescale segmentation results to original size
         x_trim = x - channels.shape[1]
         y_trim = y - channels.shape[2]
-        print(segmentation.shape)
 
         #if no padding was performed then we need to keep the same dimensions
         if x_trim > 0:
@@ -1136,8 +1136,6 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
                 segmentation = segmentation[:, :, :-y_trim]
             else:
                 segmentation = segmentation
-
-        print(segmentation.shape)
 
         self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
 
@@ -1392,8 +1390,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
                 segmentation = segmentation[:, :, :-y_trim]
             else:
                 segmentation = segmentation
-
-        print(segmentation.shape)
 
         self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
 
