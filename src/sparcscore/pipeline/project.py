@@ -153,9 +153,12 @@ class Project(Logable):
             seg_directory = os.path.join(
                 self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME
             )
+
+            self.seg_directory = seg_directory
+
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
-                seg_directory,
+                self.seg_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -174,10 +177,12 @@ class Project(Logable):
             filter_seg_directory = os.path.join(
                 self.project_location, self.DEFAULT_SEGMENTATION_FILTERING_DIR_NAME
             )
+
+            self.filter_seg_directory = filter_seg_directory
             
             self.segmentation_filtering_f = segmentation_filtering_f(
                 self.config[segmentation_filtering_f.__name__],
-                filter_seg_directory,
+                self.filter_seg_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -190,6 +195,8 @@ class Project(Logable):
                 self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
             )
 
+            self.extraction_directory = extraction_directory
+
             if extraction_f.__name__ not in self.config:
                 raise ValueError(
                     f"Config for {extraction_f.__name__} is missing from the config file"
@@ -197,7 +204,7 @@ class Project(Logable):
 
             self.extraction_f = extraction_f(
                 self.config[extraction_f.__name__],
-                extraction_directory,
+                self.extraction_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -216,9 +223,12 @@ class Project(Logable):
             classification_directory = os.path.join(
                 self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
             )
+
+            self.classification_directory = classification_directory
+
             self.classification_f = classification_f(
                 self.config[classification_f.__name__],
-                classification_directory,
+                self.classification_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -237,9 +247,12 @@ class Project(Logable):
             selection_directory = os.path.join(
                 self.project_location, self.DEFAULT_SELECTION_DIR_NAME
             )
+
+            self.selection_directory = selection_directory
+
             self.selection_f = selection_f(
                 self.config[selection_f.__name__],
-                selection_directory,
+                self.selection_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
