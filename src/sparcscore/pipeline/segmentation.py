@@ -84,11 +84,19 @@ class Segmentation(ProcessingStep):
     ]
 
     def __init__(self, *args, **kwargs):
+        #if _tmp_seg is passed as an argument execute this following code (this only applies to some cases)
+        if "_tmp_seg" in kwargs.keys():
+            self._tmp_seg = _tmp_seg
+
+            #remove _tmp_seg from kwargs so that underlying classes do not need to account for it
+            kwargs.pop("_tmp_seg")
+
         super().__init__(*args, **kwargs)
 
         self.identifier = None
         self.window = None
         self.input_path = None
+
 
     def save_classes(self, classes):
         
@@ -806,7 +814,7 @@ class ShardedSegmentation(Segmentation):
     
     def initializer_function(self, gpu_id_list):
             current_process().gpu_id_list = gpu_id_list
-            
+
     def process(self, input_image):
         self.save_zarr = False
         self.save_input_image(input_image)
@@ -1106,7 +1114,7 @@ class TimecourseSegmentation(Segmentation):
         classes = np.array(list(classes))
         
         self.log(f"transferring {self.current_index} to temmporray memory mapped array")
-        _tmp_seg[self.current_index] = labels
+        self._tmp_seg[self.current_index] = labels
 
     def _initialize_tempmmap_array(self):
         global _tmp_seg
@@ -1119,6 +1127,7 @@ class TimecourseSegmentation(Segmentation):
         # initialize tempmmap array to save segmentation results to
         # this required when trying to segment so many images that the results can no longer fit into memory
         _tmp_seg = tempmmap.array(self.shape_segmentation, dtype=np.int32)
+        self._tmp_seg = _tmp_seg
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_seg
@@ -1134,12 +1143,12 @@ class TimecourseSegmentation(Segmentation):
                 )
             hf.create_dataset(
                 "segmentation",
-                shape=_tmp_seg.shape,
+                shape=self._tmp_seg.shape,
                 chunks=(1, 2, self.shape_input_images[2], self.shape_input_images[3]),
                 dtype="uint32",
             )
             
-            hf["segmentation"][:] = _tmp_seg
+            hf["segmentation"][:] = self._tmp_seg
             
             dt = h5py.special_dtype(vlen=np.dtype("uint32"))
 
@@ -1162,7 +1171,7 @@ class TimecourseSegmentation(Segmentation):
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
         shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
-        del _tmp_seg, self.TEMP_DIR_NAME
+        del _tmp_seg, self.TEMP_DIR_NAME, self._tmp_seg
         gc. collect()
 
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
@@ -1297,6 +1306,7 @@ class TimecourseSegmentation(Segmentation):
             debug=self.debug,
             overwrite=self.overwrite,
             intermediate_output=self.intermediate_output,
+            _tmp_seg = self._tmp_seg,
         )
 
         current_shard.initialize_as_shard(indexes, input_path=input_path)
@@ -1324,11 +1334,12 @@ class MultithreadedSegmentation(TimecourseSegmentation):
             raise AttributeError(
                 "No Segmentation method defined, please set attribute ``method``"
             )
+    
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
 
     def process(self):
-        # global _tmp_seg
+        global _tmp_seg
         input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         with h5py.File(input_path, "r") as hf:
@@ -1415,6 +1426,7 @@ class MultithreadedSegmentation(TimecourseSegmentation):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
+                _tmp_seg = self._tmp_seg,
             )
 
             current_shard.initialize_as_shard(i, input_path)
