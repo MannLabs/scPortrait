@@ -30,6 +30,8 @@ import timeit
 import matplotlib.pyplot as plt
 
 import _pickle as cPickle
+#to perform garbage collection
+import gc
 
 class HDF5CellExtraction(ProcessingStep):
     """
@@ -753,9 +755,6 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
         self.log("Transferring results to final HDF5 data container.")
 
-        self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
-        self.log(f"{_tmp_single_cell_data.shape} shape of single-cell data before removing cells to close to image edges")
-
         #generate final index of all of the rows that we wish to keep out of the original array
         keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
 
@@ -765,6 +764,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         self.log("Creating HDF5 file to save results to.")
 
         with h5py.File(self.output_path, 'w') as hf:
+            self.log(f"Transferring extended labelling to ['single_cell_index_labelled'] container.")
             #create special datatype for storing strings
             dt = h5py.special_dtype(vlen=str)
 
@@ -779,6 +779,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             hf.create_dataset('single_cell_index_labelled', data = index_labelled, chunks = None, dtype = dt)
             del index_labelled #cleanup to free up memory
 
+            self.log(f"Transferring extracted single cells to ['single_cell_data'] container.")
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset('single_cell_data', 
                                                  shape =  (len(keep_index), c, x, y),
@@ -793,11 +794,10 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             #this is required to process large datasets to not run into memory issues
             for ix, i in enumerate(keep_index):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
-                
-        self.log(f"Transferring exracted single cells to .hdf5")
-        
+            
         with h5py.File(self.output_path, 'a') as hf:
             
+            self.log(f"Transferring simple cell_id index to ['single_cell_index'] container.")
             #need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
             cell_ids = _tmp_single_cell_index[keep_index, 1]
             index = np.array(list(zip(range(len(cell_ids)), cell_ids)))
@@ -805,11 +805,13 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
             hf.create_dataset('single_cell_index', data = index, dtype="uint64")           
             del index
+        
         #delete tempobjects (to cleanup directory)
         self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
         shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
-        del _tmp_single_cell_data, _tmp_single_cell_index, self.TEMP_DIR_NAME
+        del _tmp_single_cell_data, _tmp_single_cell_index, keep_index, self.TEMP_DIR_NAME
+        gc.collect()
 
     def _save_cell_info(self, index, cell_id, image_index, label_info, stack):
         global _tmp_single_cell_data, _tmp_single_cell_index
@@ -817,13 +819,12 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         
         #save single cell images
         _tmp_single_cell_data[index] = stack
-        # print("index:", index)
-        # import matplotlib.pyplot as plt
         
-        # for i in stack:
-        #         plt.figure()
-        #         plt.imshow(i)
-        #         plt.show()
+        # #perform check to see if stack only contains zeros
+        # if np.all(stack == 0):
+        #     self.log(f"Cell with the index {index} only contains zeros. Skipping this cell.")
+        #     self.save_index_to_remove.append(index)
+        #     return
 
         #get label information
         with h5py.File(self.input_segmentation_path, "r") as hf:
@@ -974,7 +975,8 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
                         for centers_index, cell_id in enumerate(_cell_ids):
                             save_index = lookup_saveindex.index.get_loc(cell_id)
-                            self._extract_classes(input_segmentation_path, px_centers, (centers_index, save_index, cell_id, image_index, label_info))
+                            x = self._extract_classes(input_segmentation_path, px_centers, (centers_index, save_index, cell_id, image_index, label_info))
+                            self.save_index_to_remove.extend(x)
                     else:
                         self.log(f"Image with the image_index {image_index} doesn't contain any cells. Skipping this image.")
 
