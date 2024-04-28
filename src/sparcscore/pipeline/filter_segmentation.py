@@ -120,11 +120,7 @@ class SegmentationFilter(ProcessingStep):
         self.log(f"Writing out window location to file at {self.directory}/window.csv")
         with open(f"{self.directory}/window.csv", "w") as f:
             f.write(f"{self.window}\n")  
-
         self.log(f"Filtering of tile with the slicing {self.window} finished.")
-
-        #delete generate temp directory to cleanup space
-        shutil.rmtree(TEMP_DIR_NAME, ignore_errors=True)
 
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)   
