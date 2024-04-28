@@ -1091,7 +1091,7 @@ class TimecourseSegmentation(Segmentation):
                     self.log(traceback.format_exc())
                 self.log(f"Segmentation on index {index} completed.")
             
-        return results
+        return None
 
     def save_segmentation(
         self,
