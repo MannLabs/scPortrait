@@ -3,7 +3,7 @@ import os
 import warnings
 import shutil
 import tempfile
-
+import sys
 
 class Logable(object):
     """
@@ -134,6 +134,10 @@ class ProcessingStep(Logable):
         # create directory for processing step
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
+
+        print(f"Temp directory {self._tmp_dir} for method {self.__class__.__name__}")
+        if not os.path.isdir(self._tmp_dir.name):
+            sys.exit("Temporary directory not found, exiting...")
 
         process = getattr(self, "process", None)
         if callable(process):
