@@ -1080,18 +1080,15 @@ class TimecourseSegmentation(Segmentation):
             if type(self.index) == int:
                 self.index = [self.index]
 
-            results = []
             for index in self.index:
                 self.current_index = index
                 input_image = hdf_input[index, :, :, :]
 
                 self.log(f"Segmentation on index {index} started.")
                 try:
-                    _result = super().__call__(input_image)
+                    super().__call__(input_image)
                 except Exception:
                     self.log(traceback.format_exc())
-                
-                results.append(_result)
                 self.log(f"Segmentation on index {index} completed.")
             
         return results
