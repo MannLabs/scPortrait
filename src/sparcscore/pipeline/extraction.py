@@ -28,6 +28,7 @@ import shutil
 import timeit
 
 import matplotlib.pyplot as plt
+from alphabase.io import tempmmap
 
 import _pickle as cPickle
 #to perform garbage collection
@@ -226,10 +227,6 @@ class HDF5CellExtraction(ProcessingStep):
                                         self.n_channels_output,
                                         self.config["image_size"],
                                         self.config["image_size"]) 
-        
-        #import tempmmap module and reset temp folder location
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
 
         #generate container for single_cell_data
         _tmp_single_cell_data = tempmmap.array(shape = self.single_cell_data_shape, dtype = np.float16)
@@ -240,8 +237,6 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             #use a regulary numpy array instead of a tempmmap array to be able to save strings as well as ints
             _tmp_single_cell_index  = np.empty(self.single_cell_index_shape, dtype = "<U64") #need to use U64 here otherwise information potentially becomes truncated
-        
-        self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_single_cell_data, _tmp_single_cell_index  
@@ -295,12 +290,8 @@ class HDF5CellExtraction(ProcessingStep):
             #this is required to process large datasets to not run into memory issues
             for ix, i in enumerate(keep_index):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
-        
-        #delete tempobjects (to cleanup directory)
-        self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
-        shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
-        del self.TEMP_DIR_NAME, _tmp_single_cell_data, _tmp_single_cell_index 
+        del _tmp_single_cell_data, _tmp_single_cell_index 
 
     def _get_label_info(self, arg):
         index, save_index, cell_id = arg
@@ -805,12 +796,8 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
             hf.create_dataset('single_cell_index', data = index, dtype="uint64")           
             del index
-        
-        #delete tempobjects (to cleanup directory)
-        self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
-        shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
 
-        del _tmp_single_cell_data, _tmp_single_cell_index, keep_index, self.TEMP_DIR_NAME
+        del _tmp_single_cell_data, _tmp_single_cell_index, keep_index
         gc.collect()
 
     def _save_cell_info(self, index, cell_id, image_index, label_info, stack):

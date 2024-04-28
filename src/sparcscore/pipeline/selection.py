@@ -118,13 +118,17 @@ class LMDSelection(ProcessingStep):
         """
         
         self.log("Selection process started")
+
+        ## TO Do
+        #check if classes and seglookup table already exist as pickle file
+        # if not create them
+        #else load them and proceed with selection
         
         # load segmentation from hdf5
         hf = h5py.File(hdf_location, 'r')
         hdf_labels = hf.get('labels')
 
         #create memory mapped temporary array for saving the segmentation
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
         c, x, y = hdf_labels.shape
         segmentation = tempmmap.array(shape = (x, y), dtype = hdf_labels.dtype)
         segmentation = hdf_labels[self.config['segmentation_channel'],:,:]
@@ -152,7 +156,5 @@ class LMDSelection(ProcessingStep):
         shape_collection.save(savepath)
         
         del segmentation
-        self.log(f"Tempmmap Folder location {TEMP_DIR_NAME} will now be removed.")
-        shutil.rmtree(TEMP_DIR_NAME, ignore_errors=True)
 
         self.log(f"Saved output at {savepath}")

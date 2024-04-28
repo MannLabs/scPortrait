@@ -39,6 +39,7 @@ from skimage.transform import resize_local_mean
 
 # for cellpose segmentation
 from cellpose import models
+from alphabase.io import tempmmap
 
 class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
@@ -1050,9 +1051,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache() 
 
     def process(self, input_image):
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
         # initialize location to save masks to
         self.maps = {
             "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
@@ -1168,10 +1166,6 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             pad_y = (0, N - y%N)
 
         downsampled_image_size = (2, _size[1]+pad_x[1], _size[2]+pad_y[1]) 
-
-        #initialize memory mapped numpy arrays to save results into
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
 
         # initialize location to save masks to
         self.maps = {
@@ -1311,9 +1305,6 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
     def process(self, input_image):
 
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
         # initialize location to save masks to
         self.maps = {
             "normalized": tempmmap.array(shape = input_image.shape, dtype = float),
@@ -1422,10 +1413,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             pad_y = (0, N - y%N)
 
         downsampled_image_size = (2, _size[1]+pad_x[1], _size[2]+pad_y[1]) 
-
-        #initialize memory mapped numpy arrays to save results into
-        from alphabase.io import tempmmap
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
 
         # initialize location to save masks to
         self.maps = {

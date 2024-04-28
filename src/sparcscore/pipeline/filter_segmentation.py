@@ -18,6 +18,7 @@ from tqdm.auto import tqdm
 #to perform garbage collection
 import gc
 import sys
+from alphabase.io import tempmmap
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction.
@@ -38,12 +39,6 @@ class SegmentationFilter(ProcessingStep):
 
         with h5py.File(input_path, "r") as hf:
             hdf_input = hf.get("labels")
-
-            #use a memory mapped numpy array to save the input image to better utilize memory consumption
-            from alphabase.io import tempmmap
-            TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-            self.TEMP_DIR_NAME = TEMP_DIR_NAME #save for later to be able to remove cached folders
-
             input_masks = tempmmap.array(shape = hdf_input.shape, dtype = np.uint16)
             input_masks = hdf_input[:2,:, :]
 
@@ -87,10 +82,8 @@ class SegmentationFilter(ProcessingStep):
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("labels")
 
-            #use a memory mapped numpy array to save the input image to better utilize memory consumption
-            from alphabase.io import tempmmap
-            TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
+            ### use a memory mapped numpy array to save the input image to better utilize memory consumption
+            
             #calculate shape of required datacontainer
             c, _, _ = hdf_input.shape
             x1 = self.window[0].start

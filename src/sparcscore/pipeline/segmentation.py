@@ -160,10 +160,6 @@ class Segmentation(ProcessingStep):
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("channels")
 
-            #use a memory mapped numpy array to save the input image to better utilize memory consumption
-            from alphabase.io import tempmmap
-            TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-
             #calculate shape of required datacontainer
             c, _, _ = hdf_input.shape
             x1 = self.window[0].start
@@ -197,7 +193,6 @@ class Segmentation(ProcessingStep):
         #cleanup generated temp dir and variables
         del input_image
         gc.collect()
-        shutil.rmtree(TEMP_DIR_NAME) #remove create temp directory to cleanup directory
 
         #write out window location
         self.log(f"Writing out window location to file at {self.directory}/window.csv")
@@ -1090,8 +1085,6 @@ class TimecourseSegmentation(Segmentation):
                 except Exception:
                     self.log(traceback.format_exc())
                 self.log(f"Segmentation on index {index} completed.")
-            
-        return None
 
     def save_segmentation(
         self,
@@ -1122,9 +1115,6 @@ class TimecourseSegmentation(Segmentation):
         del _tmp_seg
 
     def _initialize_tempmmap_array(self):
-        #reset tempmmap dir
-        TEMP_DIR_NAME = tempmmap.redefine_temp_location(self.config["cache"])
-        self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
         # create an empty HDF5 file prepared for using as a memory mapped temp array to save segmentation results to
         # this required when trying to segment so many images that the results can no longer fit into memory
@@ -1171,11 +1161,6 @@ class TimecourseSegmentation(Segmentation):
                 dtype=dt,
             )
 
-        # delete tempobjects (to cleanup directory)
-        self.log(f"Tempmmap Folder location {self.TEMP_DIR_NAME} will now be removed.")
-        shutil.rmtree(self.TEMP_DIR_NAME, ignore_errors=True)
-
-        del _tmp_seg, self.TEMP_DIR_NAME
         gc.collect()
 
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
