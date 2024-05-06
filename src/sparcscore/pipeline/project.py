@@ -363,8 +363,6 @@ class Project(Logable):
 
         self.input_image = np.stack(channels)
 
-        print(self.input_image.shape)
-
         if self.remap is not None:
             self.input_image = self.input_image[self.remap]
         
@@ -824,7 +822,6 @@ class TimecourseProject(Project):
                 "input_images", data=img, chunks=(1, 1, img.shape[2], img.shape[2])
             )
 
-            print(hf.keys())
             hf.close()
 
     def load_input_from_files(
@@ -929,7 +926,7 @@ class TimecourseProject(Project):
                         continue
                     else:
                         print(f"No images found for Timepoint {timepoint}")
-                # print(f"{sum} different timepoints found of the total {len(timepoints)} timepoints given.")
+                
                 self.log(
                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
                 )
@@ -1144,7 +1141,7 @@ class TimecourseProject(Project):
                         continue
                     else:
                         print(f"No images found for Timepoint {timepoint}")
-                # print(f"{sum} different timepoints found of the total {len(timepoints)} timepoints given.")
+                
                 self.log(
                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
                 )
@@ -1545,7 +1542,6 @@ class TimecourseProject(Project):
                         cropped = merged_images[
                             :, slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
                         ]
-                        print(merged_images.shape, cropped.shape)
 
                         # create labelling
                         column_values = []
