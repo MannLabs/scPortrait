@@ -229,11 +229,11 @@ class HDF5CellExtraction(ProcessingStep):
                                         self.config["image_size"]) 
 
         #generate container for single_cell_data
-        _tmp_single_cell_data = tempmmap.array(shape = self.single_cell_data_shape, dtype = np.float16)
+        _tmp_single_cell_data = tempmmap.array(shape = self.single_cell_data_shape, dtype = np.float16, tmp_dir_name = self._tmp_dir_path)
 
         if index_len == 2:
             #assign dtype int to only save the index and the cell_id
-            _tmp_single_cell_index  = tempmmap.array(shape = self.single_cell_index_shape, dtype = np.int64)
+            _tmp_single_cell_index  = tempmmap.array(shape = self.single_cell_index_shape, dtype = np.int64, tmp_dir_name = self._tmp_dir_path)
         else:
             #use a regulary numpy array instead of a tempmmap array to be able to save strings as well as ints
             _tmp_single_cell_index  = np.empty(self.single_cell_index_shape, dtype = "<U64") #need to use U64 here otherwise information potentially becomes truncated

@@ -130,7 +130,7 @@ class LMDSelection(ProcessingStep):
 
         #create memory mapped temporary array for saving the segmentation
         c, x, y = hdf_labels.shape
-        segmentation = tempmmap.array(shape = (x, y), dtype = hdf_labels.dtype)
+        segmentation = tempmmap.array(shape = (x, y), dtype = hdf_labels.dtype, tmp_dir_name = self._tmp_dir_path)
         segmentation = hdf_labels[self.config['segmentation_channel'],:,:]
         
         self.config['orientation_transform'] = np.array([[0, -1],[1, 0]])

@@ -1054,9 +1054,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         
         #initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, temp_dir_name = self._tmp_dir_path),
-            "nucleus_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, temp_dir_name = self._tmp_dir_path),
-            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, temp_dir_name = self._tmp_dir_path),
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_name = self._tmp_dir_path),
+            "nucleus_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
         }
 
         # could add a normalization step here if so desired
