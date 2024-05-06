@@ -154,7 +154,6 @@ class Segmentation(ProcessingStep):
         Important:
             This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
-    
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}") 
         
         with h5py.File(self.input_path, "r") as hf:
@@ -172,7 +171,7 @@ class Segmentation(ProcessingStep):
 
             #initialize directory and load data
             self.log(f"Generating a memory mapped temp array with the dimensions {(2, x, y)}")
-            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16)
+            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16, tmp_dir_name = self._tmp_dir_path)
             input_image = hdf_input[:2, self.window[0], self.window[1]]
             self.log(f"Input image loaded and mapped to memory.")
 
@@ -1118,7 +1117,7 @@ class TimecourseSegmentation(Segmentation):
 
         # create an empty HDF5 file prepared for using as a memory mapped temp array to save segmentation results to
         # this required when trying to segment so many images that the results can no longer fit into memory
-        _tmp_seg_path = tempmmap.create_empty_mmap(shape = self.shape_segmentation, dtype =  np.uint32)
+        _tmp_seg_path = tempmmap.create_empty_mmap(shape = self.shape_segmentation, dtype =  np.uint32, tmp_dir_name = self._tmp_dir_path)
         self._tmp_seg_path = _tmp_seg_path
 
     def _transfer_tempmmap_to_hdf5(self):
@@ -1295,10 +1294,9 @@ class TimecourseSegmentation(Segmentation):
             debug=self.debug,
             overwrite=self.overwrite,
             intermediate_output=self.intermediate_output,
-            _tmp_seg_path = self._tmp_seg_path,
         )
 
-        current_shard.initialize_as_shard(indexes, input_path=input_path)
+        current_shard.initialize_as_shard(indexes, input_path=input_path, _tmp_seg_path = self._tmp_seg_path)
 
         #calculate results for each shard
         results = [current_shard.call_as_shard()]

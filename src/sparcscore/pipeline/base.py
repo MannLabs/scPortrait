@@ -103,7 +103,6 @@ class ProcessingStep(Logable):
         self.directory = directory
         self.project_location = project_location
         self.config = config
-        self.create_temp_dir()
 
     def __call__(
             self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
@@ -135,20 +134,21 @@ class ProcessingStep(Logable):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        print(f"Temp directory {self._tmp_dir} for method {self.__class__.__name__}")
-        if not os.path.isdir(self._tmp_dir.name):
+        #create a temporary directory for processing step
+        self.create_temp_dir()
+        if not os.path.isdir(self._tmp_dir_path):
             sys.exit("Temporary directory not found, exiting...")
 
         process = getattr(self, "process", None)
         if callable(process):
             x = self.process(*args, **kwargs)
+            #clear temp directory after processing is completed
+            self.clear_temp_dir()
             return x
         else:
+            self.clear_temp_dir() #also ensure clearing if not callable just to make sure everything is cleaned up
             warnings.warn("no process method defined")
 
-        #after call is completed empty out temporary directories
-        self.clear_temp_dir()
-    
     def __call_empty__(
             self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
     ):
@@ -227,22 +227,20 @@ class ProcessingStep(Logable):
         Create a temporary directory in the cache directory specified in the config for saving all intermediate results.
         If "cache" not specified in the config for the method no directory will be created.
         """
-        global TEMP_DIR_NAME #this is the global variable name used within alphabase.io.tempmmap which is required to intialize a memory mapped temp array using this code
-
         if "cache" in self.config.keys():
-            self._tmp_dir_path = os.path.join(self.config["cache"], f"{self.__class__.__name__}_")
-            self._tmp_dir = tempfile.TemporaryDirectory(prefix = self._tmp_dir_path)
-            self.log(f"Initialized temporary directory for saving all temp results at {self._tmp_dir_path}")
-            print(f"Initialized temporary directory for saving all temp results at {self._tmp_dir_path} for {self.__class__.__name__}")
-            TEMP_DIR_NAME = self._tmp_dir.name
+            path = os.path.join(self.config["cache"], f"{self.__class__.__name__}_")
+            self._tmp_dir = tempfile.TemporaryDirectory(prefix = path)
+            self._tmp_dir_path = self._tmp_dir.name
+
+            self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
         else:
             self.log("No cache directory specified in config. Skipping temporary directory creation")
     
     def clear_temp_dir(self):
         """Delete created temporary directory."""
-        
+
         if "_tmp_dir" in self.__dict__.keys():
-            shutil.rmtree(self._tmp_dir)
+            shutil.rmtree(self._tmp_dir_path)
             self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
 
             del self._tmp_dir, self._tmp_dir_path
