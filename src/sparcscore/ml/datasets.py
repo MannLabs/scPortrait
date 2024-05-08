@@ -225,14 +225,9 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
         self.handle_list = []
         self.data_locator = []
-
-        print(f"Scanning {len(dir_list)} directories for hdf5 files...")
         
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
-
-            print(f"Scanning directory {directory}...")
-
             path = os.path.join(self.root_dir, directory)  # get full path
             
             target_col = self.target_col[i] # get the target column for the current directory
@@ -242,12 +237,8 @@ class HDF5SingleCellDatasetRegression(Dataset):
             if filetype in self.HDF_FILETYPES: # check if filetype is supported
                 self.add_hdf_to_index(path, target_col) # add hdf5 files to index
 
-                print(f"Added hdf5 file {directory} to index.")
-
             else:
                 self.scan_directory(path, target_col, max_level) # recursively scan for files
-
-                print(f"Scanned directory {directory}.")
 
         self.return_id = return_id # return id
         self.return_fake_id = return_fake_id # return fake id
