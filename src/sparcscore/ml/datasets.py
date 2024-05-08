@@ -254,34 +254,21 @@ class HDF5SingleCellDatasetRegression(Dataset):
         self.stats() # print dataset stats at the end
  
     def add_hdf_to_index(self, path, target_col):       
-        #try:
-        input_hdf = h5py.File(path, 'r') # read hdf5 file
-        index_handle = input_hdf.get('single_cell_index') # get single cell index handle
+        try:
+            input_hdf = h5py.File(path, 'r') # read hdf5 file
+            index_handle = input_hdf.get('single_cell_index') # get single cell index handle
 
-        print(f"Adding hdf5 file {path} to index...")
-
-        current_target_col = input_hdf.get('single_cell_index_labelled').asstr()[:, target_col] # get target column
-        print(f"Target column: {current_target_col}")
-
-        current_target_col[current_target_col == ''] = np.nan # replace empty values with nan
-        print(f"Target column after replacing empty values: {current_target_col}")
-
-        current_target_col = current_target_col.astype(float) # convert to float for regression
-        print(f"Target column after converting to float: {current_target_col}")
+            current_target_col = input_hdf.get('single_cell_index_labelled').asstr()[:, target_col] # get target column
+            current_target_col[current_target_col == ''] = np.nan # replace empty values with nan
+            current_target_col = current_target_col.astype(float) # convert to float for regression
             
-        handle_id = len(self.handle_list) # get handle id
-        self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
+            handle_id = len(self.handle_list) # get handle id
+            self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
 
-        for current_target, row in zip(current_target_col, index_handle): # iterate over rows in index handle, i.e. over all cells
-            input = [current_target, handle_id] + list(row)
-
-            print(input)
-
-            self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
-
-            print(f"Added cell with target {current_target} to data locator.")
-        #except:
-            #return
+            for current_target, row in zip(current_target_col, index_handle): # iterate over rows in index handle, i.e. over all cells
+                self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
+        except:
+            return
         
     def scan_directory(self, path, target_col, levels_left):   
 
