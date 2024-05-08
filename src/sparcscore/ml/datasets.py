@@ -225,7 +225,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
         self.handle_list = []
         self.data_locator = []
-        
+
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  # get full path
@@ -262,9 +262,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
             return
         
     def scan_directory(self, path, target_col, levels_left):   
-
-        print(f"Scanning directory {path}...")
-
         if levels_left > 0: # iterate over all files and folders in a directory if levels_left > 0
             current_level_directories = [os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))] # get directories
             current_level_files = [ name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))] # get files
