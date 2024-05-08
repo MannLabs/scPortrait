@@ -272,7 +272,11 @@ class HDF5SingleCellDatasetRegression(Dataset):
             handle_id = len(self.handle_list) # get handle id
             self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
 
-            for current_target, row in zip(current_target_col,index_handle): # iterate over rows in index handle, i.e. over all cells
+            for current_target, row in zip(current_target_col, index_handle): # iterate over rows in index handle, i.e. over all cells
+                input = [current_target, handle_id] + list(row)
+
+                print(input)
+                
                 self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
 
                 print(f"Added cell with target {current_target} to data locator.")
