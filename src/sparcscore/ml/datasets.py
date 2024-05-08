@@ -241,7 +241,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
         self.return_fake_id = return_fake_id # return fake id
         self.stats() # print dataset stats at the end
  
-        
     def add_hdf_to_index(self, path, target_col):       
         try:
             input_hdf = h5py.File(path, 'r') # read hdf5 file
