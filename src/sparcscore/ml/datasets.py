@@ -221,9 +221,13 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
         self.handle_list = []
         self.data_locator = []
+
+        print(f"Scanning {len(dir_list)} directories for hdf5 files...")
         
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
+
+            print(f"Scanning directory {directory}...")
 
             path = os.path.join(self.root_dir, directory)  # get full path
             
@@ -233,8 +237,13 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
             if filetype in self.HDF_FILETYPES: # check if filetype is supported
                 self.add_hdf_to_index(path, target_col) # add hdf5 files to index
+
+                print(f"Added hdf5 file {directory} to index.")
+
             else:
                 self.scan_directory(path, target_col, max_level) # recursively scan for files
+
+                print(f"Scanned directory {directory}.")
 
         self.return_id = return_id # return id
         self.return_fake_id = return_fake_id # return fake id
@@ -245,19 +254,31 @@ class HDF5SingleCellDatasetRegression(Dataset):
             input_hdf = h5py.File(path, 'r') # read hdf5 file
             index_handle = input_hdf.get('single_cell_index') # get single cell index handle
 
+            print(f"Adding hdf5 file {path} to index...")
+
             current_target = input_hdf.get('single_cell_index_labelled').asstr()[:, target_col] # get target column
+            print(f"Target column: {current_target}")
+
             current_target[current_target == ''] = np.nan # replace empty values with nan
+            print(f"Target column after replacing empty values: {current_target}")
+
             current_target = current_target.astype(float) # convert to float for regression
+            print(f"Target column after converting to float: {current_target}")
             
             handle_id = len(self.handle_list) # get handle id
             self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
 
             for row in index_handle: # iterate over rows in index handle, i.e. over all cells
                 self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
+
+                print(f"Added cell with target {current_target} to data locator.")
         except:
             return
         
-    def scan_directory(self, path, target_col, levels_left):        
+    def scan_directory(self, path, target_col, levels_left):   
+
+        print(f"Scanning directory {path}...")
+
         if levels_left > 0: # iterate over all files and folders in a directory if levels_left > 0
             current_level_directories = [os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))] # get directories
             current_level_files = [ name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))] # get files
@@ -294,11 +315,15 @@ class HDF5SingleCellDatasetRegression(Dataset):
             idx = idx.tolist() # convert tensor to list
         
         data_item = self.data_locator[idx] # get the data info for the current index, such as target, handle id, and row
+
+        print(f"Getting data for index {idx}...")
         
         if self.select_channel is not None: # select a specific channel
             cell_tensor = self.handle_list[data_item[1]][data_item[2], self.select_channel] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
             t = torch.unsqueeze(t, 0) # add channel dimension to tensor
+
+            print(f"Selected channel {self.select_channel} from data.")
         else: 
             cell_tensor = self.handle_list[data_item[1]][data_item[2]] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
