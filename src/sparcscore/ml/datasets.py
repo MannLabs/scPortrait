@@ -261,13 +261,13 @@ class HDF5SingleCellDatasetRegression(Dataset):
         print(f"Adding hdf5 file {path} to index...")
 
         current_target_col = input_hdf.get('single_cell_index_labelled').asstr()[:, target_col] # get target column
-        print(f"Target column: {current_target}")
+        print(f"Target column: {current_target_col}")
 
         current_target_col[current_target_col == ''] = np.nan # replace empty values with nan
-        print(f"Target column after replacing empty values: {current_target}")
+        print(f"Target column after replacing empty values: {current_target_col}")
 
         current_target_col = current_target_col.astype(float) # convert to float for regression
-        print(f"Target column after converting to float: {current_target}")
+        print(f"Target column after converting to float: {current_target_col}")
             
         handle_id = len(self.handle_list) # get handle id
         self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
