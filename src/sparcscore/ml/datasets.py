@@ -302,14 +302,14 @@ class HDF5SingleCellDatasetRegression(Dataset):
         targets = [info[0] for info in self.data_locator] # get all targets from data locator
         targets = np.array(targets, dtype=float) # convert to numpy array
 
-        min_target = np.min(targets)
-        max_target = np.max(targets)
+        #min_target = np.min(targets)
+        #max_target = np.max(targets)
 
         # add more stats eventually
 
         print(f"Total samples: {len(targets)}")
-        print(f"Min target: {min_target:.2f}")
-        print(f"Max target: {max_target:.2f}")
+        #print(f"Min target: {min_target:.2f}")
+        #print(f"Max target: {max_target:.2f}")
         
     def __len__(self):
         return len(self.data_locator) # return length of data locator
