@@ -55,7 +55,7 @@ class VGGBase(nn.Module):
                 i +=1
         return nn.Sequential(OrderedDict(layers))
     
-    def make_layers_MLP(self, cfg_MLP, cfg, single_output = False):
+    def make_layers_MLP(self, cfg_MLP, cfg, regression = False):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
@@ -77,13 +77,13 @@ class VGGBase(nn.Module):
         for out_features in cfg_MLP:
             if out_features == "M":
                 layers += [(f"MLP_relu{i}", nn.ReLU(True)), (f"MLP_dropout{i}", nn.Dropout())]
-                i+=1         
+                i += 1         
             else:
                 linear = (f"MLP_linear{i}", nn.Linear(in_features, out_features))
                 layers += [linear]
                 in_features = out_features
         
-        if single_output:
+        if regression: # if regression is True, make the final layer a single output
             linear = (f"MLP_linear_final", nn.Linear(in_features, 1))
             layers += [linear]
         else:
@@ -112,7 +112,7 @@ class VGG1(VGGBase):
     Instance of VGGBase with the model architecture 1.
     """
     def __init__(self,
-                cfg = "B",
+                cfg = "B", # default configuration
                 cfg_MLP = "A",
                 dimensions = 196,
                 in_channels = 1,
@@ -167,17 +167,15 @@ class VGG2_regression(VGGBase):
     """
     def __init__(self,
                 cfg = "B",
-                cfg_MLP = "B",
-                dimensions = 196,
-                in_channels = 1,
-                num_classes = 2,
+                cfg_MLP = "A",
+                in_channels = 1, 
                 ):
         
         super(VGG2_regression, self).__init__()
 
         self.norm = nn.BatchNorm2d(in_channels) 
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], single_output = True)
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], regression=True) # regression is set to True to make the final layer a single output
         
     def vgg(cfg, in_channels,  **kwargs):
         model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
@@ -186,7 +184,9 @@ class VGG2_regression(VGGBase):
     def forward(self, x):
         x = self.norm(x)
         x = self.features(x)
+
         x = torch.flatten(x, 1)
+
         x = self.classifier(x)
         return x
 
