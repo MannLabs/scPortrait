@@ -196,6 +196,8 @@ class VGG2_regression(VGGBase):
 
         x = self.classifier(x)
         print("x.shape after classifier", x.shape)
+
+        print(x)
         
         return x
 
