@@ -201,7 +201,7 @@ class VGG2_regression(VGGBase):
 
         print("x value" , x.item())
         
-        return x.item()
+        return x[0,0]
 
 ### CAE Model Architecture
 
