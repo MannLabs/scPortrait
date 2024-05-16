@@ -199,7 +199,9 @@ class VGG2_regression(VGGBase):
 
         print(x, x.shape)
 
-        print("x value" , x.item())
+        x_sq = torch.squeeze(x)
+
+        print(x_sq, x_sq.shape)
         
         return x
 
