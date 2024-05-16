@@ -181,11 +181,15 @@ class VGG2_regression(VGGBase):
         return model
     
     def forward(self, x):
+        print("x.shape before norm", x.shape)
         x = self.norm(x)
+        print("x.shape after norm", x.shape)
         x = self.features(x)
+        print("x.shape after features", x.shape)
 
         x = torch.flatten(x, 1)
-
+        print("x.shape after flatten", x.shape)
+        
         x = self.classifier(x)
         return x
 
