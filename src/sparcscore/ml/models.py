@@ -195,6 +195,8 @@ class VGG2_regression(VGGBase):
         print("x.shape after flatten", x.shape)
 
         x = self.classifier(x)
+        print("x.shape after classifier", x.shape)
+        
         return x
 
 ### CAE Model Architecture
