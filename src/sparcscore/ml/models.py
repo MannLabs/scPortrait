@@ -102,7 +102,7 @@ class VGGBase(nn.Module):
         x = self.softmax(x)
         return x
     
-    def encoder(self, x):
+    def encoder(self, x): 
         x = self.norm(x)
         x = self.features(x)
         return torch.flatten(x, 1)
@@ -181,7 +181,7 @@ class VGG2_regression(VGGBase):
         return model
     
     def forward(self, x):
-        print(x.shape)
+        print("x shape: ", x.shape)
         x = self.norm(x)
         x = self.features(x)
 

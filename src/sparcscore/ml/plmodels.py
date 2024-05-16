@@ -174,7 +174,7 @@ class RegressionModel(pl.LightningModule):
     
         # Define the regression model
         if model_type == "VGG2_regression":
-            self.network =  VGG2_regression(in_channels=self.hparams["num_in_channels"], cfg="B", cfg_MLP="A")
+            self.network =  VGG2_regression(cfg="B", cfg_MLP="A", in_channels=self.hparams["num_in_channels"])
 
         # Initialize metrics for regression model 
         self.mse = torchmetrics.MeanSquaredError() # MSE metric for regression
@@ -186,22 +186,26 @@ class RegressionModel(pl.LightningModule):
     def configure_optimizers(self):
         if self.hparams["optimizer"] == "SGD":
             optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams["learning_rate"])
+
         elif self.hparams["optimizer"] == "Adam":
-            #set weight decay to 0 if not specified in hparams 
             if self.hparams["weight_decay"] is None:
                 self.hparams["weight_decay"] = 0
             optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
         elif self.hparams["optimizer"] == "AdamW":
-            #set weight decay to 1e-2 if not specified in hparams 
             if self.hparams["weight_decay"] is None:
                 self.hparams["weight_decay"] = 10 ** -2
             optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
         else:
             raise ValueError("No optimizer specified in hparams")
+        
         return optimizer
     
     def training_step(self, batch):
         data, target = batch
+        print("Training data shape: ", data.shape)
+
         output = self.network(data) # Forward pass, only one output
         loss = F.mse_loss(output, target) # L2 loss
 
