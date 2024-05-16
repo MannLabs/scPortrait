@@ -52,7 +52,7 @@ class VGGBase(nn.Module):
                 else:
                     layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
                 in_channels = v
-                i +=1
+                i += 1
         return nn.Sequential(OrderedDict(layers))
     
     def make_layers_MLP(self, cfg_MLP, cfg, regression = False):
@@ -70,7 +70,10 @@ class VGGBase(nn.Module):
             nn.Sequential: A sequential model representing the MLP architecture.
         """
         # get output feature size of CNN with chosen configuration
-        in_features = int(cfg[-2]) * 2 * 2
+        if regression: 
+            in_features = int(cfg[-2]) * 4 * 4 
+        else:
+            in_features = int(cfg[-2]) * 2 * 2
         
         layers = []
         i = 0
@@ -173,6 +176,7 @@ class VGG2_regression(VGGBase):
         
         super(VGG2_regression, self).__init__()
         self.norm = nn.BatchNorm2d(in_channels) 
+
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
         self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], regression=True) # regression is set to True to make the final layer a single output
         
@@ -189,7 +193,7 @@ class VGG2_regression(VGGBase):
 
         x = torch.flatten(x, 1)
         print("x.shape after flatten", x.shape)
-        
+
         x = self.classifier(x)
         return x
 
