@@ -173,7 +173,8 @@ class VGG2_regression(VGGBase):
         
         super(VGG2_regression, self).__init__()
 
-        self.norm = nn.BatchNorm2d(in_channels) 
+        self.norm = nn.BatchNorm2(in_channels)
+
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
         self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], regression=True) # regression is set to True to make the final layer a single output
         
@@ -182,7 +183,10 @@ class VGG2_regression(VGGBase):
         return model
     
     def forward(self, x):
-        x = self.norm(x)
+
+        num_of_channels = x.shape[1]
+
+        x = nn.BatchNorm2(num_of_channels)(x)
         x = self.features(x)
 
         x = torch.flatten(x, 1)
