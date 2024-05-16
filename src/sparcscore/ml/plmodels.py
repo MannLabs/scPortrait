@@ -206,9 +206,10 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
 
         output = self.network(data) # Forward pass, only one output
-        loss = F.mse_loss(output, target) # L2 loss
 
         print("Result is: ", output, target)
+
+        loss = F.mse_loss(output, target) # L2 loss
 
         # accuracy metrics for regression???
 
