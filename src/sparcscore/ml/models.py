@@ -181,7 +181,6 @@ class VGG2_regression(VGGBase):
         return model
     
     def forward(self, x):
-        print("x shape: ", x.shape)
         x = self.norm(x)
         x = self.features(x)
 
