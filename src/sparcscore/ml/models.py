@@ -191,7 +191,7 @@ class VGG2_regression(VGGBase):
         x = self.features(x)
         print("x.shape after features", x.shape)
 
-        #x = torch.flatten(x, 1)
+        x = torch.flatten(x, 1)
         print("x.shape after flatten", x.shape)
 
         x = self.classifier(x)
