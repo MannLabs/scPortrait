@@ -204,7 +204,6 @@ class RegressionModel(pl.LightningModule):
     
     def training_step(self, batch):
         data, target = batch
-        print("target training ", target)
         target = target.unsqueeze(1) # Add dimension for regression
         output = self.network(data) # Forward pass, only one output
         loss = F.mse_loss(output, target) # L2 loss

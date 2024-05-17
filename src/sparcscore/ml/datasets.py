@@ -298,8 +298,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
             idx = idx.tolist() # convert tensor to list
         
         data_item = self.data_locator[idx] # get the data info for the current index, such as target, handle id, and row
-
-        #print(f"Getting data for index {idx}...")
         
         if self.select_channel is not None: # select a specific channel
             cell_tensor = self.handle_list[data_item[1]][data_item[2], self.select_channel] 
