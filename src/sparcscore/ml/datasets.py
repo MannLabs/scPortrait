@@ -318,10 +318,10 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
         if self.return_id:
             ids = int(data_item[3])
-            sample = (t, target, torch.tensor(ids)) # return data, target, and id
+            sample = (t, torch.tensor(target), torch.tensor(ids)) # return data, target, and id
         elif self.return_fake_id: 
-            sample = (t, target, torch.tensor(0)) # return data, target, and fake id
+            sample = (t, torch.tensor(target), torch.tensor(0)) # return data, target, and fake id
         else:
-            sample = (t, target) # return data and target
+            sample = (t, torch.tensor(target)) # return data and target
 
         return sample
