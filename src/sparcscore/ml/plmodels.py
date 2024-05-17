@@ -220,8 +220,6 @@ class RegressionModel(pl.LightningModule):
     def validation_step(self, batch):
         data, target = batch
         target = target.unsqueeze(1)
-        print("target val ", target)
-
         output = self.network(data)
         loss = F.mse_loss(output, target)
 
