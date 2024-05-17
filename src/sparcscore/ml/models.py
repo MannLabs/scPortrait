@@ -70,7 +70,11 @@ class VGGBase(nn.Module):
             nn.Sequential: A sequential model representing the MLP architecture.
         """
         # get output feature size of CNN with chosen configuration
-        in_features = int(cfg[-2]) * 2 * 2
+        
+        if regression:
+            in_features = int(cfg[-2]) * 4 * 4
+        else:
+            in_features = int(cfg[-2]) * 2 * 2
         
         layers = []
         i = 0
