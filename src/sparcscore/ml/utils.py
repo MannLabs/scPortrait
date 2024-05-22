@@ -105,7 +105,7 @@ def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, v
     return train_dataset, val_dataset, test_dataset
 
 
-def split_dataset_regression(dataset, train_size, test_size, val_size, seed=None):
+def split_dataset_regression(list_of_datasets, train_size, test_size, val_size, seed=None):
     """
     Split a dataset into train, test, and validation set.
 
@@ -129,19 +129,32 @@ def split_dataset_regression(dataset, train_size, test_size, val_size, seed=None
     test : torch.utils.data.Dataset
         Test dataset.
     """
-    residual_size = len(dataset) - train_size - test_size - val_size
-
-    if residual_size < 0:
-        raise ValueError(
-            f"Dataset with length {len(dataset)} is too small to be split into test set of size {test_size}, "
-            f"train set of size {train_size}, and validation set of size {val_size}. "
-        )
+    train_dataset = []
+    test_dataset = []
+    val_dataset = []
     
-    if seed is not None:
-        gen = torch.Generator()
-        gen.manual_seed(seed)
-        train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size], generator=gen)
-    else:
-        train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
+    for dataset in list_of_datasets:
+        residual_size = len(dataset) - train_size - test_size - val_size
 
-    return train, val, test
+        if residual_size < 0:
+            raise ValueError(
+                f"Dataset with length {len(dataset)} is too small to be split into test set of size {test_size}, "
+                f"train set of size {train_size}, and validation set of size {val_size}. "
+            )
+        
+        if seed is not None:
+            gen = torch.Generator()
+            gen.manual_seed(seed)
+            train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size], generator=gen)
+        else:
+            train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
+
+        train_dataset.append(train)
+        test_dataset.append(test)
+        val_dataset.append(val)
+
+    train_dataset = torch.utils.data.ConcatDataset(train_dataset)
+    test_dataset = torch.utils.data.ConcatDataset(test_dataset)
+    val_dataset = torch.utils.data.ConcatDataset(val_dataset)
+
+    return train_dataset, val_dataset, test_dataset
