@@ -304,7 +304,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
             t = torch.unsqueeze(t, 0) # add channel dimension to tensor
 
-            print(f"Selected channel {self.select_channel} from data.")
+            #print(f"Selected channel {self.select_channel} from data.")
         else: 
             cell_tensor = self.handle_list[data_item[1]][data_item[2]] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
