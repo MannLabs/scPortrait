@@ -105,7 +105,7 @@ def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, v
     return train_dataset, val_dataset, test_dataset
 
 
-def split_dataset_regression(list_of_datasets, train_size, test_size, val_size, fractions=None, seed=None):
+def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, val_size=None, fractions=None, seed=None):
     """
     Split a dataset into train, test, and validation set.
 
