@@ -137,12 +137,16 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
 
     for dataset in list_of_datasets:
         if fractions is not None:
+
+            if sum(fractions) != 1:
+                raise ValueError("Fractions should sum up to 1.")
+            
             if seed is not None:
                 gen = torch.Generator()
                 gen.manual_seed(seed)
-                train, test, val, _ = torch.utils.data.random_split(dataset, fractions, generator=gen)
+                train, test, val = torch.utils.data.random_split(dataset, fractions, generator=gen)
             else:
-                train, test, val, _ = torch.utils.data.random_split(dataset, fractions)
+                train, test, val = torch.utils.data.random_split(dataset, fractions)
 
             train_dataset.append(train)
             test_dataset.append(test)
@@ -171,4 +175,4 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
     test_dataset = torch.utils.data.ConcatDataset(test_dataset)
     val_dataset = torch.utils.data.ConcatDataset(val_dataset)
 
-    return train_dataset, val_dataset, test_dataset
+    return train_dataset, test_dataset, val_dataset
