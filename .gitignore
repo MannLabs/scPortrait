@@ -1,6 +1,7 @@
 #generated project folders in example datasets
 project/
 dev_project/
+development/
 development.ipynb
 config_test.yml
 segmentation_workflows/
