@@ -147,6 +147,7 @@ class Segmentation(ProcessingStep):
         self.window = window
         self.input_path = input_path
         self.save_zarr = zarr_status
+        self.create_temp_dir()
 
     def call_as_shard(self):
         """Wrapper function for calling a sharded segmentation.
@@ -171,7 +172,7 @@ class Segmentation(ProcessingStep):
 
             #initialize directory and load data
             self.log(f"Generating a memory mapped temp array with the dimensions {(2, x, y)}")
-            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16, tmp_dir_name = self._tmp_dir_path)
+            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path)
             input_image = hdf_input[:2, self.window[0], self.window[1]]
             self.log(f"Input image loaded and mapped to memory.")
 
@@ -180,14 +181,18 @@ class Segmentation(ProcessingStep):
             try:
                 self.log(f"Beginning segmentation on shard in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
+                self.clear_temp_dir()
             except Exception:
                 self.log(traceback.format_exc())
+                self.clear_temp_dir()
         else:  
             print(f"Shard in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
             try:
                 super().__call_empty__(input_image)
+                self.clear_temp_dir()
             except Exception:
                 self.log(traceback.format_exc())
+                self.clear_temp_dir()
 
         #cleanup generated temp dir and variables
         del input_image
@@ -1060,6 +1065,7 @@ class TimecourseSegmentation(Segmentation):
         self.index = index
         self.input_path = input_path
         self._tmp_seg_path = _tmp_seg_path
+        self.create_temp_dir()
 
     def call_as_shard(self):
         """Wrapper function for calling a sharded segmentation.
@@ -1081,8 +1087,10 @@ class TimecourseSegmentation(Segmentation):
                 self.log(f"Segmentation on index {index} started.")
                 try:
                     super().__call__(input_image)
+                    self.clear_temp_dir()
                 except Exception:
                     self.log(traceback.format_exc())
+                    self.clear_temp_dir()
                 self.log(f"Segmentation on index {index} completed.")
 
     def save_segmentation(
@@ -1117,7 +1125,7 @@ class TimecourseSegmentation(Segmentation):
 
         # create an empty HDF5 file prepared for using as a memory mapped temp array to save segmentation results to
         # this required when trying to segment so many images that the results can no longer fit into memory
-        _tmp_seg_path = tempmmap.create_empty_mmap(shape = self.shape_segmentation, dtype =  np.uint32, tmp_dir_name = self._tmp_dir_path)
+        _tmp_seg_path = tempmmap.create_empty_mmap(shape = self.shape_segmentation, dtype =  np.uint32, tmp_dir_abs_path = self._tmp_dir_path)
         self._tmp_seg_path = _tmp_seg_path
 
     def _transfer_tempmmap_to_hdf5(self):

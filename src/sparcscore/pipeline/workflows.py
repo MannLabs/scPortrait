@@ -1054,9 +1054,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         
         #initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_name = self._tmp_dir_path),
-            "nucleus_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
-            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_abs_path = self._tmp_dir_path),
+            "nucleus_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
         }
 
         # could add a normalization step here if so desired
@@ -1179,9 +1179,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         downsampled_image_size, pad_x, pad_y = self._calculate_downsample_image_size(input_image, N)
 
         self.maps = {
-            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_name = self._tmp_dir_path),
-            "nucleus_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
-            "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_abs_path = self._tmp_dir_path),
+            "nucleus_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
+            "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
         }
 
         # could add a normalization step here if so desired
@@ -1324,8 +1324,8 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         # initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_name = self._tmp_dir_path),
-            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_abs_path = self._tmp_dir_path),
+            "cytosol_segmentation": tempmmap.array(shape = input_image.shape, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
         }
 
         # could add a normalization step here if so desired
@@ -1433,8 +1433,8 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         # initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_name = self._tmp_dir_path),
-             "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path),
+            "normalized": tempmmap.array(shape = input_image.shape, dtype = float, tmp_dir_abs_path = self._tmp_dir_path),
+             "cytosol_segmentation": tempmmap.array(shape = downsampled_image_size, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path),
         }
         self.log("Created memory mapped temp arrays to store")
 

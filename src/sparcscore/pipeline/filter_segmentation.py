@@ -39,7 +39,7 @@ class SegmentationFilter(ProcessingStep):
 
         with h5py.File(input_path, "r") as hf:
             hdf_input = hf.get("labels")
-            input_masks = tempmmap.array(shape = hdf_input.shape, dtype = np.uint16, tmp_dir_name = self._tmp_dir_path)
+            input_masks = tempmmap.array(shape = hdf_input.shape, dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path)
             input_masks = hdf_input[:2,:, :]
 
         return(input_masks)
@@ -95,7 +95,7 @@ class SegmentationFilter(ProcessingStep):
             y = y2 - y1
 
             #initialize directory and load data
-            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16, tmp_dir_name = self._tmp_dir_path)
+            input_image = tempmmap.array(shape = (2, x, y), dtype = np.uint16, tmp_dir_abs_path = self._tmp_dir_path)
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
         #perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
