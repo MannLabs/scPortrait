@@ -213,7 +213,7 @@ class RegressionModel(pl.LightningModule):
         self.log('mse/train', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
         self.log('mae/train', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
 
-        return loss
+        return {'loss': loss, 'predictions': output, 'targets': target}
     
     def validation_step(self, batch):
         data, target = batch
@@ -226,7 +226,7 @@ class RegressionModel(pl.LightningModule):
         self.log('mse/val', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
         self.log('mae/val', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
 
-        return loss
+        return {'loss': loss, 'predictions': output, 'targets': target}
     
     def test_step(self, batch):
         data, target = batch
@@ -239,7 +239,7 @@ class RegressionModel(pl.LightningModule):
         self.log('mse/test', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
         self.log('mae/test', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
 
-        return loss
+        return {'loss': loss, 'predictions': output, 'targets': target}
 
 # implemented models for future use currently not applied to SPARCSpy
 
