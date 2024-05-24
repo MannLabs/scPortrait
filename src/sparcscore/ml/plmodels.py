@@ -211,8 +211,8 @@ class RegressionModel(pl.LightningModule):
         # accuracy metrics for regression???
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/train', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/train', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/train', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/train', self.mae(output, target), on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
     
@@ -225,8 +225,8 @@ class RegressionModel(pl.LightningModule):
          # accuracy metrics for regression???
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/val', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/val', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/val', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/val', self.mae(output, target), on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
     
@@ -239,8 +239,8 @@ class RegressionModel(pl.LightningModule):
          # accuracy metrics for regression???
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/test', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/test', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/test', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/test', self.mae(output, target), on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
 
