@@ -204,40 +204,43 @@ class RegressionModel(pl.LightningModule):
     
     def training_step(self, batch):
         data, target = batch
+        target = target.unsqueeze(1)
         output = self.network(data) # Forward pass, only one output
-        loss = F.mse_loss(output, target.unsqueeze(1)) # L2 loss
+        loss = F.mse_loss(output, target) # L2 loss
 
         # accuracy metrics for regression???
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/train', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/train', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/train', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/train', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
     
     def validation_step(self, batch):
         data, target = batch
+        target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.mse_loss(output, target.unsqueeze(1))
+        loss = F.mse_loss(output, target)
 
          # accuracy metrics for regression???
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/val', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/val', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/val', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/val', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
     
     def test_step(self, batch):
         data, target = batch
+        target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.mse_loss(output, target.unsqueeze(1))
+        loss = F.mse_loss(output, target)
 
          # accuracy metrics for regression???
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mse/test', self.mse(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
-        self.log('mae/test', self.mae(output, target.unsqueeze(1)), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/test', self.mse(output, target), on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mae/test', self.mae(output, target), on_step=False, on_epoch=True, prog_bar=True)
 
         return {'loss': loss, 'predictions': output, 'targets': target}
 
