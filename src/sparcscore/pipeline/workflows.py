@@ -550,7 +550,7 @@ class DAPISegmentation(BaseSegmentation):
 
         channels = np.stack(required_maps + feature_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype(np.uint64)
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]).astype(np.uint64)
         return (channels, segmentation)
 
     def process(self, input_image):
@@ -597,14 +597,9 @@ class DAPISegmentation(BaseSegmentation):
         channels, segmentation = self._finalize_segmentation_results()
 
         self.save_segmentation(channels, segmentation, filtered_classes)
-        # self.save_segmentation_zarr(channels, segmentation) #currently save both since we have not fully converted.
-
 
 class ShardedDAPISegmentation(ShardedSegmentation):
     method = DAPISegmentation
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
 
 
 class DAPISegmentationCellpose(BaseSegmentation):
@@ -623,7 +618,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         else:
             channels = np.stack(required_maps).astype(np.float64)
 
-        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype("uint64")
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]).astype("uint64")
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -825,12 +820,12 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             diameter = self.config["cytosol_segmentation"]["diameter"]
         else:
             diameter = None
-
-        self.log(f"Segmenting cytosol using the following model: {model_name}")
         
         #################################
         #### Perform Cytosol Segmentation
         #################################
+
+        self.log(f"Segmenting cytosol using the following model: {model_name}")
 
         masks_cytosol = model.eval(
             [input_image], diameter=diameter, channels=[2, 1]
@@ -846,6 +841,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             # save unfiltered masks for visualization of filtering process
             masks_nucleus_unfiltered = masks_nucleus.copy()
             masks_cytosol_unfiltered = masks_cytosol.copy()
+
+        #add step which automatically removes very small masks/masks that are unconnected (cells must be connected)
 
         if not filter_status:
             self.log("No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed")
