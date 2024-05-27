@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-def segmentation_mask(
+def plot_segmentation_mask(
     project,
     mask_channel=0,
     image_channel=0,
