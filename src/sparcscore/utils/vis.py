@@ -1,6 +1,7 @@
 import h5py
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 
 def plot_segmentation_mask(
@@ -9,7 +10,7 @@ def plot_segmentation_mask(
     image_channel=0,
     selection=None,
     cmap_image="Greys_r",
-    cmap_masks="jet",
+    cmap_masks="prism",
     alpha=0.5,
     figsize = (10, 10)
 ):
@@ -29,7 +30,7 @@ def plot_segmentation_mask(
     cmap_image : str, optional
         The colormap to use for the input image (default: "Greys_r").
     cmap_masks : str, optional
-        The colormap to use for the segmentation mask (default: "jet").
+        The colormap to use for the segmentation mask (default: "prism").
     alpha : float, optional
         The transparency level of the segmentation mask (default: 0.5).
 
@@ -38,6 +39,9 @@ def plot_segmentation_mask(
     fig : object
         The generated figure object.
     """
+    #integer value indicating background (default value)
+    background = 0
+    
     segmentation_file = os.path.join(
         project.seg_directory, project.segmentation_f.DEFAULT_OUTPUT_FILE
     )
@@ -50,9 +54,11 @@ def plot_segmentation_mask(
             segmentation = segmentation[mask_channel, :, :]
             image = channels[image_channel, :, :]
         else:
-            segmentation = segmentation[mask_channel, selection[0], selection[1]]
-            image = channels[image_channel, selection[0], selection[1]]
-
+            segmentation = segmentation[mask_channel, selehannels[image_channel, selection[0], selection[1]]
+    
+    #set background to np.nan so that its not visualized
+    segmentation = np.where(segmentation == background, np.nan, segmentation)
+    
     fig = plt.figure(figsize=figsize)
     plt.imshow(image, cmap=cmap_image)
     plt.imshow(segmentation, alpha=alpha, cmap=cmap_masks)
