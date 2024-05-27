@@ -667,131 +667,134 @@ class ShardedSegmentation(Segmentation):
                 self.image_size[1],
             )
 
-        hf = h5py.File(output, "a")
+        with h5py.File(output, "a") as hf:
+            #check if data container already exists and if so delete
+            if "labels" in hf.keys():
+                    del hf["labels"]
+                    self.log(
+                        "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+                    )
 
-        hdf_labels = hf.create_dataset(
-            "labels",
-            label_size,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-            dtype="int32",
-        )
+            hdf_labels = hf.create_dataset(
+                "labels",
+                label_size,
+                chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+                dtype="int32",
+            )
 
-        hdf_channels = hf.get("channels")
+            hdf_channels = hf.get("channels")
 
-        class_id_shift = 0
+            class_id_shift = 0
 
-        filtered_classes_combined = []
-        edge_classes_combined = []
+            filtered_classes_combined = []
+            edge_classes_combined = []
 
-        for i, window in enumerate(sharding_plan):
-            self.log(f"Stitching tile {i}")
+            for i, window in enumerate(sharding_plan):
+                self.log(f"Stitching tile {i}")
 
-            local_shard_directory = os.path.join(self.shard_directory, str(i))
-            local_output = os.path.join(local_shard_directory, self.DEFAULT_OUTPUT_FILE)
-            local_classes = os.path.join(local_shard_directory, "classes.csv")
+                local_shard_directory = os.path.join(self.shard_directory, str(i))
+                local_output = os.path.join(local_shard_directory, self.DEFAULT_OUTPUT_FILE)
+                local_classes = os.path.join(local_shard_directory, "classes.csv")
 
-            #check to make sure windows match
-            with open(f"{local_shard_directory}/window.csv", "r") as f:
-                window_local =  eval(f.read())
-            if window_local != window:
-                self.log("Sharding plans do not match.")
-                self.log(f"Sharding plan found locally: {window_local}")
-                self.log(f"Sharding plan found in sharding plan: {window}")
-                self.log("Reading sharding window from local file and proceeding with that.")
-                window = window_local
+                #check to make sure windows match
+                with open(f"{local_shard_directory}/window.csv", "r") as f:
+                    window_local =  eval(f.read())
+                if window_local != window:
+                    self.log("Sharding plans do not match.")
+                    self.log(f"Sharding plan found locally: {window_local}")
+                    self.log(f"Sharding plan found in sharding plan: {window}")
+                    self.log("Reading sharding window from local file and proceeding with that.")
+                    window = window_local
 
-            cr = csv.reader(open(local_classes, "r"))
-            filtered_classes = [int(el[0]) for el in list(cr)]
-            filtered_classes_combined += [
-                class_id + class_id_shift
-                for class_id in filtered_classes
-                if class_id != 0
+                cr = csv.reader(open(local_classes, "r"))
+                filtered_classes = [int(el[0]) for el in list(cr)]
+                filtered_classes_combined += [
+                    class_id + class_id_shift
+                    for class_id in filtered_classes
+                    if class_id != 0
+                ]
+
+                local_hf = h5py.File(local_output, "r")
+                local_hdf_labels = local_hf.get("labels")
+
+                shifted_map, edge_labels = shift_labels(
+                    local_hdf_labels, class_id_shift, return_shifted_labels=True
+                )
+                
+                orig_input = hdf_labels[:, window[0], window[1]]
+
+                if orig_input.shape != shifted_map.shape:
+                    print("Shapes do not match")
+                    print("window", window[0], window[1])
+                    print("shifted_map shape:", shifted_map.shape)
+                    print("orig_input shape:", orig_input.shape)
+
+                    #dirty fix to get this to run until we can implement a better solution
+                    shifted_map = np.zeros(orig_input.shape)
+                
+                shifted_map = np.where((orig_input != 0) & (shifted_map == 0), orig_input, shifted_map) 
+                #since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
+                # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the 
+                # new ones from the second shard
+                # this will result in cell ids that are missing in the file but does not matter as all cell ids will be unique
+                # any ids that were on the shard edges will be removed
+
+                #potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
+                # for other segmentation methods this could cause issues
+
+                hdf_labels[:, window[0], window[1]] = shifted_map
+
+                edge_classes_combined += edge_labels
+                class_id_shift += np.max(local_hdf_labels[0])
+
+                local_hf.close()
+                self.log(f"Finished stitching tile {i}")
+
+            classes_after_edges = [
+                item
+                for item in filtered_classes_combined
+                if item not in edge_classes_combined
             ]
 
-            local_hf = h5py.File(local_output, "r")
-            local_hdf_channels = local_hf.get("channels")
-            local_hdf_labels = local_hf.get("labels")
+            self.log("Number of filtered classes combined after sharding:")
+            self.log(len(filtered_classes_combined))
 
-            shifted_map, edge_labels = shift_labels(
-                local_hdf_labels, class_id_shift, return_shifted_labels=True
-            )
-            
-            orig_input = hdf_labels[:, window[0], window[1]]
+            self.log("Number of classes in contact with shard edges:")
+            self.log(len(edge_classes_combined))
 
-            if orig_input.shape != shifted_map.shape:
-                print("Shapes do not match")
-                print("window", window[0], window[1])
-                print("shifted_map shape:", shifted_map.shape)
-                print("orig_input shape:", orig_input.shape)
+            self.log("Number of classes after removing shard edges:")
+            self.log(len(classes_after_edges))
 
-                #dirty fix to get this to run until we can implement a better solution
-                shifted_map = np.zeros(orig_input.shape)
-            
-            shifted_map = np.where((orig_input != 0) & (shifted_map == 0), orig_input, shifted_map) 
-            #since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
-            # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the 
-            # new ones from the second shard
-            # this will result in cell ids that are missing in the file but does not matter as all cell ids will be unique
-            # any ids that were on the shard edges will be removed
+            #check filtering classes to ensure that segmentation run is properly tagged
+            self.check_filter_status()
 
-            #potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
-            # for ocdther segmentation methods this could cause issues
+            # save newly generated class list
+            self.save_classes(classes_after_edges)
+        
+            # sanity check of class reconstruction
+            if self.debug:
+                all_classes = set(hdf_labels[:].flatten())
+                if set(edge_classes_combined).issubset(set(all_classes)):
+                    self.log(
+                        "Sharding sanity check: edge classes are a full subset of all classes"
+                    )
+                else:
+                    self.log(
+                        "Sharding sanity check: edge classes are NOT a full subset of all classes."
+                    )
 
-            hdf_labels[:, window[0], window[1]] = shifted_map
+                for i in range(len(hdf_channels)):
+                    plot_image(hdf_channels[i].astype(np.float64))
 
-            edge_classes_combined += edge_labels
-            class_id_shift += np.max(local_hdf_labels[0])
-
-            local_hf.close()
-            self.log(f"Finished stitching tile {i}")
-
-        classes_after_edges = [
-            item
-            for item in filtered_classes_combined
-            if item not in edge_classes_combined
-        ]
-
-        self.log("Number of filtered classes combined after sharding:")
-        self.log(len(filtered_classes_combined))
-
-        self.log("Number of classes in contact with shard edges:")
-        self.log(len(edge_classes_combined))
-
-        self.log("Number of classes after removing shard edges:")
-        self.log(len(classes_after_edges))
-
-        #check filtering classes to ensure that segmentation run is properly tagged
-        self.check_filter_status()
-
-        # save newly generated class list
-        self.save_classes(classes_after_edges)
-    
-        # sanity check of class reconstruction
-        if self.debug:
-            all_classes = set(hdf_labels[:].flatten())
-            if set(edge_classes_combined).issubset(set(all_classes)):
-                self.log(
-                    "Sharding sanity check: edge classes are a full subset of all classes"
-                )
-            else:
-                self.log(
-                    "Sharding sanity check: edge classes are NOT a full subset of all classes."
-                )
-
-            for i in range(len(hdf_channels)):
-                plot_image(hdf_channels[i].astype(np.float64))
-
-            for i in range(len(hdf_labels)):
-                image = label2rgb(
-                    hdf_labels[i],
-                    hdf_channels[0].astype(np.float64)
-                    / np.max(hdf_channels[0].astype(np.float64)),
-                    alpha=0.5,
-                    bg_label=0,
-                )
-                plot_image(image)
-
-        hf.close()
+                for i in range(len(hdf_labels)):
+                    image = label2rgb(
+                        hdf_labels[i],
+                        hdf_channels[0].astype(np.float64)
+                        / np.max(hdf_channels[0].astype(np.float64)),
+                        alpha=0.5,
+                        bg_label=0,
+                    )
+                    plot_image(image)
 
         self.log("resolved sharding plan.")
 
