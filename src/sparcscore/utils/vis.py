@@ -54,7 +54,8 @@ def plot_segmentation_mask(
             segmentation = segmentation[mask_channel, :, :]
             image = channels[image_channel, :, :]
         else:
-            segmentation = segmentation[mask_channel, selehannels[image_channel, selection[0], selection[1]]
+            segmentation = segmentation[mask_channel, selection[0], selection[1]]
+            image = channels[image_channel, selection[0], selection[1]]
     
     #set background to np.nan so that its not visualized
     segmentation = np.where(segmentation == background, np.nan, segmentation)
