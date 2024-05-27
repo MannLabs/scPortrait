@@ -11,6 +11,7 @@ def plot_segmentation_mask(
     cmap_image="Greys_r",
     cmap_masks="jet",
     alpha=0.5,
+    figsize = (10, 10)
 ):
     """
     Visualize the segmentation mask overlayed with a channel of the input image.
@@ -52,7 +53,7 @@ def plot_segmentation_mask(
             segmentation = segmentation[mask_channel, selection[0], selection[1]]
             image = channels[image_channel, selection[0], selection[1]]
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     plt.imshow(image, cmap=cmap_image)
     plt.imshow(segmentation, alpha=alpha, cmap=cmap_masks)
     plt.axis("off")
