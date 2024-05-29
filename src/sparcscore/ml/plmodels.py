@@ -219,12 +219,12 @@ class RegressionModel(pl.LightningModule):
         target = target.unsqueeze(1)
         output = self.network(data) # Forward pass, only one output
 
-        loss = self.configure_loss()
+        loss_func = self.configure_loss()
 
         if self.hparams["loss"] == "huber": # Huber loss
-            loss = loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
         else: # MSE
-            loss = loss(output, target)
+            loss = loss_func(output, target)
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/train', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -237,12 +237,12 @@ class RegressionModel(pl.LightningModule):
         target = target.unsqueeze(1)
         output = self.network(data)
 
-        loss = self.configure_loss()
+        loss_func = self.configure_loss()
         
         if self.hparams["loss"] == "huber": # Huber loss
-            loss = loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
         else: # MSE
-            loss = loss(output, target)
+            loss = loss_func(output, target)
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/val', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -255,12 +255,12 @@ class RegressionModel(pl.LightningModule):
         target = target.unsqueeze(1)
         output = self.network(data)
 
-        loss = self.configure_loss()
+        loss_func = self.configure_loss()
         
         if self.hparams["loss"] == "huber": # Huber loss
-            loss = loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
         else: # MSE
-            loss = loss(output, target)
+            loss = loss_func(output, target)
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/test', self.mse(output, target), on_epoch=True, prog_bar=True)
