@@ -220,9 +220,9 @@ class RegressionModel(pl.LightningModule):
         output = self.network(data) # Forward pass, only one output
 
         if self.hparams["loss"] == "huber": # Huber loss
-            loss = loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+            loss = self.configure_loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
         else: # MSE
-            loss = loss(output, target)
+            loss = self.configure_loss(output, target)
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/train', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -234,7 +234,11 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
         target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.huber_loss(output, target, delta=1.0, reduction='mean')
+        
+        if self.hparams["loss"] == "huber": # Huber loss
+            loss = self.configure_loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+        else: # MSE
+            loss = self.configure_loss(output, target)
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/val', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -246,7 +250,11 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
         target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.huber_loss(output, target, delta=1.0, reduction='mean')
+        
+        if self.hparams["loss"] == "huber": # Huber loss
+            loss = self.configure_loss(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+        else: # MSE
+            loss = self.configure_loss(output, target)
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/test', self.mse(output, target), on_epoch=True, prog_bar=True)
