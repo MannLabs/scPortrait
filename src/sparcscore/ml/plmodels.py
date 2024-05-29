@@ -168,7 +168,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
 class RegressionModel(pl.LightningModule):
 
-    def __init__(self, model_type="VGG2_regression" **kwargs):
+    def __init__(self, model_type="VGG2_regression", **kwargs):
         super().__init__()
         self.save_hyperparameters()
     
