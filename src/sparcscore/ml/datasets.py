@@ -210,6 +210,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
     def __init__(self, 
                  dir_list: list[str], 
                  target_col: list[int],
+                 hours: False,
                  root_dir: str, 
                  max_level: int = 5, 
                  transform = None, 
@@ -219,6 +220,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
         
         self.dir_list = dir_list # list of directories with hdf5 files
         self.target_col = target_col # list of indices for target columns, maps 1 to 1 with dir_list, i.e. target_col[i] is the target column for dir_list[i]
+        self.hours = hours # convert target to hours
         self.root_dir = root_dir 
         self.transform = transform 
         self.select_channel = select_channel
@@ -257,6 +259,8 @@ class HDF5SingleCellDatasetRegression(Dataset):
             self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
 
             for current_target, row in zip(current_target_col, index_handle): # iterate over rows in index handle, i.e. over all cells
+                if self.hours:
+                    current_target = current_target / 3600 # convert seconds to hours
                 self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
         except:
             return
@@ -281,14 +285,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
         targets = [info[0] for info in self.data_locator] # get all targets from data locator
         targets = np.array(targets, dtype=float) # convert to numpy array
 
-        #min_target = np.min(targets)
-        #max_target = np.max(targets)
-
-        # add more stats eventually
-
         print(f"Total samples: {len(targets)}")
-        #print(f"Min target: {min_target:.2f}")
-        #print(f"Max target: {max_target:.2f}")
         
     def __len__(self):
         return len(self.data_locator) # return length of data locator
@@ -303,8 +300,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
             cell_tensor = self.handle_list[data_item[1]][data_item[2], self.select_channel] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
             t = torch.unsqueeze(t, 0) # add channel dimension to tensor
-
-            #print(f"Selected channel {self.select_channel} from data.")
         else: 
             cell_tensor = self.handle_list[data_item[1]][data_item[2]] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor

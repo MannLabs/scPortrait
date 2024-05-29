@@ -232,8 +232,6 @@ class RegressionModel(pl.LightningModule):
         output = self.network(data)
         loss = F.huber_loss(output, target, delta=1.0, reduction='mean')
 
-         # accuracy metrics for regression???
-
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/test', self.mse(output, target), on_epoch=True, prog_bar=True)
         self.log('mae/test', self.mae(output, target), on_epoch=True, prog_bar=True)
