@@ -206,9 +206,7 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
         target = target.unsqueeze(1)
         output = self.network(data) # Forward pass, only one output
-        loss = F.mse_loss(output, target) # L2 loss
-
-        # accuracy metrics for regression???
+        loss = F.huber_loss(output, target, delta=1.0, reduction='mean') # consider looking at parameters again
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/train', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -220,9 +218,7 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
         target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.mse_loss(output, target)
-
-         # accuracy metrics for regression???
+        loss = F.huber_loss(output, target, delta=1.0, reduction='mean')
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log('mse/val', self.mse(output, target), on_epoch=True, prog_bar=True)
@@ -234,7 +230,7 @@ class RegressionModel(pl.LightningModule):
         data, target = batch
         target = target.unsqueeze(1)
         output = self.network(data)
-        loss = F.mse_loss(output, target)
+        loss = F.huber_loss(output, target, delta=1.0, reduction='mean')
 
          # accuracy metrics for regression???
 
