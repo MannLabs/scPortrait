@@ -1471,40 +1471,6 @@ class TimecourseProject(Project):
         """
 
         from sparcstools.stitch import generate_stitched
-        Function to load timecourse experiments recorded with an opera phenix into a TimecourseProject. In addition to loading the images, 
-        this wrapper function also stitches images acquired in the same well (this assumes that the tiles were aquired with overlap and in a rectangular shape)
-        using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_. Implementation of this function is currently still slow for many wells/timepoints as stitching 
-        is handled consecutively and not in parallel. This will be fixed in the future.
-
-        Parameters
-        ----------
-        input_dir : str
-            Path to the directory containing the sorted images from the opera phenix.
-        channels : list(str)
-            List containing the names of the channels that should be loaded.
-        timepoints : list(str)
-            List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
-        plate_layout : str
-            Path to the plate layout file. For the format please see above.
-        img_size : int, default 1080
-            Size of the images that should be loaded. All images will be cropped to this size.
-        stitching_channel : str, default "Alexa488"
-            string indicated on which channel the stitching should be calculated.
-        overlap : float, default 0.1
-            float indicating the overlap between the tiles that were aquired.
-        max_shift : int, default 10
-            int indicating the maximum shift that is allowed when stitching the tiles. If a calculated shift is larger than this threshold
-            between two tiles then the position of these tiles is not updated and is set according to the calculated position based on the overlap.
-        overwrite : bool, default False
-            If set to True, the function will overwrite the existing input image.
-        nucleus_channel : str, default "DAPI"
-            string indicating the channel that should be used for the nucleus channel.
-        cytosol_channel : str, default "Alexa488"
-            string indicating the channel that should be used for the cytosol channel.
-        
-        """
-
-        from sparcstools.stitch import generate_stitched
 
         # check if already exists if so throw error message
         if not os.path.isdir(
