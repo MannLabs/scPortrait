@@ -17,12 +17,18 @@ import io
 from contextlib import redirect_stdout
 
 class MLClusterClassifier:
-
     """
     Class for classifying single cells using a pre-trained machine learning model.
     This class takes a pre-trained model and uses it to classify single_cells,
-    using the model’s forward function or encoder function, depending on the
-    user’s choice. The classification results are saved to a TSV file.
+    using the model's forward function or encoder function, depending on the
+    user's choice. The classification results are saved to a TSV file.
+
+    Attributes:
+        config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
+        directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`vipercore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
+        intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
+        debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
+        overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
     
     DEFAULT_LOG_NAME = "processing.log" 
@@ -32,11 +38,13 @@ class MLClusterClassifier:
     def __init__(self, 
                  config, 
                  path, 
+                 project_location,
                  debug=False, 
                  overwrite=False,
                  intermediate_output = True):
         
-        """ Class is initiated to classify extracted single cells.
+        """
+        Class is initiated to classify extracted single cells.
 
         Parameters
         ----------
@@ -57,8 +65,12 @@ class MLClusterClassifier:
         self.overwrite = overwrite
         self.config = config
         self.intermediate_output = intermediate_output
+        self.project_location = project_location
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
         
-        # Create segmentation directory
+        # Create classification directory
         self.directory = path
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -74,7 +86,11 @@ class MLClusterClassifier:
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if self.filtered_dataset is not None:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -132,22 +148,22 @@ class MLClusterClassifier:
         """ 
         Function called to perform classification on the provided HDF5 dataset.
 
-        Parameters
-        ----------
-            extraction_dir : str
-                directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            accessory : list
-                list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project
-            size : int, default = 0
-                How many cells should be selected for inference. Default is 0, then all cells are  selected.
+        Args:
+            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of 
+            a project processing workflow this argument will be provided automatically.
+            accessory (list): List containing accessory datasets on which inference should be performed in addition to the cells 
+            contained within the current project.
+            size (int, optional): How many cells should be selected for inference. Default is 0, which means all cells are selected.
+            project_dataloader (HDF5SingleCellDataset, optional): Dataloader for the project dataset. Default is HDF5SingleCellDataset.
+            accessory_dataloader (HDF5SingleCellDataset, optional): Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
-        Returns
-        -------
-            Writes results to tsv files located in the project directory.
+        Returns:
+            None: Results are written to tsv files located in the project directory.
 
         Important:
-        
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
+            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project 
+            class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
             class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project 
             class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
     
@@ -163,7 +179,6 @@ class MLClusterClassifier:
                 accessory = ([], [], [])
                 project.classify(accessory = accessory)
 
-
         Note:
             
             The following parameters are required in the config file:
@@ -176,7 +191,7 @@ class MLClusterClassifier:
                     
                     #number of threads to use for dataloader
                     threads: 24 
-                    dataloader_worker: 24
+                    dataloader_worker_number: 24
 
                     #batch size to pass to GPU
                     batch_size: 900
@@ -195,7 +210,7 @@ class MLClusterClassifier:
                     #name of the classifier used for saving the classification results to a directory
                     screen_label: "Autophagy_15h_classifier1"
                     
-                    # list of which inference methods shoudl be performed
+                    # list of which inference methods should be performed
                     # available: "forward" and "encoder"
                     # if "forward": images are passed through all layers of the modela nd the final inference results are written to file
                     # if "encoder": activations at the end of the CNN is written to file
@@ -220,7 +235,6 @@ class MLClusterClassifier:
         accessory_sizes, accessory_labels, accessory_paths = accessory
         
         self.log(f"{len(accessory_sizes)} different accessory datasets specified")
-        
         
         # Load model and parameters
         network_dir = self.config["network"]
@@ -270,7 +284,7 @@ class MLClusterClassifier:
             
             #add log message to ensure that it is always 100% transparent which classifier is being used
             self.log(f"Using the following classifier checkpoint: {latest_checkpoint_path}")
-            hparam_path = os.path.join(network_dir,"hparams.yaml")
+            hparam_path = os.path.join(network_dir, "hparams.yaml")
             
             model = MultilabelSupervisedModel.load_from_checkpoint(latest_checkpoint_path, hparams_file=hparam_path, type = self.config["classifier_architecture"], map_location = self.config['inference_device'])
         
@@ -288,7 +302,7 @@ class MLClusterClassifier:
         # redirect stdout to capture dataset size
         f = io.StringIO()
         with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset([extraction_dir],[0],"/",transform=t,return_id=True)
+            dataset = HDF5SingleCellDataset([extraction_dir], [0], "/", transform=t, return_id=True)
             
             if size == 0:
                 size = len(dataset)
@@ -319,9 +333,9 @@ class MLClusterClassifier:
         self.log(out)
             
         # classify samples
-        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=True)
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker_number"], shuffle=True)
         
-        self.log(f"log transfrom: {self.config['log_transform']}")
+        self.log(f"log transform: {self.config['log_transform']}")
         
         #extract which inferences to make from config file
         encoders = self.config["encoders"]
@@ -335,11 +349,12 @@ class MLClusterClassifier:
                   dataloader, 
                   model_fun):
         
+        
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
         
         data_iter = iter(dataloader)        
-        self.log(f"start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
+        self.log(f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference")
         with torch.no_grad():
 
             x, label, class_id = next(data_iter)
@@ -378,7 +393,225 @@ class MLClusterClassifier:
         dataframe.to_csv(path)
 
 
-class CellFeaturizer():
+from sparcscore.pipeline.base import ProcessingStep
+
+class EnsembleClassifier(ProcessingStep):
+    """
+    This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
+    """
+    DEFAULT_LOG_NAME = "processing.log"
+    DEFAULT_FILE_NAME = "single_cells.h5"
+
+    def __init__(self,
+                 *args,
+                 **kwargs):
+        
+        super().__init__(*args, **kwargs)
+
+        #create directory if it does not yet exist
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory, exist_ok=True)
+
+        self.ensemble_name = self.config["classification_label"]
+
+        #generate directory where results should be saved
+        self.directory = os.path.join(self.directory, self.ensemble_name)
+
+    def load_model(self, ckpt_path):
+        self.log(f"Loading model from checkpoing: {ckpt_path}")
+        hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
+        model = MultilabelSupervisedModel.load_from_checkpoint(checkpoint_path = ckpt_path,
+                                                               hparams_file = hparams_path, 
+                                                               map_location = self.config['inference_device'])
+        model = model.eval()
+        model.to(self.config['inference_device'])
+        self.log(f"model loaded and transferred to device {self.config['inference_device']}")
+        
+        return (model)
+
+    def generate_dataloader(self, extraction_dir):
+
+        #generate dataset
+        self.log(f"Reading data from path: {extraction_dir}")
+        px_size = self.config["input_image_px"]
+        t = transforms.Compose([transforms.Resize((px_size, px_size), antialias=True)])    
+        self.log(f"Transforming input images to shape {px_size}x{px_size}")
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            dataset = HDF5SingleCellDataset([extraction_dir], [0], "/", transform=t, return_id=True, select_channel=self.config["channel_classification"])
+ 
+        #generate dataloader
+        dataloader = torch.utils.data.DataLoader(dataset,
+                                                 batch_size=self.config["batch_size"], 
+                                                 shuffle=False,
+                                                 num_workers=self.config["dataloader_worker_number"], 
+                                                 drop_last=False)
+        
+        self.log(f"Dataloader generated with a batchsize of {self.config['batch_size']} and {self.config['dataloader_worker_number']} workers. Dataloader contains {len(dataloader)} entries.")
+        return(dataloader)
+    
+    def get_gpu_memory_usage(self):
+        if self.config['inference_device'] == "cpu":
+            return None
+        else:
+            try:
+                memory_usage = []
+                for i in range(torch.cuda.device_count()):
+                    gpu_memory = torch.cuda.memory_reserved(i) / 1024**2  # Convert bytes to MiB
+                    memory_usage.append(gpu_memory)
+                results = {f"GPU_{i}": f"{memory_usage[i]} MiB" for i in range(len(memory_usage))}
+                return results
+            except Exception as e:
+                print("Error:", e)
+                return None
+            
+    def inference(self, dataloader, model_ensemble):
+        
+        data_iter = iter(dataloader)        
+        self.log(f"Start processing {len(data_iter)} batches with {len(model_ensemble)} models from ensemble.")
+        
+        with torch.no_grad():
+
+            x, label, class_id = next(data_iter)
+            x = x.to(self.config['inference_device'])
+            
+            for ix, model_fun in enumerate(model_ensemble):
+                r = model_fun(x)
+                r = r.cpu().detach()
+
+                if ix == 0:
+                    _result = r
+                else:
+                    _result = torch.cat((_result, r), 1)
+            
+            result = _result
+
+            for i in range(len(dataloader)-1):
+                if i % 10 == 0:
+                    self.log(f"processing batch {i}")
+                x, l, id = next(data_iter)
+                x = x.to(self.config['inference_device'])
+
+                for ix, model_fun in enumerate(model_ensemble):
+                    r = model_fun(x)
+                    r = r.cpu().detach()
+
+                    if ix == 0:
+                        _result = r
+                    else:
+                        _result = torch.cat((_result, r), 1)
+
+                result = torch.cat((result, _result), 0)
+                label = torch.cat((label, l), 0)
+                class_id = torch.cat((class_id, id), 0)
+
+        result = result.detach().numpy() 
+        label = label.numpy()
+        class_id = class_id.numpy()
+        
+        # save inferred activations / predictions
+        result_labels = []
+        for model in self.model_names:
+            _result_labels = [f"{model}_result_{i}" for i in range(r.shape[1])]
+            result_labels = result_labels + _result_labels
+        
+        dataframe = pd.DataFrame(data=result, columns=result_labels)
+        dataframe["cell_id"] = class_id.astype("int")
+
+        #reorder columns to make it more readable
+        columns_to_move = ['cell_id']
+        other_columns = [col for col in dataframe.columns if col not in columns_to_move]
+        new_order = columns_to_move + other_columns
+        dataframe = dataframe[new_order]
+
+        path = os.path.join(self.directory, f"ensemble_inference_{self.ensemble_name}.csv")
+        dataframe.to_csv(path, sep = ",")
+
+        self.log(f"Results saved to file: {path}")
+
+    def __call__(self, extraction_dir):
+        """
+        Function called to perform classification on the provided HDF5 dataset.
+
+        Args:
+            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of 
+            a project processing workflow this argument will be provided automatically.
+
+        Returns:
+            None: Results are written to csv files located in the project directory.
+
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
+            class based on the previous single-cell extraction. Therefore, no parameters need to be provided         
+                    
+        Example:
+            
+            .. code-block:: python
+
+                project.classify()
+
+        Note:
+            
+            The following parameters are required in the config file:
+
+            .. code-block:: yaml
+
+                EnsembleClassifier:
+                    # channel number on which the classification should be performed
+                    channel_classification: 4
+                    
+                    #number of threads to use for dataloader
+                    dataloader_worker_number: 24
+
+                    #batch size to pass to GPU
+                    batch_size: 900
+
+                    #path to pytorch checkpoint that should be used for inference
+                    networks:
+                        model1: "path/to/model1/"
+                        model2: "path/to/model2/"
+
+                    #specify input size that the models expect, provided images will be rescaled to this size
+                    input_image_px: 128
+
+                    #label under which the results will be saved
+                    classification_label: "Autophagy_15h_classifier1"
+                    
+                    # on which device inference should be performed
+                    # for speed should be "cuda"
+                    inference_device: "cuda"
+        """
+
+        self.log("Starting Ensemble Classification")
+
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory,  exist_ok=True)
+            self.log(f"Created new directory {self.directory} to save classification results to.")
+        
+        #load models and generate ensemble
+        model_ensemble = []
+        model_names = []
+
+        for model_name, model_path in self.config["networks"].items():
+            model = self.load_model(model_path)
+            model_ensemble.append(model.network.forward)
+            model_names.append(model_name)
+        
+        self.model_names = model_names
+
+        self.log(f"Model Ensemble generated with a total of {len(model_ensemble)} models.")
+        
+        memory_usage = self.get_gpu_memory_usage()
+        self.log(f"GPU memory usage after loading models: {memory_usage}")
+
+        #generate dataloader
+        dataloader = self.generate_dataloader(f"{extraction_dir}/{self.DEFAULT_FILE_NAME}")
+
+        #perform inference
+        self.inference(dataloader = dataloader, model_ensemble = model_ensemble)
+    
+class CellFeaturizer:
 
     """
     Class for extracting general image features from SPARCS single-cell image datasets. 
@@ -408,6 +641,7 @@ class CellFeaturizer():
     def __init__(self, 
                  config, 
                  path, 
+                 project_location,
                  debug=False, 
                  overwrite=False,
                  intermediate_output = True):
@@ -433,8 +667,12 @@ class CellFeaturizer():
         self.overwrite = overwrite
         self.config = config
         self.intermediate_output = intermediate_output
-        
-        # Create segmentation directory
+        self.project_location = project_location
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
+
+        # Create classification directory
         self.directory = path
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -450,7 +688,11 @@ class CellFeaturizer():
         runs = [int(i) for i in current_level_directories if self.is_Int(i)]
         
         self.current_run = max(runs) +1 if len(runs) > 0 else 0
-        self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
+
+        if hasattr(self, 'filtered_dataset'):
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] + "_" + self.filtered_dataset)
+        else:
+            self.run_path = os.path.join(self.directory, str(self.current_run) + "_" + self.config["screen_label"] ) #to ensure that you can tell by directory name what is being classified
         
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -549,7 +791,7 @@ class CellFeaturizer():
                     channel_classification: 4
 
                     #number of threads to use for dataloader
-                    dataloader_worker: 0 #needs to be 0 if using cpu
+                    dataloader_worker_number: 0 #needs to be 0 if using cpu
                     
                     #batch size to pass to GPU
                     batch_size: 900
@@ -616,7 +858,7 @@ class CellFeaturizer():
         self.log(out)
             
         # classify samples
-        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker"], shuffle=False)
+        dataloader = torch.utils.data.DataLoader(dataset,batch_size=self.config["batch_size"], num_workers=self.config["dataloader_worker_number"], shuffle=False)
         self.inference(dataloader)
 
     def calculate_statistics(self, img, channel = -1):   

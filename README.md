@@ -5,6 +5,12 @@
 
 SPARCSpy is a scalable toolkit to analyse SPARCS datasets. The python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
+To better understand what SPARCSpy can do please checkout our [documentation](https://mannlabs.github.io/SPARCSpy/html/index.html), the [paper](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1) or our [tweetorial on the computation tools](https://twitter.com/SophiaMaedler/status/1665816840726085634?s=20) and our [tweetorial on the science](https://twitter.com/niklas_a_s/status/1664538053744947203?s=20).
+
+## Documentation
+
+The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
+
 ## Installation from Github
 
 SPARCSpy has been tested with **Python 3.8 and 3.9**. We recommended installing the library within a conda environment. 
@@ -20,7 +26,7 @@ cd SPARCSpy
 
 conda create -n "SPARCSpy"
 conda activate SPARCSpy
-conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba -c conda-forge
+conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba mahotas -c conda-forge
 ```
 
 In case you wish to utilize the ML capabilities of SPARCSpy (either for segmentation or classification) please follow the instructions [here](https://pytorch.org/get-started/locally/) to install pytorch correctly for your operating system. Once this has been installed you can verify that pytorch is installed correctly by executing the following python code:
@@ -61,9 +67,6 @@ Once these steps are completed you can proceed to install the SPARCSpy package v
 pip install -e .
 ```
   
-## Documentation
-
-The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
 
 ## Citing our Work
 

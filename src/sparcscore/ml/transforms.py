@@ -79,7 +79,7 @@ class ChannelReducer(object) :
 
     def __init__(self, channels=5):
               
-        self.channels=chanånels
+        self.channels=channels
         
     def __call__(self, tensor):
         

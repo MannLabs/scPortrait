@@ -2,30 +2,35 @@ from scipy.sparse import csr_matrix
 import numpy as np
 import torch
 import pandas as pd
-from math import floor
+from math import floor  
 
 def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, val_per_class, test_per_class, seed = None):
     """
     Combine multiple datasets to create a single balanced dataset with a specified number of samples per class for train, validation, and test set.
     A balanced dataset means that from each label source an equal number of data instances are used.
 
-    Args:
-        list_of_datasets (list[torch.utils.data.Dataset]): List of datasets to be combined.
-        class_labels (list[str|int]): List of class labels present in the datasets.
-        train_per_class (int): Number of samples per class in the train set.
-        val_per_class (int): Number of samples per class in the validation set.
-        test_per_class (int): Number of samples per class in the test set.
-        seed (None | int ): Seed for the random number generator. Defaults to None.
+    Parameters
+    ----------
+    list_of_datasets : list of torch.utils.data.Dataset
+        List of datasets to be combined.
+    class_labels : list of str or int
+        List of class labels present in the datasets.
+    train_per_class : int
+        Number of samples per class in the train set.
+    val_per_class : int
+        Number of samples per class in the validation set.
+    test_per_class : int
+        Number of samples per class in the test set.
 
-    Returns:
-        torch.utils.data.Dataset: Combined train dataset with balanced samples per class.
-        torch.utils.data.Dataset: Combined validation dataset with balanced samples per class.
-        torch.utils.data.Dataset: Combined test dataset with balanced samples per class.
-
-    Raises:
-        ValueError: If a dataset's length is too small to be split according to the provided sizes.
+    Returns
+    -------
+    train : torch.utils.data.Dataset
+        Combined train dataset with balanced samples per class.
+    val : torch.utils.data.Dataset
+        Combined validation dataset with balanced samples per class.
+    test : torch.utils.data.Dataset
+        Combined test dataset with balanced samples per class.
     """
-    
     elements = [len(el) for el in list_of_datasets]
     rows = np.arange(len(list_of_datasets))
     

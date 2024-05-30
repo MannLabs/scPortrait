@@ -3,12 +3,13 @@ import os
 import numpy as np
 import h5py
 from lmd.lib import SegmentationLoader
-
+import shutil
+from alphabase.io import tempmmap
 
 class LMDSelection(ProcessingStep):
-    """Select single cells from a segmented hdf5 file and generate cutting data for the Leica LMD microscope.
+    """
+    Select single cells from a segmented hdf5 file and generate cutting data for the Leica LMD microscope.
     This method class relies on the functionality of the pylmd library.
-
     """
     # define all valid path optimization methods used with the "path_optimization" argument in the configuration
     VALID_PATH_OPTIMIZERS = ["none", "hilbert", "greedy"]
@@ -18,27 +19,21 @@ class LMDSelection(ProcessingStep):
         super().__init__(*args, **kwargs)
         
         
-    def process(self, hdf_location, cell_sets, calibration_marker):
-        """Process function for selecting cells and generating their XML.
+    def process(self, hdf_location, cell_sets, calibration_marker, name = None):
+        """
+        Process function for selecting cells and generating their XML.
         Under the hood this method relies on the pylmd library and utilizies its `SegmentationLoader` Class.
         
-        Parameters
-        ----------
-        hdf_location : str
-            Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow, this argument will be provided.
-        cell_sets : list of dict
-            List of dictionaries containing the sets of cells which should be sorted into a single well.
-        calibration_marker : numpy.array
-            Array of size ‘(3,2)’ containing the calibration marker coordinates in the ‘(row, column)’ format.
-        
+        Args:
+            hdf_location (str): Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow, this argument will be provided.
+            cell_sets (list of dict): List of dictionaries containing the sets of cells which should be sorted into a single well.
+            calibration_marker (numpy.array): Array of size ‘(3,2)’ containing the calibration marker coordinates in the ‘(row, column)’ format.
         
         Important:
         
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` 
             class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project 
-            class will automaticly provide the most recent segmentation forward together with the supplied parameters.
-              
-                    
+            class will automaticly provide the most recent segmentation forward together with the supplied parameters.   
                     
         Example:
             
@@ -123,15 +118,24 @@ class LMDSelection(ProcessingStep):
         """
         
         self.log("Selection process started")
+
+        ## TO Do
+        #check if classes and seglookup table already exist as pickle file
+        # if not create them
+        #else load them and proceed with selection
         
         # load segmentation from hdf5
         hf = h5py.File(hdf_location, 'r')
         hdf_labels = hf.get('labels')
+
+        #create memory mapped temporary array for saving the segmentation
+        c, x, y = hdf_labels.shape
+        segmentation = tempmmap.array(shape = (x, y), dtype = hdf_labels.dtype, tmp_dir_abs_path = self._tmp_dir_path)
         segmentation = hdf_labels[self.config['segmentation_channel'],:,:]
         
         self.config['orientation_transform'] = np.array([[0, -1],[1, 0]])
         
-        sl = SegmentationLoader(config = self.config, verbose = self.debug)
+        sl = SegmentationLoader(config = self.config, verbose = self.debug, threads = self.config['threads_cell_sets'])
         
         shape_collection = sl(segmentation,
             cell_sets,
@@ -141,13 +145,16 @@ class LMDSelection(ProcessingStep):
             shape_collection.plot(calibration =True)
             shape_collection.stats()
         
-        try:
-            name = "_".join([cell_set['name'] for cell_set in cell_sets])
-        except:
-            name = 'selected_cells'
+        if name is None:
+            try:
+                name = "_".join([cell_set['name'] for cell_set in cell_sets])
+            except:
+                name = 'selected_cells'
             
         savename = name.replace(" ","_") + ".xml"
         savepath = os.path.join(self.directory, savename)
         shape_collection.save(savepath)
         
+        del segmentation
+
         self.log(f"Saved output at {savepath}")

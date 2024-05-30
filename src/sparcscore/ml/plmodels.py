@@ -100,6 +100,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
         else:
             sys.exit("Incorrect network architecture specified. Please check that MultilabelSupervisedModel type parameter is set to key present in method.")
         
+        
     def forward(self, x):
         return self.network(x)
     
