@@ -51,8 +51,8 @@ class Logable(object):
         else:
             try:
                 lines = [str(message)]
-            except:
-                self.log("unknown type during loging")
+            except Exception:
+                self.log("unknown type during logging")
                 return
 
         for line in lines:
