@@ -5,7 +5,7 @@ from sparcscore.pipeline.segmentation import (
     MultithreadedSegmentation,
 )
 from sparcscore.processing.preprocessing import percentile_normalization, downsample_img
-from sparcscore.processing.utils import plot_image, visualize_class
+from sparcscore.processing.utils import visualize_class
 from sparcscore.processing.segmentation import (
     segment_local_threshold,
     segment_global_threshold,
@@ -27,15 +27,12 @@ import skfmm
 import time
 from collections import defaultdict
 
-from functools import partial
-from multiprocessing import Pool
 import multiprocessing
 
 from skimage.filters import median
 from skimage.morphology import binary_erosion, disk, dilation, erosion
 from skimage.segmentation import watershed
 from skimage.color import label2rgb
-from skimage.transform import resize_local_mean
 
 # for cellpose segmentation
 from cellpose import models
