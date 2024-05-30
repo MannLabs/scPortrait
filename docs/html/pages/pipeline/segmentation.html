@@ -181,7 +181,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.preprocessing">preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#preprocessing">preprocessing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
 </ul>
 </li>
@@ -197,13 +197,13 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-sparcscore.pipeline.workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#workflows">workflows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
@@ -288,7 +288,7 @@
 <a class="reference internal image-reference" href="../../_images/segmentation_classes.png"><img alt="Segmentation classes overview" class="align-center" src="../../_images/segmentation_classes.png" style="width: 100%;" /></a>
 <section id="id2">
 <h3>1. Segmentation<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
-<p>The <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation" title="sparcscore.pipeline.segmentation.Segmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code></a> class is optimized for processing input images of the format CXY within the context of a base SPARCSpy <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a>. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.</p>
+<p>The <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation" title="sparcscore.pipeline.segmentation.Segmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code></a> class is optimized for processing input images of the format CXY within the context of a base SPARCSpy <code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code>. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.</p>
 </section>
 <section id="shardedsegmentation">
 <h3>2. ShardedSegmentation<a class="headerlink" href="#shardedsegmentation" title="Permalink to this headline"></a></h3>
@@ -317,7 +317,7 @@
 </section>
 <section id="timecoursesegmentation">
 <h3>3. TimecourseSegmentation<a class="headerlink" href="#timecoursesegmentation" title="Permalink to this headline"></a></h3>
-<p>The <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.segmentation.TimecourseSegmentation" title="sparcscore.pipeline.segmentation.TimecourseSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">TimecourseSegmentation</span></code></a> class is optimized for processing input images of the format NCXY within the context of a SPARCSpy <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.project.TimecourseProject" title="sparcscore.pipeline.project.TimecourseProject"><code class="xref py py-func docutils literal notranslate"><span class="pre">Timecourse</span> <span class="pre">Project</span></code></a>. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.</p>
+<p>The <a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.segmentation.TimecourseSegmentation" title="sparcscore.pipeline.segmentation.TimecourseSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">TimecourseSegmentation</span></code></a> class is optimized for processing input images of the format NCXY within the context of a SPARCSpy <code class="xref py py-func docutils literal notranslate"><span class="pre">Timecourse</span> <span class="pre">Project</span></code>. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.</p>
 </section>
 <section id="multithreadedsegmentation">
 <h3>4. MultithreadedSegmentation<a class="headerlink" href="#multithreadedsegmentation" title="Permalink to this headline"></a></h3>

@@ -75,7 +75,7 @@
 <li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -127,7 +127,7 @@
 <li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
 <li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
-<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -184,7 +184,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.preprocessing">preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#preprocessing">preprocessing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
 </ul>
 </li>
@@ -200,13 +200,13 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-sparcscore.pipeline.workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#workflows">workflows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
@@ -405,7 +405,7 @@ cytosolic segmentation mask where each cytosol is matched to exactly one nucleus
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
@@ -430,7 +430,7 @@ cytosolic segmentation mask where each cytosol is matched to exactly one nucleus
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 modifying config
-(3, 1079, 1079)
+(3, 399, 399)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -438,15 +438,15 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:108: UserWarning: Theres already a directory in the location path
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:109: UserWarning: Theres already a directory in the location path
   warnings.warn(&#34;Theres already a directory in the location path&#34;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -460,16 +460,15 @@ modifying config
   px_center = np.round(center_nuclei).astype(int)
 /Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/workflows.py:214: RuntimeWarning: invalid value encountered in cast
   px_center = np.round(center_nuclei).astype(int)
-WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap__fnlbjyy. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap__fnlbjyy with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapci8bz75y. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-extracting classes: 113it [00:00, 192.50it/s]
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapyckc3qfk with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapre_e5ggx. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+extracting classes: 49it [00:00, 275.90it/s]
 </pre></div></div>
 </div>
 <section id="Segmentation-Results">
 <h3>Segmentation Results<a class="headerlink" href="#Segmentation-Results" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -498,7 +497,7 @@ extracting classes: 113it [00:00, 192.50it/s]
 <section id="Extraction-Results">
 <h3>Extraction Results<a class="headerlink" href="#Extraction-Results" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -544,7 +543,7 @@ extracting classes: 113it [00:00, 192.50it/s]
 <h2>DAPI Segmentation<a class="headerlink" href="#DAPI-Segmentation" title="Permalink to this headline"></a></h2>
 <p>This segmentation workflow aims to only segment the nuclei of cells.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentation</span>
@@ -569,7 +568,7 @@ extracting classes: 113it [00:00, 192.50it/s]
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 modifying config
-(3, 1079, 1079)
+(3, 399, 399)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -577,12 +576,12 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:108: UserWarning: Theres already a directory in the location path
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:109: UserWarning: Theres already a directory in the location path
   warnings.warn(&#34;Theres already a directory in the location path&#34;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -595,15 +594,15 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapci8bz75y with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapfec6aoqr. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-extracting classes: 113it [00:00, 188.70it/s]
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapre_e5ggx with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapz88rcpw6. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+extracting classes: 49it [00:00, 231.72it/s]
 </pre></div></div>
 </div>
 <section id="id1">
 <h3>Segmentation Results<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -632,7 +631,7 @@ extracting classes: 113it [00:00, 188.70it/s]
 <section id="id2">
 <h3>Extraction Results<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -678,7 +677,7 @@ extracting classes: 113it [00:00, 188.70it/s]
 <h2>Cytosol Segmentation Cellpose<a class="headerlink" href="#Cytosol-Segmentation-Cellpose" title="Permalink to this headline"></a></h2>
 <p>This method uses a deep learning based segmentation approach and should optimally be run using a GPU as it is otherwise very slow.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">CytosolSegmentationCellpose</span>
@@ -703,7 +702,7 @@ extracting classes: 113it [00:00, 188.70it/s]
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 modifying config
-(3, 1079, 1079)
+(3, 399, 399)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -711,12 +710,12 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:108: UserWarning: Theres already a directory in the location path
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:109: UserWarning: Theres already a directory in the location path
   warnings.warn(&#34;Theres already a directory in the location path&#34;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -729,19 +728,19 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapfec6aoqr with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmap8rm6qs0m. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/extraction.py:408: RuntimeWarning: invalid value encountered in cast
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapz88rcpw6 with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapk352oguu. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/extraction.py:414: RuntimeWarning: invalid value encountered in cast
   px_centers = np.round(center_nuclei).astype(int)
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmap8rm6qs0m with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapvaorms53. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-extracting classes: 109it [00:00, 213.36it/s]
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapk352oguu with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapdud0qcx6. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+extracting classes: 53it [00:00, 291.55it/s]
 </pre></div></div>
 </div>
 <section id="id3">
 <h3>Segmentation Results<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -770,7 +769,7 @@ extracting classes: 109it [00:00, 213.36it/s]
 <section id="id4">
 <h3>Extraction Results<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -816,7 +815,7 @@ extracting classes: 109it [00:00, 213.36it/s]
 <h2>DAPI Segmentation Cellpose<a class="headerlink" href="#DAPI-Segmentation-Cellpose" title="Permalink to this headline"></a></h2>
 <p>This method uses a deep learning based segmentation approach and should optimally be run using a GPU as it is otherwise very slow.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparcscore.pipeline.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentationCellpose</span>
@@ -841,7 +840,7 @@ extracting classes: 109it [00:00, 213.36it/s]
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 modifying config
-(3, 1079, 1079)
+(3, 399, 399)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -849,12 +848,12 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:108: UserWarning: Theres already a directory in the location path
+/Users/sophia/Documents/GitHub/SPARCSpy/src/sparcscore/pipeline/project.py:109: UserWarning: Theres already a directory in the location path
   warnings.warn(&#34;Theres already a directory in the location path&#34;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -867,15 +866,15 @@ modifying config
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapvaorms53 with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapzrcxbt8k. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-extracting classes: 128it [00:00, 189.94it/s]
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapdud0qcx6 with temp mmap arrays is being deleted.All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./temp_mmapwswqlg3w. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+extracting classes: 59it [00:00, 279.98it/s]
 </pre></div></div>
 </div>
 <section id="id5">
 <h3>Segmentation Results<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -904,7 +903,7 @@ extracting classes: 128it [00:00, 189.94it/s]
 <section id="id6">
 <h3>Extraction Results<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>

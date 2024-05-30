@@ -71,7 +71,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -123,7 +123,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-countours-for-excision-on-the-LMD7">Exporting Cutting countours for excision on the LMD7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
 </ul>
 </li>
 </ul>
@@ -180,7 +180,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../module.html">Module Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="processing.html">processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="processing.html#module-sparcscore.processing.utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="processing.html#module-sparcscore.processing.preprocessing">preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="processing.html#preprocessing">preprocessing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
 </ul>
 </li>
@@ -196,13 +196,13 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="pipeline.html#module-sparcscore.pipeline.workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pipeline.html#workflows">workflows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
@@ -461,8 +461,19 @@ tensor(0)
 <dt class="sig sig-object py" id="sparcscore.ml.models.VGGBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.models.</span></span><span class="sig-name descname"><span class="pre">VGGBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.models.VGGBase" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
-<p>Base Implementation of VGG Model Architecture. Can be implemented with varying number of
+<p>Base implementation of VGG Model Architecture. Can be implemented with varying number of
 convolutional neural layers and fully connected layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>nn</strong> (<em>Module</em>) – Pytorch Module</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pytorch Module</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>nn.Module</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.ml.models.VGGBase.make_layers">
 <span class="sig-name descname"><span class="pre">make_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.models.VGGBase.make_layers" title="Permalink to this definition"></a></dt>
@@ -471,10 +482,10 @@ cfg with optional batch normalization for the CNN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific
-VGG architecture.</p></li>
-<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels for the first convolutional layer.</p></li>
-<li><p><strong>batch_norm</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default=True</em>) – Whether to include batch normalization layers, by default True.</p></li>
+<li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
+<li><p><strong>CNN</strong> (<em>VGG architecture of the</em>) – </p></li>
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels</p></li>
+<li><p><strong>batch_norm</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use batch normalization. Defaults to True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -494,14 +505,14 @@ cfg for the MLP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific
-VGG architecture of the CNN</p></li>
-<li><p><strong>cfg_MLP</strong> (<em>list</em>) – A list of integers and “M” representing the specific
-VGG architecture of the MLP</p></li>
+<li><p><strong>cfg_MLP</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
+<li><p><strong>MLP</strong> (<em>VGG architecture of the</em>) – </p></li>
+<li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
+<li><p><strong>CNN</strong> (<em>VGG architecture of the</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A sequential model representing the VGG architecture.</p>
+<dd class="field-even"><p>A sequential model representing the MLP architecture.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>nn.Sequential</p>
@@ -522,7 +533,7 @@ VGG architecture of the MLP</p></li>
 <dt class="sig sig-object py" id="sparcscore.ml.models.VGG2">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.models.</span></span><span class="sig-name descname"><span class="pre">VGG2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.models.VGG2" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparcscore.ml.models.VGGBase" title="sparcscore.ml.models.VGGBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.ml.models.VGGBase</span></code></a></p>
-<p>Instance of VGGBase with the model architecture 1.</p>
+<p>Instance of VGGBase with the model architecture 2.</p>
 </dd></dl>
 
 </section>
@@ -675,13 +686,13 @@ Valid options: “VGG1”, “VGG2”, “VGG1_old”, “VGG2_old”.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.ml.transforms.GaussianNoise">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianNoise" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianNoise" title="Permalink to this definition"></a></dt>
 <dd><p>Add gaussian noise to the input image.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.ml.transforms.GaussianBlur">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianBlur</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">5,</span> <span class="pre">5,</span> <span class="pre">7,</span> <span class="pre">9]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianBlur" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianBlur</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">5,</span> <span class="pre">5,</span> <span class="pre">7,</span> <span class="pre">9]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">0.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianBlur" title="Permalink to this definition"></a></dt>
 <dd><p>Apply a gaussian blur to the input image.</p>
 </dd></dl>
 
@@ -711,24 +722,20 @@ A balanced dataset means that from each label source an equal number of data ins
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>list_of_datasets</strong> (<em>list</em><em>[</em><em>torch.utils.data.Dataset</em><em>]</em>) – List of datasets to be combined.</p></li>
-<li><p><strong>class_labels</strong> (<em>list</em><em>[</em><em>str</em><em>|</em><em>int</em><em>]</em>) – List of class labels present in the datasets.</p></li>
+<li><p><strong>list_of_datasets</strong> (<em>list of torch.utils.data.Dataset</em>) – List of datasets to be combined.</p></li>
+<li><p><strong>class_labels</strong> (<em>list of str</em><em> or </em><em>int</em>) – List of class labels present in the datasets.</p></li>
 <li><p><strong>train_per_class</strong> (<em>int</em>) – Number of samples per class in the train set.</p></li>
 <li><p><strong>val_per_class</strong> (<em>int</em>) – Number of samples per class in the validation set.</p></li>
 <li><p><strong>test_per_class</strong> (<em>int</em>) – Number of samples per class in the test set.</p></li>
-<li><p><strong>seed</strong> (<em>None</em><em> | </em><em>int</em>) – Seed for the random number generator. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Combined train dataset with balanced samples per class.
-torch.utils.data.Dataset: Combined validation dataset with balanced samples per class.
-torch.utils.data.Dataset: Combined test dataset with balanced samples per class.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>torch.utils.data.Dataset</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If a dataset’s length is too small to be split according to the provided sizes.</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>train</strong> (<em>torch.utils.data.Dataset</em>) – Combined train dataset with balanced samples per class.</p></li>
+<li><p><strong>val</strong> (<em>torch.utils.data.Dataset</em>) – Combined validation dataset with balanced samples per class.</p></li>
+<li><p><strong>test</strong> (<em>torch.utils.data.Dataset</em>) – Combined test dataset with balanced samples per class.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
