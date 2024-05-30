@@ -17,11 +17,11 @@ import skfmm
 
 from sparcscore.processing.utils import plot_image
 
+
 #### Thresholding Functions to binarize input images
 def global_otsu(image):
-    """
-    Calculate the optimal global threshold for an input grayscale image using Otsu's method.
-    
+    """Calculate the optimal global threshold for an input grayscale image using Otsu's method.
+
     Otsu's method maximizes the between-class variance and minimizes the within-class variance.
 
     Parameters
@@ -33,7 +33,7 @@ def global_otsu(image):
     -------
     threshold : float
         Optimal threshold value calculated using Otsu's method.
-    
+
     Examples
     --------
     >>> import numpy as np
@@ -41,16 +41,16 @@ def global_otsu(image):
     >>> image = data.coins()
     >>> threshold = global_otsu(image)
     >>> print(threshold)
-    
+
     """
     # Calculate histogram of input image and bin centers
     counts, bin_edges = np.histogram(np.ravel(image), bins=512)
-    bin_centers = bin_edges[:-1] + np.diff(bin_edges)/2
+    bin_centers = bin_edges[:-1] + np.diff(bin_edges) / 2
 
     # Calculate cumulative sum of counts for class 1 and class 2
     weight1 = np.cumsum(counts)
     weight2 = np.cumsum(counts[::-1])[::-1]
-    
+
     # class means for all possible thresholds
     mean1 = np.cumsum(counts * bin_centers) / weight1
     mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]
@@ -64,17 +64,19 @@ def global_otsu(image):
     # Find the threshold value that maximizes the between-class variance
     idx = np.argmax(variance12)
     threshold = bin_centers[idx]
-    
+
     return threshold
 
-def _segment_threshold(image, 
-                      threshold,
-                      dilation=4, 
-                      min_distance=10, 
-                      peak_footprint=7, 
-                      speckle_kernel=4, 
-                      debug=False):
-    
+
+def _segment_threshold(
+    image,
+    threshold,
+    dilation=4,
+    min_distance=10,
+    peak_footprint=7,
+    speckle_kernel=4,
+    debug=False,
+):
     """
     Perform image segmentation using an input threshold and additional user-defined parameters.
 
@@ -108,6 +110,7 @@ def _segment_threshold(image,
     -------
     This function is meant to be used internally as a helper function for other segmentation methods.
     It should not be used directly.
+
     """
 
     image_mask = image > threshold
@@ -115,73 +118,74 @@ def _segment_threshold(image,
     # If debug is set to True, plot the binary mask
     if debug:
         plot_image(image_mask, cmap="Greys_r")
-        
-    # removing speckles by binary erosion and dilation 
+
+    # removing speckles by binary erosion and dilation
     image_mask_clean = binary_erosion(image_mask, footprint=disk(speckle_kernel))
-    image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel-1))
-    
+    image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel - 1))
+
     # Find peaks in the image mask using a distance transform
     distance = ndimage.distance_transform_edt(image_mask_clean)
-    
-    peak_idx  = peak_local_max(distance, min_distance=min_distance, footprint=disk(peak_footprint))
-    local_maxi = np.zeros_like(image_mask_clean, dtype=bool) # Initialize an array of zeros with the same shape as image_mask_clean
+
+    peak_idx = peak_local_max(
+        distance, min_distance=min_distance, footprint=disk(peak_footprint)
+    )
+    local_maxi = np.zeros_like(
+        image_mask_clean, dtype=bool
+    )  # Initialize an array of zeros with the same shape as image_mask_clean
     local_maxi[tuple(peak_idx.T)] = True
-    
+
     # If debug is set to True, plot the local maxima on the binary mask
     if debug:
         fig = plt.figure(frameon=False)
-        fig.set_size_inches(10,10)
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        fig.set_size_inches(10, 10)
+        ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
         ax.set_axis_off()
         fig.add_axes(ax)
-        ax.imshow(image_mask_clean,  cmap="Greys_r")
-        plt.scatter(peak_idx[:,1],peak_idx[:,0],color="red")
+        ax.imshow(image_mask_clean, cmap="Greys_r")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
         plt.show()
-    
+
     # segmentation by fast marching and watershed
     dilated_mask = sk_dilation(image_mask_clean, footprint=disk(dilation))
 
     fmm_marker = np.ones_like(dilated_mask)
     for center in peak_idx:
-        fmm_marker[center[0],center[1]] = 0
+        fmm_marker[center[0], center[1]] = 0
 
     m = np.ma.masked_array(fmm_marker, np.logical_not(dilated_mask))
     distance_2 = skfmm.distance(m)
-    
+
     # If debug is True, plot the calculated distance_2
     if debug:
         fig = plt.figure(frameon=False)
-        fig.set_size_inches(10,10)
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        fig.set_size_inches(10, 10)
+        ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
         ax.set_axis_off()
         fig.add_axes(ax)
-        ax.imshow(distance_2,  cmap="viridis")
-        plt.scatter(peak_idx[:,1],peak_idx[:,0],color="red")
+        ax.imshow(distance_2, cmap="viridis")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
 
-    # Assign unique labels to each segmented region     
+    # Assign unique labels to each segmented region
     marker = np.zeros_like(image_mask_clean).astype(int)
     for i, center in enumerate(peak_idx):
-        marker[center[0],center[1]] = i+1
+        marker[center[0], center[1]] = i + 1
 
     labels = watershed(distance_2, marker, mask=dilated_mask)
 
     # If debug is True, visualize the final labels on the image
-    if debug: 
-        image = label2rgb(labels,image/np.max(image),alpha=0.2, bg_label=0)
+    if debug:
+        image = label2rgb(labels, image / np.max(image), alpha=0.2, bg_label=0)
         plot_image(image)
-    
-    return(labels)
 
-def segment_global_threshold(image, 
-                            dilation=4, 
-                            min_distance=10, 
-                            peak_footprint=7, 
-                            speckle_kernel=4, 
-                            debug=False):
-    
+    return labels
+
+
+def segment_global_threshold(
+    image, dilation=4, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False
+):
     """
-    Segments an image based on a global threshold determined using Otsu's method, followed by peak detection using 
-    distance transforms and watershed segmentation. 
+    Segments an image based on a global threshold determined using Otsu's method, followed by peak detection using
+    distance transforms and watershed segmentation.
 
     Parameters
     ----------
@@ -197,7 +201,7 @@ def segment_global_threshold(image,
         Size of the structuring element used for speckle removal (default is 4).
     debug : bool, optional
         If True, intermediate results are plotted (default is False).
-    
+
     Returns
     -------
     labels : np.array
@@ -217,32 +221,36 @@ def segment_global_threshold(image,
 
     # calculate the global threshold
     threshold = global_otsu(image)
-    
-    labels = _segment_threshold(image, 
-                                threshold,
-                                dilation=dilation, 
-                                min_distance=min_distance, 
-                                peak_footprint=peak_footprint, 
-                                speckle_kernel=speckle_kernel, 
-                                debug=debug)
+
+    labels = _segment_threshold(
+        image,
+        threshold,
+        dilation=dilation,
+        min_distance=min_distance,
+        peak_footprint=peak_footprint,
+        speckle_kernel=speckle_kernel,
+        debug=debug,
+    )
 
     # returnt the segmented image
     return labels
-    
-def segment_local_threshold(image, 
-                            dilation=4, 
-                            thr=0.01, 
-                            median_block=51, 
-                            min_distance=10, 
-                            peak_footprint=7, 
-                            speckle_kernel=4, 
-                            median_step = 1,
-                            debug=False):
-    
+
+
+def segment_local_threshold(
+    image,
+    dilation=4,
+    thr=0.01,
+    median_block=51,
+    min_distance=10,
+    peak_footprint=7,
+    speckle_kernel=4,
+    median_step=1,
+    debug=False,
+):
     """
-    This function takes a unprocessed image with low background noise and extracts and segments approximately round foreground objects 
-    based on intensity. The image is segmented using the local (adaptive) threshold method. It first applies a local threshold based on 
-    the median value of a block of pixels, followed by peak detection using distance transforms and watershed segmentation. 
+    This function takes a unprocessed image with low background noise and extracts and segments approximately round foreground objects
+    based on intensity. The image is segmented using the local (adaptive) threshold method. It first applies a local threshold based on
+    the median value of a block of pixels, followed by peak detection using distance transforms and watershed segmentation.
 
     Parameters
     ----------
@@ -281,7 +289,7 @@ def segment_local_threshold(image,
     >>> plt.colorbar()
     >>> plt.show()
     """
-    
+
     if speckle_kernel < 1:
         raise ValueError("speckle_kernel needs to be at least 1")
 
@@ -289,29 +297,31 @@ def segment_local_threshold(image,
     downsampled_image = image[::median_step, ::median_step]
 
     # Calculate the local threshold using median filtering
-    local_threshold = filters.threshold_local(downsampled_image, 
-                                              block_size=median_block,
-                                              method="median", 
-                                              offset=-thr)
+    local_threshold = filters.threshold_local(
+        downsampled_image, block_size=median_block, method="median", offset=-thr
+    )
 
     # Resize the local threshold image to match the original input image
     local_threshold = resize(local_threshold, image.shape)
-    
+
     # Segment the input image using the computed local threshold
-    labels = _segment_threshold(image, 
-                                local_threshold,
-                                dilation=dilation, 
-                                min_distance=min_distance, 
-                                peak_footprint=peak_footprint, 
-                                speckle_kernel=speckle_kernel, 
-                                debug=debug)
-        
+    labels = _segment_threshold(
+        image,
+        local_threshold,
+        dilation=dilation,
+        min_distance=min_distance,
+        peak_footprint=peak_footprint,
+        speckle_kernel=speckle_kernel,
+        debug=debug,
+    )
+
     return labels
 
 
 #### Collection of functions to modify, filter or remove labels from segmentation masks
 
-#helper function to allow numba optimization for subtraction
+
+# helper function to allow numba optimization for subtraction
 @njit
 def _numba_subtract(array1, number):
     """
@@ -337,14 +347,16 @@ def _numba_subtract(array1, number):
     array([[0, 1, 2],
            [0, 4, 5],
            [0, 0, 6]])
+
     """
 
-    for i in range(array1.shape[0]):     # parallel --> for i in nb.prange(c.shape[0]):
+    for i in range(array1.shape[0]):  # parallel --> for i in nb.prange(c.shape[0]):
         for j in range(array1.shape[1]):
             if array1[i, j] != 0:
                 array1[i, j] = array1[i, j] - number
 
     return array1
+
 
 @njit
 def _return_edge_labels(input_map):
@@ -355,29 +367,39 @@ def _return_edge_labels(input_map):
     ----------
     input_map : np.ndarray
         Input segmentation as a 2D numpy array of integers.
-    
+
     Returns
     -------
     edge_labels : list
         List of unique labels in contact with the edges of the input_map.
+
     """
 
     top_row = input_map[0]
     bottom_row = input_map[-1]
-    first_column = input_map[:,0]
-    last_column = input_map[:,-1]
-    
-    full_union = set(top_row.flatten()).union(set(bottom_row.flatten())).union(set(first_column.flatten())).union(set(last_column.flatten()))
+    first_column = input_map[:, 0]
+    last_column = input_map[:, -1]
+
+    full_union = (
+        set(top_row.flatten())
+        .union(set(bottom_row.flatten()))
+        .union(set(first_column.flatten()))
+        .union(set(last_column.flatten()))
+    )
     full_union = set([np.int64(i) for i in full_union])
     full_union.discard(0)
-    
+
     return list(full_union)
 
-def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labels = True):
+
+def shift_labels(
+    input_map, shift, return_shifted_labels=False, remove_edge_labels=True
+):
     """
+
     Shift the labels of a given labeled map (2D or 3D numpy array) by a specific value.
     Return the shifted map and the labels that are in contact with the edges of the canvas.
-    All labels but the background are incremented and all classes in contact with the edges of the 
+    All labels but the background are incremented and all classes in contact with the edges of the
     canvas are returned.
 
     Parameters
@@ -389,7 +411,7 @@ def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labe
     return_shifted_labels : bool, optional
         If True, return the edge labels after shifting (default is False).
         If False will return the edge labels before shifting.
-    
+
     Returns
     -------
     shifted_map : np.ndarray
@@ -402,21 +424,20 @@ def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labe
     >>> import numpy as np
     >>> input_map = np.array([[1, 0, 0],
     ...                       [0, 2, 0],
-
-        ...                       [0, 0, 3]])
+    ...                       [0, 0, 3]])
     >>> shift = 10
     >>> shifted_map, edge_labels = shift_labels(input_map, shift)
     >>> print(shifted_map)
     array([[11,  0,  0],
-           [ 0, 12,  0],
-           [ 0,  0, 13]])
+        [ 0, 12,  0],
+        [ 0,  0, 13]])
     >>> print(edge_labels)
     [11, 13]
 
     """
-        
+
     imap = input_map[:].copy()
-    shifted_map = np.where(imap == 0, 0, imap+shift)
+    shifted_map = np.where(imap == 0, 0, imap + shift)
 
     edge_label = []
 
@@ -425,7 +446,7 @@ def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labe
     else:
         for dimension in imap:
             edge_label += _return_edge_labels(dimension)
-            
+
     if return_shifted_labels:
         edge_label = [label + shift for label in edge_label]
 
@@ -435,10 +456,11 @@ def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labe
         else:
             _edge_label = [label + shift for label in edge_label]
             shifted_map = np.where(np.isin(shifted_map, _edge_label), 0, shifted_map)
-        
+
     return shifted_map, list(set(edge_label))
 
-@njit(parallel = True)
+
+@njit(parallel=True)
 def _remove_classes(label_in, to_remove, background=0, reindex=False):
     """
     Remove specified classes from a labeled input array.
@@ -457,7 +479,7 @@ def _remove_classes(label_in, to_remove, background=0, reindex=False):
         Value used to represent the background class (default is 0).
     reindex : bool, optional
         If True, reindex the remaining classes after removal (default is False).
-    
+
     Returns
     -------
     label : np.ndarray
@@ -472,13 +494,14 @@ def _remove_classes(label_in, to_remove, background=0, reindex=False):
     array([[0, 2, 0],
            [0, 0, 2],
            [0, 2, 0]])
+
     """
     label = label_in.copy()
-    
+
     # generate library which contains the new class for label x at library[x]
     remove_set = set(to_remove)
-    library = np.zeros(np.max(label)+1, dtype="int")
-    
+    library = np.zeros(np.max(label) + 1, dtype="int")
+
     # Assign new labels for each class based on whether it is to be removed, and whether reindexing is enabled
     carry = 0
     for current_class in range(len(library)):
@@ -488,15 +511,16 @@ def _remove_classes(label_in, to_remove, background=0, reindex=False):
                 carry -= 1
         else:
             library[current_class] = current_class + carry
-            
+
     # Update the label array based on the library
     for y in prange(len(label)):
         for x in prange(len(label[0])):
-            current_label = label[y,x]
+            current_label = label[y, x]
             if current_label != background:
-                label[y,x] = library[current_label]
-                              
+                label[y, x] = library[current_label]
+
     return label
+
 
 def remove_classes(label_in, to_remove, background=0, reindex=False):
     """
@@ -512,7 +536,7 @@ def remove_classes(label_in, to_remove, background=0, reindex=False):
         Value used to represent the background class (default is 0).
     reindex : bool, optional
         If True, reindex the remaining classes after removal (default is False).
-    
+
     Returns
     -------
     label : np.ndarray
@@ -527,8 +551,10 @@ def remove_classes(label_in, to_remove, background=0, reindex=False):
     array([[0, 2, 0],
            [0, 0, 2],
            [0, 2, 0]])
+
     """
     return _remove_classes(label_in, to_remove, background=background, reindex=reindex)
+
 
 @njit(parallel=True)
 def contact_filter_lambda(label, background=0):
@@ -559,34 +585,35 @@ def contact_filter_lambda(label, background=0):
     ...                   [0, 0, 2]])
     >>> contact_filter_lambda(label)
     array([1.        , 1.,  0.6 ])
+
     """
 
     num_labels = np.max(label)
-    
-    # Initialize a background_matrix
-    background_matrix = np.ones((num_labels+1,2),dtype='int')
 
-    for y in range(1,len(label)-1):
-        for x in range(1,len(label[0])-1):
-            
-            current_label = label[y,x]
-            
+    # Initialize a background_matrix
+    background_matrix = np.ones((num_labels + 1, 2), dtype="int")
+
+    for y in range(1, len(label) - 1):
+        for x in range(1, len(label[0]) - 1):
+            current_label = label[y, x]
+
             # Count the background (0) and non-background contact pixels
-            background_matrix[current_label,0] += int(label[y-1,x] == background)
-            background_matrix[current_label,0] += int(label[y,x-1] == background)
-            background_matrix[current_label,0] += int(label[y+1,x] == background)
-            background_matrix[current_label,0] += int(label[y,x+1] == background)
-            
+            background_matrix[current_label, 0] += int(label[y - 1, x] == background)
+            background_matrix[current_label, 0] += int(label[y, x - 1] == background)
+            background_matrix[current_label, 0] += int(label[y + 1, x] == background)
+            background_matrix[current_label, 0] += int(label[y, x + 1] == background)
+
             # Count the non-background contact pixels
-            background_matrix[current_label,1] += int(label[y-1,x] != current_label)
-            background_matrix[current_label,1] += int(label[y,x-1] != current_label)
-            background_matrix[current_label,1] += int(label[y+1,x] != current_label)
-            background_matrix[current_label,1] += int(label[y,x+1] != current_label)
-            
+            background_matrix[current_label, 1] += int(label[y - 1, x] != current_label)
+            background_matrix[current_label, 1] += int(label[y, x - 1] != current_label)
+            background_matrix[current_label, 1] += int(label[y + 1, x] != current_label)
+            background_matrix[current_label, 1] += int(label[y, x + 1] != current_label)
+
     # Compute the proportion of background contact pixels
-    proportion = background_matrix[:,0]/background_matrix[:,1]
-    
+    proportion = background_matrix[:, 0] / background_matrix[:, 1]
+
     return proportion
+
 
 def contact_filter(inarr, threshold=1, reindex=False, background=0):
     """
@@ -605,7 +632,7 @@ def contact_filter(inarr, threshold=1, reindex=False, background=0):
         If True, reindexes the remaining classes after removal (default is False).
     background : int, optional
         Value used to represent the background class (default is 0).
-    
+
     Returns
     -------
     label : np.ndarray
@@ -621,27 +648,29 @@ def contact_filter(inarr, threshold=1, reindex=False, background=0):
     array([[0, 1, 1],
            [0, 0, 1],
            [0, 0, 0]])
+
     """
-    
+
     label = inarr.copy()
 
-    #laulate contact matrix for labels
+    # laulate contact matrix for labels
     background_contact = contact_filter_lambda(label, background=0)
 
     # extract all classes with less background contact than the threshold, but not the background  class
-    to_remove = np.argwhere(background_contact<threshold).flatten()
+    to_remove = np.argwhere(background_contact < threshold).flatten()
 
     to_remove = np.delete(to_remove, np.where(to_remove == background))
-    
+
     # numba typed list fails to determine type for empty list
     # return without removing classes if no classes should be removed
     if len(to_remove) > 0:
         # remove these classes
-        label = remove_classes(label,nb.typed.List(to_remove),reindex=reindex)
+        label = remove_classes(label, nb.typed.List(to_remove), reindex=reindex)
     else:
-         pass
-    
+        pass
+
     return label
+
 
 @njit
 def _class_size(mask, debug=False, background=0):
@@ -660,7 +689,7 @@ def _class_size(mask, debug=False, background=0):
         Debug flag (default is False).
     background : int, optional
         Value used to represent the background class (default is 0).
-    
+
     Returns
     -------
     mean_arr : np.ndarray
@@ -679,53 +708,60 @@ def _class_size(mask, debug=False, background=0):
             [0.33333333, 1.66666667],
             [1.5       , 1.5       ]]),
     array([nan,  3.,  2.]))
+
     """
 
     # Get the unique cell_ids and remove the background(0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: 
+    if 0 in cell_ids:
         cell_ids.remove(background)
     cell_ids = np.array(cell_ids)
 
-    min_cell_id = np.min(cell_ids) #need to convert to array since numba min functions requires array as input not list
-                                       #-1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
-    
+    min_cell_id = np.min(
+        cell_ids
+    )  # need to convert to array since numba min functions requires array as input not list
+    # -1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
+
     # Adjust mask by subtracting the min_cell_id - 1 from non-zero elements
     if min_cell_id != 1:
-        mask = _numba_subtract(mask, min_cell_id - 1 ) 
+        mask = _numba_subtract(mask, min_cell_id - 1)
 
     # Calculate the total number of classes
     num_classes = np.max(mask) + 1
-    
+
     # Initialize an array to store the sum of the coordinates for each class
     mean_sum = np.zeros((num_classes, 2))
     #
     #  Initialize an array to store the number of pixels for each class
     length = np.zeros((num_classes, 1))
-    
-    #get dimensions of input mask
-    rows, cols = mask.shape 
-    
+
+    # get dimensions of input mask
+    rows, cols = mask.shape
+
     # Iterate through the rows and columns of the mask
     for row in range(rows):
         for col in range(cols):
-            #get the class id at the current position
-            return_id = mask[row, col] 
-            
+            # get the class id at the current position
+            return_id = mask[row, col]
+
             # Check if the current class ID is not equal to the background class
             if return_id != background:
-                mean_sum[return_id ] += np.array([row, col], dtype="uint32")  # Add the coordinates to the corresponding class ID in mean_sum
-                length[return_id][0] += 1 # Increment the number of pixels for the corresponding class ID in length
-                
+                mean_sum[return_id] += np.array(
+                    [row, col], dtype="uint32"
+                )  # Add the coordinates to the corresponding class ID in mean_sum
+                length[return_id][0] += (
+                    1  # Increment the number of pixels for the corresponding class ID in length
+                )
 
-    # Divide the mean_sum array by the length array to get the mean_arr            
+    # Divide the mean_sum array by the length array to get the mean_arr
     mean_arr = np.divide(mean_sum, length)
 
-    #set background index to np.NaN
+    # set background index to np.NaN
     length[background][0] = np.nan
     mean_arr[background] = np.nan
 
     return mean_arr, length.flatten()
+
 
 def size_filter(label, limits=[0, 100000], background=0, reindex=False):
     """
@@ -762,22 +798,23 @@ def size_filter(label, limits=[0, 100000], background=0, reindex=False):
     array([[0, 0, 0],
            [0, 2, 0],
            [0, 0, 2]])
+
     """
-    
+
     # Calculate the number of pixels for each class in the labeled array
     _, points_class = _class_size(label)
-    
+
     # Find the classes with size below the lower limit and above the upper limit
     below = np.argwhere(points_class < limits[0]).flatten()
     above = np.argwhere(points_class > limits[1]).flatten()
-    
+
     # Combine the classes below and above the limits to create the list of classes to remove
     to_remove = list(below) + list(above)
-    
+
     # Remove the specified classes, and optionally reindex the remaining classes
     if len(to_remove) > 0:
-        label = remove_classes(label,nb.typed.List(to_remove),reindex=reindex)
-    
+        label = remove_classes(label, nb.typed.List(to_remove), reindex=reindex)
+
     return label
 
 
@@ -799,7 +836,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
         Debug flag (default is False).
     skip_background : bool, optional
         If True, skip background class (default is True).
-    
+
     Returns
     -------
     center : numpy.ndarray
@@ -819,75 +856,84 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
     array([3, 2], dtype=uint32),
     array([1, 2], dtype=int32))
     """
-    
+
     # need to perform this adjustment here so that we can also work with segmentations that do not start with a seg index of 1!
     # this is relevant when working with segmentations that have been reindexed over different tiles
 
     # Get the unique cell_ids and remove the background (0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: 
+    if 0 in cell_ids:
         cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
 
-    min_cell_id = np.min(cell_ids) #need to convert to array since numba min functions requires array as input not list
-                                       #-1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
-    
+    min_cell_id = np.min(
+        cell_ids
+    )  # need to convert to array since numba min functions requires array as input not list
+    # -1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
+
     # Adjust mask by subtracting the min_cell_id - 1 from non-zero elements
     if min_cell_id != 1:
-        mask = _numba_subtract(mask, min_cell_id - 1 ) 
+        mask = _numba_subtract(mask, min_cell_id - 1)
 
     if skip_background:
         num_classes = np.max(mask)
     else:
         num_classes = np.max(mask) + 1
     class_range = [0, num_classes]
-    
+
     # Check if there's only background
     if class_range[1] == 0:
         print("no cells in image. Only contains background.")
-        #return empty arrays
+        # return empty arrays
         return None, None, None
-    
-    num_classes = int(num_classes) #add explicit conversion to int to ensure that numba can type the function correctly
-    points_class = np.zeros((num_classes,), dtype = nb.uint32)
-    center = np.zeros((num_classes, 2, ))
+
+    num_classes = int(
+        num_classes
+    )  # add explicit conversion to int to ensure that numba can type the function correctly
+    points_class = np.zeros((num_classes,), dtype=nb.uint32)
+    center = np.zeros(
+        (
+            num_classes,
+            2,
+        )
+    )
     ids = np.zeros((num_classes,))
 
     if skip_background:
         for y in range(len(mask)):
             for x in range(len(mask[0])):
-
-                class_id = mask[y,x]
+                class_id = mask[y, x]
                 if class_id != 0:
                     class_id -= 1
-                    points_class[class_id] +=1
-                    center[class_id] += np.array([x,y])
+                    points_class[class_id] += 1
+                    center[class_id] += np.array([x, y])
                     ids[class_id] = class_id + 1
-                    
+
     else:
         for y in range(len(mask)):
             for x in range(len(mask[0])):
-                class_id = mask[y,x]
+                class_id = mask[y, x]
                 points_class[class_id] += 1
-                center[class_id] += np.array([x,y])
+                center[class_id] += np.array([x, y])
                 ids[class_id] = class_id
-                    
-    x = center[:,0]/points_class
-    y = center[:,1]/points_class
-    
-    center = np.stack((y,x)).T
-    
+
+    x = center[:, 0] / points_class
+    y = center[:, 1] / points_class
+
+    center = np.stack((y, x)).T
+
     if skip_background:
         if min_cell_id != 1:
-            ids += (min_cell_id - 1 ) 
+            ids += min_cell_id - 1
     else:
         if min_cell_id != 1:
-            ids[1:] += (min_cell_id - 1 ) #leave the background at 0
+            ids[1:] += min_cell_id - 1  # leave the background at 0
 
     return center, points_class, ids.astype("int32")
 
 
 #### Helper Numba functions to increase speed of numpy operations
+
 
 # short-circuiting replacement for np.any()
 @nb.jit(nopython=True)
@@ -899,7 +945,7 @@ def sc_any(array):
     ----------
     array : np.ndarray
         Input array to check if any values are True
-    
+
     Returns
     -------
     bool
@@ -909,6 +955,7 @@ def sc_any(array):
         if x:
             return True
     return False
+
 
 # short-circuiting replacement for np.all()
 @nb.jit(nopython=True)
@@ -920,7 +967,7 @@ def sc_all(array):
     ----------
     array : np.ndarray
         Input array to check if all values are True
-    
+
     Returns
     -------
     bool
