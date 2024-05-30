@@ -415,8 +415,6 @@ class BaseSegmentation(Segmentation):
         plt.show()
 
     def _visualize_cytosol_filtering(self, classes_wga_filtered):
-        um_p_px = 665 / 1024  # what is this!!?? @GWallmann
-        um_2_px = um_p_px * um_p_px  # what is this!!?? @GWallmann
 
         visualize_class(
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][1]
@@ -643,7 +641,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
             status = "multi_GPU"
         except:
             gpu_id = 0
-            self.log(f"running on default GPU.")
+            self.log("running on default GPU.")
             status = "single_GPU"
 
         gc.collect()
@@ -666,7 +664,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
         elif torch.backends.mps.is_available():
             use_GPU = True
             device = torch.device("mps")
-            self.log(f"Using MPS backend for segmentation.")
+            self.log("Using MPS backend for segmentation.")
         else:
             use_GPU = False
             device = torch.device("cpu")
@@ -752,7 +750,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         except:
             gpu_id = 0
-            self.log(f"running on default GPU.")
+            self.log("running on default GPU.")
             status = "single_GPU"
 
         # clean up old cached variables to free up GPU memory
@@ -775,7 +773,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         elif torch.backends.mps.is_available():
             use_GPU = True
             device = torch.device("mps")
-            self.log(f"Using MPS backend for segmentation.")
+            self.log("Using MPS backend for segmentation.")
         else:
             use_GPU = False
             device = torch.device("cpu")
@@ -784,9 +782,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # check to see if the cells should be filtered within the segmentation run
         if "filter_status" in self.config.keys():
-            filter_status = self.config["filter_status"]
+            self.filter_status = self.config["filter_status"]
         else:
-            filter_status = True
+            #default behaviour that this filtering should be performed, otherwise another additional step is required before extraction 
+            self.filter_status = True 
 
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
@@ -857,7 +856,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # add step which automatically removes very small masks/masks that are unconnected (cells must be connected)
 
-        if not filter_status:
+        if not self.filter_status:
             self.log(
                 "No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed"
             )
@@ -1431,7 +1430,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
             status = "multi_GPU"
         except:
             gpu_id = 0
-            self.log(f"running on default GPU.")
+            self.log("running on default GPU.")
             status = "single_GPU"
 
         gc.collect()
@@ -1452,7 +1451,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         elif torch.backends.mps.is_available():
             use_GPU = True
             device = torch.device("mps")
-            self.log(f"Using MPS backend for segmentation.")
+            self.log("Using MPS backend for segmentation.")
         else:
             use_GPU = False
             device = torch.device("cpu")
