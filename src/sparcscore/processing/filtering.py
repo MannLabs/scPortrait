@@ -208,6 +208,7 @@ class SizeFilter(Logable):
         axs.set_title(label)
         axs.set_xlabel("value")
         axs.set_ylabel("density")
+        fig.tight_layout()
         plt.close(fig)
 
         if save_figure:
