@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
-import sys, getopt
 import argparse
-import os
 
-from tabulate import tabulate
 import h5py
-import numpy as np
 import random
 from multiprocessing import Pool
 
@@ -18,7 +14,6 @@ def _generate_parser():
     -------
     parser : argparse.ArgumentParser
         The instantiated parser with defined arguments.
-
     """
     # instantiate the parser
     parser = argparse.ArgumentParser(description='Manipulate existing single cell hdf5 datasets.')
@@ -183,7 +178,7 @@ def _main():
        
     print(f"\n=== starting parallel execution with {args.threads} threads ===")
     with Pool(processes=args.threads) as pool:
-        x = pool.map(_write_new_list,slices)
+        results = pool.map(_write_new_list,slices)
     
     input_hdf.close()
 

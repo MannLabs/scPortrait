@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-import sys, getopt
 import argparse
 import os
+from collections.abc import Iterable
 
-from tabulate import tabulate
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor as Pool
 from colorama import init
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 import h5py
 
 def generate_parser():
@@ -26,7 +25,7 @@ def generate_parser():
     
 def main():
    
-    print(f"SPARCS-stat collecting information. This can take some time...")
+    print("SPARCS-stat collecting information. This can take some time...")
     
     
     parser = generate_parser()
@@ -191,13 +190,12 @@ def get_dataset_length(path):
         length = len(index_handle)
         input_hdf.close()
         return "{:,}".format(length) 
-    except:
+    except Exception:
         return "denied"
     
-from collections.abc import Iterable
 # adapted from https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
-def flatten(l):
-    for el in l:
+def flatten(list):
+    for el in list:
         if isinstance(el, Iterable):
             if len(el)>0:
                 yield el[0]
