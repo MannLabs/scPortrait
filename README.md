@@ -1,4 +1,4 @@
-[![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml)
+[![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/SPARCSspatial/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/SPARCSspatial/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/SPARCSpy/html/index.html)](https://mannlabs.github.io/SPARCSpy/html/index.html)
 
 ![graphical_abstract](https://github.com/MannLabs/SPARCSpy/assets/15019107/760366d8-47fc-4499-956b-0049aef09a1c)
@@ -9,7 +9,7 @@ To better understand what SPARCSpy can do please checkout our [documentation](ht
 
 ## Documentation
 
-The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
+The current documentation can be found under https://mannlabs.github.io/SPARCSspatial/html/index.html.
 
 ## Installation from Github
 
