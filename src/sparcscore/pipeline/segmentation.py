@@ -71,7 +71,6 @@ class Segmentation(ProcessingStep):
     PRINT_MAPS_ON_DEBUG = True
     DEFAULT_CHANNELS_NAME = "channels"
     DEFAULT_MASK_NAME = "labels"
-
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
 
     channel_colors = [
@@ -627,6 +626,24 @@ class ShardedSegmentation(Segmentation):
         
         return _sharding_plan
 
+    def cleanup_shards(self, sharding_plan):
+
+        file_identifiers_plots = [".png", ".tif", ".tiff", ".jpg", ".jpeg", ".pdf"]
+
+        for i, window in enumerate(sharding_plan):
+            local_shard_directory = os.path.join(self.shard_directory, str(i))
+            for file in os.listdir(local_shard_directory):
+                if file.endswith(tuple(file_identifiers_plots)):
+                    shutil.copyfile(os.path.join(local_shard_directory, file), os.path.join(self.directory, f"tile{i}_{file}"))
+                    os.remove(os.path.join(local_shard_directory, file))
+                    #self.log(f"Moved file {file} from {local_shard_directory} to {self.directory} and renamed it to {i}_{file}")
+
+        # Add section here that cleans up the results from the tiles and deletes them to save memory
+        self.log("Deleting intermediate tile results to free up storage space")
+        shutil.rmtree(self.shard_directory, ignore_errors=True)
+
+        gc.collect()
+
     def resolve_sharding(self, sharding_plan):
         """
         The function iterates over a sharding plan and generates a new stitched hdf5 based segmentation.
@@ -812,12 +829,8 @@ class ShardedSegmentation(Segmentation):
         self.save_segmentation_zarr(labels = labels)
         self.log("finished saving segmentation results to ome.zarr from sharded segmentation.")
 
-        # Add section here that cleans up the results from the tiles and deletes them to save memory
-        self.log("Deleting intermediate tile results to free up storage space")
-        shutil.rmtree(self.shard_directory, ignore_errors=True)
+        self.cleanup_shards(sharding_plan)
 
-        gc.collect()
-    
     def initializer_function(self, gpu_id_list):
             current_process().gpu_id_list = gpu_id_list
 
