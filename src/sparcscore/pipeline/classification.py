@@ -9,6 +9,7 @@ from torch.masked import masked_tensor
 from sparcscore.ml.datasets import HDF5SingleCellDataset
 from sparcscore.ml.transforms import ChannelSelector
 from sparcscore.ml.plmodels import MultilabelSupervisedModel
+from sparcscore.pipeline.base import ProcessingStep
 
 from torchvision import transforms
 
@@ -408,11 +409,11 @@ class MLClusterClassifier:
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
-                x, l, id = next(data_iter)
+                x, _label, id = next(data_iter)
 
                 r = model_fun(x.to(self.config["inference_device"]))
                 result = torch.cat((result, r.cpu().detach()), 0)
-                label = torch.cat((label, l), 0)
+                label = torch.cat((label, _label), 0)
                 class_id = torch.cat((class_id, id), 0)
 
         result = result.detach().numpy()
@@ -437,10 +438,6 @@ class MLClusterClassifier:
             self.run_path, f"dimension_reduction_{model_fun.__name__}.tsv"
         )
         dataframe.to_csv(path)
-
-
-from sparcscore.pipeline.base import ProcessingStep
-
 
 class EnsembleClassifier(ProcessingStep):
     """
@@ -554,7 +551,7 @@ class EnsembleClassifier(ProcessingStep):
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
-                x, l, id = next(data_iter)
+                x, _label, id = next(data_iter)
                 x = x.to(self.config["inference_device"])
 
                 for ix, model_fun in enumerate(model_ensemble):
@@ -567,7 +564,7 @@ class EnsembleClassifier(ProcessingStep):
                         _result = torch.cat((_result, r), 1)
 
                 result = torch.cat((result, _result), 0)
-                label = torch.cat((label, l), 0)
+                label = torch.cat((label, _label), 0)
                 class_id = torch.cat((class_id, id), 0)
 
         result = result.detach().numpy()
@@ -1018,13 +1015,13 @@ class CellFeaturizer:
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
-                x, l, id = next(data_iter)
+                x, _label, id = next(data_iter)
 
                 r = self.calculate_statistics(
                     x, channel=self.config["channel_classification"]
                 )
                 result = torch.cat((result, r), 0)
-                label = torch.cat((label, l), 0)
+                label = torch.cat((label, _label), 0)
                 class_id = torch.cat((class_id, id), 0)
 
         label = label.numpy()

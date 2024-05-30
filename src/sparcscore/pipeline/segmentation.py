@@ -1,5 +1,8 @@
 import os
+import gc
+import sys
 import numpy as np
+from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import csv
 import h5py
@@ -20,15 +23,7 @@ import zarr
 from ome_zarr.io import parse_url
 from ome_zarr.writer import write_labels, write_label_metadata
 
-# to show progress
-from tqdm.auto import tqdm
-
-# to perform garbage collection
-import gc
-
-import sys
 from alphabase.io import tempmmap
-
 
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
@@ -369,7 +364,7 @@ class Segmentation(ProcessingStep):
                     )
                     self.maps[map_name] = None
 
-            except:
+            except Exception:
                 self.log(
                     "Error loading map {} {} from path {}".format(
                         map_index, map_name, map_path
@@ -496,7 +491,7 @@ class ShardedSegmentation(Segmentation):
         input_image = input_image.astype("uint16")
 
         with h5py.File(output, "w") as hf:
-            hdf_channels = hf.create_dataset(
+            hf.create_dataset(
                 self.DEFAULT_CHANNELS_NAME,
                 data=input_image,
                 chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
@@ -692,36 +687,6 @@ class ShardedSegmentation(Segmentation):
             label_size = (1, self.image_size[0], self.image_size[1])
         elif self.config["input_channels"] >= 2:
             label_size = (2, self.image_size[0], self.image_size[1])
-
-        # dirty fix to get this to run until we can impelement a better solution
-        if (
-            "wga_segmentation" in self.config
-        ):  # need to add this check because otherwise it sometimes throws errors need better solution
-            if "wga_background_image" in self.config["wga_segmentation"]:
-                if self.config["wga_segmentation"]["wga_background_image"]:
-                    channel_size = (
-                        self.config["input_channels"] - 1,
-                        self.image_size[0],
-                        self.image_size[1],
-                    )
-                else:
-                    channel_size = (
-                        self.config["input_channels"],
-                        self.image_size[0],
-                        self.image_size[1],
-                    )
-            else:
-                channel_size = (
-                    self.config["input_channels"],
-                    self.image_size[0],
-                    self.image_size[1],
-                )
-        else:
-            channel_size = (
-                self.config["input_channels"],
-                self.image_size[0],
-                self.image_size[1],
-            )
 
         with h5py.File(output, "a") as hf:
             # check if data container already exists and if so delete
@@ -1174,7 +1139,7 @@ class TimecourseSegmentation(Segmentation):
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get(self.DEFAULT_CHANNELS_NAME)
 
-            if type(self.index) == int:
+            if isinstance(self.index, int):
                 self.index = [self.index]
 
             for index in self.index:
@@ -1296,7 +1261,6 @@ class TimecourseSegmentation(Segmentation):
 
         self.log("resolve segmentation indexes")
 
-        output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
         path = os.path.join(self.directory, self.DEFAULT_INPUT_IMAGE_NAME)
 
         with h5py.File(path, "a") as hf:

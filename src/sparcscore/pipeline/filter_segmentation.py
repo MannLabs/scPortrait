@@ -1,25 +1,20 @@
 import os
+import gc
+import sys
 import numpy as np
 import csv
 import h5py
-from multiprocessing import Pool
+from tqdm.auto import tqdm
 import shutil
-import pandas as pd
 from collections import defaultdict
-
 import traceback
+
+from multiprocessing import Pool
 
 from sparcscore.processing.segmentation import sc_any
 from sparcscore.pipeline.base import ProcessingStep
 
-# to show progress
-from tqdm.auto import tqdm
-
-# to perform garbage collection
-import gc
-import sys
 from alphabase.io import tempmmap
-
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction."""
@@ -217,7 +212,7 @@ class TiledSegmentationFilter(SegmentationFilter):
 
         self.log(f"input image {mask_size[0]} px by {mask_size[1]} px")
         self.log(f"target_tile_size: {self.config['tile_size']}")
-        self.log(f"tileing plan:")
+        self.log("tileing plan:")
         self.log(f"{tiles_side[0]} rows by {tiles_side[1]} columns")
         self.log(f"{tile_size[0]} px by {tile_size[1]} px")
 
@@ -273,7 +268,6 @@ class TiledSegmentationFilter(SegmentationFilter):
 
         for i, window in enumerate(tileing_plan):
             local_tile_directory = os.path.join(self.tile_directory, str(i))
-            local_output = os.path.join(local_tile_directory, self.DEFAULT_OUTPUT_FILE)
             local_classes = os.path.join(local_tile_directory, "filtered_classes.csv")
 
             # check to make sure windows match

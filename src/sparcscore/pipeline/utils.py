@@ -1,8 +1,6 @@
 import pandas as pd
 from shapely.geometry import Polygon
 from rasterio.features import rasterize
-import xarray as xr
-
 
 def _read_napari_csv(path):
     # read csv table

@@ -10,7 +10,6 @@ from collections import defaultdict
 
 from sparcscore.processing.preprocessing import downsample_img_pxs
 
-
 class BaseFiltering(SegmentationFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,7 +102,7 @@ class filtering_match_nucleus_to_cytosol(BaseFiltering):
             return nucleus_cytosol_pairs
 
     def process(self, input_masks):
-        if type(input_masks) == str:
+        if isinstance(input_masks, str):
             input_masks = self.read_input_masks(input_masks)
 
         # allow for optional downsampling to improve computation time
@@ -126,7 +125,6 @@ class filtering_match_nucleus_to_cytosol(BaseFiltering):
         # cleanup TEMP directories if not done during individual tile runs
         if hasattr(self, "TEMP_DIR_NAME"):
             shutil.rmtree(self.TEMP_DIR_NAME)
-
 
 class multithreaded_filtering_match_nucleus_to_cytosol(TiledSegmentationFilter):
     method = filtering_match_nucleus_to_cytosol

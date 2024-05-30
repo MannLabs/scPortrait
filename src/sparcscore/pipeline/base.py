@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import sys
 
-
 class Logable(object):
     """
     Object which can create log entries.

@@ -9,15 +9,12 @@ import numpy as np
 import numpy.ma as ma
 import sys
 import imagesize
-
-# packages for timecourse project
 import pandas as pd
 from cv2 import imread
 import re
 import h5py
 from tqdm.auto import tqdm
 from time import time
-import shutil
 
 from sparcscore.pipeline.base import Logable
 from sparcscore.processing.preprocessing import percentile_normalization, EDF, maximum_intensity_projection
@@ -365,7 +362,7 @@ class Project(Logable):
                 shutil.rmtree(path)
                 self.log("Overwrite is set to True. Existing input image was deleted.")
             else:
-                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
+                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or delete the existing input image.")
 
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
@@ -424,7 +421,7 @@ class Project(Logable):
                 shutil.rmtree(path)
                 self.log("Overwrite is set to True. Existing input image was deleted.")
             else:
-                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
+                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or remove the existing input image ")
 
         if not array.shape[0] == self.config["input_channels"]:
             raise ValueError(
@@ -484,7 +481,7 @@ class Project(Logable):
         if "Z" in dimensions:
             self.log("Found more than one Z-stack in CZI file.")
             
-            if type(z_stack_projection) == int:
+            if isinstance(z_stack_projection, int):
                 self.log(f"Selection Z-stack {z_stack_projection}")
                 _mosaic = np.array([czi.read_mosaic(region = (box.x, box.y, box.w, box.h),
                                                     C = c, 
@@ -564,7 +561,7 @@ class Project(Logable):
         if n_zstacks > 1:
             self.log(f"Found {n_zstacks} Z-stack in CZI file.")
             
-            if type(z_stack_projection) == int:
+            if isinstance(z_stack_projection, int):
                 self.log(f"Selection Z-stack {z_stack_projection}")
                 _mosaic = czi.get_image_dask_data("CYX", Z=z_stack_projection).compute()
             
@@ -604,12 +601,9 @@ class Project(Logable):
                 self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             
-            #get name from naparipath
-            name = os.path.basename(napari_csv_path).split(".")[0]
-
             # read napari csv
             polygons = _read_napari_csv(napari_csv_path)
     
@@ -640,7 +634,7 @@ class Project(Logable):
             self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             self.segmentation_f(self.input_image, *args, **kwargs)
 
@@ -659,7 +653,7 @@ class Project(Logable):
             self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
 
@@ -1556,7 +1550,7 @@ class TimecourseProject(Project):
                     f"following timepoints given not found in imaging data: {not_found_timepoints}"
                 )
 
-            self.log(f"Will perform merging over the following specs:")
+            self.log("Will perform merging over the following specs:")
             self.log(f"Wells: {_wells}")
             self.log(f"Timepoints: {_timepoints}")
 
@@ -1740,7 +1734,7 @@ class TimecourseProject(Project):
 
             print("If Segmentation already existed removed.")
 
-        if self.segmentation_f == None:
+        if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
         else:
@@ -1751,7 +1745,7 @@ class TimecourseProject(Project):
         Extract single cells from a timecourse project with the defined extraction method.
         """
 
-        if self.extraction_f == None:
+        if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
         input_segmentation = self.segmentation_f.get_output()

@@ -586,7 +586,8 @@ def _class_size(mask, debug=False, background=0):
 
     # Get the unique cell_ids and remove the background(0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: cell_ids.remove(background)
+    if 0 in cell_ids: 
+        cell_ids.remove(background)
     cell_ids = np.array(cell_ids)
 
     min_cell_id = np.min(cell_ids) #need to convert to array since numba min functions requires array as input not list
@@ -710,7 +711,8 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     # Get the unique cell_ids and remove the background (0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: cell_ids.remove(0)
+    if 0 in cell_ids: 
+        cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
 
     min_cell_id = np.min(cell_ids) #need to convert to array since numba min functions requires array as input not list
@@ -772,8 +774,6 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
 
 #### Helper Numba functions to increase speed of numpy operations
-
-import numba as nb
 
 # short-circuiting replacement for np.any()
 @nb.jit(nopython=True)

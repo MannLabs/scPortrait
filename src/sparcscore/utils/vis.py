@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-
 def plot_segmentation_mask(
     project,
     mask_channel=0,

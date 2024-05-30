@@ -3,9 +3,7 @@ import os
 import numpy as np
 import h5py
 from lmd.lib import SegmentationLoader
-import shutil
 from alphabase.io import tempmmap
-
 
 class LMDSelection(ProcessingStep):
     """
@@ -152,7 +150,7 @@ class LMDSelection(ProcessingStep):
         if name is None:
             try:
                 name = "_".join([cell_set["name"] for cell_set in cell_sets])
-            except:
+            except Exception:
                 name = "selected_cells"
 
         savename = name.replace(" ", "_") + ".xml"

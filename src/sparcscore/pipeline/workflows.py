@@ -37,8 +37,7 @@ from skimage.color import label2rgb
 
 # for cellpose segmentation
 from cellpose import models
-import gc
-from collections import defaultdictfrom alphabase.io import tempmmap
+from alphabase.io import tempmmap
 
 
 class BaseSegmentation(Segmentation):
@@ -47,7 +46,7 @@ class BaseSegmentation(Segmentation):
 
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
-        if type(self.config["lower_quantile_normalization"]) == float:
+        if isinstance(self.config["lower_quantile_normalization"], float):
             self.log("Normalizing each channel to the same range")
             self.maps["normalized"] = percentile_normalization(
                 input_image,
@@ -368,9 +367,6 @@ class BaseSegmentation(Segmentation):
     def _visualize_nucleus_segmentation(
         self, classes_nuclei_unconnected, classes_nuclei_filtered
     ):
-        um_p_px = 665 / 1024  # what is this!!?? @GWallmann
-        um_2_px = um_p_px * um_p_px  # what is this!!?? @GWallmann
-
         visualize_class(
             classes_nuclei_unconnected,
             self.maps["nucleus_segmentation"],
@@ -414,7 +410,6 @@ class BaseSegmentation(Segmentation):
         plt.show()
 
     def _visualize_cytosol_filtering(self, classes_wga_filtered):
-
         visualize_class(
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][1]
         )
@@ -638,7 +633,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
             gpu_id = gpu_id_list[cpu_id]
             self.log(f"starting process on GPU {gpu_id}")
             status = "multi_GPU"
-        except:
+        except Exception:
             gpu_id = 0
             self.log("running on default GPU.")
             status = "single_GPU"
@@ -729,33 +724,36 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         ).astype(np.uint32)
 
         return channels, segmentation
-    
-    def get_params_cellsize_filtering(self, type):
 
+    def get_params_cellsize_filtering(self, type):
         absolute_filter_status = False
-        
+
         if "min_size" in self.config[f"{type}_segmentation"].keys():
             min_size = self.config[f"{type}_segmentation"]["min_size"]
             absolute_filter_status = True
         if "max_size" in self.config[f"{type}_segmentation"].keys():
             max_size = self.config[f"{type}_segmentation"]["max_size"]
             absolute_filter_status = True
-        
+
         if absolute_filter_status:
             thresholds = [min_size, max_size]
             return (thresholds, None)
         else:
             thresholds = None
 
-            #get confidence intervals to automatically calculate thresholds
+            # get confidence intervals to automatically calculate thresholds
             if "confidence_interval" in self.config[f"{type}_segmentation"].keys():
-                confidence_interval = self.config[f"{type}_segmentation"]["confidence_interval"]
+                confidence_interval = self.config[f"{type}_segmentation"][
+                    "confidence_interval"
+                ]
             else:
-                #get default value
-                self.log(f"No confidence interval specified for {type} mask filtering, using default value of 0.95")
+                # get default value
+                self.log(
+                    f"No confidence interval specified for {type} mask filtering, using default value of 0.95"
+                )
                 confidence_interval = 0.95
-            
-            return(thresholds, confidence_interval)
+
+            return (thresholds, confidence_interval)
 
     def cellpose_segmentation(self, input_image):
         try:
@@ -774,7 +772,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             self.log(f"starting process on GPU {gpu_id}")
             status = "multi_GPU"
 
-        except:
+        except Exception:
             gpu_id = 0
             self.log("running on default GPU.")
             status = "single_GPU"
@@ -807,17 +805,17 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         if "filter_masks_size" in self.config.keys():
-            self.filter_size= self.config["filter_status"]
+            self.filter_size = self.config["filter_status"]
         else:
-            #default behaviour is that it should be turned on (this gives biologically more meaningful results)
-            self.filter_size = True 
+            # default behaviour is that it should be turned on (this gives biologically more meaningful results)
+            self.filter_size = True
 
         # check to see if the cells should be filtered for matching nuclei/cytosols within the segmentation run
         if "filter_status" in self.config.keys():
             self.filter_status = self.config["filter_status"]
         else:
-            #default behaviour that this filtering should be performed, otherwise another additional step is required before extraction 
-            self.filter_status = True 
+            # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
+            self.filter_status = True
 
         # load correct segmentation model for nuclei
         if "model" in self.config["nucleus_segmentation"].keys():
@@ -893,39 +891,51 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         if self.filter_size:
             self.log("Filtering generated nucleus and cytosol masks based on size.")
 
-            #perform filtering for nucleus size
-            thresholds, confidence_interval = self.get_params_cellsize_filtering("nucleus")
+            # perform filtering for nucleus size
+            thresholds, confidence_interval = self.get_params_cellsize_filtering(
+                "nucleus"
+            )
 
             if thresholds is not None:
-                self.log(f"Performing filtering of nuclei with specified thresholds {thresholds} from config file.")
+                self.log(
+                    f"Performing filtering of nuclei with specified thresholds {thresholds} from config file."
+                )
             else:
-                self.log(f"Automatically calculating thresholds for filtering of nuclei based on a fitted normal distribution with a confidence interval of {confidence_interval * 100}%.")
-            
+                self.log(
+                    f"Automatically calculating thresholds for filtering of nuclei based on a fitted normal distribution with a confidence interval of {confidence_interval * 100}%."
+                )
+
             filter_nucleus = SizeFilter(
-                label="nucleus", 
-                log=True, 
-                plot_qc=self.debug, 
+                label="nucleus",
+                log=True,
+                plot_qc=self.debug,
                 directory=self.directory,
-                confidence_interval = confidence_interval,
-                filter_threshold = thresholds
+                confidence_interval=confidence_interval,
+                filter_threshold=thresholds,
             )
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
-            #perform filtering for cytosol size
-            thresholds, confidence_interval = self.get_params_cellsize_filtering("cytosol")
+            # perform filtering for cytosol size
+            thresholds, confidence_interval = self.get_params_cellsize_filtering(
+                "cytosol"
+            )
 
             if thresholds is not None:
-                self.log(f"Performing filtering of cytosols with specified thresholds {thresholds} from config file.")
+                self.log(
+                    f"Performing filtering of cytosols with specified thresholds {thresholds} from config file."
+                )
             else:
-                self.log(f"Automatically calculating thresholds for filtering of cytosols based on a fitted normal distribution with a confidence interval of {confidence_interval * 100}%.")
-            
+                self.log(
+                    f"Automatically calculating thresholds for filtering of cytosols based on a fitted normal distribution with a confidence interval of {confidence_interval * 100}%."
+                )
+
             filter_cytosol = SizeFilter(
-                label="cytosol", 
-                log=True, 
-                plot_qc=self.debug, 
+                label="cytosol",
+                log=True,
+                plot_qc=self.debug,
                 directory=self.directory,
                 confidence_interval=confidence_interval,
-                filter_threshold = thresholds
+                filter_threshold=thresholds,
             )
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
@@ -1269,9 +1279,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         # could add a normalization step here if so desired
         self.maps["normalized"] = input_image
-        
-        del input_image
-        gc.collect()
 
         del input_image
         gc.collect()
@@ -1504,7 +1511,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
             gpu_id = gpu_id_list[cpu_id]
             self.log(f"starting process on GPU {gpu_id}")
             status = "multi_GPU"
-        except:
+        except Exception:
             gpu_id = 0
             self.log("running on default GPU.")
             status = "single_GPU"
@@ -1844,6 +1851,7 @@ class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegment
 
     method = CytosolSegmentationCellpose_Timecourse
 
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 

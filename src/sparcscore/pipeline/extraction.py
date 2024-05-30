@@ -1,40 +1,32 @@
-from datetime import datetime
-from operator import index
 import os
 import numpy as np
 import pandas as pd
+import sys
 import csv
+import h5py
+from tqdm.auto import tqdm
+from itertools import compress
+import timeit
+import _pickle as cPickle
+import matplotlib.pyplot as plt
+
 from functools import partial
-from multiprocessing import Pool
 import multiprocessing as mp
 
-import h5py
-import sys
-from tqdm import tqdm
-from itertools import compress
+from alphabase.io import tempmmap
 
 from skimage.filters import gaussian
 from skimage.morphology import disk, dilation
-
 from scipy.ndimage import binary_fill_holes
 
-from sparcscore.processing.segmentation import numba_mask_centroid, _return_edge_labels
-from sparcscore.processing.utils import plot_image, flatten
+from sparcscore.processing.segmentation import numba_mask_centroid
+from sparcscore.processing.utils import flatten
 from sparcscore.processing.preprocessing import percentile_normalization, MinMax
 from sparcscore.pipeline.base import ProcessingStep
 
-import uuid
-import shutil
-import timeit
-
-import matplotlib.pyplot as plt
-from alphabase.io import tempmmap
-
-import _pickle as cPickle
 
 # to perform garbage collection
 import gc
-
 
 class HDF5CellExtraction(ProcessingStep):
     """
@@ -86,7 +78,7 @@ class HDF5CellExtraction(ProcessingStep):
                 self.log(
                     f"Loading classes from filtered classes path: {self.classes_path}"
                 )
-            except:
+            except Exception:
                 raise ValueError("Need to run segmentation_filtering method ")
         else:
             self.classes_path = os.path.join(
@@ -119,7 +111,7 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             self.normalization = True
 
-        if self.normalization == True:
+        if self.normalization:
 
             def norm_function(img):
                 return percentile_normalization(img)
@@ -247,8 +239,8 @@ class HDF5CellExtraction(ProcessingStep):
 
     def verbalise_extraction_info(self):
         # print some output information
-        self.log(f"Extraction Details:")
-        self.log(f"--------------------------------")
+        self.log("Extraction Details:")
+        self.log("--------------------------------")
         self.log(f"Input channels: {self.n_channels_input}")
         self.log(f"Input labels: {self.n_segmentation_channels}")
         self.log(f"Output channels: {self.n_channels_output}")
@@ -316,7 +308,7 @@ class HDF5CellExtraction(ProcessingStep):
         # get cell_ids of the cells that were successfully extracted
         _, cell_ids = _tmp_single_cell_index[keep_index].T
 
-        self.log(f"Transferring extracted single cells to .hdf5")
+        self.log("Transferring extracted single cells to .hdf5")
 
         if self.debug:
             # visualize some cells for debugging purposes
@@ -876,7 +868,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
         with h5py.File(self.output_path, "w") as hf:
             self.log(
-                f"Transferring extended labelling to ['single_cell_index_labelled'] container."
+                "Transferring extended labelling to ['single_cell_index_labelled'] container."
             )
             # create special datatype for storing strings
             dt = h5py.special_dtype(vlen=str)
@@ -897,7 +889,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             del index_labelled  # cleanup to free up memory
 
             self.log(
-                f"Transferring extracted single cells to ['single_cell_data'] container."
+                "Transferring extracted single cells to ['single_cell_data'] container."
             )
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset(
@@ -915,7 +907,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
         with h5py.File(self.output_path, "a") as hf:
             self.log(
-                f"Transferring simple cell_id index to ['single_cell_index'] container."
+                "Transferring simple cell_id index to ['single_cell_index'] container."
             )
             # need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
             cell_ids = _tmp_single_cell_index[keep_index, 1]

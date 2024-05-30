@@ -37,7 +37,7 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, type, eval = True, 
 
     # Load model
     model = MultilabelSupervisedModel.load_from_checkpoint(
-        checkpoint_path, hparams_file=hparam_path, model_type=model_type, map_location=device
+        checkpoint_path, hparams_file=hparam_path, model_type=type, map_location=device
     )
     if eval:
         model.eval()

@@ -122,7 +122,7 @@ def download_testimage(folder):
         returns.append(path)
     return returns
 
-def flatten(l):
+def flatten(list):
     """
     Flatten a list of lists into a single list.
 
@@ -130,7 +130,7 @@ def flatten(l):
     containing all the elements from the input lists.
 
     Args:
-        l (list of lists): A list containing one or more lists as its elements.
+        list (list of lists): A list containing one or more lists as its elements.
 
     Returns:
         flattened_list (list): A single list containing all elements from the input lists.
@@ -141,4 +141,4 @@ def flatten(l):
     [1, 2, 3, 4, 5, 6, 7, 8, 9]
     """
     # Flatten the input list using list comprehension
-    return [item for sublist in l for item in sublist]
+    return [item for sublist in list for item in sublist]

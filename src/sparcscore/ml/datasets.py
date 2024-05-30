@@ -1,7 +1,5 @@
 from torch.utils.data import Dataset
 import torch
-import numpy as np
-import random
 import os
 import h5py
    
@@ -92,7 +90,6 @@ class HDF5SingleCellDataset(Dataset):
 
             #check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]
-            filename = directory.split(".")[0]
                 
             if filetype in self.HDF_FILETYPES:
                 self.add_hdf_to_index(current_label, directory)
@@ -118,7 +115,7 @@ class HDF5SingleCellDataset(Dataset):
 
             for row in index_handle:
                 self.data_locator.append([current_label, handle_id]+list(row))      
-        except:
+        except Exception:
             return
         
     def scan_directory(self, path, current_label, levels_left):
@@ -130,14 +127,12 @@ class HDF5SingleCellDataset(Dataset):
         if levels_left > 0:
             
             # get files and directories at current level
-            input_list = os.listdir(path)
             current_level_directories = [os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
 
             current_level_files = [ name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
                         
             for i, file in enumerate(current_level_files):
                 filetype = file.split(".")[-1]
-                filename = file.split(".")[0]
                 
                 if filetype in self.HDF_FILETYPES:
                     
@@ -156,8 +151,8 @@ class HDF5SingleCellDataset(Dataset):
         
         print("Total: {}".format(len(labels)))
         
-        for l in set(labels):
-            print("{}: {}".format(l,labels.count(l)))
+        for label in set(labels):
+            print("{}: {}".format(label, labels.count(label)))
         
     def __len__(self):
         return len(self.data_locator)
