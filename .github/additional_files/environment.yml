@@ -1,7 +1,9 @@
-name: SPARCSminimal
+name: base
 channels:
   - conda-forge
 dependencies:
+  - numpy==1.26.4
+  - numba
   - pip:
       - affine==2.4.0
       - aicspylibczi==3.1.2
@@ -21,7 +23,6 @@ dependencies:
       - click==8.1.7
       - click-plugins==1.1.1
       - cligj==0.7.2
-      - cloudpickle==3.0.0
       - colorama==0.4.6
       - contextlib2==21.6.0
       - contourpy==1.2.1
@@ -59,9 +60,7 @@ dependencies:
       - multidict==6.0.5
       - natsort==8.4.0
       - networkx==3.3
-      - numba==0.59.1
       - numcodecs==0.12.1
-      - numpy==1.26.4
       - ome-zarr==0.9.0
       - opencv-python==4.9.0.80
       - opencv-python-headless==4.9.0.80
@@ -112,3 +111,4 @@ dependencies:
       - zarr==2.18.2
       - zict==3.0.0
       - zipp==3.19.0
+      - xarray==2024.5.0

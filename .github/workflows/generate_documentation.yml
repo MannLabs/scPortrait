@@ -22,7 +22,16 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install Dependencies with Mamba
       run: |
-        conda env update -n base --file .github/additional_files/environment.yml
+        conda env update -n base --file .github/additional_files/environment.yml 
     - name: Install Repository Module
       run: |
         pip install ./
+    - name: Install Sphinx and additional dependences
+      run: |
+        pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints sphinx-argparse nbsphinx renku-sphinx-theme
+    - name: Generate Documentation
+      run: |
+        cd docs_source
+        make clean
+        make html
+      
