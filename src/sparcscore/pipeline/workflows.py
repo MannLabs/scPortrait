@@ -805,7 +805,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         self.log(f"GPU Status for segmentation: {use_GPU}")
 
         if "filter_masks_size" in self.config.keys():
-            self.filter_size = self.config["filter_status"]
+            self.filter_size = self.config["filter_masks_size"]
         else:
             # default behaviour is that it should be turned on (this gives biologically more meaningful results)
             self.filter_size = True
@@ -913,6 +913,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 confidence_interval=confidence_interval,
                 filter_threshold=thresholds,
             )
+
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
             # perform filtering for cytosol size

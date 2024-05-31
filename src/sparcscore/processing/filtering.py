@@ -335,16 +335,21 @@ class SizeFilter(Logable):
         if self.filter_threshold is None:
             self.filter_threshold = self.calculate_filtering_threshold(pixel_counts)
 
-        ids_remove = counts[0][1:][
-            np.where(
-                (self.filter_threshold[0] > pixel_counts)
-                | (pixel_counts < self.filter_threshold[1])
-            )
-        ]
+        ids_remove = []
+        _ids = counts[0][1:][np.where(pixel_counts < self.filter_threshold[0])]
+        ids_remove.extend(_ids)
 
         self.log(
-            f"Found {len(ids_remove)} ids to remove from {self.label} mask which are outside of the chosen threshold range {self.filter}."
+            f"Found {len(_ids)} ids to remove from {self.label} mask which are smaller than the chosen threshold range {self.filter_threshold}."
         )
+
+        _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
+        ids_remove.extend(_ids)
+
+        self.log(
+            f"Found {len(_ids)} ids to remove from {self.label} mask which are bigger than the chosen threshold range {self.filter_threshold}."
+        )
+
         self.ids_to_remove = ids_remove
 
     def update_mask(self, mask, ids_to_remove):
