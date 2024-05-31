@@ -21,8 +21,8 @@ class SizeFilter(Logable):
     represent the actual cell masks of interest. Using the fitted model, the filtering thresholds are calculated
     to remove all cells that fall outside of the given confidence interval. 
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     filter_threshold : tuple of floats, optional
         The lower and upper thresholds for object size filtering. If not provided, it will be automatically calculated.
     label : str, optional
@@ -37,8 +37,8 @@ class SizeFilter(Logable):
     confidence_interval : float, optional
         The confidence interval for calculating the filtering threshold. Default is 0.95.
 
-    Examples:
-    ---------
+    Examples
+    --------
     # Create a SizeFilter object
     filter = SizeFilter(filter_threshold=(100, 200), label="my_mask")
 
@@ -182,7 +182,7 @@ class SizeFilter(Logable):
         """
         Plot a histogram of the given values.
 
-        Parameters:
+        Parameters
         ----------
         values : array-like
             The values to be plotted.
@@ -197,7 +197,7 @@ class SizeFilter(Logable):
         save_figure : bool, optional
             Whether to save the figure as an image. Default is True.
 
-        Returns:
+        Returns
         -------
         fig : matplotlib.figure.Figure
             The generated figure object.
