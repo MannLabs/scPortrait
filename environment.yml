@@ -1,4 +1,4 @@
-name: SPARCSpy
+name: SPARCSspatial-dev
 channels:
   - pytorch
   - anaconda
@@ -436,3 +436,4 @@ dependencies:
       - yarl==1.9.4
       - yattag==1.15.2
       - zarr==2.15.0
+prefix: /Users/sophia/mambaforge/envs/SPARCSspatial-dev
