@@ -30,9 +30,8 @@ jobs:
     - name: Install Sphinx and additional dependences
       run: |
         pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints sphinx-argparse nbsphinx renku-sphinx-theme
-    - name: Install Pandoc
-      uses: pandoc/actions/setup
     - name: Generate Documentation
+      uses: docker://pandoc/core:2.9
       run: |
         cd docs_source
         make clean

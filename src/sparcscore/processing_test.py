@@ -36,7 +36,7 @@ def test_segment_threshold():
     ), "Output labels and input image shapes are not equal"
 
     # Check if output has the correct dtype (int)
-    assert isinstance(labels.dtype, np.int), "Output label dtype is not integer"
+    assert isinstance(labels.dtype, int), "Output label dtype is not integer"
 
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
@@ -55,7 +55,7 @@ def test_segment_global_threshold():
     ), "Output labels and input image shapes are not equal"
 
     # Check if output has the correct dtype (int)
-    assert isinstance(labels.dtype, np.int), "Output label dtype is not integer"
+    assert isinstance(labels.dtype, int), "Output label dtype is not integer"
 
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
@@ -234,7 +234,7 @@ def test_numba_mask_centroid():
     centers, points_class, ids = numba_mask_centroid(mask)
     expected_centers = np.array([[0.33333333, 1.66666667], [1.5, 1.5]])
     expected_points_class = np.array([3, 2], dtype=np.uint32)
-    expected_ids = np.array([1, 2], dtype=np.int32)
+    expected_ids = np.array([1, 2], dtype=int)
 
     assert np.allclose(centers, expected_centers, atol=1e-6)
     assert np.all(points_class == expected_points_class)
