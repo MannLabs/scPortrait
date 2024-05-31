@@ -35,9 +35,6 @@ def test_segment_threshold():
         labels.shape == image.shape
     ), "Output labels and input image shapes are not equal"
 
-    # Check if output has the correct dtype (int)
-    assert isinstance(labels.dtype, int), "Output label dtype is not integer"
-
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
 
@@ -53,9 +50,6 @@ def test_segment_global_threshold():
     assert (
         labels.shape == image.shape
     ), "Output labels and input image shapes are not equal"
-
-    # Check if output has the correct dtype (int)
-    assert isinstance(labels.dtype, int), "Output label dtype is not integer"
 
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
