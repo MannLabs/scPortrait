@@ -22,18 +22,24 @@ from contextlib import redirect_stdout
 class MLClusterClassifier:
     """
     Class for classifying single cells using a pre-trained machine learning model.
-    This class takes a pre-trained model and uses it to classify single_cells,
+
+    This class takes a pre-trained model and uses it to classify single cells,
     using the model's forward function or encoder function, depending on the
     user's choice. The classification results are saved to a TSV file.
 
-    Attributes:
-        config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
-        directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`sparcscore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
-        intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
-        debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
-        overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
+    Attributes
+    ----------
+    config : dict
+        Config file which is passed by the Project class when called. It is loaded from the project based on the name of the class.
+    directory : str
+        Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`sparcscore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
+    intermediate_output : bool, optional
+        When set to True, intermediate outputs will be saved where applicable. Default is False.
+    debug : bool, optional
+        When set to True, debug outputs will be printed where applicable. Default is False.
+    overwrite : bool, optional
+        When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.
     """
-
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
@@ -162,79 +168,84 @@ class MLClusterClassifier:
         accessory_dataloader=HDF5SingleCellDataset,
     ):
         """
-        Function called to perform classification on the provided HDF5 dataset.
+        Perform classification on the provided HDF5 dataset.
 
-        Args:
-            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
-            a project processing workflow this argument will be provided automatically.
-            accessory (list): List containing accessory datasets on which inference should be performed in addition to the cells
+        Parameters
+        ----------
+        extraction_dir : str
+            Directory containing the extracted HDF5 files from the project. If this class is used as part of
+            a project processing workflow, this argument will be provided automatically.
+        accessory : list
+            List containing accessory datasets on which inference should be performed in addition to the cells
             contained within the current project.
-            size (int, optional): How many cells should be selected for inference. Default is 0, which means all cells are selected.
-            project_dataloader (HDF5SingleCellDataset, optional): Dataloader for the project dataset. Default is HDF5SingleCellDataset.
-            accessory_dataloader (HDF5SingleCellDataset, optional): Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
+        size : int, optional
+            How many cells should be selected for inference. Default is 0, which means all cells are selected.
+        project_dataloader : HDF5SingleCellDataset, optional
+            Dataloader for the project dataset. Default is HDF5SingleCellDataset.
+        accessory_dataloader : HDF5SingleCellDataset, optional
+            Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
-        Returns:
-            None: Results are written to tsv files located in the project directory.
+        Returns
+        -------
+        None
+            Results are written to TSV files located in the project directory.
 
-        Important:
-            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
-            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-            class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
-            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-            class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
+        class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
+        The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
 
+        Examples
+        --------
+        .. code-block:: python
 
+            # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
+            # Leave empty if you only want to infer on all extracted cells in the current project
 
-        Example:
+            accessory = ([], [], [])
+            project.classify(accessory=accessory)
 
-            .. code-block:: python
+        Notes
+        -----
+        The following parameters are required in the config file:
 
-                # define acceossory dataset: additional hdf5 datasets that you want to perform an inference on
-                # leave empty if you only want to infere on all extracted cells in the current project
+        .. code-block:: yaml
 
-                accessory = ([], [], [])
-                project.classify(accessory = accessory)
+            MLClusterClassifier:
+                # Channel number on which the classification should be performed
+                channel_classification: 4
 
-        Note:
+                # Number of threads to use for dataloader
+                threads: 24
+                dataloader_worker_number: 24
 
-            The following parameters are required in the config file:
+                # Batch size to pass to GPU
+                batch_size: 900
 
-            .. code-block:: yaml
+                # Path to PyTorch checkpoint that should be used for inference
+                network: "path/to/model/"
 
-                MLClusterClassifier:
-                    # channel number on which the classification should be performed
-                    channel_classification: 4
+                # Classifier architecture implemented in SPARCSpy
+                # Choose one of VGG1, VGG2, VGG1_old, VGG2_old
+                classifier_architecture: "VGG2_old"
 
-                    #number of threads to use for dataloader
-                    threads: 24
-                    dataloader_worker_number: 24
+                # If more than one checkpoint is provided in the network directory, which checkpoint should be chosen
+                # Should either be "max" or a numeric value indicating the epoch number
+                epoch: "max"
 
-                    #batch size to pass to GPU
-                    batch_size: 900
+                # Name of the classifier used for saving the classification results to a directory
+                screen_label: "Autophagy_15h_classifier1"
 
-                    #path to pytorch checkpoint that should be used for inference
-                    network: "path/to/model/"
+                # List of which inference methods should be performed
+                # Available: "forward" and "encoder"
+                # If "forward": images are passed through all layers of the model and the final inference results are written to file
+                # If "encoder": activations at the end of the CNN are written to file
+                encoders: ["forward", "encoder"]
 
-                    #classifier architecture implemented in SPARCSpy
-                    # choose one of VGG1, VGG2, VGG1_old, VGG2_old
-                    classifier_architecture: "VGG2_old"
-
-                    #if more than one checkpoint is provided in the network directory which checkpoint should be chosen
-                    # should either be "max" or a numeric value indicating the epoch number
-                    epoch: "max"
-
-                    #name of the classifier used for saving the classification results to a directory
-                    screen_label: "Autophagy_15h_classifier1"
-
-                    # list of which inference methods should be performed
-                    # available: "forward" and "encoder"
-                    # if "forward": images are passed through all layers of the modela nd the final inference results are written to file
-                    # if "encoder": activations at the end of the CNN is written to file
-                    encoders: ["forward", "encoder"]
-
-                    # on which device inference should be performed
-                    # for speed should be "cuda"
-                    inference_device: "cuda"
+                # On which device inference should be performed
+                # For speed, should be "cuda"
+                inference_device: "cuda"
         """
 
         # is called with the path to the segmented image
@@ -687,52 +698,44 @@ class CellFeaturizer:
     The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
+    
+    - Area of the nucleus in pixels
+    - Area of the cytosol in pixels
+    - Mean intensity of the chosen channel
+    - Median intensity of the chosen channel
+    - 75% quantile of the chosen channel
+    - 25% quantile of the chosen channel
+    - Summed intensity of the chosen channel in the region labeled as nucleus
+    - Summed intensity of the chosen channel in the region labeled as cytosol
+    - Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area
+    - Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area
 
-    - area of the nucleus in px,
-    - area of the cytosol in px,
-    - mean intensity of chosen channel
-    - median intensity of chosen channel,
-    - 75% quantile of chosen channel,
-    - 25% quantile of chosen channel,
-    - summed intensity of the chosen channel in the region labeled as nucleus,
-    - summed intensity of the chosen channel in the region labeled as cyotosl,
-    - summed intensity of the chosen channel in the region labelled as nucleus normalized to the nucleus area,
-    - summed intensity of the chosen channel in the region labelled as cytosol normalized to the cytosol area, nucleus_area
-
-    The features are outputed in this order in the tsv file.
-
+    The features are outputted in this order in the TSV file.
     """
 
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
 
-    def __init__(
-        self,
-        config,
-        path,
-        project_location,
-        debug=False,
-        overwrite=False,
-        intermediate_output=True,
-    ):
-        """Class is initiated to featurize extracted single cells.
+    def __init__(self, config, path, project_location, debug=False, overwrite=False, intermediate_output=True):
+        """
+        Class is initiated to featurize extracted single cells.
 
         Parameters
         ----------
         config : dict
             Configuration for the extraction passed over from the :class:`pipeline.Project`.
-
         path : str
             Directory for the extraction log and results. Will be created if not existing yet.
-
+        project_location : str
+            Location of the project directory.
         debug : bool, optional, default=False
             Flag used to output debug information and map images.
-
         overwrite : bool, optional, default=False
             Flag used to recalculate all images, not yet implemented.
+        intermediate_output : bool, optional, default=True
+            Flag to save intermediate outputs.
         """
-
         self.debug = debug
         self.overwrite = overwrite
         self.config = config
@@ -774,7 +777,7 @@ class CellFeaturizer:
             self.run_path = os.path.join(
                 self.directory,
                 str(self.current_run) + "_" + self.config["screen_label"],
-            )  # to ensure that you can tell by directory name what is being classified
+            )
 
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -783,6 +786,19 @@ class CellFeaturizer:
         self.log(f"current run: {self.current_run}")
 
     def is_Int(self, s):
+        """
+        Check if a string represents an integer.
+
+        Parameters
+        ----------
+        s : str
+            String to check.
+
+        Returns
+        -------
+        bool
+            True if the string represents an integer, False otherwise.
+        """
         try:
             int(s)
             return True
@@ -790,17 +806,27 @@ class CellFeaturizer:
             return False
 
     def get_timestamp(self):
-        # Returns the current date and time as a formatted string.
+        """
+        Returns the current date and time as a formatted string.
 
-        # datetime object containing current date and time
+        Returns
+        -------
+        str
+            The current date and time formatted as "[DD/MM/YYYY HH:MM:SS] ".
+        """
         now = datetime.now()
-
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         return "[" + dt_string + "] "
 
     def log(self, message):
-        # Writes a message to a log file and prints it to the console if debug is True.
+        """
+        Writes a message to a log file and prints it to the console if debug is True.
 
+        Parameters
+        ----------
+        message : str or list or dict
+            Message to log.
+        """
         log_path = os.path.join(self.run_path, self.DEFAULT_LOG_NAME)
 
         if isinstance(message, str):
@@ -821,79 +847,65 @@ class CellFeaturizer:
             if self.debug:
                 print(self.get_timestamp() + line)
 
-    def __call__(
-        self,
-        extraction_dir,
-        accessory,
-        size=0,
-        project_dataloader=HDF5SingleCellDataset,
-        accessory_dataloader=HDF5SingleCellDataset,
-    ):
+    def __call__(self, extraction_dir, accessory, size=0, project_dataloader=HDF5SingleCellDataset, accessory_dataloader=HDF5SingleCellDataset):
         """
-        Function called to perform featurization on the provided HDF5 dataset.
+        Perform featurization on the provided HDF5 dataset.
 
         Parameters
         ----------
-            extraction_dir : str
-                directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            accessory : list
-                list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project
-            size : int, default = 0
-                How many cells should be selected for inference. Default is 0, then all cells are selected.
+        extraction_dir : str
+            Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
+        accessory : list
+            List containing accessory datasets on which inference should be performed in addition to the cells contained within the current project.
+        size : int, optional, default=0
+            How many cells should be selected for inference. Default is 0, meaning all cells are selected.
+        project_dataloader : HDF5SingleCellDataset, optional
+            Dataloader for the project dataset. Default is HDF5SingleCellDataset.
+        accessory_dataloader : HDF5SingleCellDataset, optional
+            Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
         Returns
         -------
-            Writes results to tsv files located in the project directory.
+        None
+            Results are written to TSV files located in the project directory.
 
-        Important:
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.
 
-            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
-            class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-            class will automaticly provide the most recent extraction results together with the supplied parameters.
+        Examples
+        --------
+        .. code-block:: python
 
+            # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
+            # Leave empty if you only want to infer on all extracted cells in the current project
 
-        Example:
+            accessory = ([], [], [])
+            project.classify(accessory=accessory)
 
-            .. code-block:: python
+        Notes
+        -----
+        The following parameters are required in the config file:
 
-                # define acceossory dataset: additional hdf5 datasets that you want to perform an inference on
-                # leave empty if you only want to infere on all extracted cells in the current project
+        .. code-block:: yaml
 
-                accessory = ([], [], [])
-                project.classify(accessory = accessory)
+            CellFeaturizer:
+                # Channel number on which the featurization should be performed
+                channel_classification: 4
 
-        Note:
+                # Number of threads to use for dataloader
+                dataloader_worker_number: 0 # needs to be 0 if using CPU
 
-            The following parameters are required in the config file:
+                # Batch size to pass to GPU
+                batch_size: 900
 
-            .. code-block:: yaml
+                # On which device inference should be performed
+                # For speed should be "cuda"
+                inference_device: "cpu"
 
-                CellFeaturizer:
-                    # channel number on which the featurization should be performed
-                    channel_classification: 4
-
-                    #number of threads to use for dataloader
-                    dataloader_worker_number: 0 #needs to be 0 if using cpu
-
-                    #batch size to pass to GPU
-                    batch_size: 900
-
-                    # on which device inference should be performed
-                    # for speed should be "cuda"
-                    inference_device: "cpu"
-
-                    #label under which the results should be saved
-                    screen_label: "Ch3_Featurization"
-
+                # Label under which the results should be saved
+                screen_label: "Ch3_Featurization"
         """
-
-        # is called with the path to the segmented image
-        # Size: number of datapoints of the project dataset considered
-        # ===== Dataloaders =====
-        # should be HDF5SingleCellDataset for .h5 datasets
-        # project_dataloader: dataloader for the project dataset
-        # accessory_dataloader: dataloader for the accesssory datasets
-
         self.log("Started classification")
         self.log(f"starting with run {self.current_run}")
         self.log(self.config)
@@ -902,12 +914,12 @@ class CellFeaturizer:
 
         self.log(f"{len(accessory_sizes)} different accessory datasets specified")
 
-        # generate project dataset dataloader
+        # Generate project dataset dataloader
         t = transforms.Compose([])
 
         self.log(f"loading {extraction_dir}")
 
-        # redirect stdout to capture dataset size
+        # Redirect stdout to capture dataset size
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = HDF5SingleCellDataset(
@@ -935,11 +947,11 @@ class CellFeaturizer:
 
             dataset = torch.utils.data.ConcatDataset([dataset, local_dataset])
 
-        # log stdout
+        # Log stdout
         out = f.getvalue()
         self.log(out)
 
-        # classify samples
+        # Classify samples
         dataloader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.config["batch_size"],
@@ -949,23 +961,37 @@ class CellFeaturizer:
         self.inference(dataloader)
 
     def calculate_statistics(self, img, channel=-1):
-        # get batch size
+        """
+        Calculate statistics for an image batch.
+
+        Parameters
+        ----------
+        img : torch.Tensor
+            Tensor containing the image batch.
+        channel : int, optional, default=-1
+            Channel to calculate statistics over.
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor containing the calculated statistics.
+        """
         N, _, _, _ = img.shape
 
-        # calculate area statistics
+        # Calculate area statistics
         nucleus_mask = img[:, 0] > 0
         nucleus_area = nucleus_mask.view(N, -1).sum(1, keepdims=True)
         cytosol_mask = img[:, 1] > 0
         cytosol_area = cytosol_mask.view(N, -1).sum(1, keepdims=True)
 
-        # select channel to calculate summary statistics over
+        # Select channel to calculate summary statistics over
         img_selected = img[:, channel]
         mean = img_selected.view(N, -1).mean(1, keepdim=True)
         median = img_selected.view(N, -1).quantile(q=0.5, dim=1, keepdim=True)
         quant75 = img_selected.view(N, -1).quantile(q=0.75, dim=1, keepdim=True)
         quant25 = img_selected.view(N, -1).quantile(q=0.25, dim=1, keepdim=True)
 
-        # calculate more complex statistics
+        # Calculate more complex statistics
         summed_intensity_nucleus_area = (
             masked_tensor(img_selected, nucleus_mask)
             .view(N, -1)
@@ -981,7 +1007,7 @@ class CellFeaturizer:
             summed_intensity_cytosol_area / cytosol_area
         )
 
-        # generate results tensor with all values and return
+        # Generate results tensor with all values and return
         results = torch.concat(
             [
                 nucleus_area,
@@ -1000,9 +1026,18 @@ class CellFeaturizer:
         return results
 
     def inference(self, dataloader):
-        # 1. performs inference for a dataloader
-        # 2. saves the results to file
+        """
+        Perform inference for a dataloader and save the results to a file.
 
+        Parameters
+        ----------
+        dataloader : torch.utils.data.DataLoader
+            Dataloader to perform inference on.
+
+        Returns
+        -------
+        None
+        """
         data_iter = iter(dataloader)
         self.log(f"start processing {len(data_iter)} batches")
         with torch.no_grad():
@@ -1027,7 +1062,7 @@ class CellFeaturizer:
         label = label.numpy()
         class_id = class_id.numpy()
 
-        # save inferred activations / predictions
+        # Save inferred activations / predictions
         result_labels = [
             "nucleus_area",
             "cytosol_area",

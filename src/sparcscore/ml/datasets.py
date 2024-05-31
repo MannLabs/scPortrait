@@ -46,11 +46,13 @@ class HDF5SingleCellDataset(Dataset):
 
     Examples
     --------
-    >>> hdf5_data = HDF5SingleCellDataset(dir_list=[‘data1.hdf5’, ‘data2.hdf5’],
-    dir_labels=[0, 1],
-    root_dir=‘/path/to/data’,
-    transform=None,
-    return_id=True)
+    >>> hdf5_data = HDF5SingleCellDataset(
+    ...     dir_list=['data1.hdf5', 'data2.hdf5'],
+    ...     dir_labels=[0, 1],
+    ...     root_dir='/path/to/data',
+    ...     transform=None,
+    ...     return_id=True
+    ... )
     >>> len(hdf5_data)
     2000
     >>> sample = hdf5_data[0]

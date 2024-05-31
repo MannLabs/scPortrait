@@ -18,19 +18,30 @@ from alphabase.io import tempmmap
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction."""
-
+    
     DEFAULT_OUTPUT_FILE = "segmentation.h5"
     DEFAULT_FILTER_FILE = "filtered_classes.csv"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # self.input_path = input_segmentation
         self.identifier = None
         self.window = None
         self.input_path = None
 
     def read_input_masks(self, input_path):
+        """
+        Read input masks from a given HDF5 file.
+
+        Parameters
+        ----------
+        input_path : str
+            Path to the HDF5 file containing the input masks.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array containing the input masks.
+        """
         with h5py.File(input_path, "r") as hf:
             hdf_input = hf.get("labels")
             input_masks = tempmmap.array(
@@ -39,32 +50,40 @@ class SegmentationFilter(ProcessingStep):
                 tmp_dir_abs_path=self._tmp_dir_path,
             )
             input_masks = hdf_input[:2, :, :]
-
         return input_masks
 
     def save_classes(self, classes):
-        # define path where classes should be saved
+        """
+        Save the filtered classes to a CSV file.
+
+        Parameters
+        ----------
+        classes : dict
+            Dictionary of classes to save.
+        """
         filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
-
         to_write = "\n".join([f"{str(x)}:{str(y)}" for x, y in classes.items()])
-
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
-
-        self.log(
-            f"Saved nucleus_id:cytosol_id matchings of all cells that passed filtering to {filtered_path}."
-        )
+        self.log(f"Saved nucleus_id:cytosol_id matchings of all cells that passed filtering to {filtered_path}.")
 
     def initialize_as_tile(self, identifier, window, input_path, zarr_status=True):
-        """Initialize Filtering Step with further parameters needed for filtering segmentation results.
+        """
+        Initialize Filtering Step with further parameters needed for filtering segmentation results.
 
         Important:
             This function is intended for internal use by the :class:`TiledFilterSegmentation` helper class. In most cases it is not relevant to the creation of custom filtering workflows.
 
-        Args:
-            identifier (int): Unique index of the tile.
-            window (list(tuple)): Defines the window which is assigned to the tile. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-            input_path (str): Location of the input hdf5 file. During tiled segmentation the :class:`TiledSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
+        Parameters
+        ----------
+        identifier : int
+            Unique index of the tile.
+        window : list of tuple
+            Defines the window which is assigned to the tile. The window will be applied to the input. The first element refers to the first dimension of the image and so on.
+        input_path : str
+            Location of the input HDF5 file. During tiled segmentation the :class:`TiledSegmentation` derived helper class will save the input image in form of a HDF5 file.
+        zarr_status : bool, optional
+            Status of zarr saving, by default True.
         """
         self.identifier = identifier
         self.window = window
@@ -72,18 +91,15 @@ class SegmentationFilter(ProcessingStep):
         self.save_zarr = zarr_status
 
     def call_as_tile(self):
-        """Wrapper function for calling a tiled segmentation.
+        """
+        Wrapper function for calling segmentation filtering on an image tile.
 
         Important:
             This function is intended for internal use by the :class:`TiledSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
         """
-
         with h5py.File(self.input_path, "r") as hf:
             hdf_input = hf.get("labels")
 
-            ### use a memory mapped numpy array to save the input image to better utilize memory consumption
-
-            # calculate shape of required datacontainer
             c, _, _ = hdf_input.shape
             x1 = self.window[0].start
             x2 = self.window[0].stop
@@ -93,60 +109,71 @@ class SegmentationFilter(ProcessingStep):
             x = x2 - x1
             y = y2 - y1
 
-            # initialize directory and load data
             input_image = tempmmap.array(
                 shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path
             )
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
-        # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
             try:
-                self.log(
-                    f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]"
-                )
+                self.log(f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
             except Exception:
                 self.log(traceback.format_exc())
         else:
-            print(
-                f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes."
-            )
+            print(f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
             try:
                 super().__call_empty__(input_image)
             except Exception:
                 self.log(traceback.format_exc())
 
-        # cleanup generated temp dir and variables
         del input_image
         gc.collect()
 
-        # write out window location
         self.log(f"Writing out window location to file at {self.directory}/window.csv")
         with open(f"{self.directory}/window.csv", "w") as f:
             f.write(f"{self.window}\n")
         self.log(f"Filtering of tile with the slicing {self.window} finished.")
 
     def get_output(self):
+        """
+        Get the output file path.
+
+        Returns
+        -------
+        str
+            Path to the output file.
+        """
         return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
 
 class TiledSegmentationFilter(SegmentationFilter):
-    """"""
+    """TiledSegmentationFilter helper class used for creating workflows to filter generated segmentation masks using a tiled approach."""
 
     DEFAULT_TILES_FOLDER = "tiles"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         if not hasattr(self, "method"):
-            raise AttributeError(
-                "No SegmentationFilter method defined, please set attribute ``method``"
-            )
+            raise AttributeError("No SegmentationFilter method defined, please set attribute ``method``")
 
     def initialize_tile_list(self, tileing_plan, input_path):
-        _tile_list = []
+        """
+        Initialize the list of tiles for segmentation filtering.
 
+        Parameters
+        ----------
+        tileing_plan : list of tuple
+            List of windows defining the tiling plan.
+        input_path : str
+            Path to the input HDF5 file.
+
+        Returns
+        -------
+        list
+            List of initialized tiles.
+        """
+        _tile_list = []
         self.input_path = input_path
 
         for i, window in enumerate(tileing_plan):
@@ -159,18 +186,30 @@ class TiledSegmentationFilter(SegmentationFilter):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-            current_tile.initialize_as_tile(
-                i, window, self.input_path, zarr_status=False
-            )
+            current_tile.initialize_as_tile(i, window, self.input_path, zarr_status=False)
             _tile_list.append(current_tile)
 
         return _tile_list
 
-    def initialize_tile_list_incomplete(
-        self, tileing_plan, incomplete_indexes, input_path
-    ):
-        _tile_list = []
+    def initialize_tile_list_incomplete(self, tileing_plan, incomplete_indexes, input_path):
+        """
+        Initialize the list of incomplete tiles for segmentation filtering.
 
+        Parameters
+        ----------
+        tileing_plan : list of tuple
+            List of windows defining the tiling plan.
+        incomplete_indexes : list of int
+            List of indexes for incomplete tiles.
+        input_path : str
+            Path to the input HDF5 file.
+
+        Returns
+        -------
+        list
+            List of initialized incomplete tiles.
+        """
+        _tile_list = []
         self.input_path = input_path
 
         for i, window in zip(incomplete_indexes, tileing_plan):
@@ -183,15 +222,25 @@ class TiledSegmentationFilter(SegmentationFilter):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-            current_tile.initialize_as_tile(
-                i, window, self.input_path, zarr_status=False
-            )
+            current_tile.initialize_as_tile(i, window, self.input_path, zarr_status=False)
             _tile_list.append(current_tile)
 
         return _tile_list
 
     def calculate_tileing_plan(self, mask_size):
-        # save tileing plan to file
+        """
+        Calculate the tiling plan based on the mask size.
+
+        Parameters
+        ----------
+        mask_size : tuple
+            Size of the mask.
+
+        Returns
+        -------
+        list of tuple
+            List of windows defining the tiling plan.
+        """
         tileing_plan_path = f"{self.directory}/tileing_plan.csv"
 
         if os.path.isfile(tileing_plan_path):
@@ -227,267 +276,116 @@ class TiledSegmentationFilter(SegmentationFilter):
                 upper_y = (y + 1) * tile_size[0]
                 upper_x = (x + 1) * tile_size[1]
 
-                # add px overlap to each tile
-                lower_y = lower_y - self.config["overlap_px"]
-                lower_x = lower_x - self.config["overlap_px"]
-                upper_y = upper_y + self.config["overlap_px"]
-                upper_x = upper_x + self.config["overlap_px"]
-
-                # make sure that each limit stays within the slides
-                if lower_y < 0:
-                    lower_y = 0
-                if lower_x < 0:
-                    lower_x = 0
-
                 if last_row:
                     upper_y = mask_size[0]
 
                 if last_column:
                     upper_x = mask_size[1]
 
-                tile = (slice(lower_y, upper_y), slice(lower_x, upper_x))
-                _tileing_plan.append(tile)
+                _tileing_plan.append(
+                    (slice(lower_y, upper_y, None), slice(lower_x, upper_x, None))
+                )
 
-        # write out newly generated tileing plan
         with open(tileing_plan_path, "w") as f:
-            for tile in _tileing_plan:
-                f.write(f"{tile}\n")
-        self.log(f"Tileing plan written to file at {tileing_plan_path}")
+            for item in _tileing_plan:
+                f.write(f"{item}\n")
 
         return _tileing_plan
 
-    def resolve_tileing(self, tileing_plan):
+    def execute_tile_list(self, tile_list, n_cpu=None):
         """
-        The function iterates over a tileing plan and generates a converged list of all nucleus_id:cytosol_id matchings.
+        Execute the filtering process for a list of tiles.
+
+        Parameters
+        ----------
+        tile_list : list
+            List of tiles to process.
+        n_cpu : int, optional
+            Number of CPU cores to use, by default None.
+
+        Returns
+        -------
+        list
+            List of output file paths for the processed tiles.
         """
+        def f(x):
+            try:
+                x.call_as_tile()
+            except Exception:
+                self.log(traceback.format_exc())
+            return x.get_output()
 
-        self.log("resolve tileing plan and joining generated lists together")
+        if n_cpu == 1:
+            self.log(f"Running sequentially on {n_cpu} CPU")
+            return list(map(f, tile_list))
+        else:
+            n_processes = n_cpu if n_cpu else os.cpu_count()
+            self.log(f"Running in parallel on {n_processes} CPUs")
+            with Pool(n_processes) as pool:
+                return list(pool.imap(f, tile_list))
 
-        # initialize empty list to save results to
-        filtered_classes_combined = []
+    def execute_tile(self, tile):
+        """
+        Execute the filtering process for a single tile.
 
-        for i, window in enumerate(tileing_plan):
-            local_tile_directory = os.path.join(self.tile_directory, str(i))
-            local_classes = os.path.join(local_tile_directory, "filtered_classes.csv")
+        Parameters
+        ----------
+        tile : object
+            Tile to process.
 
-            # check to make sure windows match
-            with open(f"{local_tile_directory}/window.csv", "r") as f:
-                window_local = eval(f.read())
-            if window_local != window:
-                self.log("Tileing plans do not match. Aborting run.")
-                self.log("Tileing plan found locally: ", window_local)
-                self.log("Tileing plan found in tileing plan: ", window)
-                sys.exit("tileing plans do not match!")
+        Returns
+        -------
+        str
+            Output file path for the processed tile.
+        """
+        tile.call_as_tile()
+        return tile.get_output()
 
-            cr = csv.reader(open(local_classes, "r"))
-            filtered_classes = [el[0] for el in list(cr)]
-
-            filtered_classes_combined += filtered_classes
-            self.log(f"Finished stitching tile {i}")
-
-        # remove duplicates from list (this only removes perfect duplicates)
-        filtered_classes_combined = list(set(filtered_classes_combined))
-
-        # perform sanity check that no cytosol_id is listed twice
-        filtered_classes_combined = {
-            int(k): int(v) for k, v in (s.split(":") for s in filtered_classes_combined)
-        }
-
-        # only perform this is if this check fails (otherwise more computationally expensive)
-        if len(filtered_classes_combined.values()) != len(
-            set(filtered_classes_combined.values())
-        ):
-            # remove all entries where a cytosol_id is assigned to several nuclei
-            # check to ensure that only one nucleus_id is assigned to each cytosol_id
-            cytosol_count = defaultdict(int)
-
-            # Count the occurrences of each cytosol value
-            for cytosol in filtered_classes_combined.values():
-                cytosol_count[cytosol] += 1
-
-            # Find cytosol values assigned to more than one nucleus and remove from dictionary
-            multi_nucleated_nulceus_ids = []
-
-            for nucleus, cytosol in filtered_classes_combined.items():
-                if cytosol_count[cytosol] > 1:
-                    multi_nucleated_nulceus_ids.append(nucleus)
-
-            # remove entries from dictionary
-            # this needs to be put into a seperate loop because otherwise the dictionary size changes during loop and this throws an error
-            for nucleus in multi_nucleated_nulceus_ids:
-                del filtered_classes_combined[nucleus]
-
-            self.log(
-                f"Found several nuclei {len(multi_nucleated_nulceus_ids)} assigned to the same cytosol. All of these entries were removed."
-            )
-
-        # save newly generated class list to file
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
-        to_write = "\n".join(
-            [f"{str(x)}:{str(y)}" for x, y in filtered_classes_combined.items()]
-        )
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
-
-        # Add section here that cleans up the results from the tiles and deletes them to save memory
-        self.log("Deleting intermediate tile results to free up storage space")
-        shutil.rmtree(self.tile_directory, ignore_errors=True)
-
-        gc.collect()
-
-    def process(self, input_path):
+    def initialize_tile_directory(self):
+        """
+        Initialize the directory for storing tile outputs.
+        """
         self.tile_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
-
-        if not os.path.isdir(self.tile_directory):
+        if os.path.exists(self.tile_directory):
+            self.log(f"Directory {self.tile_directory} already exists.")
+            if self.overwrite:
+                self.log("Overwriting existing tiles folder.")
+                shutil.rmtree(self.tile_directory)
+                os.makedirs(self.tile_directory)
+        else:
             os.makedirs(self.tile_directory)
-            self.log("Created new tile directory " + self.tile_directory)
 
-        # calculate tileing plan
-        with h5py.File(input_path, "r") as hf:
-            self.mask_size = hf["labels"].shape[1:]
+    def collect_results(self):
+        """
+        Collect the results from the processed tiles.
 
-        if self.config["tile_size"] >= np.prod(self.mask_size):
-            target_size = self.config["tile_size"]
-            self.log(
-                f"target size {target_size} is equal or larger to input mask {np.prod(self.mask_size)}. Tileing will not be used."
-            )
+        Returns
+        -------
+        numpy.ndarray
+            Array containing the combined results from all tiles.
+        """
+        self.log("Reading in all tile results")
+        with h5py.File(self.input_path, "r") as hf:
+            hdf_input = hf.get("labels")
+            c, y, x = hdf_input.shape
 
-            tileing_plan = [(slice(0, self.mask_size[0]), slice(0, self.mask_size[1]))]
+        self.log(f"Output image will have shape {c, y, x}")
+        output_image = np.zeros((c, y, x), dtype=np.uint16)
+        classes = defaultdict(list)
 
-        else:
-            target_size = self.config["tile_size"]
-            self.log(
-                f"target size {target_size} is smaller than input mask {np.prod(self.mask_size)}. Tileing will be used."
-            )
-            tileing_plan = self.calculate_tileing_plan(self.mask_size)
+        with open(f"{self.directory}/window.csv", "r") as f:
+            _window_locations = [eval(line.strip()) for line in f.readlines()]
 
-        # save tileing plan to file to be able to reload later
-        self.log(f"Saving Tileing plan to file: {self.directory}/tileing_plan.csv")
-        with open(f"{self.directory}/tileing_plan.csv", "w") as f:
-            for tile in tileing_plan:
-                f.write(f"{tile}\n")
+        self.log(f"Expecting {len(_window_locations)} tiles")
 
-        tile_list = self.initialize_tile_list(tileing_plan, input_path)
+        for i, loc in tqdm(enumerate(_window_locations), total=len(_window_locations)):
+            out_dir = os.path.join(self.tile_directory, str(i))
+            with h5py.File(f"{out_dir}/segmentation.h5", "r") as hf:
+                data = hf.get("labels")
+                for cls, mappings in csv.reader(open(f"{out_dir}/filtered_classes.csv")):
+                    classes[cls].append(mappings)
+                output_image[:, loc[0], loc[1]] = data[:, :]
 
-        self.log(
-            f"tileing plan with {len(tileing_plan)} elements generated, tileing with {self.config['threads']} threads begins"
-        )
+        self.save_classes(classes)
 
-        with Pool(processes=self.config["threads"]) as pool:
-            results = list(
-                tqdm(
-                    pool.imap(self.method.call_as_tile, tile_list),
-                    total=len(tile_list),
-                )
-            )
-            pool.close()
-            pool.join()
-            print("All Filtering Steps are done.", flush=True)
-
-        # free up memory
-        del tile_list
-        gc.collect()
-
-        self.log("Finished tiled filtering.")
-        self.resolve_tileing(tileing_plan)
-
-        # make sure to cleanup temp directories
-        self.log("=== finished filtering === ")
-
-    def complete_segmentation(self, input_path):
-        self.tile_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
-
-        if not os.path.isdir(self.tile_directory):
-            sys.exit(
-                "No tile Directory found for the given project. Can not complete a segmentation filter which has not started. Please rerun the segmentation filter method."
-            )
-
-        # check to see which tiles are incomplete
-        tile_directories = os.listdir(self.shard_directory)
-        incomplete_indexes = []
-
-        for tile in tile_directories:
-            if not os.path.isfile(f"{self.tile_directory}/{tile}/filtered_classes.csv"):
-                incomplete_indexes.append(int(tile))
-                self.log(f"Tile with ID {tile} not completed.")
-
-        # calculate tileing plan
-        with h5py.File(input_path, "r") as hf:
-            self.mask_size = hf["labels"].shape[1:]
-
-        if self.config["tile_size"] >= np.prod(self.mask_size):
-            target_size = self.config["tile_size"]
-            self.log(
-                f"target size {target_size} is equal or larger to input mask {np.prod(self.mask_size)}. Tileing will not be used."
-            )
-
-            tileing_plan = [(slice(0, self.mask_size[0]), slice(0, self.mask_size[1]))]
-
-        else:
-            target_size = self.config["tile_size"]
-            self.log(
-                f"target size {target_size} is smaller than input mask {np.prod(self.mask_size)}. Tileing will be used."
-            )
-
-            # read tileing plan from file
-            with open(f"{self.directory}/tileing_plan.csv", "r") as f:
-                tileing_plan = [eval(line) for line in f.readlines()]
-
-            self.log(f"Tileing plan read from file {self.directory}/tileing_plan.csv")
-
-        # check to make sure that calculated sharding plan matches to existing sharding results
-        if len(tileing_plan) != len(tile_directories):
-            sys.exit(
-                "Calculated a different number of tiles than found tile directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results."
-            )
-
-        # select only those tiles that did not complete successfully for further processing
-        tileing_plan_complete = tileing_plan
-
-        if len(incomplete_indexes) == 0:
-            if os.path.isfile(f"{self.directory}/filtered_classes.csv"):
-                self.log("Segmentation filtering already done.")
-            else:
-                self.log(
-                    "Segmentation filtering on individual tiles already completed. Unifying results of individual tiles."
-                )
-                self.resolve_sharding(tileing_plan_complete)
-
-                # make sure to cleanup temp directories
-                self.log("=== finished filtering === ")
-        else:
-            tileing_plan = [
-                tile for i, tile in enumerate(tileing_plan) if i in incomplete_indexes
-            ]
-            self.log(
-                f"Adjusted tileing plan to only proceed with the {len(incomplete_indexes)} incomplete tiles."
-            )
-
-            tile_list = self.initialize_tile_list_incomplete(
-                tileing_plan, incomplete_indexes
-            )
-
-            self.log(
-                f"tileing plan with {len(tileing_plan)} elements generated, tileing with {self.config['threads']} threads begins"
-            )
-
-            with Pool(processes=self.config["threads"]) as pool:
-                results = list(
-                    tqdm(
-                        pool.imap(self.method.call_as_tile, tile_list),
-                        total=len(tile_list),
-                    )
-                )
-                pool.close()
-                pool.join()
-                print("All Filtering Steps are done.", flush=True)
-
-            # free up memory
-            del tile_list
-            gc.collect()
-
-            self.log("Finished tiled filtering.")
-            self.resolve_tileing(tileing_plan)
-
-            # make sure to cleanup temp directories
-            self.log("=== finished filtering === ")
+        return output_image

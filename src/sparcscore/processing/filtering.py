@@ -39,17 +39,15 @@ class SizeFilter(Logable):
 
     Examples
     --------
-    # Create a SizeFilter object
-    filter = SizeFilter(filter_threshold=(100, 200), label="my_mask")
-
-    # Apply the filter to a mask
-    filtered_mask = filter.filter(input_mask)
-
-    # Get the object IDs to be removed
-    ids_to_remove = filter.get_ids_to_remove(input_mask)
-
-    # Update the mask by removing the identified object IDs
-    updated_mask = filter.update_mask(input_mask, ids_to_remove)
+    >>> # Create a SizeFilter object
+    >>> filter = SizeFilter(filter_threshold=(100, 200), label="my_mask")
+    >>> # Apply the filter to a mask
+    >>> filtered_mask = filter.filter(input_mask)
+    >>> # Get the object IDs to be removed
+    >>> ids_to_remove = filter.get_ids_to_remove(input_mask)
+    >>> # Update the mask by removing the identified object IDs
+    >>> updated_mask = filter.update_mask(input_mask, ids_to_remove)
+    
     """
     
     def __init__(

@@ -653,49 +653,50 @@ class HDF5CellExtraction(ProcessingStep):
 
     def process(self, input_segmentation_path, filtered_classes_path=None):
         """
-        Process function to run the extraction method.
+        Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
 
-        Args:
-            input_segmentation_path (str): Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            filtered_classes_path (str): Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.
+        Parameters
+        ----------
+        input_segmentation_path : str
+            Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+        filtered_classes_path : str, optional
+            Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
 
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
+        The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.
 
-        Important:
+        Examples
+        --------
+        .. code-block:: python
 
-            If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
-            The Project class will automaticly provide the most recent segmentation forward together with the supplied parameters.
+            # After project is initialized and input data has been loaded and segmented
+            project.extract()
 
-        Example:
+        Notes
+        -----
+        The following parameters are required in the config file when running this method:
 
-            .. code-block:: python
+        .. code-block:: yaml
 
-                #after project is initialized and input data has been loaded and segmented
-                project.extract()
+            HDF5CellExtraction:
 
-        Note:
+                compression: True
 
-            The following parameters are required in the config file when running this method:
+                # threads used in multithreading
+                threads: 80
 
-            .. code-block:: yaml
+                # image size in pixels
+                image_size: 128
 
-                HDF5CellExtraction:
+                # directory where intermediate results should be saved
+                cache: "/mnt/temp/cache"
 
-                    compression: True
-
-                    #threads used in multithreading
-                    threads: 80
-
-                    # image size in pixel
-                    image_size: 128
-
-                    # directory where intermediate results should be saved
-                    cache: "/mnt/temp/cache"
-
-                    #specs to define how hdf5 data should be chunked and saved
-                    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
-                    hdf5_rdcc_w0: 1
-                    hdf5_rdcc_nslots: 50000
-
+                # specs to define how HDF5 data should be chunked and saved
+                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
+                hdf5_rdcc_w0: 1
+                hdf5_rdcc_nslots: 50000
         """
         # is called with the path to the segmented image
 
@@ -953,48 +954,48 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         """
         Process function to run the extraction method.
 
-        Args:
-            input_segmentation_path: str
-                Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.
-            filtered_classes_path: str
-                Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.
+        Parameters
+        ----------
+        input_segmentation_path : str
+            Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+        filtered_classes_path : str, optional
+            Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
 
-        Important:
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
+        The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.
 
-            If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
-            The Project class will automaticly provide the most recent segmentation forward together with the supplied parameters.
+        Examples
+        --------
+        .. code-block:: python
 
-        Example:
+            # After project is initialized and input data has been loaded and segmented
+            project.extract()
 
-            .. code-block:: python
+        Notes
+        -----
+        The following parameters are required in the config file when running this method:
 
-                #after project is initialized and input data has been loaded and segmented
-                project.extract()
+        .. code-block:: yaml
 
-        Note:
+            HDF5CellExtraction:
 
-            The following parameters are required in the config file when running this method:
+                compression: True
 
-            .. code-block:: yaml
+                # threads used in multithreading
+                threads: 80
 
-                HDF5CellExtraction:
+                # image size in pixels
+                image_size: 128
 
-                    compression: True
+                # directory where intermediate results should be saved
+                cache: "/mnt/temp/cache"
 
-                    #threads used in multithreading
-                    threads: 80
-
-                    # image size in pixel
-                    image_size: 128
-
-                    # directory where intermediate results should be saved
-                    cache: "/mnt/temp/cache"
-
-                    #specs to define how hdf5 data should be chunked and saved
-                    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
-                    hdf5_rdcc_w0: 1
-                    hdf5_rdcc_nslots: 50000
-
+                # specs to define how HDF5 data should be chunked and saved
+                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
+                hdf5_rdcc_w0: 1
+                hdf5_rdcc_nslots: 50000
         """
         # is called with the path to the segmented image
 
