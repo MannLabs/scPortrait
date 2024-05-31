@@ -31,9 +31,7 @@ jobs:
       run: |
         pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints sphinx-argparse nbsphinx renku-sphinx-theme
     - name: Install Pandoc
-      uses: pandoc/actions/setup@{main}
-      with:
-        version: 2.19
+      uses: pandoc/actions/setup
     - name: Generate Documentation
       run: |
         cd docs_source
