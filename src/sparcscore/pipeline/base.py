@@ -87,7 +87,7 @@ class ProcessingStep(Logable):
 
     Attributes:
         config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
-        directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`vipercore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
+        directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`sparcscore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
         intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.

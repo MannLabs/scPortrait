@@ -21,7 +21,7 @@ Please make sure that the package is installed editable (with the `-e` flag). Ot
 We recommend installing the non-python dependencies with conda before installing SPARCSpy (especially if running on an M1 Silicon Mac):
 
 ```
-git clone https://github.com/MannLabs/SPARCSpy
+git clone https://github.com/MannLabs/SPARCSspatial
 cd SPARCSpy
 
 conda create -n "SPARCSpy"

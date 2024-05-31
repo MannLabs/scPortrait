@@ -1,4 +1,6 @@
 #### Required Packages #####
+
+# General dependencies
 numpy
 pandas
 tabulate
@@ -6,28 +8,28 @@ colorama
 matplotlib
 tqdm
 h5py
-pyYaml
-datetime
+pyyaml
 pillow
-tabulate
-colorama
 zarr
-ome_zarr
+ome-zarr
 alphabase
 aicspylibczi
-aicsimageio
 shapely
 rasterio
-mahotas
 imagesize
-#to be installed previously via conda
-numba
+
+
+# Packages better installed via conda due to dependencies
 cellpose
+scikit-fmm
+
+# Packages to be installed via conda
+# (Ensure these are installed in your conda environment beforehand)
+numba
 torch
 pytorch-lightning
 torchvision
-#opencv
+opencv-python
 scikit-image
-scikit-fmm
 scipy
 mahotas
