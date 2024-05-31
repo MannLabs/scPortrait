@@ -232,7 +232,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id4">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -424,6 +424,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/processing.html#sparcscore.processing.filtering.SizeFilter.calculate_filtering_threshold">calculate_filtering_threshold() (sparcscore.processing.filtering.SizeFilter method)</a>
 </li>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.CellFeaturizer.calculate_statistics">calculate_statistics() (sparcscore.pipeline.classification.CellFeaturizer method)</a>
+</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.call_as_shard">call_as_shard() (sparcscore.pipeline.segmentation.Segmentation method)</a>
 
       <ul>
@@ -436,15 +438,9 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.transforms.ChannelSelector">ChannelSelector (class in sparcscore.ml.transforms)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.classify">classify() (sparcscore.pipeline.project.Project method)</a>
-</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.ProcessingStep.clear_temp_dir">clear_temp_dir() (sparcscore.pipeline.base.ProcessingStep method)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.utils.combine_datasets_balanced">combine_datasets_balanced() (in module sparcscore.ml.utils)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.complete_filter_segmentation">complete_filter_segmentation() (sparcscore.pipeline.project.Project method)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.complete_segmentation">complete_segmentation() (sparcscore.pipeline.project.Project method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.ProcessingStep.config">config (sparcscore.pipeline.base.ProcessingStep attribute)</a>
 
@@ -454,10 +450,10 @@
       </ul></li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">configure_optimizers() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.confusion_plot">confusion_plot() (sparcscore.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.contact_filter">contact_filter() (in module sparcscore.processing.segmentation)</a>
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.contact_filter_lambda">contact_filter_lambda() (in module sparcscore.processing.segmentation)</a>
@@ -500,24 +496,6 @@
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.MLClusterClassifier.debug">(sparcscore.pipeline.classification.MLClusterClassifier attribute)</a>
 </li>
       </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.DEFAULT_CLASSIFICATION_DIR_NAME">DEFAULT_CLASSIFICATION_DIR_NAME (sparcscore.pipeline.project.Project attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_CLASSIFICATION_DIR_NAME">(sparcscore.pipeline.project.TimecourseProject attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.DEFAULT_CONFIG_NAME">DEFAULT_CONFIG_NAME (sparcscore.pipeline.project.Project attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_CONFIG_NAME">(sparcscore.pipeline.project.TimecourseProject attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.DEFAULT_EXTRACTION_DIR_NAME">DEFAULT_EXTRACTION_DIR_NAME (sparcscore.pipeline.project.Project attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_EXTRACTION_DIR_NAME">(sparcscore.pipeline.project.TimecourseProject attribute)</a>
-</li>
-      </ul></li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.DEFAULT_FILTER_ADDTIONAL_FILE">DEFAULT_FILTER_ADDTIONAL_FILE (sparcscore.pipeline.segmentation.Segmentation attribute)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.DEFAULT_FILTER_FILE">DEFAULT_FILTER_FILE (sparcscore.pipeline.segmentation.Segmentation attribute)</a>
@@ -528,32 +506,16 @@
       </ul></li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.Logable.DEFAULT_FORMAT">DEFAULT_FORMAT (sparcscore.pipeline.base.Logable attribute)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_INPUT_IMAGE_NAME">DEFAULT_INPUT_IMAGE_NAME (sparcscore.pipeline.project.TimecourseProject attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.ShardedSegmentation.DEFAULT_INPUT_IMAGE_NAME">(sparcscore.pipeline.segmentation.ShardedSegmentation attribute)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.ShardedSegmentation.DEFAULT_INPUT_IMAGE_NAME">DEFAULT_INPUT_IMAGE_NAME (sparcscore.pipeline.segmentation.ShardedSegmentation attribute)</a>
 </li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.Logable.DEFAULT_LOG_NAME">DEFAULT_LOG_NAME (sparcscore.pipeline.base.Logable attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.DEFAULT_OUTPUT_FILE">DEFAULT_OUTPUT_FILE (sparcscore.pipeline.segmentation.Segmentation attribute)</a>
 
       <ul>
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.ShardedSegmentation.DEFAULT_OUTPUT_FILE">(sparcscore.pipeline.segmentation.ShardedSegmentation attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.DEFAULT_SEGMENTATION_DIR_NAME">DEFAULT_SEGMENTATION_DIR_NAME (sparcscore.pipeline.project.Project attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_SEGMENTATION_DIR_NAME">(sparcscore.pipeline.project.TimecourseProject attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.DEFAULT_SELECTION_DIR_NAME">DEFAULT_SELECTION_DIR_NAME (sparcscore.pipeline.project.Project attribute)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.DEFAULT_SELECTION_DIR_NAME">(sparcscore.pipeline.project.TimecourseProject attribute)</a>
 </li>
       </ul></li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.ShardedSegmentation.DEFAULT_SHARD_FOLDER">DEFAULT_SHARD_FOLDER (sparcscore.pipeline.segmentation.ShardedSegmentation attribute)</a>
@@ -585,14 +547,6 @@
       <li><a href="pages/module/processing.html#sparcscore.processing.preprocessing.EDF">EDF() (in module sparcscore.processing.preprocessing)</a>
 </li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.extract">extract() (sparcscore.pipeline.project.Project method)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.extract">(sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      </ul></li>
-  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
@@ -600,12 +554,10 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/processing.html#sparcscore.processing.filtering.SizeFilter.filter">filter() (sparcscore.processing.filtering.SizeFilter method)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.filter_segmentation">filter_segmentation() (sparcscore.pipeline.project.Project method)</a>
+      <li><a href="pages/module/processing.html#sparcscore.processing.utils.flatten">flatten() (in module sparcscore.processing.utils)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/processing.html#sparcscore.processing.utils.flatten">flatten() (in module sparcscore.processing.utils)</a>
-</li>
       <li><a href="pages/module/ml.html#sparcscore.ml.models.VGGBase.forward">forward() (sparcscore.ml.models.VGGBase method)</a>
 
       <ul>
@@ -624,12 +576,16 @@
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.ProcessingStep.get_directory">get_directory() (sparcscore.pipeline.base.ProcessingStep method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/processing.html#sparcscore.processing.filtering.SizeFilter.get_ids_to_remove">get_ids_to_remove() (sparcscore.processing.filtering.SizeFilter method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.Logable.get_timestamp">get_timestamp() (sparcscore.pipeline.base.Logable method)</a>
+
+      <ul>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.CellFeaturizer.get_timestamp">(sparcscore.pipeline.classification.CellFeaturizer method)</a>
 </li>
+      </ul></li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.getitem">getitem() (sparcscore.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.global_otsu">global_otsu() (in module sparcscore.processing.segmentation)</a>
@@ -654,6 +610,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.identifier">identifier (sparcscore.pipeline.segmentation.Segmentation attribute)</a>
 </li>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.CellFeaturizer.inference">inference() (sparcscore.pipeline.classification.CellFeaturizer method)</a>
+</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.initialize_as_shard">initialize_as_shard() (sparcscore.pipeline.segmentation.Segmentation method)</a>
 
       <ul>
@@ -670,6 +628,8 @@
         <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.MLClusterClassifier.intermediate_output">(sparcscore.pipeline.classification.MLClusterClassifier attribute)</a>
 </li>
       </ul></li>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.CellFeaturizer.is_Int">is_Int() (sparcscore.pipeline.classification.CellFeaturizer method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -680,28 +640,16 @@
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.selection.LMDSelection">LMDSelection (class in sparcscore.pipeline.selection)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.load_input_from_array">load_input_from_array() (sparcscore.pipeline.project.Project method)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.load_input_from_array">(sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      </ul></li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.load_input_from_czi">load_input_from_czi() (sparcscore.pipeline.project.Project method)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.load_input_from_file">load_input_from_file() (sparcscore.pipeline.project.Project method)</a>
+      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.load_maps_from_disk">load_maps_from_disk() (sparcscore.pipeline.segmentation.Segmentation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.load_input_from_files">load_input_from_files() (sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.load_input_from_files_and_merge">load_input_from_files_and_merge() (sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.load_input_from_stitched_files">load_input_from_stitched_files() (sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.load_maps_from_disk">load_maps_from_disk() (sparcscore.pipeline.segmentation.Segmentation method)</a>
-</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.Logable.log">log() (sparcscore.pipeline.base.Logable method)</a>
+
+      <ul>
+        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.classification.CellFeaturizer.log">(sparcscore.pipeline.classification.CellFeaturizer method)</a>
 </li>
+      </ul></li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.Logable">Logable (class in sparcscore.pipeline.base)</a>
 </li>
   </ul></td>
@@ -869,10 +817,10 @@
 </li>
       <li><a href="pages/module/utils.html#sparcscore.utils.vis.plot_segmentation_mask">plot_segmentation_mask() (in module sparcscore.utils.vis)</a>
 </li>
-      <li><a href="pages/module/ml.html#sparcscore.ml.metrics.precision">precision() (in module sparcscore.ml.metrics)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/ml.html#sparcscore.ml.metrics.precision">precision() (in module sparcscore.ml.metrics)</a>
+</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation.PRINT_MAPS_ON_DEBUG">PRINT_MAPS_ON_DEBUG (sparcscore.pipeline.segmentation.Segmentation attribute)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.extraction.HDF5CellExtraction.process">process() (sparcscore.pipeline.extraction.HDF5CellExtraction method)</a>
@@ -884,8 +832,6 @@
 </li>
       </ul></li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.base.ProcessingStep">ProcessingStep (class in sparcscore.pipeline.base)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project">Project (class in sparcscore.pipeline.project)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -937,19 +883,11 @@
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.scan_directory">scan_directory() (sparcscore.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.segment">segment() (sparcscore.pipeline.project.Project method)</a>
-
-      <ul>
-        <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject.segment">(sparcscore.pipeline.project.TimecourseProject method)</a>
-</li>
-      </ul></li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.segment_global_threshold">segment_global_threshold() (in module sparcscore.processing.segmentation)</a>
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.segment_local_threshold">segment_local_threshold() (in module sparcscore.processing.segmentation)</a>
 </li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.Segmentation">Segmentation (class in sparcscore.pipeline.segmentation)</a>
-</li>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.Project.select">select() (sparcscore.pipeline.project.Project method)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset.select_channel">select_channel (sparcscore.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
@@ -971,12 +909,12 @@
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.shift_labels">shift_labels() (in module sparcscore.processing.segmentation)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/processing.html#sparcscore.processing.segmentation.size_filter">size_filter() (in module sparcscore.processing.segmentation)</a>
 </li>
       <li><a href="pages/module/processing.html#sparcscore.processing.filtering.SizeFilter">SizeFilter (class in sparcscore.processing.filtering)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     sparcscore.ml.datasets
 
@@ -1072,8 +1010,6 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/pipeline.html#sparcscore.pipeline.project.TimecourseProject">TimecourseProject (class in sparcscore.pipeline.project)</a>
-</li>
       <li><a href="pages/module/pipeline.html#sparcscore.pipeline.segmentation.TimecourseSegmentation">TimecourseSegmentation (class in sparcscore.pipeline.segmentation)</a>
 </li>
       <li><a href="pages/module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel.train_metrics">train_metrics (sparcscore.ml.plmodels.MultilabelSupervisedModel attribute)</a>

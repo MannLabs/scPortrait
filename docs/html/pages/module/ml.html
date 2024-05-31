@@ -492,20 +492,22 @@ containing hdf5 files.</p>
 </dd></dl>
 
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; hdf5_data = HDF5SingleCellDataset(dir_list=[‘data1.hdf5’, ‘data2.hdf5’],
-dir_labels=[0, 1],
-root_dir=‘/path/to/data’,
-transform=None,
-return_id=True)
-&gt;&gt;&gt; len(hdf5_data)
-2000
-&gt;&gt;&gt; sample = hdf5_data[0]
-&gt;&gt;&gt; sample[0].shape
-torch.Size([1, 128, 128])
-&gt;&gt;&gt; sample[1]
-tensor(0)
-&gt;&gt;&gt; sample[2]
-tensor(0)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">hdf5_data</span> <span class="o">=</span> <span class="n">HDF5SingleCellDataset</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dir_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;data1.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;data2.hdf5&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">dir_labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">root_dir</span><span class="o">=</span><span class="s1">&#39;/path/to/data&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">return_id</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">hdf5_data</span><span class="p">)</span>
+<span class="go">2000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span> <span class="o">=</span> <span class="n">hdf5_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([1, 128, 128])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">tensor(0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">tensor(0)</span>
 </pre></div>
 </div>
 </dd></dl>

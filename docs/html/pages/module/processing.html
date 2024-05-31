@@ -235,7 +235,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id4">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -1024,14 +1024,16 @@ By enabling this option, the filter will better be able to distinguish between s
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Create a SizeFilter object
-filter = SizeFilter(filter_threshold=(100, 200), label=”my_mask”)</p>
-<p># Apply the filter to a mask
-filtered_mask = filter.filter(input_mask)</p>
-<p># Get the object IDs to be removed
-ids_to_remove = filter.get_ids_to_remove(input_mask)</p>
-<p># Update the mask by removing the identified object IDs
-updated_mask = filter.update_mask(input_mask, ids_to_remove)</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a SizeFilter object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">filter</span> <span class="o">=</span> <span class="n">SizeFilter</span><span class="p">(</span><span class="n">filter_threshold</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;my_mask&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Apply the filter to a mask</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filtered_mask</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">input_mask</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Get the object IDs to be removed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ids_to_remove</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">get_ids_to_remove</span><span class="p">(</span><span class="n">input_mask</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Update the mask by removing the identified object IDs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">updated_mask</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">update_mask</span><span class="p">(</span><span class="n">input_mask</span><span class="p">,</span> <span class="n">ids_to_remove</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.plot_gaussian_model">
 <span class="sig-name descname"><span class="pre">plot_gaussian_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(5,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_figure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.plot_gaussian_model" title="Link to this definition"></a></dt>

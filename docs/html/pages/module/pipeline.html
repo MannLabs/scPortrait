@@ -235,7 +235,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id4">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -461,7 +461,7 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.base.ProcessingStep.directory">
 <span class="sig-name descname"><span class="pre">directory</span></span><a class="headerlink" href="#sparcscore.pipeline.base.ProcessingStep.directory" title="Link to this definition"></a></dt>
-<dd><p>Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.project.Project</span></code></a> class, a subdirectory of the project directory is passed.</p>
+<dd><p>Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the <code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.project.Project</span></code> class, a subdirectory of the project directory is passed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -552,452 +552,15 @@ If “cache” not specified in the config for the method no directory will be c
 <p>Within SPARCSpy, all operations are centered around the concept of a <code class="docutils literal notranslate"><span class="pre">Project</span></code>. A <code class="docutils literal notranslate"><span class="pre">Project</span></code> is a python class which manages all of the SPARCSpy processing steps and is the central element through which all operations are performed. Each <code class="docutils literal notranslate"><span class="pre">Project</span></code> directly maps to a directory on the file system which contains all of the inputs to a specific SPARCSpy run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see <a class="reference internal" href="../pipeline/project.html#projects"><span class="std std-ref">here</span></a> for more information.</p>
 <section id="id1">
 <h3>Project<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.project.</span></span><span class="sig-name descname"><span class="pre">Project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">location_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_filtering_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraction_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#sparcscore.pipeline.base.Logable" title="sparcscore.pipeline.base.Logable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logable</span></code></a></p>
-<p>Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
-to a directory on the file system which contains all of the project inputs as well as the generated outputs.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>location_path</strong> (<em>str</em>) – Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.</p></li>
-<li><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>default &quot;&quot;</em>) – Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in <code class="docutils literal notranslate"><span class="pre">DEFAULT_CLASSIFICATION_DIR_NAME</span></code>. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.</p></li>
-<li><p><strong>intermediate_output</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True intermediate outputs will be saved where applicable.</p></li>
-<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True debug outputs will be printed where applicable.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True, the processing step directory will be completely deleted and newly created when called.</p></li>
-<li><p><strong>segmentation_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing segmentation workflow.</p></li>
-<li><p><strong>extraction_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing extraction workflow.</p></li>
-<li><p><strong>classification_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing classification workflow.</p></li>
-<li><p><strong>selection_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing selection workflow.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.DEFAULT_CONFIG_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_CONFIG_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.Project.DEFAULT_CONFIG_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “config.yml”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.DEFAULT_SEGMENTATION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_SEGMENTATION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.Project.DEFAULT_SEGMENTATION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the segmentation process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “segmentation”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.DEFAULT_EXTRACTION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_EXTRACTION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.Project.DEFAULT_EXTRACTION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the extraction process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “extraction”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.DEFAULT_CLASSIFICATION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_CLASSIFICATION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.Project.DEFAULT_CLASSIFICATION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the classification process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “selection”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.DEFAULT_SELECTION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_SELECTION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.Project.DEFAULT_SELECTION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the selection process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “classification”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.load_input_from_file">
-<span class="sig-name descname"><span class="pre">load_input_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[(0,</span> <span class="pre">-1),</span> <span class="pre">(0,</span> <span class="pre">-1)]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.load_input_from_file" title="Link to this definition"></a></dt>
-<dd><p>Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file_paths</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing paths to each channel like
-[“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
-Expects a list of file paths with length “input_channel” as
-defined in the config.yml.</p></li>
-<li><p><strong>crop</strong> (<em>list</em><em>(</em><em>tuple</em><em>)</em><em>, </em><em>optional</em>) – When set, it can be used to crop the input image. The first
-element refers to the first dimension of the image and so on.
-For example use “[(0,1000),(0,2000)]” to crop the image to
-1000 px height and 2000 px width from the top left corner.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.load_input_from_array">
-<span class="sig-name descname"><span class="pre">load_input_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.load_input_from_array" title="Link to this definition"></a></dt>
-<dd><p>Load input image from an already loaded numpy array.
-The numpy array needs to have the following shape: CXY.
-The channels need to be in the following order: nucleus, cellmembrane channel,
-other channnels or a remapping needs to be defined.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>array</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[channels, height, width]”.</p></li>
-<li><p><strong>remap</strong> (<em>list</em><em>(</em><em>int</em><em>)</em><em>, </em><em>optional</em>) – Define remapping of channels. For example use “[1, 0, 2]”
-to change the order of the first and the second channel.
-The expected order is Nucleus Channel, Cellmembrane Channel
-followed by other channels.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.load_input_from_czi">
-<span class="sig-name descname"><span class="pre">load_input_from_czi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">czi_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intensity_rescale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scene</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_stack_projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.load_input_from_czi" title="Link to this definition"></a></dt>
-<dd><p>Load image input from .czi file</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>czi_path</strong> (<em>path</em>) – path to .czi file that should be loaded</p></li>
-<li><p><strong>intensity_rescale</strong> (<em>bool</em><em>, </em><em>optional</em>) – boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.</p></li>
-<li><p><strong>scene</strong> (<em>int</em><em>, </em><em>optional</em>) – integer indicating which scene should be selected if the .czi contains several. Defaults to None.</p></li>
-<li><p><strong>z_stack_projection</strong> (<em>int</em><em> or </em><em>&quot;maximum_intensity_projection&quot;</em><em> or </em><em>&quot;EDF&quot;</em>) – if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.</p></li>
-<li><p><strong>remap</strong> (<em>list</em><em>(</em><em>int</em><em>)</em><em>, </em><em>optional</em>) – Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.segment">
-<span class="sig-name descname"><span class="pre">segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.segment" title="Link to this definition"></a></dt>
-<dd><p>Segment project with the selected segmentation method.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.complete_segmentation">
-<span class="sig-name descname"><span class="pre">complete_segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.complete_segmentation" title="Link to this definition"></a></dt>
-<dd><p>complete an aborted or failed segmentation run.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.filter_segmentation">
-<span class="sig-name descname"><span class="pre">filter_segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.filter_segmentation" title="Link to this definition"></a></dt>
-<dd><p>execute workflow to run filtering on generated segmentation masks to only select those cells that
-fulfill the filtering criteria</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.complete_filter_segmentation">
-<span class="sig-name descname"><span class="pre">complete_filter_segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.complete_filter_segmentation" title="Link to this definition"></a></dt>
-<dd><p>complete an aborted or failed segmentation filtering run.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.extract">
-<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.extract" title="Link to this definition"></a></dt>
-<dd><p>Extract single cells with the defined extraction method.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.classify">
-<span class="sig-name descname"><span class="pre">classify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.classify" title="Link to this definition"></a></dt>
-<dd><p>Classify extracted single cells with the defined classification method.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.Project.select">
-<span class="sig-name descname"><span class="pre">select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.Project.select" title="Link to this definition"></a></dt>
-<dd><p>Select specified classes using the defined selection method.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 <section id="timecourseproject">
 <h3>TimecourseProject<a class="headerlink" href="#timecourseproject" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.project.</span></span><span class="sig-name descname"><span class="pre">TimecourseProject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-class docutils literal notranslate"><span class="pre">Project</span></code></a></p>
-<p>TimecourseProject class used to create a SPARCSpy project for datasets that have multiple fields of view that should be processed and analysed together.
-It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base SPARCSpy <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a>,
-it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a> class,
-it requires the use of specialized processing classes that are able to handle this additional dimensionality.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>location_path</strong> (<em>str</em>) – Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.</p></li>
-<li><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>default &quot;&quot;</em>) – Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in <code class="docutils literal notranslate"><span class="pre">DEFAULT_CLASSIFICATION_DIR_NAME</span></code>. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.</p></li>
-<li><p><strong>intermediate_output</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True intermediate outputs will be saved where applicable.</p></li>
-<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True debug outputs will be printed where applicable.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – When set to True, the processing step directory will be completely deleted and newly created when called.</p></li>
-<li><p><strong>segmentation_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing segmentation workflow.</p></li>
-<li><p><strong>extraction_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing extraction workflow.</p></li>
-<li><p><strong>classification_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing classification workflow.</p></li>
-<li><p><strong>selection_f</strong> (<em>Class</em><em>, </em><em>default None</em>) – Class containing selection workflow.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_CONFIG_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_CONFIG_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_CONFIG_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “config.yml”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_INPUT_IMAGE_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_INPUT_IMAGE_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_INPUT_IMAGE_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default file name for loading the input image.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “input_segmentation.h5”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_SEGMENTATION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_SEGMENTATION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_SEGMENTATION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the segmentation process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “segmentation”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_EXTRACTION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_EXTRACTION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_EXTRACTION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the extraction process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “extraction”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_CLASSIFICATION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_CLASSIFICATION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_CLASSIFICATION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the classification process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “selection”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.DEFAULT_SELECTION_DIR_NAME">
-<span class="sig-name descname"><span class="pre">DEFAULT_SELECTION_DIR_NAME</span></span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.DEFAULT_SELECTION_DIR_NAME" title="Link to this definition"></a></dt>
-<dd><p>Default foldername for the selection process.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default “classification”</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_array">
-<span class="sig-name descname"><span class="pre">load_input_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_array" title="Link to this definition"></a></dt>
-<dd><p>Function to load imaging data from an array into the TimecourseProject.</p>
-<p>The provided array needs to fullfill the following conditions:
-- shape: NCYX
-- all images need to have the same dimensions and the same number of channels
-- channels need to be in the following order: nucleus, cytosol other channels
-- dtype uint16.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>img</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[num_images, channels, height, width]”.</p></li>
-<li><p><strong>label</strong> (<em>numpy.ndarray</em>) – Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: “image_index”, “unique_image_identifier”, “…”</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_files">
-<span class="sig-name descname"><span class="pre">load_input_from_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_files" title="Link to this definition"></a></dt>
-<dd><p>Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.</p>
-<p>Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the <a class="reference external" href="https://github.com/MannLabs/SPARCStools">sparcstools package</a>.</p>
-<p>In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
-using the well notation <code class="docutils literal notranslate"><span class="pre">RowXX_WellXX</span></code>:</p>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Well</p></th>
-<th class="head"><p>Condition1</p></th>
-<th class="head"><p>Condition2</p></th>
-<th class="head"><p>…</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>RowXX_WellXX</p></td>
-<td><p>A</p></td>
-<td><p>B</p></td>
-<td><p>…</p></td>
-</tr>
-</tbody>
-</table>
-<p>A tab needs to be used as a seperator and the file saved as a .tsv file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the directory containing the sorted images from the opera phenix.</p></li>
-<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the channels that should be loaded.</p></li>
-<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.</p></li>
-<li><p><strong>plate_layout</strong> (<em>str</em>) – Path to the plate layout file. For the format please see above.</p></li>
-<li><p><strong>img_size</strong> (<em>int</em><em>, </em><em>default 1080</em>) – Size of the images that should be loaded. All images will be cropped to this size.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">timepoints</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Timepoint&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/sorted/outputs/from/sparcstools&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plate_layout</span> <span class="o">=</span> <span class="s2">&quot;plate_layout.tsv&quot;</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">project</span><span class="o">.</span><span class="n">load_input_from_files</span><span class="p">(</span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">input_dir</span><span class="p">,</span>  <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">,</span>  <span class="n">timepoints</span> <span class="o">=</span> <span class="n">timepoints</span><span class="p">,</span> <span class="n">plate_layout</span> <span class="o">=</span> <span class="n">plate_layout</span><span class="p">,</span> <span class="n">overwrite</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.</p>
-<p>Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the <a class="reference external" href="https://github.com/MannLabs/SPARCStools">sparcstools package</a>.</p>
-<p>In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
-using the well notation <code class="docutils literal notranslate"><span class="pre">RowXX_WellXX</span></code>:</p>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Well</p></th>
-<th class="head"><p>Condition1</p></th>
-<th class="head"><p>Condition2</p></th>
-<th class="head"><p>…</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>RowXX_WellXX</p></td>
-<td><p>A</p></td>
-<td><p>B</p></td>
-<td><p>…</p></td>
-</tr>
-</tbody>
-</table>
-<p>A tab needs to be used as a seperator and the file saved as a .tsv file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the directory containing the sorted images from the opera phenix.</p></li>
-<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the channels that should be loaded.</p></li>
-<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.</p></li>
-<li><p><strong>plate_layout</strong> (<em>str</em>) – Path to the plate layout file. For the format please see above.</p></li>
-<li><p><strong>img_size</strong> (<em>int</em><em>, </em><em>default 1080</em>) – Size of the images that should be loaded. All images will be cropped to this size.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">timepoints</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Timepoint&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/sorted/outputs/from/sparcstools&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plate_layout</span> <span class="o">=</span> <span class="s2">&quot;plate_layout.tsv&quot;</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">project</span><span class="o">.</span><span class="n">load_input_from_files</span><span class="p">(</span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">input_dir</span><span class="p">,</span>  <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">,</span>  <span class="n">timepoints</span> <span class="o">=</span> <span class="n">timepoints</span><span class="p">,</span> <span class="n">plate_layout</span> <span class="o">=</span> <span class="n">plate_layout</span><span class="p">,</span> <span class="n">overwrite</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_stitched_files">
-<span class="sig-name descname"><span class="pre">load_input_from_stitched_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_stitched_files" title="Link to this definition"></a></dt>
-<dd><p>Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
-Assumes that stitched images for all files have already been assembled.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dir</strong> (<em>str</em>) – path to directory containing the stitched images</p></li>
-<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – list of strings indicating which channels should be loaded</p></li>
-<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – list of strings indicating which timepoints should be loaded</p></li>
-<li><p><strong>plate_layout</strong> (<em>str</em>) – path to csv file containing the plate layout</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – boolean indicating if existing files should be overwritten. Defaults to False.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.load_input_from_files_and_merge">
-<span class="sig-name descname"><span class="pre">load_input_from_files_and_merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stitching_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Alexa488'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nucleus_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DAPI'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cytosol_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Alexa488'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.load_input_from_files_and_merge" title="Link to this definition"></a></dt>
-<dd><p>Function to load timecourse experiments recorded with an opera phenix into a TimecourseProject. In addition to loading the images,
-this wrapper function also stitches images acquired in the same well (this assumes that the tiles were aquired with overlap and in a rectangular shape)
-using the <a class="reference external" href="https://github.com/MannLabs/SPARCStools">sparcstools package</a>. Implementation of this function is currently still slow for many wells/timepoints as stitching
-is handled consecutively and not in parallel. This will be fixed in the future.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the directory containing the sorted images from the opera phenix.</p></li>
-<li><p><strong>channels</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the channels that should be loaded.</p></li>
-<li><p><strong>timepoints</strong> (<em>list</em><em>(</em><em>str</em><em>)</em>) – List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.</p></li>
-<li><p><strong>plate_layout</strong> (<em>str</em>) – Path to the plate layout file. For the format please see above.</p></li>
-<li><p><strong>img_size</strong> (<em>int</em><em>, </em><em>default 1080</em>) – Size of the images that should be loaded. All images will be cropped to this size.</p></li>
-<li><p><strong>stitching_channel</strong> (<em>str</em><em>, </em><em>default &quot;Alexa488&quot;</em>) – string indicated on which channel the stitching should be calculated.</p></li>
-<li><p><strong>overlap</strong> (<em>float</em><em>, </em><em>default 0.1</em>) – float indicating the overlap between the tiles that were aquired.</p></li>
-<li><p><strong>max_shift</strong> (<em>int</em><em>, </em><em>default 10</em>) – int indicating the maximum shift that is allowed when stitching the tiles. If a calculated shift is larger than this threshold
-between two tiles then the position of these tiles is not updated and is set according to the calculated position based on the overlap.</p></li>
-<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>default False</em>) – If set to True, the function will overwrite the existing input image.</p></li>
-<li><p><strong>nucleus_channel</strong> (<em>str</em><em>, </em><em>default &quot;DAPI&quot;</em>) – string indicating the channel that should be used for the nucleus channel.</p></li>
-<li><p><strong>cytosol_channel</strong> (<em>str</em><em>, </em><em>default &quot;Alexa488&quot;</em>) – string indicating the channel that should be used for the cytosol channel.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.segment">
-<span class="sig-name descname"><span class="pre">segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.segment" title="Link to this definition"></a></dt>
-<dd><p>segment timecourse project with the defined segmentation method.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sparcscore.pipeline.project.TimecourseProject.extract">
-<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.project.TimecourseProject.extract" title="Link to this definition"></a></dt>
-<dd><p>Extract single cells from a timecourse project with the defined extraction method.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 </section>
 <section id="segmentation">
 <h2>segmentation<a class="headerlink" href="#segmentation" title="Link to this heading"></a></h2>
-<section id="id4">
-<h3>Segmentation<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<section id="id2">
+<h3>Segmentation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.segmentation.Segmentation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.segmentation.</span></span><span class="sig-name descname"><span class="pre">Segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.segmentation.Segmentation" title="Link to this definition"></a></dt>
@@ -1655,47 +1218,45 @@ results to an HDF5 file.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.extraction.HDF5CellExtraction.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_segmentation_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtered_classes_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.extraction.HDF5CellExtraction.process" title="Link to this definition"></a></dt>
-<dd><p>Process function to run the extraction method.</p>
+<dd><p>Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_segmentation_path</strong> (<em>str</em>) – Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow this argument will be provided automatically.</p></li>
-<li><p><strong>filtered_classes_path</strong> (<em>str</em>) – Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.</p></li>
+<li><p><strong>input_segmentation_path</strong> (<em>str</em>) – Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.</p></li>
+<li><p><strong>filtered_classes_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.</p></li>
 </ul>
 </dd>
 </dl>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>If this class is used as part of a project processing workflow, all of the arguments will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code> class based on the previous segmentation.
-The Project class will automaticly provide the most recent segmentation forward together with the supplied parameters.</p>
+The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.</p>
 </div>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#after project is initialized and input data has been loaded and segmented</span>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># After project is initialized and input data has been loaded and segmented</span>
 <span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<p class="rubric">Notes</p>
 <p>The following parameters are required in the config file when running this method:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">HDF5CellExtraction</span><span class="p">:</span>
 
 <span class="w">    </span><span class="nt">compression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
 
-<span class="w">    </span><span class="c1">#threads used in multithreading</span>
+<span class="w">    </span><span class="c1"># threads used in multithreading</span>
 <span class="w">    </span><span class="nt">threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 
-<span class="w">    </span><span class="c1"># image size in pixel</span>
+<span class="w">    </span><span class="c1"># image size in pixels</span>
 <span class="w">    </span><span class="nt">image_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
 
 <span class="w">    </span><span class="c1"># directory where intermediate results should be saved</span>
 <span class="w">    </span><span class="nt">cache</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/mnt/temp/cache&quot;</span>
 
-<span class="w">    </span><span class="c1">#specs to define how hdf5 data should be chunked and saved</span>
-<span class="w">    </span><span class="nt">hdf5_rdcc_nbytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880000</span><span class="w"> </span><span class="c1"># 5gb 1024 * 1024 * 5000</span>
+<span class="w">    </span><span class="c1"># specs to define how HDF5 data should be chunked and saved</span>
+<span class="w">    </span><span class="nt">hdf5_rdcc_nbytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880000</span><span class="w"> </span><span class="c1"># 5GB 1024 * 1024 * 5000</span>
 <span class="w">    </span><span class="nt">hdf5_rdcc_w0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">    </span><span class="nt">hdf5_rdcc_nslots</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span>
 </pre></div>
-</div>
 </div>
 </dd></dl>
 
@@ -1719,45 +1280,41 @@ in the input data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_segmentation_path</strong> – str
-Path of the segmentation hdf5 file. IF this class is used as part of a project processing workflow this argument will be provided automatically.</p></li>
-<li><p><strong>filtered_classes_path</strong> – str
-Path to the filtered classes that should be used for extraction. Default is None. If not provided will use the automatically generated paths.</p></li>
+<li><p><strong>input_segmentation_path</strong> (<em>str</em>) – Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.</p></li>
+<li><p><strong>filtered_classes_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.</p></li>
 </ul>
 </dd>
 </dl>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>If this class is used as part of a project processing workflow, all of the arguments will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code> class based on the previous segmentation.
-The Project class will automaticly provide the most recent segmentation forward together with the supplied parameters.</p>
+The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.</p>
 </div>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#after project is initialized and input data has been loaded and segmented</span>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># After project is initialized and input data has been loaded and segmented</span>
 <span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<p class="rubric">Notes</p>
 <p>The following parameters are required in the config file when running this method:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">HDF5CellExtraction</span><span class="p">:</span>
 
 <span class="w">    </span><span class="nt">compression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
 
-<span class="w">    </span><span class="c1">#threads used in multithreading</span>
+<span class="w">    </span><span class="c1"># threads used in multithreading</span>
 <span class="w">    </span><span class="nt">threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 
-<span class="w">    </span><span class="c1"># image size in pixel</span>
+<span class="w">    </span><span class="c1"># image size in pixels</span>
 <span class="w">    </span><span class="nt">image_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
 
 <span class="w">    </span><span class="c1"># directory where intermediate results should be saved</span>
 <span class="w">    </span><span class="nt">cache</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/mnt/temp/cache&quot;</span>
 
-<span class="w">    </span><span class="c1">#specs to define how hdf5 data should be chunked and saved</span>
-<span class="w">    </span><span class="nt">hdf5_rdcc_nbytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880000</span><span class="w"> </span><span class="c1"># 5gb 1024 * 1024 * 5000</span>
+<span class="w">    </span><span class="c1"># specs to define how HDF5 data should be chunked and saved</span>
+<span class="w">    </span><span class="nt">hdf5_rdcc_nbytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880000</span><span class="w"> </span><span class="c1"># 5GB 1024 * 1024 * 5000</span>
 <span class="w">    </span><span class="nt">hdf5_rdcc_w0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">    </span><span class="nt">hdf5_rdcc_nslots</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span>
 </pre></div>
-</div>
 </div>
 </dd></dl>
 
@@ -1772,14 +1329,14 @@ The Project class will automaticly provide the most recent segmentation forward 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.pipeline.classification.</span></span><span class="sig-name descname"><span class="pre">MLClusterClassifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediate_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier" title="Link to this definition"></a></dt>
-<dd><p>Class for classifying single cells using a pre-trained machine learning model.
-This class takes a pre-trained model and uses it to classify single_cells,
+<dd><p>Class for classifying single cells using a pre-trained machine learning model.</p>
+<p>This class takes a pre-trained model and uses it to classify single cells,
 using the model’s forward function or encoder function, depending on the
 user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.config">
 <span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.config" title="Link to this definition"></a></dt>
-<dd><p>Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.</p>
+<dd><p>Config file which is passed by the Project class when called. It is loaded from the project based on the name of the class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
@@ -1790,7 +1347,7 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.directory">
 <span class="sig-name descname"><span class="pre">directory</span></span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.directory" title="Link to this definition"></a></dt>
-<dd><p>Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the <a class="reference internal" href="#sparcscore.pipeline.project.Project" title="sparcscore.pipeline.project.Project"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.project.Project</span></code></a> class, a subdirectory of the project directory is passed.</p>
+<dd><p>Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the <code class="xref py py-class docutils literal notranslate"><span class="pre">sparcscore.pipeline.project.Project</span></code> class, a subdirectory of the project directory is passed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -1801,10 +1358,10 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.intermediate_output">
 <span class="sig-name descname"><span class="pre">intermediate_output</span></span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.intermediate_output" title="Link to this definition"></a></dt>
-<dd><p>When set to True intermediate outputs will be saved where applicable.</p>
+<dd><p>When set to True, intermediate outputs will be saved where applicable. Default is False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool, default <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<dd class="field-odd"><p>bool, optional</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1812,10 +1369,10 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.debug">
 <span class="sig-name descname"><span class="pre">debug</span></span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.debug" title="Link to this definition"></a></dt>
-<dd><p>When set to True debug outputs will be printed where applicable.</p>
+<dd><p>When set to True, debug outputs will be printed where applicable. Default is False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool, default <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<dd class="field-odd"><p>bool, optional</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1823,10 +1380,10 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.overwrite">
 <span class="sig-name descname"><span class="pre">overwrite</span></span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.overwrite" title="Link to this definition"></a></dt>
-<dd><p>When set to True, the processing step directory will be completely deleted and newly created when called.</p>
+<dd><p>When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool, default <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<dd class="field-odd"><p>bool, optional</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1834,21 +1391,21 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.MLClusterClassifier.__call__">
 <span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extraction_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.MLClusterClassifier.__call__" title="Link to this definition"></a></dt>
-<dd><p>Function called to perform classification on the provided HDF5 dataset.</p>
+<dd><p>Perform classification on the provided HDF5 dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>extraction_dir</strong> (<em>str</em>) – Directory containing the extracted HDF5 files from the project. If this class is used as part of</p></li>
-<li><p><strong>automatically.</strong> (<em>a project processing workflow this argument will be provided</em>)</p></li>
-<li><p><strong>accessory</strong> (<em>list</em>) – List containing accessory datasets on which inference should be performed in addition to the cells</p></li>
-<li><p><strong>project.</strong> (<em>contained within the current</em>)</p></li>
+<li><p><strong>extraction_dir</strong> (<em>str</em>) – Directory containing the extracted HDF5 files from the project. If this class is used as part of
+a project processing workflow, this argument will be provided automatically.</p></li>
+<li><p><strong>accessory</strong> (<em>list</em>) – List containing accessory datasets on which inference should be performed in addition to the cells
+contained within the current project.</p></li>
 <li><p><strong>size</strong> (<em>int</em><em>, </em><em>optional</em>) – How many cells should be selected for inference. Default is 0, which means all cells are selected.</p></li>
 <li><p><strong>project_dataloader</strong> (<a class="reference internal" href="ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset" title="sparcscore.ml.datasets.HDF5SingleCellDataset"><em>HDF5SingleCellDataset</em></a><em>, </em><em>optional</em>) – Dataloader for the project dataset. Default is HDF5SingleCellDataset.</p></li>
 <li><p><strong>accessory_dataloader</strong> (<a class="reference internal" href="ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset" title="sparcscore.ml.datasets.HDF5SingleCellDataset"><em>HDF5SingleCellDataset</em></a><em>, </em><em>optional</em>) – Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Results are written to tsv files located in the project directory.</p>
+<dd class="field-even"><p>Results are written to TSV files located in the project directory.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1857,58 +1414,54 @@ user’s choice. The classification results are saved to a TSV file.</p>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>If this class is used as part of a project processing workflow, the first argument will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code>
-class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.
-class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-class will automaticly provide the most recent extracted single-cell dataset together with the supplied parameters.</p>
+class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
+The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.</p>
 </div>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define acceossory dataset: additional hdf5 datasets that you want to perform an inference on</span>
-<span class="c1"># leave empty if you only want to infere on all extracted cells in the current project</span>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define accessory dataset: additional HDF5 datasets that you want to perform an inference on</span>
+<span class="c1"># Leave empty if you only want to infer on all extracted cells in the current project</span>
 
 <span class="n">accessory</span> <span class="o">=</span> <span class="p">([],</span> <span class="p">[],</span> <span class="p">[])</span>
-<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span> <span class="o">=</span> <span class="n">accessory</span><span class="p">)</span>
+<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span><span class="o">=</span><span class="n">accessory</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<p class="rubric">Notes</p>
 <p>The following parameters are required in the config file:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">MLClusterClassifier</span><span class="p">:</span>
-<span class="w">    </span><span class="c1"># channel number on which the classification should be performed</span>
+<span class="w">    </span><span class="c1"># Channel number on which the classification should be performed</span>
 <span class="w">    </span><span class="nt">channel_classification</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
 
-<span class="w">    </span><span class="c1">#number of threads to use for dataloader</span>
+<span class="w">    </span><span class="c1"># Number of threads to use for dataloader</span>
 <span class="w">    </span><span class="nt">threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
 <span class="w">    </span><span class="nt">dataloader_worker_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
 
-<span class="w">    </span><span class="c1">#batch size to pass to GPU</span>
+<span class="w">    </span><span class="c1"># Batch size to pass to GPU</span>
 <span class="w">    </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">900</span>
 
-<span class="w">    </span><span class="c1">#path to pytorch checkpoint that should be used for inference</span>
+<span class="w">    </span><span class="c1"># Path to PyTorch checkpoint that should be used for inference</span>
 <span class="w">    </span><span class="nt">network</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;path/to/model/&quot;</span>
 
-<span class="w">    </span><span class="c1">#classifier architecture implemented in SPARCSpy</span>
-<span class="w">    </span><span class="c1"># choose one of VGG1, VGG2, VGG1_old, VGG2_old</span>
+<span class="w">    </span><span class="c1"># Classifier architecture implemented in SPARCSpy</span>
+<span class="w">    </span><span class="c1"># Choose one of VGG1, VGG2, VGG1_old, VGG2_old</span>
 <span class="w">    </span><span class="nt">classifier_architecture</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;VGG2_old&quot;</span>
 
-<span class="w">    </span><span class="c1">#if more than one checkpoint is provided in the network directory which checkpoint should be chosen</span>
-<span class="w">    </span><span class="c1"># should either be &quot;max&quot; or a numeric value indicating the epoch number</span>
+<span class="w">    </span><span class="c1"># If more than one checkpoint is provided in the network directory, which checkpoint should be chosen</span>
+<span class="w">    </span><span class="c1"># Should either be &quot;max&quot; or a numeric value indicating the epoch number</span>
 <span class="w">    </span><span class="nt">epoch</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;max&quot;</span>
 
-<span class="w">    </span><span class="c1">#name of the classifier used for saving the classification results to a directory</span>
+<span class="w">    </span><span class="c1"># Name of the classifier used for saving the classification results to a directory</span>
 <span class="w">    </span><span class="nt">screen_label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Autophagy_15h_classifier1&quot;</span>
 
-<span class="w">    </span><span class="c1"># list of which inference methods should be performed</span>
-<span class="w">    </span><span class="c1"># available: &quot;forward&quot; and &quot;encoder&quot;</span>
-<span class="w">    </span><span class="c1"># if &quot;forward&quot;: images are passed through all layers of the modela nd the final inference results are written to file</span>
-<span class="w">    </span><span class="c1"># if &quot;encoder&quot;: activations at the end of the CNN is written to file</span>
+<span class="w">    </span><span class="c1"># List of which inference methods should be performed</span>
+<span class="w">    </span><span class="c1"># Available: &quot;forward&quot; and &quot;encoder&quot;</span>
+<span class="w">    </span><span class="c1"># If &quot;forward&quot;: images are passed through all layers of the model and the final inference results are written to file</span>
+<span class="w">    </span><span class="c1"># If &quot;encoder&quot;: activations at the end of the CNN are written to file</span>
 <span class="w">    </span><span class="nt">encoders</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;forward&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;encoder&quot;</span><span class="p p-Indicator">]</span>
 
-<span class="w">    </span><span class="c1"># on which device inference should be performed</span>
-<span class="w">    </span><span class="c1"># for speed should be &quot;cuda&quot;</span>
+<span class="w">    </span><span class="c1"># On which device inference should be performed</span>
+<span class="w">    </span><span class="c1"># For speed, should be &quot;cuda&quot;</span>
 <span class="w">    </span><span class="nt">inference_device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cuda&quot;</span>
 </pre></div>
-</div>
 </div>
 </dd></dl>
 
@@ -1924,70 +1477,147 @@ class will automaticly provide the most recent extracted single-cell dataset tog
 The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.</p>
 <p>The features which are calculated are:</p>
 <ul class="simple">
-<li><p>area of the nucleus in px,</p></li>
-<li><p>area of the cytosol in px,</p></li>
-<li><p>mean intensity of chosen channel</p></li>
-<li><p>median intensity of chosen channel,</p></li>
-<li><p>75% quantile of chosen channel,</p></li>
-<li><p>25% quantile of chosen channel,</p></li>
-<li><p>summed intensity of the chosen channel in the region labeled as nucleus,</p></li>
-<li><p>summed intensity of the chosen channel in the region labeled as cyotosl,</p></li>
-<li><p>summed intensity of the chosen channel in the region labelled as nucleus normalized to the nucleus area,</p></li>
-<li><p>summed intensity of the chosen channel in the region labelled as cytosol normalized to the cytosol area, nucleus_area</p></li>
+<li><p>Area of the nucleus in pixels</p></li>
+<li><p>Area of the cytosol in pixels</p></li>
+<li><p>Mean intensity of the chosen channel</p></li>
+<li><p>Median intensity of the chosen channel</p></li>
+<li><p>75% quantile of the chosen channel</p></li>
+<li><p>25% quantile of the chosen channel</p></li>
+<li><p>Summed intensity of the chosen channel in the region labeled as nucleus</p></li>
+<li><p>Summed intensity of the chosen channel in the region labeled as cytosol</p></li>
+<li><p>Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area</p></li>
+<li><p>Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area</p></li>
 </ul>
-<p>The features are outputed in this order in the tsv file.</p>
+<p>The features are outputted in this order in the TSV file.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.__call__">
 <span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extraction_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accessory_dataloader=&lt;class</span> <span class="pre">'sparcscore.ml.datasets.HDF5SingleCellDataset'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.__call__" title="Link to this definition"></a></dt>
-<dd><p>Function called to perform featurization on the provided HDF5 dataset.</p>
+<dd><p>Perform featurization on the provided HDF5 dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>extraction_dir</strong> (<em>str</em>) – directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.</p></li>
-<li><p><strong>accessory</strong> (<em>list</em>) – list containing accessory datasets on which inference should be performed in addition to the cells contained within the current project</p></li>
-<li><p><strong>size</strong> (<em>int</em><em>, </em><em>default = 0</em>) – How many cells should be selected for inference. Default is 0, then all cells are selected.</p></li>
+<li><p><strong>extraction_dir</strong> (<em>str</em>) – Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.</p></li>
+<li><p><strong>accessory</strong> (<em>list</em>) – List containing accessory datasets on which inference should be performed in addition to the cells contained within the current project.</p></li>
+<li><p><strong>size</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default=0</em>) – How many cells should be selected for inference. Default is 0, meaning all cells are selected.</p></li>
+<li><p><strong>project_dataloader</strong> (<a class="reference internal" href="ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset" title="sparcscore.ml.datasets.HDF5SingleCellDataset"><em>HDF5SingleCellDataset</em></a><em>, </em><em>optional</em>) – Dataloader for the project dataset. Default is HDF5SingleCellDataset.</p></li>
+<li><p><strong>accessory_dataloader</strong> (<a class="reference internal" href="ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset" title="sparcscore.ml.datasets.HDF5SingleCellDataset"><em>HDF5SingleCellDataset</em></a><em>, </em><em>optional</em>) – Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>Writes results to tsv files located in the project directory.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Results are written to TSV files located in the project directory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>If this class is used as part of a project processing workflow, the first argument will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code>
-class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project
-class will automaticly provide the most recent extraction results together with the supplied parameters.</p>
+<p>If this class is used as part of a project processing workflow, the first argument will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code> class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.</p>
 </div>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define acceossory dataset: additional hdf5 datasets that you want to perform an inference on</span>
-<span class="c1"># leave empty if you only want to infere on all extracted cells in the current project</span>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define accessory dataset: additional HDF5 datasets that you want to perform an inference on</span>
+<span class="c1"># Leave empty if you only want to infer on all extracted cells in the current project</span>
 
 <span class="n">accessory</span> <span class="o">=</span> <span class="p">([],</span> <span class="p">[],</span> <span class="p">[])</span>
-<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span> <span class="o">=</span> <span class="n">accessory</span><span class="p">)</span>
+<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span><span class="o">=</span><span class="n">accessory</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<p class="rubric">Notes</p>
 <p>The following parameters are required in the config file:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">CellFeaturizer</span><span class="p">:</span>
-<span class="w">    </span><span class="c1"># channel number on which the featurization should be performed</span>
+<span class="w">    </span><span class="c1"># Channel number on which the featurization should be performed</span>
 <span class="w">    </span><span class="nt">channel_classification</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
 
-<span class="w">    </span><span class="c1">#number of threads to use for dataloader</span>
-<span class="w">    </span><span class="nt">dataloader_worker_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1">#needs to be 0 if using cpu</span>
+<span class="w">    </span><span class="c1"># Number of threads to use for dataloader</span>
+<span class="w">    </span><span class="nt">dataloader_worker_number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># needs to be 0 if using CPU</span>
 
-<span class="w">    </span><span class="c1">#batch size to pass to GPU</span>
+<span class="w">    </span><span class="c1"># Batch size to pass to GPU</span>
 <span class="w">    </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">900</span>
 
-<span class="w">    </span><span class="c1"># on which device inference should be performed</span>
-<span class="w">    </span><span class="c1"># for speed should be &quot;cuda&quot;</span>
+<span class="w">    </span><span class="c1"># On which device inference should be performed</span>
+<span class="w">    </span><span class="c1"># For speed should be &quot;cuda&quot;</span>
 <span class="w">    </span><span class="nt">inference_device</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cpu&quot;</span>
 
-<span class="w">    </span><span class="c1">#label under which the results should be saved</span>
+<span class="w">    </span><span class="c1"># Label under which the results should be saved</span>
 <span class="w">    </span><span class="nt">screen_label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ch3_Featurization&quot;</span>
 </pre></div>
 </div>
-</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.is_Int">
+<span class="sig-name descname"><span class="pre">is_Int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.is_Int" title="Link to this definition"></a></dt>
+<dd><p>Check if a string represents an integer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>str</em>) – String to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the string represents an integer, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.get_timestamp">
+<span class="sig-name descname"><span class="pre">get_timestamp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.get_timestamp" title="Link to this definition"></a></dt>
+<dd><p>Returns the current date and time as a formatted string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current date and time formatted as “[DD/MM/YYYY HH:MM:SS] “.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.log">
+<span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.log" title="Link to this definition"></a></dt>
+<dd><p>Writes a message to a log file and prints it to the console if debug is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<em>str</em><em> or </em><em>list</em><em> or </em><em>dict</em>) – Message to log.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.calculate_statistics">
+<span class="sig-name descname"><span class="pre">calculate_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.calculate_statistics" title="Link to this definition"></a></dt>
+<dd><p>Calculate statistics for an image batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<em>torch.Tensor</em>) – Tensor containing the image batch.</p></li>
+<li><p><strong>channel</strong> (<em>int</em><em>, </em><em>optional</em><em>, </em><em>default=-1</em>) – Channel to calculate statistics over.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor containing the calculated statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.pipeline.classification.CellFeaturizer.inference">
+<span class="sig-name descname"><span class="pre">inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.pipeline.classification.CellFeaturizer.inference" title="Link to this definition"></a></dt>
+<dd><p>Perform inference for a dataloader and save the results to a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataloader</strong> (<em>torch.utils.data.DataLoader</em>) – Dataloader to perform inference on.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
