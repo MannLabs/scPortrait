@@ -4,6 +4,7 @@ channels:
 dependencies:
   - numpy==1.26.4
   - numba
+  - pip==24.0
   - pip:
       - affine==2.4.0
       - aicspylibczi==3.1.2

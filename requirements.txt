@@ -17,6 +17,7 @@ aicspylibczi
 shapely
 rasterio
 imagesize
+xarray
 
 
 # Packages better installed via conda due to dependencies

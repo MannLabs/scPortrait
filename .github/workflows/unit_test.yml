@@ -20,7 +20,11 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
-        conda env update --file .github/additional_files/environment.yml --name SPARCSpy
+        conda install -y python=3.10
+        conda env update --file .github/additional_files/environment.yml --name base
+    - name:  Install package
+      run: |
+        pip install ./    
     - name: Test with pytest
       run: |
         conda install pytest
