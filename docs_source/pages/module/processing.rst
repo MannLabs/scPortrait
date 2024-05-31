@@ -16,3 +16,8 @@ segmentation
 ############
 .. automodule:: sparcscore.processing.segmentation
     :members:
+
+filtering
+#########
+.. automodule:: sparcscore.processing.filtering
+    :members:

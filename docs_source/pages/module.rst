@@ -7,3 +7,4 @@ Module Documentation
    module/processing 
    module/pipeline
    module/ml
+   module/utils
