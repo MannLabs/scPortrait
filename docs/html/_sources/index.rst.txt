@@ -11,12 +11,12 @@ SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Pytho
 Installation
 =============
 
-Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks>`_.
+Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks>`_.
 
 Getting Started
 ===============
 
-You can check out our :ref:`quickstart<quickstart>` guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSpy/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/SPARCSpy/issues>`_.
+You can check out our :ref:`quickstart<quickstart>` guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/SPARCSspatial/issues>`_.
 
 Citing our Work
 ================

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>A walk through the SPARCSpy Ecosystem &mdash; SPARCSpy  documentation</title>
@@ -14,10 +14,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -33,11 +34,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> SPARCSpy
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SPARCSpy
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -183,9 +188,42 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#preprocessing">preprocessing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.utils.plot_image"><code class="docutils literal notranslate"><span class="pre">plot_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.utils.visualize_class"><code class="docutils literal notranslate"><span class="pre">visualize_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.utils.download_testimage"><code class="docutils literal notranslate"><span class="pre">download_testimage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.utils.flatten"><code class="docutils literal notranslate"><span class="pre">flatten()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.preprocessing">preprocessing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.percentile_normalization"><code class="docutils literal notranslate"><span class="pre">percentile_normalization()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.downsample_img"><code class="docutils literal notranslate"><span class="pre">downsample_img()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.downsample_img_pxs"><code class="docutils literal notranslate"><span class="pre">downsample_img_pxs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.rolling_window_mean"><code class="docutils literal notranslate"><span class="pre">rolling_window_mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.origins_from_distance"><code class="docutils literal notranslate"><span class="pre">origins_from_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.MinMax"><code class="docutils literal notranslate"><span class="pre">MinMax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.EDF"><code class="docutils literal notranslate"><span class="pre">EDF()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.preprocessing.maximum_intensity_projection"><code class="docutils literal notranslate"><span class="pre">maximum_intensity_projection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.global_otsu"><code class="docutils literal notranslate"><span class="pre">global_otsu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.segment_global_threshold"><code class="docutils literal notranslate"><span class="pre">segment_global_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.segment_local_threshold"><code class="docutils literal notranslate"><span class="pre">segment_local_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.shift_labels"><code class="docutils literal notranslate"><span class="pre">shift_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.remove_classes"><code class="docutils literal notranslate"><span class="pre">remove_classes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.contact_filter_lambda"><code class="docutils literal notranslate"><span class="pre">contact_filter_lambda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.contact_filter"><code class="docutils literal notranslate"><span class="pre">contact_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.size_filter"><code class="docutils literal notranslate"><span class="pre">size_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.numba_mask_centroid"><code class="docutils literal notranslate"><span class="pre">numba_mask_centroid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.sc_any"><code class="docutils literal notranslate"><span class="pre">sc_any()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
@@ -200,13 +238,38 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id4">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-sparcscore.pipeline.workflows">workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.BaseSegmentation"><code class="docutils literal notranslate"><span class="pre">BaseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
@@ -224,13 +287,50 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/ml.html">ml</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.datasets">datasets</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.metrics">metrics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.transforms">transforms</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.utils">utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.datasets">datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.metrics">metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.transforms">transforms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-sparcscore.ml.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#sparcscore.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -250,7 +350,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../quickstart.html">Quickstart</a></li>
       <li class="breadcrumb-item active">A walk through the SPARCSpy Ecosystem</li>
       <li class="wy-breadcrumbs-aside">
@@ -263,13 +363,13 @@
            <div itemprop="articleBody">
              
   <section id="A-walk-through-the-SPARCSpy-Ecosystem">
-<h1>A walk through the SPARCSpy Ecosystem<a class="headerlink" href="#A-walk-through-the-SPARCSpy-Ecosystem" title="Permalink to this headline"></a></h1>
+<h1>A walk through the SPARCSpy Ecosystem<a class="headerlink" href="#A-walk-through-the-SPARCSpy-Ecosystem" title="Link to this heading"></a></h1>
 <p>This notebook will introduce you to the SPARCSpy ecosystem and give you a complete working example of how to use SPARCSpy. It will walk you through the following steps of the SPARCSpy workflow: 1. <strong>segmentation</strong>: Generates masks for the segmentation of input images into individual cells 2. <strong>extraction</strong>: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel. 3. <strong>classification</strong>: The
 image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods. Here we utilize the pretrained binary classifier from the original <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">SPARCS manuscript</a> that identifies individual cells defective in a biological process called “autophagy”. 4. <strong>selection</strong>: Cutting
 instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an <code class="docutils literal notranslate"><span class="pre">.xml</span></code> file which can be loaded on a leica LMD microscope for automated cell excision.</p>
 <p>The data used in this notebook was previously stitched using the stitching workflow in <a class="reference external" href="https://github.com/MannLabs/SPARCStools">SPARCStools</a>. Please see the notebook <a class="reference external" href="https://mannlabs.github.io/SPARCStools/html/pages/notebooks/example_stitching_notebook.html">here</a>.</p>
 <section id="Import-Required-Libraries">
-<h2>Import Required Libraries<a class="headerlink" href="#Import-Required-Libraries" title="Permalink to this headline"></a></h2>
+<h2>Import Required Libraries<a class="headerlink" href="#Import-Required-Libraries" title="Link to this heading"></a></h2>
 <p>First we need to import all of the python functions we require to run the pipeline.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
@@ -291,7 +391,7 @@ instructions for the isolation of selected individual cells by laser microdissec
 </div>
 </section>
 <section id="Generate-the-Project-Structure">
-<h2>Generate the Project Structure<a class="headerlink" href="#Generate-the-Project-Structure" title="Permalink to this headline"></a></h2>
+<h2>Generate the Project Structure<a class="headerlink" href="#Generate-the-Project-Structure" title="Link to this heading"></a></h2>
 <p>Executing this code will generate a new SPARCSpy project in the designated location. Each SPARCSpy project has the following general structure:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.
 ├── classification
@@ -342,7 +442,7 @@ modifying config
 </div>
 </section>
 <section id="Load-Imaging-Data">
-<h2>Load Imaging Data<a class="headerlink" href="#Load-Imaging-Data" title="Permalink to this headline"></a></h2>
+<h2>Load Imaging Data<a class="headerlink" href="#Load-Imaging-Data" title="Link to this heading"></a></h2>
 <p>Once we have generated our project structure we next need to load our imaging data. There are several different ways to do this.</p>
 <ol class="arabic simple">
 <li><p>you can load the images directly from file by specifying a list of filepaths</p></li>
@@ -351,7 +451,7 @@ modifying config
 <p>Here it is important that you load the channels in the following order: Nucleus, Cellmembrane, others</p>
 <p>In this particular example we are utilizing images from U2OS cells which are stained with Hoechst 33342 to visualize nuclei and express Lck-mNeon to visualize the cellular membrane and LC3B-mcherry, a fluroescently tagged protein relevant for visualizing the biological process of autophagy. The cells have not been stimulated to induce autophagy and should be autophagy defective.</p>
 <section id="Method-1:-loading-images-from-file">
-<h3>Method 1: loading images from file<a class="headerlink" href="#Method-1:-loading-images-from-file" title="Permalink to this headline"></a></h3>
+<h3>Method 1: loading images from file<a class="headerlink" href="#Method-1:-loading-images-from-file" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -374,7 +474,7 @@ modifying config
 </div>
 </section>
 <section id="Method-2:-loading-images-from-numpy-array">
-<h3>Method 2: loading images from numpy array<a class="headerlink" href="#Method-2:-loading-images-from-numpy-array" title="Permalink to this headline"></a></h3>
+<h3>Method 2: loading images from numpy array<a class="headerlink" href="#Method-2:-loading-images-from-numpy-array" title="Link to this heading"></a></h3>
 <p>To simulate the case where the images you want to load are already loaded as a numpy array, we first convert the images to a numpy array and then pass this array to the project instead of only providing the image paths.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -394,7 +494,7 @@ modifying config
 </div>
 </section>
 <section id="Looking-at-the-loaded-images">
-<h3>Looking at the loaded images<a class="headerlink" href="#Looking-at-the-loaded-images" title="Permalink to this headline"></a></h3>
+<h3>Looking at the loaded images<a class="headerlink" href="#Looking-at-the-loaded-images" title="Link to this heading"></a></h3>
 <p>The loaded images are accesible via the input_image parameter of the project and are saved as numpy arrays with the following structure (c, x, y)</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -487,7 +587,7 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
 </section>
 </section>
 <section id="Generating-a-Segmentation">
-<h2>Generating a Segmentation<a class="headerlink" href="#Generating-a-Segmentation" title="Permalink to this headline"></a></h2>
+<h2>Generating a Segmentation<a class="headerlink" href="#Generating-a-Segmentation" title="Link to this heading"></a></h2>
 <p>SPARCSpy has different segmentation workflows between which you can choose. If none of them fit your needs you can also easily write your own.</p>
 <p>Here we will demonstrate the CPU based classical segmentation method that was also utilized in the manuscript.</p>
 <p>We define the segmentation method to be used when we initialize the project. In this case we used the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method. The <code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code> works very similarily but allows you to process several image chunks in parallel for more efficient computation on large input images.</p>
@@ -885,7 +985,7 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
 </pre></div></div>
 </div>
 <section id="Looking-at-Segmentation-Results">
-<h3>Looking at Segmentation Results<a class="headerlink" href="#Looking-at-Segmentation-Results" title="Permalink to this headline"></a></h3>
+<h3>Looking at Segmentation Results<a class="headerlink" href="#Looking-at-Segmentation-Results" title="Link to this heading"></a></h3>
 <p>The Segmentation Results are written to a hdf5 file called <code class="docutils literal notranslate"><span class="pre">segmentation.h5</span></code> located in the segmentation directory of our SPARCSpy project.</p>
 <p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">channels</span></code> and <code class="docutils literal notranslate"><span class="pre">labels</span></code>. Channels contains the input images and <code class="docutils literal notranslate"><span class="pre">labels</span></code> the generated segmentation masks.</p>
 <div class="nbinput docutils container">
@@ -992,7 +1092,7 @@ array([[[0.000e+00, 0.000e+00, 0.000e+00, ..., 2.393e+03, 2.404e+03,
 </section>
 </section>
 <section id="Extracting-single-cell-images">
-<h2>Extracting single-cell images<a class="headerlink" href="#Extracting-single-cell-images" title="Permalink to this headline"></a></h2>
+<h2>Extracting single-cell images<a class="headerlink" href="#Extracting-single-cell-images" title="Link to this heading"></a></h2>
 <p>Once we have generated a segmentation mask, the next step is to extract single-cell images of segmented cells in the dataset.</p>
 <p>Like during the segmentation there are several extraction methods to choose from. For regular SPARCSpy projects we need the <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> method. This will extract single-cell images for all cells segmentated in the dataset and write them to a hdf5 file.</p>
 <p>The parameters with which <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> will run are again specified in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file.</p>
@@ -1154,7 +1254,7 @@ extracting classes: 484it [00:02, 172.14it/s]
 </pre></div></div>
 </div>
 <section id="Look-at-extracted-single-cell-images">
-<h3>Look at extracted single-cell images<a class="headerlink" href="#Look-at-extracted-single-cell-images" title="Permalink to this headline"></a></h3>
+<h3>Look at extracted single-cell images<a class="headerlink" href="#Look-at-extracted-single-cell-images" title="Link to this heading"></a></h3>
 <p>The extracted single-cell images are written to a h5py file <code class="docutils literal notranslate"><span class="pre">single_cells.h5</span></code> located under <code class="docutils literal notranslate"><span class="pre">extraction\data</span></code> within the project folder.</p>
 <p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> and <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code>. <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> contains the extracted single cell images while <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> contains the cell id of the extracted cell at that location.</p>
 <div class="nbinput docutils container">
@@ -1220,7 +1320,7 @@ cell id:  [10 11]
 </section>
 </section>
 <section id="Classification-of-extracted-single-cells">
-<h2>Classification of extracted single-cells<a class="headerlink" href="#Classification-of-extracted-single-cells" title="Permalink to this headline"></a></h2>
+<h2>Classification of extracted single-cells<a class="headerlink" href="#Classification-of-extracted-single-cells" title="Link to this heading"></a></h2>
 <p>Next we can apply a pretained model to classify our cells within the SPARCSpy project.</p>
 <p>Within the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> we specify which model should be used for inference and we can give it a name.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MLClusterClassifier:
@@ -1296,7 +1396,7 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.0.2. T
 </pre></div></div>
 </div>
 <section id="looking-at-the-generated-results">
-<h3>looking at the generated results<a class="headerlink" href="#looking-at-the-generated-results" title="Permalink to this headline"></a></h3>
+<h3>looking at the generated results<a class="headerlink" href="#looking-at-the-generated-results" title="Link to this heading"></a></h3>
 <p>The results are written to a csv file which we can load with pandas.</p>
 <p>SPARCSpy writes the softmax results directly to csv as <code class="docutils literal notranslate"><span class="pre">ln()</span></code> for better precision. To transform these numbers back to the range between 0 and 1 we first need to apply the <code class="docutils literal notranslate"><span class="pre">np.exp</span></code> function.</p>
 <div class="nbinput docutils container">
@@ -1454,7 +1554,7 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.0.2. T
 </section>
 </section>
 <section id="Exporting-Cutting-contours-for-excision-on-the-LMD7">
-<h2>Exporting Cutting contours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7" title="Permalink to this headline"></a></h2>
+<h2>Exporting Cutting contours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7" title="Link to this heading"></a></h2>
 <p>SPARCSpy directly interfaces with our other open-source python library <a class="reference external" href="https://github.com/MannLabs/py-lmd">py-lmd</a> to easily select and export cells for excision on a Leica LMD microscope.</p>
 <p>Of note: this will require that the cells have been plates on a LMD compatible surface (like a PPS slide). SPARCSpy can of course also simply be used for data analysis procedures, then ignore this last step.</p>
 <p>First we will select the cells we wish to excise based on their classification score. Here we have chosen a threadhold &gt;= 0.99999 for bin1 and a threshold &lt;= 0.9 for bin2.</p>

@@ -14,7 +14,7 @@ We recommend installing the dependencies with mamba or conda before installing S
 
 .. code::
 
-   git clone https://github.com/MannLabs/SPARCSpy
+   git clone https://github.com/MannLabs/SPARCSspatial
    cd SPARCSpy
 
    conda create -n "SPARCSpy"
@@ -59,7 +59,7 @@ Currently SPARCSpy depends on a developer version of alphabase so please install
 SPARCSpy also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`_.
 Once these steps are completed you can proceed to install the SPARCSpy package.
 
-Clone the `Github repository <https://github.com/MannLabs/sparcspy>`_ and use pip to install the library in your current environment. Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available:
+Clone the `Github repository <https://github.com/MannLabs/SPARCSspatial>`_ and use pip to install the library in your current environment. Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available:
 
 .. code:: 
 

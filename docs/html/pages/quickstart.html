@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; SPARCSpy  documentation</title>
@@ -13,11 +13,14 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -30,11 +33,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> SPARCSpy
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SPARCSpy
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -180,9 +187,42 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module.html">Module Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module/processing.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/processing.html#preprocessing">preprocessing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.segmentation">segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.utils.plot_image"><code class="docutils literal notranslate"><span class="pre">plot_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.utils.visualize_class"><code class="docutils literal notranslate"><span class="pre">visualize_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.utils.download_testimage"><code class="docutils literal notranslate"><span class="pre">download_testimage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.utils.flatten"><code class="docutils literal notranslate"><span class="pre">flatten()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.preprocessing">preprocessing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.percentile_normalization"><code class="docutils literal notranslate"><span class="pre">percentile_normalization()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.downsample_img"><code class="docutils literal notranslate"><span class="pre">downsample_img()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.downsample_img_pxs"><code class="docutils literal notranslate"><span class="pre">downsample_img_pxs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.rolling_window_mean"><code class="docutils literal notranslate"><span class="pre">rolling_window_mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.origins_from_distance"><code class="docutils literal notranslate"><span class="pre">origins_from_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.MinMax"><code class="docutils literal notranslate"><span class="pre">MinMax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.EDF"><code class="docutils literal notranslate"><span class="pre">EDF()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.preprocessing.maximum_intensity_projection"><code class="docutils literal notranslate"><span class="pre">maximum_intensity_projection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.global_otsu"><code class="docutils literal notranslate"><span class="pre">global_otsu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.segment_global_threshold"><code class="docutils literal notranslate"><span class="pre">segment_global_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.segment_local_threshold"><code class="docutils literal notranslate"><span class="pre">segment_local_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.shift_labels"><code class="docutils literal notranslate"><span class="pre">shift_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.remove_classes"><code class="docutils literal notranslate"><span class="pre">remove_classes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.contact_filter_lambda"><code class="docutils literal notranslate"><span class="pre">contact_filter_lambda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.contact_filter"><code class="docutils literal notranslate"><span class="pre">contact_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.size_filter"><code class="docutils literal notranslate"><span class="pre">size_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.numba_mask_centroid"><code class="docutils literal notranslate"><span class="pre">numba_mask_centroid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.sc_any"><code class="docutils literal notranslate"><span class="pre">sc_any()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="module/pipeline.html">pipeline</a><ul>
@@ -197,13 +237,38 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#id4">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="module/pipeline.html#workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module/pipeline.html#module-sparcscore.pipeline.workflows">workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.BaseSegmentation"><code class="docutils literal notranslate"><span class="pre">BaseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#sparcscore.pipeline.workflows.Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
@@ -221,13 +286,50 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="module/ml.html">ml</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.datasets">datasets</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.metrics">metrics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#models">models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#plmodels">plmodels</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.transforms">transforms</a></li>
-<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.utils">utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.datasets">datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.metrics">metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#models">models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#plmodels">plmodels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.pretrained_models">pretrained_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.transforms">transforms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="module/ml.html#module-sparcscore.ml.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/ml.html#sparcscore.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="module/utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="module/utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -247,7 +349,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Quickstart</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/pages/quickstart.rst.txt" rel="nofollow"> View page source</a>
@@ -259,7 +361,7 @@
            <div itemprop="articleBody">
              
   <section id="quickstart">
-<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline"></a></h1>
+<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
 <p>This section will give you a brief overview of the SPARCSpy ecosystem, introduce you to our computational workflow and walk you through an example project. For more detailled information please see the section describing the <a class="reference internal" href="pipeline.html#pipeline"><span class="std std-ref">complete computational workflow</span></a>.</p>
 <div class="toctree-wrapper compound">
 <ul>
