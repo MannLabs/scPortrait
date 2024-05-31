@@ -22,7 +22,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install Dependencies with Mamba
       run: |
-        conda env update -n base --file .github/workflows/environment.yml
+        conda env update -n base --file .github/additional_files/environment.yml
     - name: Install Repository Module
       run: |
         pip install ./
