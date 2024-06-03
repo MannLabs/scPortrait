@@ -25,6 +25,7 @@ from ome_zarr.writer import write_labels, write_label_metadata
 
 from alphabase.io import tempmmap
 
+
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
 
@@ -280,7 +281,7 @@ class Segmentation(ProcessingStep):
                 loc = parse_url(path, mode="w").store
                 group = zarr.group(store=loc)
 
-                segmentation_names = ["nucleus", "cyotosol"]
+                segmentation_names = ["nucleus", "cytosol"]
 
                 # check if segmentation names already exist if so delete
                 for seg_names in segmentation_names:
@@ -301,7 +302,15 @@ class Segmentation(ProcessingStep):
                     path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
                     with h5py.File(path_labels, "r") as hf:
-                        labels = hf[self.DEFAULT_MASK_NAME][:]
+                        #initialize tempmmap array to save label results into
+                        labels = tempmmap.array(
+                            shape=hf[self.DEFAULT_MASK_NAME].shape,
+                            dtype=hf[self.DEFAULT_MASK_NAME].dtype,
+                            tmp_dir_abs_path=self._tmp_dir_path,
+                        )
+
+                        labels[0] = hf[self.DEFAULT_MASK_NAME][0]
+                        labels[1] = hf[self.DEFAULT_MASK_NAME][1]
 
                 segmentations = [np.expand_dims(seg, axis=0) for seg in labels]
 
@@ -316,6 +325,7 @@ class Segmentation(ProcessingStep):
                     )
 
                 self.log("finished saving segmentation results to ome.zarr")
+                del labels
             else:
                 self.log(
                     "Not saving shard segmentation into ome.zarr. Will only save completely assembled image."
@@ -538,9 +548,8 @@ class ShardedSegmentation(Segmentation):
 
         self.check_filter_status()
         self.save_classes(classes)
-
-        self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels=labels)
+        self.log("=== finished segmentation ===")
 
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
