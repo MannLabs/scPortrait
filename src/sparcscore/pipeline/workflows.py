@@ -951,9 +951,16 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         else:
 
+            self.log(
+                " Performing filtering to match Cytosol and Nucleus IDs."
+            )
+
             # perform filtering to remove cytosols which do not have a corresponding nucleus
             filter = MatchNucleusCytosolIds(filtering_threshold = self.config["filtering_threshold"])
             masks_nucleus, masks_cytosol = filter.filter(masks_nucleus, masks_cytosol)
+
+            self.log(f"Removed {len(filter.nuclei_discard_list)} nuclei and {len(filter.cytosol_discard_list)} cytosols due to filtering.")
+            self.log(f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain.")
 
             if self.debug:
                 # plot nucleus and cytosol masks before and after filtering
