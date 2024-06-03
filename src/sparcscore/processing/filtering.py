@@ -688,6 +688,8 @@ class MatchNucleusCytosolIds(BaseFilter):
             if cytosol_id in self.cytosol_discard_list:
                 _cleanup.append(nucleus_id)
         
+        #ensure we have no duplicate entries
+        _cleanup = list(set(_cleanup))
         for nucleus in _cleanup:
             del self._nucleus_lookup_dict[nucleus]
 
