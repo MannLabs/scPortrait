@@ -546,7 +546,7 @@ class MatchNucleusCytosolIds(BaseFilter):
         for cytosol in self._nucleus_lookup_dict.values():
             cytosol_count[cytosol] += 1
         
-        self.cytosol_counts = cytosol_count
+        self.cytosol_count = cytosol_count
         
     def check_for_unassigned_cytosols(self):
         all_cytosol_ids = self.get_unique_ids(self.cytosol_mask)
