@@ -477,7 +477,7 @@ class MatchNucleusCytosolIds(BaseFilter):
     def update_masks(self):
 
         nucleus_mask = self.update_mask(self.nucleus_mask, self.nuclei_discard_list)
-        cytosol_mask = self.update_mask(self.cytosol_mask)
+        cytosol_mask = self.update_cytosol_mask(self.cytosol_mask)
 
         if self.downsample:
             nucleus_mask = self.upscale_mask_basic(nucleus_mask, self.erosion_dilation)
