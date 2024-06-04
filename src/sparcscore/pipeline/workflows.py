@@ -1057,6 +1057,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             channels = np.stack(required_maps).astype(np.uint16)
 
         _seg_size = self.maps["nucleus_segmentation"].shape
+
         self.log(
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
@@ -1064,28 +1065,24 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # rescale downsampled segmentation results to original size by repeating pixels
         _, x, y = size_padding
 
+        N, smoothing_kernel_size = _get_downsampling_parameters()
+
         nuc_seg = self.maps["nucleus_segmentation"]
-        nuc_seg = nuc_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        nuc_seg = nuc_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         cyto_seg = self.maps["cytosol_segmentation"]
-        cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        cyto_seg = cyto_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         # perform erosion and dilation for smoothing
-        nuc_seg = erosion(nuc_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        nuc_seg = erosion(nuc_seg, footprint=disk(smoothing_kernel_size))
         nuc_seg = dilation(
-            nuc_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            nuc_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
 
-        cyto_seg = erosion(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+        cyto_seg = erosion(cyto_seg, footprint=disk(smoothing_kernel_size))
         cyto_seg = dilation(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            cyto_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
 
         # combine masks into one stack
         segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
