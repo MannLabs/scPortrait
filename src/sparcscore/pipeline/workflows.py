@@ -913,8 +913,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
-            self.log(f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}.")
-        
+            self.log(
+                f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}."
+            )
+
             # perform filtering for cytosol size
             thresholds, confidence_interval = self.get_params_cellsize_filtering(
                 "cytosol"
@@ -939,8 +941,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             )
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
-            self.log(f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}.")
-        
+            self.log(
+                f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}."
+            )
+
         ######################
         ### Perform Filtering match cytosol and nucleus IDs if applicable
         ######################
@@ -951,17 +955,20 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             )
 
         else:
-
-            self.log(
-                "Performing filtering to match Cytosol and Nucleus IDs."
-            )
+            self.log("Performing filtering to match Cytosol and Nucleus IDs.")
 
             # perform filtering to remove cytosols which do not have a corresponding nucleus
-            filter = MatchNucleusCytosolIds(filtering_threshold = self.config["filtering_threshold"])
+            filter = MatchNucleusCytosolIds(
+                filtering_threshold=self.config["filtering_threshold"]
+            )
             masks_nucleus, masks_cytosol = filter.filter(masks_nucleus, masks_cytosol)
 
-            self.log(f"Removed {len(filter.nuclei_discard_list)} nuclei and {len(filter.cytosol_discard_list)} cytosols due to filtering.")
-            self.log(f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain.")
+            self.log(
+                f"Removed {len(filter.nuclei_discard_list)} nuclei and {len(filter.cytosol_discard_list)} cytosols due to filtering."
+            )
+            self.log(
+                f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain."
+            )
 
             if self.debug:
                 # plot nucleus and cytosol masks before and after filtering
@@ -1044,24 +1051,26 @@ class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
 class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    
+    def _get_downsampling_parameters(self):
+        N = self.config["downsampling_factor"]
+        if "smoothing_kernel_size" in self.config.keys():
+            smoothing_kernel_size = self.config["smoothing_kernel_size"]
+
+            if smoothing_kernel_size > N:
+                self.log(
+                    "Warning: Smoothing Kernel size is larger than the downsampling factor. This can lead to issues during smoothing where segmentation masks are lost. Please ensure to double check your results."
+                )
+
+        else:
+            self.log(
+                "Smoothing Kernel size not explicitly defined. Will calculate a default value based on the downsampling factor."
+            )
+            smoothing_kernel_size = N
+        
+        return N, smoothing_kernel_size
 
     def _finalize_segmentation_results(self, size_padding):
-        def _get_downsampling_parameters(self):
-            N = self.config["downsampling_factor"]
-            if "smoothing_kernel_size" in self.config.keys():
-                smoothing_kernel_size = self.config["smoothing_kernel_size"]
-
-                if smoothing_kernel_size > N:
-                    self.log(
-                        "Warning: Smoothing Kernel size is larger than the downsampling factor. This can lead to issues during smoothing where segmentation masks are lost. Please ensure to double check your results."
-                    )
-
-            else:
-                self.log(
-                    "Smoothing Kernel size not explicitly defined. Will calculate a default value based on the downsampling factor."
-                )
-                smoothing_kernel_size = N
-
         # nuclear and cyotosolic channels are required (used for segmentation)
         required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
 
@@ -1407,6 +1416,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             channels = np.stack(required_maps).astype(np.uint16)
 
         _seg_size = self.maps["cytosol_segmentation"].shape
+
         self.log(
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
