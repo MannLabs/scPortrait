@@ -1378,10 +1378,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         )
 
         _, x, y = size_padding
-        segmentation_size = (
-            x,
-            y,
-        )  # return to same size as original input image but adjust number of channels expected
 
         cyto_seg = self.maps["cytosol_segmentation"]
         cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
