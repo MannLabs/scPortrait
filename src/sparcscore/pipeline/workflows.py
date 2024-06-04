@@ -1057,6 +1057,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             channels = np.stack(required_maps).astype(np.uint16)
 
         _seg_size = self.maps["nucleus_segmentation"].shape
+
         self.log(
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
@@ -1064,28 +1065,45 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # rescale downsampled segmentation results to original size by repeating pixels
         _, x, y = size_padding
 
+        N, smoothing_kernel_size = _get_downsampling_parameters()
+
         nuc_seg = self.maps["nucleus_segmentation"]
-        nuc_seg = nuc_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        n_nuclei = len(
+            np.unique(nuc_seg)[0]
+        )  # get number of objects in mask for sanity checking
+        nuc_seg = nuc_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         cyto_seg = self.maps["cytosol_segmentation"]
-        cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        n_cytosols = len(np.unique(cyto_seg)[0])
+        cyto_seg = cyto_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         # perform erosion and dilation for smoothing
-        nuc_seg = erosion(nuc_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        nuc_seg = erosion(nuc_seg, footprint=disk(smoothing_kernel_size))
         nuc_seg = dilation(
-            nuc_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            nuc_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
 
-        cyto_seg = erosion(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+        cyto_seg = erosion(cyto_seg, footprint=disk(smoothing_kernel_size))
         cyto_seg = dilation(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            cyto_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
+
+        # sanity check to make sure that smoothing does not remove masks
+        if len(np.unique(nuc_seg)[0]) != n_nuclei:
+            self.log(
+                "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+            sys.exit(
+                "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+
+        if len(np.unique(cyto_seg)[0]) != n_cytosols:
+            self.log(
+                "Error. Number of cytosols in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+            sys.exit(
+                "Error. Number of cytosols in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
 
         # combine masks into one stack
         segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
