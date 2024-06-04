@@ -1090,7 +1090,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # rescale downsampled segmentation results to original size by repeating pixels
         _, x, y = size_padding
 
-        N, smoothing_kernel_size = _get_downsampling_parameters()
+        N, smoothing_kernel_size = self._get_downsampling_parameters()
 
         nuc_seg = self.maps["nucleus_segmentation"]
         n_nuclei = len(
