@@ -1046,6 +1046,22 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self, size_padding):
+        def _get_downsampling_parameters(self):
+            N = self.config["downsampling_factor"]
+            if "smoothing_kernel_size" in self.config.keys():
+                smoothing_kernel_size = self.config["smoothing_kernel_size"]
+
+                if smoothing_kernel_size > N:
+                    self.log(
+                        "Warning: Smoothing Kernel size is larger than the downsampling factor. This can lead to issues during smoothing where segmentation masks are lost. Please ensure to double check your results."
+                    )
+
+            else:
+                self.log(
+                    "Smoothing Kernel size not explicitly defined. Will calculate a default value based on the downsampling factor."
+                )
+                smoothing_kernel_size = N
+
         # nuclear and cyotosolic channels are required (used for segmentation)
         required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
 
