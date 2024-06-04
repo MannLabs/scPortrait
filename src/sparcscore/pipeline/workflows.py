@@ -916,6 +916,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
+            self.log(f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}.")
+        
             # perform filtering for cytosol size
             thresholds, confidence_interval = self.get_params_cellsize_filtering(
                 "cytosol"
@@ -940,6 +942,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             )
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
+            self.log(f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}.")
         if not self.filter_status:
             self.log(
                 "No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed"
