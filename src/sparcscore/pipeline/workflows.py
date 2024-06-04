@@ -20,13 +20,10 @@ from sparcscore.processing.segmentation import (
 import os
 import sys
 import numpy as np
-import pandas as pd
 import torch
 import gc
 import matplotlib.pyplot as plt
 import skfmm
-import time
-from collections import defaultdict
 
 import multiprocessing
 
@@ -916,6 +913,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
+            self.log(f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}.")
+        
             # perform filtering for cytosol size
             thresholds, confidence_interval = self.get_params_cellsize_filtering(
                 "cytosol"
@@ -940,6 +939,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             )
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
+            self.log(f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}.")
+        
         ######################
         ### Perform Filtering match cytosol and nucleus IDs if applicable
         ######################
@@ -952,7 +953,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         else:
 
             self.log(
-                " Performing filtering to match Cytosol and Nucleus IDs."
+                "Performing filtering to match Cytosol and Nucleus IDs."
             )
 
             # perform filtering to remove cytosols which do not have a corresponding nucleus
