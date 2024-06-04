@@ -1093,13 +1093,11 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         N, smoothing_kernel_size = self._get_downsampling_parameters()
 
         nuc_seg = self.maps["nucleus_segmentation"]
-        n_nuclei = len(
-            np.unique(nuc_seg)[0]
-        )  # get number of objects in mask for sanity checking
+        n_nuclei = len(np.unique(nuc_seg))  # get number of objects in mask for sanity checking
         nuc_seg = nuc_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         cyto_seg = self.maps["cytosol_segmentation"]
-        n_cytosols = len(np.unique(cyto_seg)[0])
+        n_cytosols = len(np.unique(cyto_seg))
         cyto_seg = cyto_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         # perform erosion and dilation for smoothing
@@ -1114,7 +1112,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         )  # dilate 1 more than eroded to ensure that we do not lose any pixels
 
         # sanity check to make sure that smoothing does not remove masks
-        if len(np.unique(nuc_seg)[0]) != n_nuclei:
+        if len(np.unique(nuc_seg)) != n_nuclei:
             self.log(
                 "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
             )
@@ -1122,7 +1120,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
                 "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
             )
 
-        if len(np.unique(cyto_seg)[0]) != n_cytosols:
+        if len(np.unique(cyto_seg)) != n_cytosols:
             self.log(
                 "Error. Number of cytosols in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
             )
