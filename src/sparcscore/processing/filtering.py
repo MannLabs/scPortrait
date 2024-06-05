@@ -454,7 +454,7 @@ class SizeFilter(BaseFilter):
         """
         if self.ids_to_remove is None:
             self._get_ids_to_remove(input_mask)
-        return self.update_mask(input_mask, self.ids_to_remove)
+        return self.get_updated_mask(input_mask, self.ids_to_remove)
 
 
 class MatchNucleusCytosolIds(BaseFilter):
