@@ -376,12 +376,12 @@ class SizeFilter(BaseFilter):
             plt.show(fig)  # show the figure if plot_qc is True
 
         if self.log_values:
-            self.threshold = np.exp(threshold)
+            self.filter_threshold = np.exp(threshold)
         else:
-            self.threshold = threshold
+            self.filter_threshold = threshold
 
         self.log(
-            f"Calculated threshold for {self.label} with {self.confidence_interval * 100}% confidence interval: {self.threshold}"
+            f"Calculated threshold for {self.label} with {self.confidence_interval * 100}% confidence interval: {self.filter_threshold}"
         )
 
     def _get_ids_to_remove(self, input_mask):
