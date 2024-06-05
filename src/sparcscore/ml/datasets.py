@@ -374,12 +374,12 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
 
             index_handle = input_hdf.get('single_cell_index')[self.index_list] # get single cell index handle
 
-            current_target_col = input_hdf.get('single_cell_index_labelled')[self.index_list].asstr()[:, target_col] # get target column
+            current_target_col = input_hdf.get('single_cell_index_labelled').asstr()[self.index_list, target_col] # get target column
             current_target_col[current_target_col == ''] = np.nan # replace empty values with nan
             current_target_col = current_target_col.astype(float) # convert to float for regression
             
             handle_id = len(self.handle_list) # get handle id
-            self.handle_list.append(input_hdf.get('single_cell_data')[self.index_list]) # append data handle (i.e. extracted images)
+            self.handle_list.append(input_hdf.get('single_cell_data')) # append data handle (i.e. extracted images)
 
             for current_target, row in zip(current_target_col, index_handle): # iterate over rows in index handle, i.e. over all cells
                 if self.hours:
