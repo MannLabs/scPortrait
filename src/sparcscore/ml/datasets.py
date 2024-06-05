@@ -320,7 +320,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
         return sample
     
 
-class HDF5SingleCellDatasetRegression_Subset(Dataset):
+class HDF5SingleCellDatasetRegressionSubset(Dataset):
     """
     Class for handling SPARCSpy single cell datasets stored in HDF5 files for regression tasks.
     Supports selecting a subset of the data based on given indices. 
