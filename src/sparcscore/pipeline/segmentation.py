@@ -302,7 +302,7 @@ class Segmentation(ProcessingStep):
                     path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
                     with h5py.File(path_labels, "r") as hf:
-                        #initialize tempmmap array to save label results into
+                        # initialize tempmmap array to save label results into
                         labels = tempmmap.array(
                             shape=hf[self.DEFAULT_MASK_NAME].shape,
                             dtype=hf[self.DEFAULT_MASK_NAME].dtype,
@@ -841,7 +841,15 @@ class ShardedSegmentation(Segmentation):
         path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         with h5py.File(path_labels, "r") as hf:
-            labels = hf[self.DEFAULT_MASK_NAME][:]
+            # initialize tempmmap array to save label results into
+            labels = tempmmap.array(
+                shape=hf[self.DEFAULT_MASK_NAME].shape,
+                dtype=hf[self.DEFAULT_MASK_NAME].dtype,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            )
+
+            labels[0] = hf[self.DEFAULT_MASK_NAME][0]
+            labels[1] = hf[self.DEFAULT_MASK_NAME][1]
 
         self.save_segmentation_zarr(labels=labels)
         self.log(
