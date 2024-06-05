@@ -657,6 +657,7 @@ class ShardedSegmentation(Segmentation):
     def cleanup_shards(self, sharding_plan):
         file_identifiers_plots = [".png", ".tif", ".tiff", ".jpg", ".jpeg", ".pdf"]
 
+        self.log("Moving generated plots from shard directory to main directory.")
         for i, window in enumerate(sharding_plan):
             local_shard_directory = os.path.join(self.shard_directory, str(i))
             for file in os.listdir(local_shard_directory):
@@ -945,7 +946,6 @@ class ShardedSegmentation(Segmentation):
 
     def complete_segmentation(self, input_image):
         self.save_zarr = False
-        self.save_input_image(input_image)
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
 
         # check to make sure that the shard directory exisits, if not exit and return error
@@ -953,6 +953,9 @@ class ShardedSegmentation(Segmentation):
             sys.exit(
                 "No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method."
             )
+
+        #save input image to segmentation.h5
+        self.save_input_image(input_image)
 
         # check to see which tiles are incomplete
         tile_directories = os.listdir(self.shard_directory)
