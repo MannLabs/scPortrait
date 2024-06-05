@@ -619,12 +619,16 @@ class MatchNucleusCytosolIds(BaseFilter):
         tuple
             A tuple containing the updated nucleus mask and cytosol mask.
         """
-        nucleus_mask = self.update_mask(self.nucleus_mask, self.nuclei_discard_list)
-        cytosol_mask = self.update_cytosol_mask(self.cytosol_mask)
+        nucleus_mask = self.get_updated_mask(
+            self.nucleus_mask, self.nuclei_discard_list
+        )
+        cytosol_mask = self._get_updated_cytosol_mask(self.cytosol_mask)
 
         if self.downsample:
-            nucleus_mask = self.upscale_mask_basic(nucleus_mask, self.erosion_dilation)
-            cytosol_mask = self.upscale_mask_basic(
+            nucleus_mask = self.get_upscaled_mask_basic(
+                nucleus_mask, self.erosion_dilation
+            )
+            cytosol_mask = self.get_upscaled_mask_basic(
                 self.cytosol_mask, self.erosion_dilation
             )
 
@@ -676,7 +680,7 @@ class MatchNucleusCytosolIds(BaseFilter):
         all_nucleus_ids = self.get_unique_ids(self.nucleus_mask)
 
         for nucleus_id in all_nucleus_ids:
-            self.match_nucleus_id(nucleus_id)
+            self._match_nucleus_id(nucleus_id)
 
     def _count_cytosol_occurances(self):
         """
@@ -747,7 +751,7 @@ class MatchNucleusCytosolIds(BaseFilter):
         dict
             The lookup table mapping nucleus IDs to matched cytosol IDs.
         """
-        self.load_masks(nucleus_mask, cytosol_mask)
+        self._load_masks(nucleus_mask, cytosol_mask)
         self._initialize_lookup_table()
         self._count_cytosol_occurances()
         self._check_for_unassigned_cytosols()
