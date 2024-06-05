@@ -914,7 +914,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
             self.log(
-                f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}."
+                f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.filter_threshold}."
             )
 
             # perform filtering for cytosol size
@@ -942,7 +942,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
             self.log(
-                f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}."
+                f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.filter_threshold}."
             )
 
         ######################
