@@ -747,7 +747,7 @@ class MatchNucleusCytosolIds(BaseFilter):
         dict
             The lookup table mapping nucleus IDs to matched cytosol IDs.
         """
-        self.load_masks(nucleus_mask, cytosol_mask)
+        self._load_masks(nucleus_mask, cytosol_mask)
         self._initialize_lookup_table()
         self._count_cytosol_occurances()
         self._check_for_unassigned_cytosols()
