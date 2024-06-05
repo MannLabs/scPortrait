@@ -280,7 +280,7 @@ class Segmentation(ProcessingStep):
                 loc = parse_url(path, mode="w").store
                 group = zarr.group(store=loc)
 
-                segmentation_names = ["nucleus", "cyotosol"]
+                segmentation_names = ["nucleus", "cytosol"]
 
                 # check if segmentation names already exist if so delete
                 for seg_names in segmentation_names:

@@ -1071,7 +1071,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         return N, smoothing_kernel_size
 
     def _finalize_segmentation_results(self, size_padding):
-        # nuclear and cyotosolic channels are required (used for segmentation)
+        # nuclear and cytosolic channels are required (used for segmentation)
         required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
 
         # Feature maps are all further channel which contain additional phenotypes e.g. for classification
