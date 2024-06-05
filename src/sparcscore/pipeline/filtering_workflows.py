@@ -24,7 +24,7 @@ class filtering_match_nucleus_to_cytosol(BaseFiltering):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.filter_threshold = self.config["filter_threshold"]
+        self.filtering_threshold = self.config["filtering_threshold"]
 
         # allow for optional downsampling to improve computation time
         if "downsampling_factor" in self.config.keys():
@@ -42,10 +42,10 @@ class filtering_match_nucleus_to_cytosol(BaseFiltering):
 
         # perform filtering
         filter = MatchNucleusCytosolIds(
-            filter_config=self.filter_threshold,
-            downsample_factor=self.N,
-            smoothing_kernel_size=self.kernel_size,
+            filtering_threshold=self.filtering_threshold,
+            downsampling_factor=self.N,
             erosion_dilation=self.erosion_dilation,
+            smoothing_kernel_size=self.kernel_size,
         )
         nucleus_cytosol_pairs = filter.generate_lookup_table(
             input_masks[0], input_masks[1]
