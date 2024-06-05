@@ -5,7 +5,7 @@ from sparcscore.pipeline.segmentation import (
     MultithreadedSegmentation,
 )
 from sparcscore.processing.preprocessing import percentile_normalization, downsample_img
-from sparcscore.processing.filtering import SizeFilter
+from sparcscore.processing.filtering import SizeFilter, MatchNucleusCytosolIds
 from sparcscore.processing.utils import visualize_class
 from sparcscore.processing.segmentation import (
     segment_local_threshold,
@@ -20,13 +20,10 @@ from sparcscore.processing.segmentation import (
 import os
 import sys
 import numpy as np
-import pandas as pd
 import torch
 import gc
 import matplotlib.pyplot as plt
 import skfmm
-import time
-from collections import defaultdict
 
 import multiprocessing
 
@@ -916,8 +913,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
             masks_nucleus = filter_nucleus.filter(masks_nucleus)
 
-            self.log(f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}.")
-        
+            self.log(
+                f"Removed {len(filter_nucleus.ids_to_remove)} nuclei as they fell outside of the threshold range {filter_nucleus.threshold}."
+            )
+
             # perform filtering for cytosol size
             thresholds, confidence_interval = self.get_params_cellsize_filtering(
                 "cytosol"
@@ -942,288 +941,33 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             )
             masks_cytosol = filter_cytosol.filter(masks_cytosol)
 
-            self.log(f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}.")
+            self.log(
+                f"Removed {len(filter_cytosol.ids_to_remove)} cytosols as they fell outside of the threshold range {filter_cytosol.threshold}."
+            )
+
+        ######################
+        ### Perform Filtering match cytosol and nucleus IDs if applicable
+        ######################
+
         if not self.filter_status:
             self.log(
                 "No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed"
             )
 
         else:
-            ##########################
-            ### Perform Cell Filtering
-            ##########################
+            self.log("Performing filtering to match Cytosol and Nucleus IDs.")
 
-            # log start time of cell filtering to track
-            timing_info = []
-
-            start = time.time()
-            timing_info.append(
-                ("start_time", "Time when started the segmentation run", start)
+            # perform filtering to remove cytosols which do not have a corresponding nucleus
+            filter = MatchNucleusCytosolIds(
+                filtering_threshold=self.config["filtering_threshold"]
             )
+            masks_nucleus, masks_cytosol = filter.filter(masks_nucleus, masks_cytosol)
 
-            all_nucleus_ids = np.unique(masks_nucleus)[1:]
-            nucleus_cytosol_pairs = {}
-
-            self.log(f"Number of nuclei to filter: {len(all_nucleus_ids)}")
-
-            ### STEP 1: filter cells based on having a matching cytosol mask
-            current_time = time.time()
-            timing_info.append(
-                (
-                    "start_time",
-                    "Time when starting filtering cells (for nucleus_id in all_nucleus_ids) = STEP 1",
-                    current_time,
-                )
-            )
-
-            for nucleus_id in all_nucleus_ids:
-                ### STEP 1.1: lookup which image pixels belong to the nucleus
-                time_in_the_loop = time.time()
-
-                # get the nucleus and set the background to 0 and the nucleus to 1
-                nucleus = masks_nucleus == nucleus_id
-
-                # now get the coordinates of the nucleus
-                nucleus_pixels = np.nonzero(nucleus)
-
-                timing_info.append(
-                    (
-                        "STEP 1.1",
-                        f"Time required for getting nucleus pixels in seconds for nucleus {nucleus_id}",
-                        time.time() - time_in_the_loop,
-                    )
-                )
-
-                ### Step 1.2: get the cytosol ids in the nucleus area
-                time_in_the_loop = time.time()
-
-                # check if those indices are not background in the cytosol mask
-                potential_cytosol = masks_cytosol[nucleus_pixels]
-
-                timing_info.append(
-                    (
-                        "STEP 1.2",
-                        f"Time required for getting potential cytosol pixels in seconds for nucleus {nucleus_id}",
-                        time.time() - time_in_the_loop,
-                    )
-                )
-
-                if np.all(potential_cytosol != 0):
-                    time_in_the_loop = time.time()
-
-                    unique_cytosol, counts = np.unique(
-                        potential_cytosol, return_counts=True
-                    )
-                    all_counts = np.sum(counts)
-                    cytosol_proportions = counts / all_counts
-
-                    timing_info.append(
-                        (
-                            "STEP 1.3",
-                            f"Time required for getting unique cytosol pixels and calculating their proportions in seconds for nucleus {nucleus_id}",
-                            time.time() - time_in_the_loop,
-                        )
-                    )
-
-                    if np.any(
-                        cytosol_proportions >= self.config["filtering_threshold"]
-                    ):
-                        time_in_the_loop = time.time()
-
-                        # get the cytosol_id with max proportion
-                        cytosol_id = unique_cytosol[
-                            np.argmax(
-                                cytosol_proportions
-                                >= self.config["filtering_threshold"]
-                            )
-                        ]
-                        nucleus_cytosol_pairs[nucleus_id] = cytosol_id
-                    else:
-                        nucleus_cytosol_pairs[nucleus_id] = 0
-
-                    timing_info.append(
-                        (
-                            "STEP 1.4",
-                            f"Time required for getting cytosol_id with max proportion in seconds for nucleus {nucleus_id}",
-                            time.time() - time_in_the_loop,
-                        )
-                    )
-
-            timing_info.append(
-                (
-                    "STEP 1",
-                    "Time required for filtering cells (for nucleus_id in all_nucleus_ids) in seconds",
-                    time.time() - current_time,
-                )
-            )
-
-            #######################################################
-            ### STEP 2: count the occurrences of each cytosol value
-            #######################################################
-            new_time = time.time()
-            timing_info.append(
-                (
-                    "start_time",
-                    "Time when started counting the occurences of each cytosol id = STEP 2",
-                    new_time,
-                )
-            )
-
-            # check if there are any cytosol masks that are assigned to multiple nuclei
-            cytosol_count = defaultdict(int)
-
-            # Count the occurrences of each cytosol value
-            for cytosol in nucleus_cytosol_pairs.values():
-                cytosol_count[cytosol] += 1
-
-            timing_info.append(
-                (
-                    "STEP 2",
-                    "Time required for counting the occurences of each cytosol id in seconds",
-                    time.time() - new_time,
-                )
-            )
-
-            #######################################################
-            ### STEP 3: filter cytosol ids that are assigned to more than one nucleus
-            #######################################################
-
-            new_time = time.time()
-            timing_info.append(
-                (
-                    "start_time",
-                    "Time when started finding cytosol ids assigned to more than one nucleus = STEP 3",
-                    new_time,
-                )
-            )
-
-            # Find cytosol values assigned to more than one nucleus
-            for nucleus, cytosol in nucleus_cytosol_pairs.items():
-                if cytosol_count[cytosol] > 1:
-                    nucleus_cytosol_pairs[nucleus] = 0
-
-            timing_info.append(
-                (
-                    "STEP 3",
-                    "Time required for filtering cytosol ids that are assigned to more than one nucleus in seconds",
-                    time.time() - new_time,
-                )
-            )
-
-            #######################################################
-            ### STEP 4: filter cytosol masks that are not in the lookup table
-            #######################################################
-
-            new_time = time.time()
-            timing_info.append(
-                (
-                    "start_time",
-                    "Time when started filtering cytosol masks that are not in the lookup table = STEP 4",
-                    new_time,
-                )
-            )
-
-            # get unique cytosol ids that are not in the lookup table
-            all_cytosol_ids = set(np.unique(masks_cytosol))
-            all_cytosol_ids.discard(0)
-            used_cytosol_ids = set(nucleus_cytosol_pairs.values())
-            not_used_cytosol_ids = all_cytosol_ids - used_cytosol_ids
-
-            # set all cytosol ids that are not present in lookup table to 0 in the cytosol mask
-            ###speedup of 40X approximately in a small test case with an array of 10000x10000 and 400 cytosol ids to remove
-            # masks_cytosol = np.where(np.isin(masks_cytosol, not_used_cytosol_ids), 0, masks_cytosol)
-            for cytosol_id in not_used_cytosol_ids:
-                masks_cytosol[masks_cytosol == cytosol_id] = 0
-
-            timing_info.append(
-                (
-                    "STEP 4",
-                    "Time required for filtering cytosol masks that are not in the lookup table in seconds",
-                    time.time() - new_time,
-                )
-            )
-
-            ### STEP 5: filter nucleus masks that are not in the lookup table
-            new_time = time.time()
-            timing_info.append(
-                (
-                    "start_time",
-                    "Time when started filtering nucleus masks that are not in the lookup table = STEP 5",
-                    new_time,
-                )
-            )
-
-            # get unique nucleus ids that are not in the lookup table
-            all_nucleus_ids = set(np.unique(masks_nucleus))
-            all_nucleus_ids.discard(0)
-            used_nucleus_ids = set(nucleus_cytosol_pairs.keys())
-            not_used_nucleus_ids = all_nucleus_ids - used_nucleus_ids
-
-            # set all nucleus ids that are not present in lookup table to 0 in the nucleus mask
-            ###speedup of 40X approximately in a small test case with an array of 10000x10000 and 400 cytosol ids to remove
-            # masks_nucleus = np.where(np.isin(masks_nucleus, not_used_nucleus_ids), 0, masks_nucleus)
-            for nucleus_id in not_used_nucleus_ids:
-                masks_nucleus[masks_nucleus == nucleus_id] = 0
-
-            timing_info.append(
-                (
-                    "STEP 5",
-                    "Time required for filtering nucleus masks that are not in the lookup table in seconds",
-                    time.time() - new_time,
-                )
-            )
-
-            #################################################################
-            ### STEP 6: filter cytosol masks that are not in the lookup table
-            #################################################################
-
-            new_time = time.time()
-            timing_info.append(("Time when started updating masks = STEP 6", new_time))
-
-            # now we have all the nucleus cytosol pairs we can filter the masks
-            updated_cytosol_mask = np.zeros_like(masks_cytosol, dtype=bool)
-            for nucleus_id, cytosol_id in nucleus_cytosol_pairs.items():
-                if cytosol_id == 0:
-                    masks_nucleus[masks_nucleus == nucleus_id] = (
-                        0  # set the nucleus to 0
-                    )
-                else:
-                    # set the cytosol pixels to the nucleus_id if not previously updated
-                    condition = np.logical_and(
-                        masks_cytosol == cytosol_id, ~updated_cytosol_mask
-                    )
-                    masks_cytosol[condition] = nucleus_id
-                    updated_cytosol_mask = np.logical_or(
-                        updated_cytosol_mask, condition
-                    )
-
-            timing_info.append(
-                (
-                    "STEP 6",
-                    "Time required for filtering cytosol masks that are not in the lookup table in seconds",
-                    time.time() - new_time,
-                )
-            )
-            end = time.time()
-
-            timing_info.append(
-                (
-                    "All STEPS",
-                    "Time required for filtering generated masks in seconds",
-                    end - start,
-                )
+            self.log(
+                f"Removed {len(filter.nuclei_discard_list)} nuclei and {len(filter.cytosol_discard_list)} cytosols due to filtering."
             )
             self.log(
-                f"Time required for filtering generated masks in seconds: {end - start}"
-            )
-
-            # generate a dataframe with the time logging information and write out to file
-            df_timing = pd.DataFrame(
-                timing_info, columns=["Step", "description", "Time (s)"]
-            )
-            df_timing.to_csv(
-                f"{self.project_location}/segmentation/timing_info_{self.identifier}.csv",
-                index=False,
+                f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain."
             )
 
             if self.debug:
@@ -1243,9 +987,6 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 fig.tight_layout()
                 fig.show()
                 del fig  # delete figure after showing to free up memory again
-
-            # cleanup memory by deleting no longer required variables
-            del updated_cytosol_mask, all_nucleus_ids, used_nucleus_ids
 
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
@@ -1310,9 +1051,27 @@ class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
 class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    
+    def _get_downsampling_parameters(self):
+        N = self.config["downsampling_factor"]
+        if "smoothing_kernel_size" in self.config.keys():
+            smoothing_kernel_size = self.config["smoothing_kernel_size"]
+
+            if smoothing_kernel_size > N:
+                self.log(
+                    "Warning: Smoothing Kernel size is larger than the downsampling factor. This can lead to issues during smoothing where segmentation masks are lost. Please ensure to double check your results."
+                )
+
+        else:
+            self.log(
+                "Smoothing Kernel size not explicitly defined. Will calculate a default value based on the downsampling factor."
+            )
+            smoothing_kernel_size = N
+        
+        return N, smoothing_kernel_size
 
     def _finalize_segmentation_results(self, size_padding):
-        # nuclear and cyotosolic channels are required (used for segmentation)
+        # nuclear and cytosolic channels are required (used for segmentation)
         required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
 
         # Feature maps are all further channel which contain additional phenotypes e.g. for classification
@@ -1323,6 +1082,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             channels = np.stack(required_maps).astype(np.uint16)
 
         _seg_size = self.maps["nucleus_segmentation"].shape
+
         self.log(
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
@@ -1330,28 +1090,43 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # rescale downsampled segmentation results to original size by repeating pixels
         _, x, y = size_padding
 
+        N, smoothing_kernel_size = self._get_downsampling_parameters()
+
         nuc_seg = self.maps["nucleus_segmentation"]
-        nuc_seg = nuc_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        n_nuclei = len(np.unique(nuc_seg))  # get number of objects in mask for sanity checking
+        nuc_seg = nuc_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         cyto_seg = self.maps["cytosol_segmentation"]
-        cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
-        )
+        n_cytosols = len(np.unique(cyto_seg))
+        cyto_seg = cyto_seg.repeat(N, axis=0).repeat(N, axis=1)
 
         # perform erosion and dilation for smoothing
-        nuc_seg = erosion(nuc_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        nuc_seg = erosion(nuc_seg, footprint=disk(smoothing_kernel_size))
         nuc_seg = dilation(
-            nuc_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            nuc_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
 
-        cyto_seg = erosion(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+        cyto_seg = erosion(cyto_seg, footprint=disk(smoothing_kernel_size))
         cyto_seg = dilation(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+            cyto_seg, footprint=disk(smoothing_kernel_size + 1)
+        )  # dilate 1 more than eroded to ensure that we do not lose any pixels
+
+        # sanity check to make sure that smoothing does not remove masks
+        if len(np.unique(nuc_seg)) != n_nuclei:
+            self.log(
+                "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+            sys.exit(
+                "Error. Number of nuclei in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+
+        if len(np.unique(cyto_seg)) != n_cytosols:
+            self.log(
+                "Error. Number of cytosols in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
+            sys.exit(
+                "Error. Number of cytosols in segmentation mask changed after smoothing. This should not happen. Ensure that you have chosen adequate smoothing parameters or use the defaults."
+            )
 
         # combine masks into one stack
         segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
@@ -1639,15 +1414,12 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             channels = np.stack(required_maps).astype(np.uint16)
 
         _seg_size = self.maps["cytosol_segmentation"].shape
+
         self.log(
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
 
         _, x, y = size_padding
-        segmentation_size = (
-            x,
-            y,
-        )  # return to same size as original input image but adjust number of channels expected
 
         cyto_seg = self.maps["cytosol_segmentation"]
         cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
