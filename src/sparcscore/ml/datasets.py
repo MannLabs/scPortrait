@@ -120,7 +120,7 @@ class HDF5SingleCellDataset(Dataset):
             for row in index_handle:
                 self.data_locator.append([current_label, handle_id]+list(row))  
 
-                print(f"Added cell with target {current_label} to data locator.")    
+                #print(f"Added cell with target {current_label} to data locator.")    
         except:
             return
         
