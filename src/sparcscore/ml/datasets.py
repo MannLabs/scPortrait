@@ -341,11 +341,13 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
         
         self.dir_list = dir_list 
         self.target_col = target_col
-        self.index_list = index_list.sort()
+        self.index_list = index_list
         self.hours = hours
         self.root_dir = root_dir 
         self.transform = transform 
         self.select_channel = select_channel
+
+        self.index_list = sorted(self.index_list)
 
         self.handle_list = []
         self.data_locator = []
