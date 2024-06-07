@@ -341,8 +341,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
         
         self.dir_list = dir_list 
         self.target_col = target_col
-        index_list = index_list.sort()
-        self.index_list = index_list
+        self.index_list = index_list.sort()
         self.hours = hours
         self.root_dir = root_dir 
         self.transform = transform 
