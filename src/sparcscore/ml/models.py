@@ -1,7 +1,9 @@
+from collections import OrderedDict
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
-from collections import OrderedDict
+
 
 class VGGBase(nn.Module): 
     """
@@ -88,7 +90,7 @@ class VGGBase(nn.Module):
                 in_features = out_features
         
         if regression: # if regression is True, make the final layer a single output
-            linear = (f"MLP_linear_final", nn.Linear(in_features, 1))
+            linear = ("MLP_linear_final", nn.Linear(in_features, 1))
             layers += [linear]
         else:
             linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
