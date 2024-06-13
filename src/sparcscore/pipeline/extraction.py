@@ -793,6 +793,7 @@ class HDF5CellExtraction(ProcessingStep):
     ):
         # setup output directory
         self.setup_output(folder_name=self.SELECTED_DATA_DIR)
+        self.DEFAULT_LOG_NAME = "partial_processing.log"
 
         self.get_channel_info()
         self.setup_output()
@@ -888,6 +889,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         # reset variable to initial value
         self.setup_output()
+        self.DEFAULT_LOG_NAME = "processing.log"
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
