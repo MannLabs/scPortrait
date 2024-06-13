@@ -841,7 +841,7 @@ class HDF5CellExtraction(ProcessingStep):
         del _cell_ids, filter, nuclei_ids
 
         # subset to only get the N_cells requested from this method
-        np.randomseed(42)
+        np.random.seed(42)
         class_list = np.random.choice(class_list, n_cells, replace=False)
 
         self.log(f"Randomly selected {n_cells} cells to extract")
