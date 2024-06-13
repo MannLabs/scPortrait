@@ -1,0 +1,33 @@
+---
+name: "Cellpose Segmentation"
+input_channels: 3
+output_channels: 5
+ShardedCytosolSegmentationDownsamplingCellpose:
+    input_channels: 2
+    output_masks: 2
+    shard_size: 120000000 # maxmimum number of pixel per tile
+    overlap_px: 100
+    nGPUs: 2
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    threads: 1 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+    cache: "/fs/pool/pool-mann-maedler-shared/temp"
+    lower_quantile_normalization:   0.001
+    upper_quantile_normalization:   0.999
+    median_filter_size: 6 # Size in pixels
+    nucleus_segmentation:
+        model: "nuclei"
+    cytosol_segmentation:
+        model: "cyto2"
+    chunk_size: 50
+    filtering_threshold: 0.95
+    downsampling_factor: 4
+    smoothing_kernel_size: 7
+HDF5CellExtraction:
+    compression: True
+    threads: 80 # threads used in multithreading
+    image_size: 128 # image size in pixel
+    normalization_range: None #turn of percentile normalization for cells -> otherwise normalise out differences for the alexa647 channel
+    cache: "/fs/pool/pool-mann-maedler-shared/temp"
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
+    hdf5_rdcc_w0: 1
+    hdf5_rdcc_nslots: 50000

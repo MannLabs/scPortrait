@@ -9,15 +9,12 @@ import numpy as np
 import numpy.ma as ma
 import sys
 import imagesize
-
-# packages for timecourse project
 import pandas as pd
 from cv2 import imread
 import re
 import h5py
 from tqdm.auto import tqdm
 from time import time
-import shutil
 
 from sparcscore.pipeline.base import Logable
 from sparcscore.processing.preprocessing import percentile_normalization, EDF, maximum_intensity_projection
@@ -30,28 +27,43 @@ from ome_zarr.reader import Reader
 
 class Project(Logable):
     """
-        Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
+    Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
     to a directory on the file system which contains all of the project inputs as well as the generated outputs.
 
-    Args:
-        location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
-        config_path (str, optional, default ""): Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-        intermediate_output (bool, default False): When set to True intermediate outputs will be saved where applicable.
-        debug (bool, default False): When set to True debug outputs will be printed where applicable.
-        overwrite (bool, default False): When set to True, the processing step directory will be completely deleted and newly created when called.
-        segmentation_f (Class, default None): Class containing segmentation workflow.
-        extraction_f (Class, default None): Class containing extraction workflow.
-        classification_f (Class, default None): Class containing classification workflow.
-        selection_f (Class, default None): Class containing selection workflow.
-    
-    Attributes:
-        DEFAULT_CONFIG_NAME (str, default "config.yml"): Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
-        DEFAULT_SEGMENTATION_DIR_NAME (str, default "segmentation"): Default foldername for the segmentation process.
-        DEFAULT_EXTRACTION_DIR_NAME (str, default "extraction"): Default foldername for the extraction process.
-        DEFAULT_CLASSIFICATION_DIR_NAME (str, default "selection"): Default foldername for the classification process.
-        DEFAULT_SELECTION_DIR_NAME (str, default "classification"): Default foldername for the selection process.
-        DEFAULT_INPUT_IMAGE_NAME (str, default "input_image.ome.zarr"): Default filename for the input image.
-        channel_colors (list(str)): List of colors used for the channel visualization in the segmentation output.
+    Parameters
+    ----------
+    location_path : str
+        Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
+    config_path : str, optional, default ""
+        Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+    intermediate_output : bool, default False
+        When set to True intermediate outputs will be saved where applicable.
+    debug : bool, default False
+        When set to True debug outputs will be printed where applicable.
+    overwrite : bool, default False
+        When set to True, the processing step directory will be completely deleted and newly created when called.
+    segmentation_f : Class, default None
+        Class containing segmentation workflow.
+    extraction_f : Class, default None
+        Class containing extraction workflow.
+    classification_f : Class, default None
+        Class containing classification workflow.
+    selection_f : Class, default None
+        Class containing selection workflow.
+
+    Attributes
+    ----------
+    DEFAULT_CONFIG_NAME : str, default "config.yml"
+        Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
+    DEFAULT_SEGMENTATION_DIR_NAME : str, default "segmentation"
+        Default foldername for the segmentation process.
+    DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
+        Default foldername for the extraction process.
+    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
+        Default foldername for the classification process.
+    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+        Default foldername for the selection process.
+
     """
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
@@ -153,9 +165,12 @@ class Project(Logable):
             seg_directory = os.path.join(
                 self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME
             )
+
+            self.seg_directory = seg_directory
+
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
-                seg_directory,
+                self.seg_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -174,10 +189,12 @@ class Project(Logable):
             filter_seg_directory = os.path.join(
                 self.project_location, self.DEFAULT_SEGMENTATION_FILTERING_DIR_NAME
             )
+
+            self.filter_seg_directory = filter_seg_directory
             
             self.segmentation_filtering_f = segmentation_filtering_f(
                 self.config[segmentation_filtering_f.__name__],
-                filter_seg_directory,
+                self.filter_seg_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -190,6 +207,8 @@ class Project(Logable):
                 self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
             )
 
+            self.extraction_directory = extraction_directory
+
             if extraction_f.__name__ not in self.config:
                 raise ValueError(
                     f"Config for {extraction_f.__name__} is missing from the config file"
@@ -197,7 +216,7 @@ class Project(Logable):
 
             self.extraction_f = extraction_f(
                 self.config[extraction_f.__name__],
-                extraction_directory,
+                self.extraction_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -216,9 +235,12 @@ class Project(Logable):
             classification_directory = os.path.join(
                 self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
             )
+
+            self.classification_directory = classification_directory
+
             self.classification_f = classification_f(
                 self.config[classification_f.__name__],
-                classification_directory,
+                self.classification_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -237,9 +259,12 @@ class Project(Logable):
             selection_directory = os.path.join(
                 self.project_location, self.DEFAULT_SELECTION_DIR_NAME
             )
+
+            self.selection_directory = selection_directory
+
             self.selection_f = selection_f(
                 self.config[selection_f.__name__],
-                selection_directory,
+                self.selection_directory,
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -311,9 +336,19 @@ class Project(Logable):
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
 
-        Args:
-            file_paths (list(str)): List containing paths to each channel like [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”]. Expects a list of file paths with length “input_channel” as defined in the config.yml.
-            crop (list(tuple), optional): When set, it can be used to crop the input image. The first element refers to the first dimension of the image and so on. For example use “[(0,1000),(0,2000)]” to crop the image to 1000 px height and 2000 px width from the top left corner.
+        Parameters
+        ----------
+        file_paths : list(str)
+            List containing paths to each channel like
+            [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
+            Expects a list of file paths with length “input_channel” as
+            defined in the config.yml.
+
+        crop : list(tuple), optional
+            When set, it can be used to crop the input image. The first
+            element refers to the first dimension of the image and so on.
+            For example use “[(0,1000),(0,2000)]” to crop the image to
+            1000 px height and 2000 px width from the top left corner.
 
         """
         if self.config is None:
@@ -327,7 +362,7 @@ class Project(Logable):
                 shutil.rmtree(path)
                 self.log("Overwrite is set to True. Existing input image was deleted.")
             else:
-                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
+                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or delete the existing input image.")
 
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
@@ -350,8 +385,6 @@ class Project(Logable):
 
         self.input_image = np.stack(channels)
 
-        print(self.input_image.shape)
-
         if self.remap is not None:
             self.input_image = self.input_image[self.remap]
         
@@ -359,14 +392,22 @@ class Project(Logable):
 
     def load_input_from_array(self, array, remap=None):
         """
-        Load input image from an already loaded numpy array.
+        Load input image from an already loaded numpy array. 
         The numpy array needs to have the following shape: CXY. 
         The channels need to be in the following order: nucleus, cellmembrane channel, 
         other channnels or a remapping needs to be defined.
 
-        Args:
-            array (numpy.ndarray): Numpy array of shape “[channels, height, width]”.
-            remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
+        Parameters
+        ----------
+        array : numpy.ndarray
+            Numpy array of shape “[channels, height, width]”.
+
+        remap : list(int), optional
+            Define remapping of channels. For example use “[1, 0, 2]”
+            to change the order of the first and the second channel.
+            The expected order is Nucleus Channel, Cellmembrane Channel
+            followed by other channels.
+
         """
         # input data is not copied to the project folder
         if self.config is None:
@@ -380,7 +421,7 @@ class Project(Logable):
                 shutil.rmtree(path)
                 self.log("Overwrite is set to True. Existing input image was deleted.")
             else:
-                raise ValueError(f"Overwrite is set to False but an input image already written to file. Either set ")
+                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or remove the existing input image ")
 
         if not array.shape[0] == self.config["input_channels"]:
             raise ValueError(
@@ -440,7 +481,7 @@ class Project(Logable):
         if "Z" in dimensions:
             self.log("Found more than one Z-stack in CZI file.")
             
-            if type(z_stack_projection) == int:
+            if isinstance(z_stack_projection, int):
                 self.log(f"Selection Z-stack {z_stack_projection}")
                 _mosaic = np.array([czi.read_mosaic(region = (box.x, box.y, box.w, box.h),
                                                     C = c, 
@@ -485,74 +526,76 @@ class Project(Logable):
         self.log("finished loading. array.")
         self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
 
-    def load_input_from_czi_2(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
-        """Load image input from .czi file. Slower than CZI 1 use that function instead.
+    #deprecate this function for the time being do to import issues
+    #new function needs to be implemented anyways that does not lead to memory issues
+    # def load_input_from_czi_2(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
+    #     """Load image input from .czi file. Slower than CZI 1 use that function instead.
 
-        Args:
-            czi_path (path): path to .czi file that should be loaded
-            intensity_rescale (bool, optional): boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.
-            scene (int, optional): integer indicating which scene should be selected if the .czi contains several. Defaults to None.
-            z_stack_projection (int or "maximum_intensity_projection" or "EDF"): if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.
-            remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
-        """
-        from aicsimageio.aics_image import AICSImage
+    #     Args:
+    #         czi_path (path): path to .czi file that should be loaded
+    #         intensity_rescale (bool, optional): boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.
+    #         scene (int, optional): integer indicating which scene should be selected if the .czi contains several. Defaults to None.
+    #         z_stack_projection (int or "maximum_intensity_projection" or "EDF"): if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.
+    #         remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
+    #     """
+    #     from aicsimageio.aics_image import AICSImage
 
-        self.log(f"Reading CZI file from path {czi_path}")
-        czi = AICSImage(czi_path)
+    #     self.log(f"Reading CZI file from path {czi_path}")
+    #     czi = AICSImage(czi_path)
 
-        n_scenes = len(czi.scenes)
-        n_channels = czi.dims.C
-        n_zstacks = czi.dims.Z
+    #     n_scenes = len(czi.scenes)
+    #     n_channels = czi.dims.C
+    #     n_zstacks = czi.dims.Z
 
-        if n_scenes > 1:
-            if scene is None:
-                sys.exit("For multi-scene CZI files you need to select one scene that you wish to load into SPARCSpy. Please pass an integer to the parameter scene indicating which scene to choose.")
-            else:
-                self.log(f"Reading scene {czi.scenes[scene]} from CZI file.")
-                czi.set_scene(scene)
+    #     if n_scenes > 1:
+    #         if scene is None:
+    #             sys.exit("For multi-scene CZI files you need to select one scene that you wish to load into SPARCSpy. Please pass an integer to the parameter scene indicating which scene to choose.")
+    #         else:
+    #             self.log(f"Reading scene {czi.scenes[scene]} from CZI file.")
+    #             czi.set_scene(scene)
         
-        #if there is only one scene automatically select this one
-        if n_scenes == 1:
-            scene = 0
-            czi.set_scene(scene)
+    #     #if there is only one scene automatically select this one
+    #     if n_scenes == 1:
+    #         scene = 0
+    #         czi.set_scene(scene)
 
-        #check if more than one zstack is contained
-        if n_zstacks > 1:
-            self.log(f"Found {n_zstacks} Z-stack in CZI file.")
+    #     #check if more than one zstack is contained
+    #     if n_zstacks > 1:
+    #         self.log(f"Found {n_zstacks} Z-stack in CZI file.")
             
-            if type(z_stack_projection) == int:
-                self.log(f"Selection Z-stack {z_stack_projection}")
-                _mosaic = czi.get_image_dask_data("CYX", Z=z_stack_projection).compute()
+    #         if isinstance(z_stack_projection, int):
+    #             self.log(f"Selection Z-stack {z_stack_projection}")
+    #             _mosaic = czi.get_image_dask_data("CYX", Z=z_stack_projection).compute()
             
-            elif z_stack_projection is not None:
+    #         elif z_stack_projection is not None:
                 
-                #define method for aggregating z-stacks
-                if z_stack_projection == "maximum_intensity_projection":
-                    self.log("Using Maximum Intensity Projection to combine Z-stacks.")
-                    method = maximum_intensity_projection
-                elif z_stack_projection == "EDF":
-                    self.log("Using EDF to combine Z-stacks.")
-                    method = EDF
-                else:
-                    sys.exit("Please define a valid method for z_stack_projection.")
+    #             #define method for aggregating z-stacks
+    #             if z_stack_projection == "maximum_intensity_projection":
+    #                 self.log("Using Maximum Intensity Projection to combine Z-stacks.")
+    #                 method = maximum_intensity_projection
+    #             elif z_stack_projection == "EDF":
+    #                 self.log("Using EDF to combine Z-stacks.")
+    #                 method = EDF
+    #             else:
+    #                 sys.exit("Please define a valid method for z_stack_projection.")
                 
-                #actually read data
-                _mosaic = []
-                for c in range(n_channels):
-                    _img = czi.get_image_dask_data("ZYX", C = c).compute()
-                    _mosaic.append(method(_img))
-                _mosaic = np.array(_mosaic)
+    #             #actually read data
+    #             _mosaic = []
+    #             for c in range(n_channels):
+    #                 _img = czi.get_image_dask_data("ZYX", C = c).compute()
+    #                 _mosaic.append(method(_img))
+    #             _mosaic = np.array(_mosaic)
             
-        else:
-            _mosaic = czi.read_mosaic("CYX").compute()
+    #     else:
+    #         _mosaic = czi.read_mosaic("CYX").compute()
 
-        #perform intensity rescaling before loading images
-        if intensity_rescale:
-            self.log("Performing percentile normalization on the input image with lower_percentile=0.005 and upper_percentile=0.995")
-            _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=0.005, upper_percentile=0.995) for i in range(n_channels)])
-            _mosaic = (_mosaic * 65535).astype('uint16') #convert to 16bit images
+    #     #perform intensity rescaling before loading images
+    #     if intensity_rescale:
+    #         self.log("Performing percentile normalization on the input image with lower_percentile=0.005 and upper_percentile=0.995")
+    #         _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=0.005, upper_percentile=0.995) for i in range(n_channels)])
+    #         _mosaic = (_mosaic * 65535).astype('uint16') #convert to 16bit images
 
-        self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
+    #     self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
 
 
     def define_image_area_napari(self, napari_csv_path):
@@ -560,12 +603,9 @@ class Project(Logable):
                 self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             
-            #get name from naparipath
-            name = os.path.basename(napari_csv_path).split(".")[0]
-
             # read napari csv
             polygons = _read_napari_csv(napari_csv_path)
     
@@ -596,7 +636,7 @@ class Project(Logable):
             self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             self.segmentation_f(self.input_image, *args, **kwargs)
 
@@ -615,7 +655,7 @@ class Project(Logable):
             self.log("No input image loaded. Trying to read file from disk.")
             try:
                 self.load_input_image()
-            except:
+            except Exception:
                 raise ValueError("No input image loaded and no file found to load image from.")
             self.segmentation_f.complete_segmentation(self.input_image, *args, **kwargs)
 
@@ -729,24 +769,41 @@ class TimecourseProject(Project):
     it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>` class,
     it requires the use of specialized processing classes that are able to handle this additional dimensionality.
 
-    Args:
-        location_path (str): Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
-        config_path (str, optional): Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-        intermediate_output (bool, optional): When set to True intermediate outputs will be saved where applicable. Defaults to False.
-        debug (bool, optional): When set to True debug outputs will be printed where applicable. Defaults to False.
-        overwrite (bool, optional): When set to True, the processing step directory will be completely deleted and newly created when called. Defaults to False.
-        segmentation_f (Class, optional): Class containing segmentation workflow. Defaults to None.
-        extraction_f (Class, optional): Class containing extraction workflow. Defaults to None.
-        classification_f (Class, optional): Class containing classification workflow. Defaults to None.
-        selection_f (Class, optional): Class containing selection workflow. Defaults to None.
-    
-    Attributes:
-        DEFAULT_CONFIG_NAME (str): Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
-        DEFAULT_INPUT_IMAGE_NAME (str): Default file name for loading the input image.
-        DEFAULT_SEGMENTATION_DIR_NAME (str): Default foldername for the segmentation process.
-        DEFAULT_EXTRACTION_DIR_NAME (str): Default foldername for the extraction process.
-        DEFAULT_CLASSIFICATION_DIR_NAME (str): Default foldername for the classification process.
-        DEFAULT_SELECTION_DIR_NAME (str): Default foldername for the selection process.
+    Parameters
+    ----------
+    location_path : str
+        Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
+    config_path : str, optional, default ""
+        Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+    intermediate_output : bool, default False
+        When set to True intermediate outputs will be saved where applicable.
+    debug : bool, default False
+        When set to True debug outputs will be printed where applicable.
+    overwrite : bool, default False
+        When set to True, the processing step directory will be completely deleted and newly created when called.
+    segmentation_f : Class, default None
+        Class containing segmentation workflow.
+    extraction_f : Class, default None
+        Class containing extraction workflow.
+    classification_f : Class, default None
+        Class containing classification workflow.
+    selection_f : Class, default None
+        Class containing selection workflow.
+
+    Attributes
+    ----------
+    DEFAULT_CONFIG_NAME : str, default "config.yml"
+        Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
+    DEFAULT_INPUT_IMAGE_NAME: str, default "input_segmentation.h5"
+        Default file name for loading the input image.
+    DEFAULT_SEGMENTATION_DIR_NAME : str, default "segmentation"
+        Default foldername for the segmentation process.
+    DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
+        Default foldername for the extraction process.
+    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
+        Default foldername for the classification process.
+    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+        Default foldername for the selection process.
     """
     DEFAULT_INPUT_IMAGE_NAME = "input_segmentation.h5"
 
@@ -754,6 +811,25 @@ class TimecourseProject(Project):
         super().__init__(*args, **kwargs)
 
     def load_input_from_array(self, img, label, overwrite=False):
+        """
+        Function to load imaging data from an array into the TimecourseProject.
+        
+        The provided array needs to fullfill the following conditions:
+        - shape: NCYX
+        - all images need to have the same dimensions and the same number of channels
+        - channels need to be in the following order: nucleus, cytosol other channels
+        - dtype uint16.
+
+        Parameters
+        ----------
+        img : numpy.ndarray
+            Numpy array of shape “[num_images, channels, height, width]”.
+        label : numpy.ndarray
+            Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: "image_index", "unique_image_identifier", "..."
+        overwrite : bool, default False
+            If set to True, the function will overwrite the existing input image.
+        """
+
         """
         Function to load imaging data from an array into the TimecourseProject.
         
@@ -811,7 +887,6 @@ class TimecourseProject(Project):
                 "input_images", data=img, chunks=(1, 1, img.shape[2], img.shape[2])
             )
 
-            print(hf.keys())
             hf.close()
 
     def load_input_from_files(
@@ -823,6 +898,45 @@ class TimecourseProject(Project):
             img_size=1080,
             overwrite=False):
         """
+        Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.
+    
+        Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_.
+
+        In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
+        using the well notation ``RowXX_WellXX``:
+
+        .. csv-table::
+            :header: "Well", "Condition1", "Condition2", ...
+            :widths: auto
+
+            "RowXX_WellXX", "A", "B", ...
+
+        A tab needs to be used as a seperator and the file saved as a .tsv file.
+
+        Parameters
+        ----------
+        input_dir : str
+            Path to the directory containing the sorted images from the opera phenix.
+        channels : list(str)
+            List containing the names of the channels that should be loaded.
+        timepoints : list(str)
+            List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
+        plate_layout : str
+            Path to the plate layout file. For the format please see above.
+        img_size : int, default 1080
+            Size of the images that should be loaded. All images will be cropped to this size.
+        overwrite : bool, default False
+            If set to True, the function will overwrite the existing input image.
+
+        Example
+        -------
+        >>> channels = ["DAPI", "Alexa488", "mCherry"]
+        >>> timepoints = ["Timepoint"+str(x).zfill(3) for x in list(range(1, 3))]
+        >>> input_dir = "path/to/sorted/outputs/from/sparcstools"
+        >>> plate_layout = "plate_layout.tsv"
+
+        >>> project.load_input_from_files(input_dir = input_dir,  channels = channels,  timepoints = timepoints, plate_layout = plate_layout, overwrite = True)
+        
         Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.
     
         Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_.
@@ -916,7 +1030,7 @@ class TimecourseProject(Project):
                         continue
                     else:
                         print(f"No images found for Timepoint {timepoint}")
-                # print(f"{sum} different timepoints found of the total {len(timepoints)} timepoints given.")
+                
                 self.log(
                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
                 )
@@ -1131,7 +1245,7 @@ class TimecourseProject(Project):
                         continue
                     else:
                         print(f"No images found for Timepoint {timepoint}")
-                # print(f"{sum} different timepoints found of the total {len(timepoints)} timepoints given.")
+                
                 self.log(
                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
                 )
@@ -1438,7 +1552,7 @@ class TimecourseProject(Project):
                     f"following timepoints given not found in imaging data: {not_found_timepoints}"
                 )
 
-            self.log(f"Will perform merging over the following specs:")
+            self.log("Will perform merging over the following specs:")
             self.log(f"Wells: {_wells}")
             self.log(f"Timepoints: {_timepoints}")
 
@@ -1532,7 +1646,6 @@ class TimecourseProject(Project):
                         cropped = merged_images[
                             :, slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
                         ]
-                        print(merged_images.shape, cropped.shape)
 
                         # create labelling
                         column_values = []
@@ -1623,7 +1736,7 @@ class TimecourseProject(Project):
 
             print("If Segmentation already existed removed.")
 
-        if self.segmentation_f == None:
+        if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
         else:
@@ -1634,7 +1747,7 @@ class TimecourseProject(Project):
         Extract single cells from a timecourse project with the defined extraction method.
         """
 
-        if self.extraction_f == None:
+        if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
         input_segmentation = self.segmentation_f.get_output()

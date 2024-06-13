@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SPARCSpy - image-based single cell analysis at scale in python &mdash; SPARCSpy  documentation</title>
+  <title>SPARCSpy - image-based single cell analysis at scale in Python &mdash; SPARCSpy  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -16,9 +16,11 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -216,6 +218,10 @@
 <li class="toctree-l4"><a class="reference internal" href="pages/module/processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/pipeline.html">pipeline</a><ul>
@@ -230,7 +236,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pages/module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -318,6 +324,13 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="pages/module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -336,7 +349,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">SPARCSpy - image-based single cell analysis at scale in python</li>
+      <li class="breadcrumb-item active">SPARCSpy - image-based single cell analysis at scale in Python</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -347,17 +360,18 @@
            <div itemprop="articleBody">
              
   <section id="sparcspy-image-based-single-cell-analysis-at-scale-in-python">
-<h1>SPARCSpy - image-based single cell analysis at scale in python<a class="headerlink" href="#sparcspy-image-based-single-cell-analysis-at-scale-in-python" title="Link to this heading"></a></h1>
+<h1>SPARCSpy - image-based single cell analysis at scale in Python<a class="headerlink" href="#sparcspy-image-based-single-cell-analysis-at-scale-in-python" title="Link to this heading"></a></h1>
 <p>SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.</p>
-<a class="reference internal image-reference" href="_images/graphical_abstract_without_title.png"><img alt="graphical abstract" class="align-center" src="_images/graphical_abstract_without_title.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="_images/graphical_abstract_without_title.png"><img alt="graphical abstract" class="align-center" src="_images/graphical_abstract_without_title.png" style="width: 100%;" />
+</a>
 </section>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>Check out the installation instructions <a class="reference internal" href="pages/quickstart/installation.html#installation"><span class="std std-ref">here</span></a>. You can validate your installation by running one of the example notebooks <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks">here</a>.</p>
+<p>Check out the installation instructions <a class="reference internal" href="pages/quickstart/installation.html#installation"><span class="std std-ref">here</span></a>. You can validate your installation by running one of the example notebooks <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks">here</a>.</p>
 </section>
 <section id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
-<p>You can check out our <a class="reference internal" href="pages/quickstart.html#quickstart"><span class="std std-ref">quickstart</span></a> guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth <a class="reference internal" href="pages/pipeline.html#pipeline"><span class="std std-ref">computational workflow</span></a> guide. In the github repository you can also find some <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/docs_source/pages/notebooks">tutorial notebooks</a> as well as <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/tree/main/example_data">small example datasets</a> to get started with. If you encounter issues feel free to <a class="reference external" href="https://github.com/MannLabs/SPARCSpy/issues">open up a git issue</a>.</p>
+<p>You can check out our <a class="reference internal" href="pages/quickstart.html#quickstart"><span class="std std-ref">quickstart</span></a> guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth <a class="reference internal" href="pages/pipeline.html#pipeline"><span class="std std-ref">computational workflow</span></a> guide. In the github repository you can also find some <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks">tutorial notebooks</a> as well as <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/example_data">small example datasets</a> to get started with. If you encounter issues feel free to <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/issues">open up a git issue</a>.</p>
 </section>
 <section id="citing-our-work">
 <h1>Citing our Work<a class="headerlink" href="#citing-our-work" title="Link to this heading"></a></h1>
@@ -412,6 +426,7 @@ bioRxiv 2023.06.01.542416; doi: <a class="reference external" href="https://doi.
 <li class="toctree-l2"><a class="reference internal" href="pages/module/processing.html">processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/pipeline.html">pipeline</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/ml.html">ml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/module/utils.html">utils</a></li>
 </ul>
 </li>
 </ul>

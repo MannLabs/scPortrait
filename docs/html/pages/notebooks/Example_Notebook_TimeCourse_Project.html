@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example Notebook Running SPARCSpy on datasets with multiple images &mdash; SPARCSpy  documentation</title>
@@ -17,14 +17,16 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Example Notebook showcasing the different segmentation workflows" href="example_notebook_segmentation_workflows.html" />
+    <link rel="prev" title="Example Notebooks" href="../example_notebooks.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,7 +49,42 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
-<ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../pipeline.html">SPARCSpy Workflow</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">SPARCSpy Projects</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
@@ -84,6 +121,45 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="../example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Example Notebook Running SPARCSpy on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Example-loading-data-via-a-numpy-array">Example loading data via a numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -144,6 +220,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
@@ -158,7 +238,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id4">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -246,6 +326,13 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -264,6 +351,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../example_notebooks.html">Example Notebooks</a></li>
       <li class="breadcrumb-item active">Example Notebook Running SPARCSpy on datasets with multiple images</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/pages/notebooks/Example_Notebook_TimeCourse_Project.ipynb.txt" rel="nofollow"> View page source</a>
@@ -1031,7 +1119,10 @@ WARNING:root:New temp folder location. Temp mmap arrays are written to /tmp/./te
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../example_notebooks.html" class="btn btn-neutral float-left" title="Example Notebooks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="example_notebook_segmentation_workflows.html" class="btn btn-neutral float-right" title="Example Notebook showcasing the different segmentation workflows" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

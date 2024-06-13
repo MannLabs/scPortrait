@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+### VGG Model Architecture
 class VGGBase(nn.Module): 
     """
     Base implementation of VGG Model Architecture. Can be implemented with varying number of 
@@ -136,7 +137,7 @@ class VGG1(VGGBase):
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
         self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg])
         
-    def vgg(cfg, in_channels,  **kwargs):
+    def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG1(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
 
@@ -163,7 +164,7 @@ class VGG2(VGGBase):
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
         self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg])
         
-    def vgg(cfg, in_channels,  **kwargs):
+    def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
 
@@ -300,7 +301,6 @@ class CAEBase(nn.Module):
         layers += [nn.ConvTranspose2d(in_channels,out_channels,3,padding=1, stride=1)]
         
         return nn.Sequential(*layers)
-
 
 ### VAE Model Architecture
 
@@ -478,32 +478,6 @@ class VAEBase(nn.Module):
         loss = recons_loss + kld_weight * kld_loss
         return {'loss': loss, 'Reconstruction_Loss':recons_loss, 'KLD':-kld_loss}
 
-
-    """
-   Instance of VGGBase with model architecture 2.
-    """
-     
-    def __init__(self,
-                cfg = "B",
-                cfg_MLP = "B",
-                dimensions = 196,
-                in_channels = 5,
-                num_classes = 2,
-                ):
-        
-        super(VGG2, self).__init__()
-        
-        self.norm = nn.BatchNorm2d(in_channels)
-        self.softmax = nn.LogSoftmax(dim=1)
-        
-        self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg])
-        
-    def vgg(cfg, in_channels,  **kwargs):
-        model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
-        return model
-    
-
 #### DEPRECATED FUNCTIONS FOR BACKWARD COMPATABILITY
 
 class _VGG1(nn.Module):
@@ -608,8 +582,8 @@ class _VGG1(nn.Module):
                 in_channels = v
         return nn.Sequential(*layers)
         
-    def vgg(cfg, in_channels,  **kwargs):
-        model = _VGG1(make_layers(cfgs[cfg], in_channels), **kwargs)
+    def vgg(self, cfg, in_channels,  **kwargs):
+        model = _VGG1(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
     
 class _VGG2(nn.Module):
@@ -730,5 +704,5 @@ class _VGG2(nn.Module):
         return nn.Sequential(*layers)
         
     def vgg(self, cfg, in_channels,  **kwargs):
-        model = _VGG1(make_layers(cfgs[cfg], in_channels), **kwargs)
+        model = _VGG1(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model

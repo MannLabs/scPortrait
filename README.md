@@ -1,13 +1,15 @@
-[![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/SPARCSpy/actions/workflows/python-package.yml)
+[![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/SPARCSspatial/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/SPARCSspatial/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/SPARCSpy/html/index.html)](https://mannlabs.github.io/SPARCSpy/html/index.html)
 
-SPARCSpy is a scalable toolkit to analyse SPARCS datasets. The python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes and subsequent excision using Laser Microdissection.
+![Graphical Abstract](https://github.com/MannLabs/SPARCSspatial/assets/15019107/47461f35-3dec-4aa6-ba51-ee1b631ddab9)
+
+SPARCSpy is a scalable toolkit to analyse SPARCS datasets. The python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
 To better understand what SPARCSpy can do please checkout our [documentation](https://mannlabs.github.io/SPARCSpy/html/index.html), the [paper](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1) or our [tweetorial on the computation tools](https://twitter.com/SophiaMaedler/status/1665816840726085634?s=20) and our [tweetorial on the science](https://twitter.com/niklas_a_s/status/1664538053744947203?s=20).
 
 ## Documentation
 
-The current documentation can be found under https://mannlabs.github.io/SPARCSpy/html/index.html.
+The current documentation can be found under https://mannlabs.github.io/SPARCSspatial/html/index.html.
 
 ## Installation from Github
 
@@ -19,7 +21,7 @@ Please make sure that the package is installed editable (with the `-e` flag). Ot
 We recommend installing the non-python dependencies with conda before installing SPARCSpy (especially if running on an M1 Silicon Mac):
 
 ```
-git clone https://github.com/MannLabs/SPARCSpy
+git clone https://github.com/MannLabs/SPARCSspatial
 cd SPARCSpy
 
 conda create -n "SPARCSpy"

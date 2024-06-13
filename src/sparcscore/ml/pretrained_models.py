@@ -35,8 +35,10 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, type, eval = True, 
 
     """
 
-    #load model
-    model = MultilabelSupervisedModel.load_from_checkpoint(checkpoint_path, hparams_file=hparam_path, type = type, map_location = device)
+    # Load model
+    model = MultilabelSupervisedModel.load_from_checkpoint(
+        checkpoint_path, hparams_file=hparam_path, model_type=type, map_location=device
+    )
     if eval:
         model.eval()
 
@@ -64,7 +66,7 @@ def autophagy_classifier1_0(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy1.0/VGG1_autophagy_classifier1.0.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy1.0/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, type = "VGG1_old", device = device)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG1_old", device = device)
     return(model)
 
 def autophagy_classifier2_0(device = "cuda"):
@@ -77,7 +79,7 @@ def autophagy_classifier2_0(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.0/VGG2_autophagy_classifier2.0.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy2.0/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, type = "VGG2_old", device = device)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG2_old", device = device)
     return(model)
 
 def autophagy_classifier2_1(device = "cuda"):
@@ -90,5 +92,5 @@ def autophagy_classifier2_1(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.1/VGG2_autophagy_classifier2.1.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy2.1/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, type = "VGG2_old", device = device)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG2_old", device = device)
     return(model)

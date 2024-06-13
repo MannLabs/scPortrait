@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ml &mdash; SPARCSpy  documentation</title>
@@ -16,12 +16,13 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="utils" href="utils.html" />
     <link rel="prev" title="pipeline" href="pipeline.html" /> 
 </head>
 
@@ -46,6 +47,41 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../pipeline.html">SPARCSpy Workflow</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">SPARCSpy Projects</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
@@ -82,6 +118,45 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html">Example Notebook Running SPARCSpy on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-loading-data-via-a-numpy-array">Example loading data via a numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -142,6 +217,10 @@
 <li class="toctree-l4"><a class="reference internal" href="processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pipeline.html">pipeline</a><ul>
@@ -156,7 +235,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id4">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -240,6 +319,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-sparcscore.ml.utils">utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#sparcscore.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -406,20 +492,22 @@ containing hdf5 files.</p>
 </dd></dl>
 
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; hdf5_data = HDF5SingleCellDataset(dir_list=[‘data1.hdf5’, ‘data2.hdf5’],
-dir_labels=[0, 1],
-root_dir=‘/path/to/data’,
-transform=None,
-return_id=True)
-&gt;&gt;&gt; len(hdf5_data)
-2000
-&gt;&gt;&gt; sample = hdf5_data[0]
-&gt;&gt;&gt; sample[0].shape
-torch.Size([1, 128, 128])
-&gt;&gt;&gt; sample[1]
-tensor(0)
-&gt;&gt;&gt; sample[2]
-tensor(0)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">hdf5_data</span> <span class="o">=</span> <span class="n">HDF5SingleCellDataset</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dir_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;data1.hdf5&#39;</span><span class="p">,</span> <span class="s1">&#39;data2.hdf5&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">dir_labels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">root_dir</span><span class="o">=</span><span class="s1">&#39;/path/to/data&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">return_id</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">hdf5_data</span><span class="p">)</span>
+<span class="go">2000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span> <span class="o">=</span> <span class="n">hdf5_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([1, 128, 128])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">tensor(0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">tensor(0)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -498,7 +586,7 @@ cfg with optional batch normalization for the CNN.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
-<li><p><strong>CNN</strong> (<em>VGG architecture</em><em> of </em><em>the</em>) – </p></li>
+<li><p><strong>CNN</strong> (<em>VGG architecture</em><em> of </em><em>the</em>)</p></li>
 <li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels</p></li>
 <li><p><strong>batch_norm</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use batch normalization. Defaults to True.</p></li>
 </ul>
@@ -521,9 +609,9 @@ cfg for the MLP.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cfg_MLP</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
-<li><p><strong>MLP</strong> (<em>VGG architecture</em><em> of </em><em>the</em>) – </p></li>
+<li><p><strong>MLP</strong> (<em>VGG architecture</em><em> of </em><em>the</em>)</p></li>
 <li><p><strong>cfg</strong> (<em>list</em>) – A list of integers and “M” representing the specific</p></li>
-<li><p><strong>CNN</strong> (<em>VGG architecture</em><em> of </em><em>the</em>) – </p></li>
+<li><p><strong>CNN</strong> (<em>VGG architecture</em><em> of </em><em>the</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -715,13 +803,13 @@ Valid options: “VGG1”, “VGG2”, “VGG1_old”, “VGG2_old”.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.ml.transforms.GaussianNoise">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianNoise" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels_to_exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianNoise" title="Link to this definition"></a></dt>
 <dd><p>Add gaussian noise to the input image.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sparcscore.ml.transforms.GaussianBlur">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianBlur</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">5,</span> <span class="pre">5,</span> <span class="pre">7,</span> <span class="pre">9]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">0.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianBlur" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.ml.transforms.</span></span><span class="sig-name descname"><span class="pre">GaussianBlur</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">5,</span> <span class="pre">5,</span> <span class="pre">7,</span> <span class="pre">9]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.1,</span> <span class="pre">2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.transforms.GaussianBlur" title="Link to this definition"></a></dt>
 <dd><p>Apply a gaussian blur to the input image.</p>
 </dd></dl>
 
@@ -745,7 +833,7 @@ Valid options: “VGG1”, “VGG2”, “VGG1_old”, “VGG2_old”.</p></li>
 <span id="utils"></span><h2>utils<a class="headerlink" href="#module-sparcscore.ml.utils" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="sparcscore.ml.utils.combine_datasets_balanced">
-<span class="sig-prename descclassname"><span class="pre">sparcscore.ml.utils.</span></span><span class="sig-name descname"><span class="pre">combine_datasets_balanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_per_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_per_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_per_class</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.utils.combine_datasets_balanced" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sparcscore.ml.utils.</span></span><span class="sig-name descname"><span class="pre">combine_datasets_balanced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_per_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_per_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_per_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.ml.utils.combine_datasets_balanced" title="Link to this definition"></a></dt>
 <dd><p>Combine multiple datasets to create a single balanced dataset with a specified number of samples per class for train, validation, and test set.
 A balanced dataset means that from each label source an equal number of data instances are used.</p>
 <dl class="field-list simple">
@@ -777,6 +865,7 @@ A balanced dataset means that from each label source an equal number of data ins
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="pipeline.html" class="btn btn-neutral float-left" title="pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

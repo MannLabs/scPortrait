@@ -1,16 +1,11 @@
-import sys, getopt
 import argparse
 import os
 
-from tabulate import tabulate
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor as Pool
-from colorama import init
-from colorama import Fore, Back, Style
-import h5py
 import glob
-import pprint
 import shutil
+from collections.abc import Iterable
 
 def generate_parser():
     # Instantiate the parser
@@ -43,7 +38,7 @@ def main():
     else:
         try:
             search_directory = os.path.abspath(args.search_directory)
-        except:
+        except Exception:
             print("search directory not a valid path")
         
     tabel = scan_directory_clean(args.recursion, search_directory)
@@ -88,8 +83,6 @@ def scan_directory_clean(levels_left, path, num_threads = 10):
             _to_delete = []
             _to_delete = _to_delete + glob.glob(os.path.join(path, "segmentation", "tiles", "*"))
             _to_delete = _to_delete + glob.glob(os.path.join(path, "segmentation", "shards", "*")) #for backward compatability with previous runs where it was still called shards
-            #_to_delete.append(os.path.join(path, 'segmentation', 'input_image.h5'))
-
             files = []
             dirs = []
 
@@ -140,7 +133,7 @@ def check_dir(path):
                 _files.append(_file)
             
     if os.path.isfile(path):
-        _files.append(file)
+        _files.append(path)
     
     return(_files, _dirs)
 
@@ -168,9 +161,8 @@ def sizeof_fmt(num, suffix="B"):
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}"
 
-from collections.abc import Iterable
-def flatten(l):
-    for el in l:
+def flatten(list):
+    for el in list:
         if isinstance(el, Iterable):
             if len(el)>0:
                 yield el[0]

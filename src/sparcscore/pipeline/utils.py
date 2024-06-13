@@ -1,16 +1,15 @@
 import pandas as pd
 from shapely.geometry import Polygon
 from rasterio.features import rasterize
-import xarray as xr
 
 def _read_napari_csv(path):
     # read csv table
-    shapes = pd.read_csv(path, sep = ",")
-    shapes.columns = ['index_shape', 'shape-type', 'vertex-index', 'axis-0', 'axis-1']
-    
-    #get unqiue shapes
+    shapes = pd.read_csv(path, sep=",")
+    shapes.columns = ["index_shape", "shape-type", "vertex-index", "axis-0", "axis-1"]
+
+    # get unqiue shapes
     shape_ids = shapes.index_shape.value_counts().index.tolist()
-    
+
     polygons = []
 
     for shape_id in shape_ids:
@@ -20,11 +19,11 @@ def _read_napari_csv(path):
 
         polygon = Polygon(zip(x, y))
         polygons.append(polygon)
-    
+
     return polygons
+
 
 def _generate_mask_polygon(poly, outshape):
     x, y = outshape
-    img = rasterize(poly, out_shape = (x, y))
-    return(img.astype("bool"))
-
+    img = rasterize(poly, out_shape=(x, y))
+    return img.astype("bool")

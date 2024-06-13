@@ -426,7 +426,7 @@ class AutoEncoderModel(pl.LightningModule):
                 try:
                     if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
                         print(type(obj), obj.size())
-                except:
+                except Exception:
                     pass
         
 

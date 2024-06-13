@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>processing &mdash; SPARCSpy  documentation</title>
@@ -16,7 +16,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,6 +47,41 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">SPARCSpy Ecosystem</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">SPARCSpy workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../pipeline.html">SPARCSpy Workflow</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">SPARCSpy Projects</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
@@ -83,6 +118,45 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#basic-sparcspy-project">Basic SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_sparcspy_project.html">A walk through the SPARCSpy Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_sparcspy_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#timecourse-sparcspy-project">Timecourse SPARCSpy Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html">Example Notebook Running SPARCSpy on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Example-loading-data-via-a-numpy-array">Example loading data via a numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/Example_Notebook_TimeCourse_Project.html#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -143,6 +217,10 @@
 <li class="toctree-l4"><a class="reference internal" href="#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pipeline.html">pipeline</a><ul>
@@ -157,7 +235,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pipeline.html#id2">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -241,6 +319,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="ml.html#module-sparcscore.ml.utils">utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#sparcscore.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -363,13 +448,13 @@ Successfully downloaded testimage_wga.tiff from <a class="reference external" hr
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sparcscore.processing.utils.flatten">
-<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.flatten" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sparcscore.processing.utils.</span></span><span class="sig-name descname"><span class="pre">flatten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.utils.flatten" title="Link to this definition"></a></dt>
 <dd><p>Flatten a list of lists into a single list.</p>
 <p>This function takes in a list of lists (nested lists) and returns a single list
 containing all the elements from the input lists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>l</strong> (<em>list</em><em> of </em><em>lists</em>) – A list containing one or more lists as its elements.</p>
+<dd class="field-odd"><p><strong>list</strong> (<em>list</em><em> of </em><em>lists</em>) – A list containing one or more lists as its elements.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A single list containing all elements from the input lists.</p>
@@ -570,18 +655,20 @@ Based on implementation here: <a class="reference external" href="https://mahota
 <dd class="field-odd"><p><strong>image</strong> (<em>np.array</em>) – Input grayscale image.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Optimal threshold value calculated using Otsu’s method.</p>
+<dd class="field-even"><p><strong>threshold</strong> – Optimal threshold value calculated using Otsu’s method.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>threshold (float)</p>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; from skimage import data
-&gt;&gt;&gt; image = data.coins()
-&gt;&gt;&gt; threshold = global_otsu(image)
-&gt;&gt;&gt; print(threshold)</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coins</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">threshold</span> <span class="o">=</span> <span class="n">global_otsu</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -601,21 +688,23 @@ distance transforms and watershed segmentation.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Labeled array, where each unique feature in the input image has a unique label.</p>
+<dd class="field-even"><p><strong>labels</strong> – Labeled array, where each unique feature in the input image has a unique label.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>labels (np.array)</p>
+<dd class="field-odd"><p>np.array</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import matplotlib.pyplot as plt
-&gt;&gt;&gt; from skimage import data
-&gt;&gt;&gt; from segment import segment_global_threshold
-&gt;&gt;&gt; coins = data.coins()
-&gt;&gt;&gt; labels = segment_global_threshold(coins, dilation=5, min_distance=20, peak_footprint=7, speckle_kernel=3, debug=True)
-&gt;&gt;&gt; plt.imshow(labels, cmap=’jet’)
-&gt;&gt;&gt; plt.colorbar()
-&gt;&gt;&gt; plt.show()</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">segment</span> <span class="kn">import</span> <span class="n">segment_global_threshold</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">coins</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coins</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">labels</span> <span class="o">=</span> <span class="n">segment_global_threshold</span><span class="p">(</span><span class="n">coins</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">min_distance</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">peak_footprint</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">speckle_kernel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -639,21 +728,23 @@ the median value of a block of pixels, followed by peak detection using distance
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Labeled array, where each unique feature in the input image has a unique label.</p>
+<dd class="field-even"><p><strong>labels</strong> – Labeled array, where each unique feature in the input image has a unique label.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>labels (np.array)</p>
+<dd class="field-odd"><p>np.array</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; import matplotlib.pyplot as plt
-&gt;&gt;&gt; from skimage import data
-&gt;&gt;&gt; image = data.coins()
-&gt;&gt;&gt; labels = segment_local_threshold(image, dilation=4, thr=0.01, median_block=51, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False)
-&gt;&gt;&gt; plt.imshow(labels, cmap=‘jet’)
-&gt;&gt;&gt; plt.colorbar()
-&gt;&gt;&gt; plt.show()</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coins</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">labels</span> <span class="o">=</span> <span class="n">segment_local_threshold</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">median_block</span><span class="o">=</span><span class="mi">51</span><span class="p">,</span> <span class="n">min_distance</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">peak_footprint</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">speckle_kernel</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -673,26 +764,24 @@ If False will return the edge labels before shifting.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The labeled map with incremented labels.
-edge_labels (list): List of unique labels in contact with the edges of the canvas.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>shifted_map (np.ndarray)</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>shifted_map</strong> (<em>np.ndarray</em>) – The labeled map with incremented labels.</p></li>
+<li><p><strong>edge_labels</strong> (<em>list</em>) – List of unique labels in contact with the edges of the canvas.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; input_map = np.array([[1, 0, 0],</p>
-<blockquote>
-<div><p>[0, 2, 0],
-[0, 0, 3]])</p>
-</div></blockquote>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">shift</span> <span class="o">=</span> <span class="mi">10</span>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<span class="gp">... </span>                      <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<span class="gp">... </span>                      <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shift</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">shifted_map</span><span class="p">,</span> <span class="n">edge_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">(</span><span class="n">input_map</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">shifted_map</span><span class="p">)</span>
 <span class="go">array([[11,  0,  0],</span>
-<span class="go">       [ 0, 12,  0],</span>
-<span class="go">       [ 0,  0, 13]])</span>
+<span class="go">    [ 0, 12,  0],</span>
+<span class="go">    [ 0,  0, 13]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">edge_labels</span><span class="p">)</span>
 <span class="go">[11, 13]</span>
 </pre></div>
@@ -713,22 +802,22 @@ edge_labels (list): List of unique labels in contact with the edges of the canva
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Labeled array with specified classes removed or reindexed.</p>
+<dd class="field-even"><p><strong>label</strong> – Labeled array with specified classes removed or reindexed.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>label (np.ndarray)</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; label_in = np.array([[1, 2, 1], [1, 0, 2], [0, 2, 3]])
-&gt;&gt;&gt; to_remove = [1, 3]
-&gt;&gt;&gt; remove_classes(label_in, to_remove)
-array([[0, 2, 0],</p>
-<blockquote>
-<div><p>[0, 0, 2],
-[0, 2, 0]])</p>
-</div></blockquote>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">remove_classes</span><span class="p">(</span><span class="n">label_in</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">)</span>
+<span class="go">array([[0, 2, 0],</span>
+<span class="go">       [0, 0, 2],</span>
+<span class="go">       [0, 2, 0]])</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -746,20 +835,18 @@ to total surrounding elements for each class.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array containing the contact proportion for each class.</p>
+<dd class="field-even"><p><strong>pop</strong> – Array containing the contact proportion for each class.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pop (np.ndarray)</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; label = np.array([[0, 1, 1],</p>
-<blockquote>
-<div><p>[0, 2, 1],
-[0, 0, 2]])</p>
-</div></blockquote>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter_lambda</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter_lambda</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 <span class="go">array([1.        , 1.,  0.6 ])</span>
 </pre></div>
 </div>
@@ -781,20 +868,18 @@ contact proportion less than the given threshold.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Filtered labeled array.</p>
+<dd class="field-even"><p><strong>label</strong> – Filtered labeled array.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>label (np.ndarray)</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; inarr = np.array([[0, 1, 1],</p>
-<blockquote>
-<div><p>[0, 2, 1],
-[0, 0, 2]])</p>
-</div></blockquote>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter</span><span class="p">(</span><span class="n">inarr</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">contact_filter</span><span class="p">(</span><span class="n">inarr</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="go">array([[0, 1, 1],</span>
 <span class="go">       [0, 0, 1],</span>
 <span class="go">       [0, 0, 0]])</span>
@@ -820,20 +905,18 @@ it can reindex the remaining classes.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Filtered labeled array.</p>
+<dd class="field-even"><p><strong>label</strong> – Filtered labeled array.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>label (np.ndarray)</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; label = np.array([[0, 1, 1],</p>
-<blockquote>
-<div><p>[0, 2, 1],
-[0, 0, 2]])</p>
-</div></blockquote>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">size_filter</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">... </span>                  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">size_filter</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="go">array([[0, 0, 0],</span>
 <span class="go">       [0, 2, 0],</span>
 <span class="go">       [0, 0, 2]])</span>
@@ -857,24 +940,24 @@ each class, and the id number of each class.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array containing the (y, x) coordinates of the centroids of each class.
-points_class (numpy.ndarray): Array containing the number of pixels associated with each class.
-ids (numpy.ndarray): Array containing the id number of each class.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>center (numpy.ndarray)</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>center</strong> (<em>numpy.ndarray</em>) – Array containing the (y, x) coordinates of the centroids of each class.</p></li>
+<li><p><strong>points_class</strong> (<em>numpy.ndarray</em>) – Array containing the number of pixels associated with each class.</p></li>
+<li><p><strong>ids</strong> (<em>numpy.ndarray</em>) – Array containing the id number of each class.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
-<p>Example:
-&gt;&gt;&gt; import numpy as np
-&gt;&gt;&gt; mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
-&gt;&gt;&gt; numba_mask_centroid(mask)
-(array([[0.33333333, 1.66666667],</p>
-<blockquote>
-<div><p>[1.5       , 1.5       ]]),</p>
-</div></blockquote>
-<p>array([3, 2], dtype=uint32),
-array([1, 2], dtype=int32))</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">numba_mask_centroid</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+<span class="go">(array([[0.33333333, 1.66666667],</span>
+<span class="go">        [1.5       , 1.5       ]]),</span>
+<span class="go">array([3, 2], dtype=uint32),</span>
+<span class="go">array([1, 2], dtype=int32))</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -886,7 +969,10 @@ array([1, 2], dtype=int32))</p>
 <dd class="field-odd"><p><strong>array</strong> (<em>np.ndarray</em>) – Input array to check if any values are True</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>boolean value indicating if expression evaluated to True or False</p>
+<dd class="field-even"><p>Boolean value indicating if expression evaluated to True or False</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -900,9 +986,196 @@ array([1, 2], dtype=int32))</p>
 <dd class="field-odd"><p><strong>array</strong> (<em>np.ndarray</em>) – Input array to check if all values are True</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>boolean value indicating if expression evaluated to True or False</p>
+<dd class="field-even"><p>Boolean value indicating if expression evaluated to True or False</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="module-sparcscore.processing.filtering">
+<span id="filtering"></span><h2>filtering<a class="headerlink" href="#module-sparcscore.processing.filtering" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sparcscore.processing.filtering.</span></span><span class="sig-name descname"><span class="pre">SizeFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'segmask'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_qc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">population_to_keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'largest'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter" title="Link to this definition"></a></dt>
+<dd><p>Filter class for removing objects from a mask based on their size.</p>
+<p>This class provides methods to remove objects from a segmentation mask based on their size.
+If specified the objects are filtered using a threshold range passed by the user. Otherwise,
+this threshold range will be automatically calculated.</p>
+<p>To automatically calculate the threshold range, a gaussian mixture model will be fitted to the data.
+Per default, the number of components is set to 2, as it is assumed that the objects in the mask can be divided into two
+groups: small and large objects. The small objects constitute segmentation artefacts (partial masks that are
+frequently generated by segmentation models like e.g. cellpose) while the large objects
+represent the actual cell masks of interest. Using the fitted model, the filtering thresholds are calculated
+to remove all cells that fall outside of the given confidence interval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter_threshold</strong> (<em>tuple</em><em> of </em><em>floats</em><em>, </em><em>optional</em>) – The lower and upper thresholds for object size filtering. If not provided, it will be automatically calculated.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the mask. Default is “segmask”.</p></li>
+<li><p><strong>log</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to take the logarithm of the size of the objects before fitting the normal distribution. Default is True.
+By enabling this option, the filter will better be able to distinguish between small and large objects.</p></li>
+<li><p><strong>plot_qc</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to plot quality control figures. Default is True.</p></li>
+<li><p><strong>directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the generated figures. If not provided, the current working directory will be used.</p></li>
+<li><p><strong>confidence_interval</strong> (<em>float</em><em>, </em><em>optional</em>) – The confidence interval for calculating the filtering threshold. Default is 0.95.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a SizeFilter object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">filter</span> <span class="o">=</span> <span class="n">SizeFilter</span><span class="p">(</span><span class="n">filter_threshold</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;my_mask&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Apply the filter to a mask</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filtered_mask</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">input_mask</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Get the object IDs to be removed</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ids_to_remove</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">get_ids_to_remove</span><span class="p">(</span><span class="n">input_mask</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Update the mask by removing the identified object IDs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">updated_mask</span> <span class="o">=</span> <span class="nb">filter</span><span class="o">.</span><span class="n">update_mask</span><span class="p">(</span><span class="n">input_mask</span><span class="p">,</span> <span class="n">ids_to_remove</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.plot_gaussian_model">
+<span class="sig-name descname"><span class="pre">plot_gaussian_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(5,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_figure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.plot_gaussian_model" title="Link to this definition"></a></dt>
+<dd><p>Plot a histogram of the provided data with fitted Gaussian distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> (<em>array_like</em>) – The input data array.</p></li>
+<li><p><strong>means</strong> (<em>array_like</em>) – The means of the Gaussian distributions.</p></li>
+<li><p><strong>variances</strong> (<em>array_like</em>) – The variances of the Gaussian distributions.</p></li>
+<li><p><strong>weights</strong> (<em>array_like</em>) – The weights of the Gaussian distributions.</p></li>
+<li><p><strong>threshold</strong> (<em>tuple</em>) – The lower and upper threshold values.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – The label for the histogram.</p></li>
+<li><p><strong>n_components</strong> (<em>int</em>) – The number of Gaussian components.</p></li>
+<li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of bins in the histogram. Default is 30.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The size of the figure. Default is (5, 5).</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – The transparency of the histogram bars. Default is 0.5.</p></li>
+<li><p><strong>directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the figure. Default is None.</p></li>
+<li><p><strong>save_figure</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save the figure. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fig</strong> – The generated figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.plot_histogram">
+<span class="sig-name descname"><span class="pre">plot_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(5,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_figure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.plot_histogram" title="Link to this definition"></a></dt>
+<dd><p>Plot a histogram of the given values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> (<em>array-like</em>) – The values to be plotted.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label for the histogram plot.</p></li>
+<li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of bins in the histogram. Default is 30.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – The transparency of the histogram bars. Default is 0.5.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The size of the figure. Default is (5, 5).</p></li>
+<li><p><strong>save_figure</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to save the figure as an image. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fig</strong> – The generated figure object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.figure.Figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.calculate_filtering_threshold">
+<span class="sig-name descname"><span class="pre">calculate_filtering_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.calculate_filtering_threshold" title="Link to this definition"></a></dt>
+<dd><p>Calculate the filtering thresholds for the given counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>counts</strong> (<em>numpy.ndarray</em>) – The counts of the data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the lower and upper filtering thresholds.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sparcscore.processing.filtering</span> <span class="kn">import</span> <span class="n">SizeFilter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">counts1</span><span class="p">,</span> <span class="n">counts2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">size_filter</span> <span class="o">=</span> <span class="n">SizeFilter</span><span class="p">(</span><span class="n">log</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">thresholds</span> <span class="o">=</span> <span class="n">size_filter</span><span class="o">.</span><span class="n">calculate_filtering_threshold</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">thresholds</span>
+<span class="go">(1.0785720179538172, 4.911918901671607)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.get_ids_to_remove">
+<span class="sig-name descname"><span class="pre">get_ids_to_remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.get_ids_to_remove" title="Link to this definition"></a></dt>
+<dd><p>Get the IDs to remove from the input mask based on the filtering threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_mask</strong> (<em>ndarray</em>) – The input mask as a numpy array.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An array containing the IDs to remove from the input mask.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function calculates the filtering threshold based on the pixel counts of the input mask.
+It then identifies the IDs that are outside of the chosen threshold range and returns them as an array.</p>
+<p>The filtering threshold can be automatically calculated if not provided.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.update_mask">
+<span class="sig-name descname"><span class="pre">update_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids_to_remove</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.update_mask" title="Link to this definition"></a></dt>
+<dd><p>Update the given mask by setting the values corresponding to the specified IDs to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – The mask to be updated.</p></li>
+<li><p><strong>ids_to_remove</strong> (<em>numpy.ndarray</em>) – The IDs to be removed from the mask.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The updated mask with the specified IDs set to 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sparcscore.processing.filtering.SizeFilter.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sparcscore.processing.filtering.SizeFilter.filter" title="Link to this definition"></a></dt>
+<dd><p>Filter the input mask based on the filtering threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_mask</strong> (<em>ndarray</em>) – The input mask to be filtered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>filtered_mask</strong> – The filtered mask after settings the IDs which do not fullfill the filtering criteria to 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>

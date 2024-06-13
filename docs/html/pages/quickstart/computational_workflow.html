@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPARCSpy workflow &mdash; SPARCSpy  documentation</title>
@@ -16,7 +16,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -217,6 +217,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-sparcscore.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#sparcscore.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
@@ -231,7 +235,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id3">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id4">Segmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
@@ -319,6 +323,13 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/utils.html#module-sparcscore.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/utils.html#sparcscore.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -350,7 +361,8 @@
              
   <section id="sparcspy-workflow">
 <span id="computational-workflow"></span><h1>SPARCSpy workflow<a class="headerlink" href="#sparcspy-workflow" title="Link to this heading"></a></h1>
-<a class="reference internal image-reference" href="../../_images/sparcspy_workflow_steps.png"><img alt="SPARCSpy workflow steps: Segmentation, Extraction, Classification, Selection" class="align-center" src="../../_images/sparcspy_workflow_steps.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/sparcspy_workflow_steps.png"><img alt="SPARCSpy workflow steps: Segmentation, Extraction, Classification, Selection" class="align-center" src="../../_images/sparcspy_workflow_steps.png" style="width: 100%;" />
+</a>
 <p>The SPARCSpy workflow consists of up to 4 steps:</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -393,7 +405,8 @@
 <section id="extraction">
 <span id="quickstart-extraction"></span><h2>Extraction<a class="headerlink" href="#extraction" title="Link to this heading"></a></h2>
 <p>The SPARCSpy framework is built around the idea of generating standardized single-cell image datasets. A SPARCSpy single cell image dataset consists of a collection of images for each cell, containing both the segmentation masks and imaging channels of that particular cell. Aggregated across all cells in a SPARCSpy dataset, these image collections are saved as <code class="docutils literal notranslate"><span class="pre">HDF5</span></code>, a container file format that enables the retrieval of individual cells without loading the entire dataset. These <code class="docutils literal notranslate"><span class="pre">HDF5</span></code> datasets are created during the extraction step.</p>
-<a class="reference internal image-reference" href="../../_images/single_cell_dataset.png"><img alt="SPARCSpy single cell image dataset example" class="align-center" src="../../_images/single_cell_dataset.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../../_images/single_cell_dataset.png"><img alt="SPARCSpy single cell image dataset example" class="align-center" src="../../_images/single_cell_dataset.png" style="width: 100%;" />
+</a>
 <p>To crop out image regions corresponding to individual cells, the extraction step takes the segmentation masks generated during the segmentation step and applies them to the original image. By using the segmentation masks to extract only those pixels that are annotated to belong to a given cell, SPARCSpy achieves exact clipping of individual cells from their background, eliminating noise from neighbouring cells. This makes SPARCSpy ideally suited to processing data from experiments in which single cell resolution is required, for example in pooled genetic screening.
 During the extraction process, all single cell images are also centered on their respective nuclei.</p>
 <p>The size in px of the output images can be set in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file and typically depends on the resolution of the input images as well as the physical size of the imaged cells. In our <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">first publication</a> we extracted single cell images of U2OS cells from original images captured at 20X magnification at a size of 128 x 128px. Extraction is only performed on cells that were fully imaged, i.e. their masks do not intersect with the image borders.</p>

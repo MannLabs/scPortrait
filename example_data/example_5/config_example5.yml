@@ -7,7 +7,7 @@ Cytosol_Cellpose_TimecourseSegmentation:
     output_masks: 2
     shard_size: 4000000 # Average number of pixel per tile. 10.000 * 10.000 pixel are recommended. Can be adapted to memory and computation needs. 
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
-    cache: "."
+    cache: "/Users/sophia/Documents/GitHub/SPARCSpy/development/cache"
     lower_quantile_normalization:   0.001
     upper_quantile_normalization:   0.999
     median_filter_size:   4 # Size in pixels
@@ -23,7 +23,7 @@ Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
     shard_size: 4000000 # Average number of pixel per tile. 10.000 * 10.000 pixel are recommended. Can be adapted to memory and computation needs. 
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
     threads: 5 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
-    cache: "."
+    cache: "/Users/sophia/Documents/GitHub/SPARCSpy/development/cache"
     lower_quantile_normalization:   0.001
     upper_quantile_normalization:   0.999
     median_filter_size:   4 # Size in pixels
@@ -37,7 +37,7 @@ TimecourseHDF5CellExtraction:
     compression: True
     threads: 80 # threads used in multithreading
     image_size: 128 # image size in pixel
-    cache: "."
+    cache: "/Users/sophia/Documents/GitHub/SPARCSpy/development/cache"
     hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 50000
