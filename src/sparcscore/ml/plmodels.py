@@ -1,16 +1,15 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.ticker as ticker
-
-import gc   
+import gc
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from sparcscore.ml.models import VGG1, VGG2, VGG2_regression, CAEBase, _VGG1, _VGG2
+from sparcscore.ml.models import _VGG1, _VGG2, VGG1, VGG2, CAEBase, VGG2_regression
+
 
 class MultilabelSupervisedModel(pl.LightningModule):
     """
@@ -221,9 +220,9 @@ class RegressionModel(pl.LightningModule):
 
         loss_func = self.configure_loss()
 
-        if self.hparams["loss"] == "huber": # Huber loss
+        if self.hparams["loss"] == "huber":
             loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
-        else: # MSE
+        else:
             loss = loss_func(output, target)
 
         self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -239,9 +238,9 @@ class RegressionModel(pl.LightningModule):
 
         loss_func = self.configure_loss()
         
-        if self.hparams["loss"] == "huber": # Huber loss
+        if self.hparams["loss"] == "huber":
             loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
-        else: # MSE
+        else:
             loss = loss_func(output, target)
 
         self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -257,9 +256,9 @@ class RegressionModel(pl.LightningModule):
 
         loss_func = self.configure_loss()
         
-        if self.hparams["loss"] == "huber": # Huber loss
+        if self.hparams["loss"] == "huber":
             loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
-        else: # MSE
+        else:
             loss = loss_func(output, target)
 
         self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
