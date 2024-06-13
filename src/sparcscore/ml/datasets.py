@@ -257,7 +257,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
                 if self.hours:
                     current_target = current_target / 3600 # convert seconds to hours
                 self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
-        except:
+        except Exception:
             return
         
     def scan_directory(self, path, target_col, levels_left):   
@@ -381,7 +381,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
                 if self.hours:
                     current_target = current_target / 3600 # convert seconds to hours
                 self.data_locator.append([current_target, handle_id] + list(row)) # append target, handle id, and row to data locator
-        except:
+        except Exception:
             return
         
     def scan_directory(self, path, target_col, levels_left):   
