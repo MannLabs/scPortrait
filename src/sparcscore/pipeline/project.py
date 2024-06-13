@@ -696,7 +696,17 @@ class Project(Logable):
 
         input_segmentation = self.segmentation_f.get_output()
         self.extraction_f(input_segmentation, *args, **kwargs)
+    
+    def partial_extract(self, n_cells = 100, *args, **kwargs):
+        """
+        Extract n number of single cells with the defined extraction method.
+        """
+        if self.extraction_f is None:
+            raise ValueError("No extraction method defined")
 
+        input_segmentation = self.segmentation_f.get_output()
+        self.extraction_f.process_partial(input_segmentation, n_cells = n_cells *args, **kwargs)
+    
     def classify(self, *args, **kwargs):
         """
         Classify extracted single cells with the defined classification method.
