@@ -705,7 +705,7 @@ class Project(Logable):
             raise ValueError("No extraction method defined")
 
         input_segmentation = self.segmentation_f.get_output()
-        self.extraction_f.process_partial(input_segmentation, n_cells = n_cells *args, **kwargs)
+        self.extraction_f.process_partial(input_segmentation, n_cells = n_cells, *args, **kwargs)
     
     def classify(self, *args, **kwargs):
         """
