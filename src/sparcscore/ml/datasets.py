@@ -1,9 +1,11 @@
-from torch.utils.data import Dataset
-import torch
-import numpy as np
 import os
+
 import h5py
-   
+import numpy as np
+import torch
+from torch.utils.data import Dataset
+
+
 class HDF5SingleCellDataset(Dataset):
     """
     Class for handling SPARCSpy single cell datasets stored in HDF5 files.
@@ -61,7 +63,6 @@ class HDF5SingleCellDataset(Dataset):
     tensor(0)
     >>> sample[2]
     tensor(0)
-
     """
     
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"] # supported hdf5 filetypes 
@@ -231,20 +232,17 @@ class HDF5SingleCellDatasetRegression(Dataset):
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  # get full path
-            
             target_col = self.target_col[i] # get the target column for the current directory
-            
             filetype = directory.split(".")[-1] # get filetype
 
             if filetype in self.HDF_FILETYPES: # check if filetype is supported
                 self.add_hdf_to_index(path, target_col) # add hdf5 files to index
-
             else:
                 self.scan_directory(path, target_col, max_level) # recursively scan for files
 
-        self.return_id = return_id # return id
-        self.return_fake_id = return_fake_id # return fake id
-        self.stats() # print dataset stats at the end
+        self.return_id = return_id
+        self.return_fake_id = return_fake_id 
+        self.stats()
  
     def add_hdf_to_index(self, path, target_col):       
         try:
@@ -330,7 +328,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
     def __init__(self, 
                  dir_list: list[str], 
                  target_col: list[int],
-                 index_list: list[int],
+                 index_list: list[int], # list of indices to select from the index
                  hours: False,
                  root_dir: str, 
                  max_level: int = 5, 
