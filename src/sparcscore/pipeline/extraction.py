@@ -88,9 +88,7 @@ class HDF5CellExtraction(ProcessingStep):
             )
             self.log(f"Loading classes from default classes path: {self.classes_path}")
 
-        self.output_path = os.path.join(
-            self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_DATA_FILE
-        )
+        self.setup_output()
 
         # extract required information for generating datasets
         self.get_compression_type()
@@ -183,7 +181,7 @@ class HDF5CellExtraction(ProcessingStep):
     def get_output_path(self):
         return self.extraction_data_directory
 
-    def setup_output(self, folder_name=None):
+    def setup_output(self, folder_name = None):
 
         if folder_name is None:
             folder_name = self.DEFAULT_DATA_DIR
@@ -193,6 +191,8 @@ class HDF5CellExtraction(ProcessingStep):
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
             self.log("Created new data directory " + self.extraction_data_directory)
+
+        self.log(f"Setup output folder at {self.extraction_data_directory}")
 
     def parse_remapping(self):
         self.remap = None
@@ -331,6 +331,10 @@ class HDF5CellExtraction(ProcessingStep):
 
                 fig.tight_layout()
                 fig.show()
+        
+        #create name for output file
+        self.output_path = os.path.join(self.extraction_data_directory, self.DEFAULT_DATA_FILE)
+        print(self.output_path)
 
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
@@ -791,15 +795,16 @@ class HDF5CellExtraction(ProcessingStep):
     def process_partial(
         self, input_segmentation_path, filtered_classes_path=None, n_cells=100
     ):
-        # setup output directory
-        self.setup_output(folder_name=self.SELECTED_DATA_DIR)
+        # setup output directory and ensure that a new temporary directory is created
         self.DEFAULT_LOG_NAME = "partial_processing.log"
+        self.setup_output(folder_name=self.SELECTED_DATA_DIR)
+        self.create_temp_dir()
 
+        #get required information for extraction
         self.get_channel_info()
-        self.setup_output()
         self.parse_remapping()
 
-        self.log("Started parital extraction")
+        self.log("Started partial extraction")
         self.log(f"Loading segmentation data from {input_segmentation_path}")
 
         hf = h5py.File(input_segmentation_path, "r")
@@ -890,7 +895,7 @@ class HDF5CellExtraction(ProcessingStep):
         # reset variable to initial value
         self.setup_output()
         self.DEFAULT_LOG_NAME = "processing.log"
-
+        self.clear_temp_dir()
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     """
