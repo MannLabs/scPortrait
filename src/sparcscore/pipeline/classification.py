@@ -19,7 +19,7 @@ import io
 from contextlib import redirect_stdout
 
 
-class MLClusterClassifier:
+class MLClusterClassifier(ProcessingStep):
     """
     Class for classifying single cells using a pre-trained machine learning model.
 
@@ -40,6 +40,7 @@ class MLClusterClassifier:
     overwrite : bool, optional
         When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.
     """
+
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
@@ -99,15 +100,21 @@ class MLClusterClassifier:
 
         self.current_run = max(runs) + 1 if len(runs) > 0 else 0
 
-        if self.filtered_dataset is not None:
-            self.run_path = os.path.join(
-                self.directory,
-                str(self.current_run)
-                + "_"
-                + self.config["screen_label"]
-                + "_"
-                + self.filtered_dataset,
-            )
+        if hasattr(self, "filtered_dataset"):
+            if self.filtered_dataset is not None:
+                self.run_path = os.path.join(
+                    self.directory,
+                    str(self.current_run)
+                    + "_"
+                    + self.config["screen_label"]
+                    + "_"
+                    + self.filtered_dataset,
+                )
+            else:
+                self.run_path = os.path.join(
+                    self.directory,
+                    str(self.current_run) + "_" + self.config["screen_label"],
+                )
         else:
             self.run_path = os.path.join(
                 self.directory,
@@ -126,38 +133,6 @@ class MLClusterClassifier:
             return True
         except ValueError:
             return False
-
-    def get_timestamp(self):
-        # Returns the current date and time as a formatted string.
-
-        # datetime object containing current date and time
-        now = datetime.now()
-
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        return "[" + dt_string + "] "
-
-    def log(self, message):
-        # Writes a message to a log file and prints it to the console if debug is True.
-
-        log_path = os.path.join(self.run_path, self.DEFAULT_LOG_NAME)
-
-        if isinstance(message, str):
-            lines = message.split("\n")
-
-        if isinstance(message, list):
-            lines = message
-
-        if isinstance(message, dict):
-            lines = []
-            for key, value in message.items():
-                lines.append(f"{key}: {value}")
-
-        for line in lines:
-            with open(log_path, "a") as myfile:
-                myfile.write(self.get_timestamp() + line + " \n")
-
-            if self.debug:
-                print(self.get_timestamp() + line)
 
     def __call__(
         self,
@@ -393,8 +368,8 @@ class MLClusterClassifier:
             num_workers=self.config["dataloader_worker_number"],
             shuffle=True,
         )
-
-        self.log(f"log transform: {self.config['log_transform']}")
+        if hasattr(self.config, "log_transform"):
+            self.log(f"log transform: {self.config['log_transform']}")
 
         # extract which inferences to make from config file
         encoders = self.config["encoders"]
@@ -429,9 +404,10 @@ class MLClusterClassifier:
 
         result = result.detach().numpy()
 
-        if self.config["log_transform"]:
-            sigma = 1e-9
-            result = np.log(result + sigma)
+        if hasattr(self.config, "log_transform"):
+            if self.config["log_transform"]:
+                sigma = 1e-9
+                result = np.log(result + sigma)
 
         label = label.numpy()
         class_id = class_id.numpy()
@@ -449,6 +425,7 @@ class MLClusterClassifier:
             self.run_path, f"dimension_reduction_{model_fun.__name__}.tsv"
         )
         dataframe.to_csv(path)
+
 
 class EnsembleClassifier(ProcessingStep):
     """
@@ -692,13 +669,13 @@ class EnsembleClassifier(ProcessingStep):
         self.inference(dataloader=dataloader, model_ensemble=model_ensemble)
 
 
-class CellFeaturizer:
+class CellFeaturizer(ProcessingStep):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
     The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
-    
+
     - Area of the nucleus in pixels
     - Area of the cytosol in pixels
     - Mean intensity of the chosen channel
@@ -717,7 +694,15 @@ class CellFeaturizer:
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
 
-    def __init__(self, config, path, project_location, debug=False, overwrite=False, intermediate_output=True):
+    def __init__(
+        self,
+        config,
+        path,
+        project_location,
+        debug=False,
+        overwrite=False,
+        intermediate_output=True,
+    ):
         """
         Class is initiated to featurize extracted single cells.
 
@@ -805,49 +790,14 @@ class CellFeaturizer:
         except ValueError:
             return False
 
-    def get_timestamp(self):
-        """
-        Returns the current date and time as a formatted string.
-
-        Returns
-        -------
-        str
-            The current date and time formatted as "[DD/MM/YYYY HH:MM:SS] ".
-        """
-        now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        return "[" + dt_string + "] "
-
-    def log(self, message):
-        """
-        Writes a message to a log file and prints it to the console if debug is True.
-
-        Parameters
-        ----------
-        message : str or list or dict
-            Message to log.
-        """
-        log_path = os.path.join(self.run_path, self.DEFAULT_LOG_NAME)
-
-        if isinstance(message, str):
-            lines = message.split("\n")
-
-        if isinstance(message, list):
-            lines = message
-
-        if isinstance(message, dict):
-            lines = []
-            for key, value in message.items():
-                lines.append(f"{key}: {value}")
-
-        for line in lines:
-            with open(log_path, "a") as myfile:
-                myfile.write(self.get_timestamp() + line + " \n")
-
-            if self.debug:
-                print(self.get_timestamp() + line)
-
-    def __call__(self, extraction_dir, accessory, size=0, project_dataloader=HDF5SingleCellDataset, accessory_dataloader=HDF5SingleCellDataset):
+    def __call__(
+        self,
+        extraction_dir,
+        accessory,
+        size=0,
+        project_dataloader=HDF5SingleCellDataset,
+        accessory_dataloader=HDF5SingleCellDataset,
+    ):
         """
         Perform featurization on the provided HDF5 dataset.
 
