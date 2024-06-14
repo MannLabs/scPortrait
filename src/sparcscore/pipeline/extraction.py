@@ -811,7 +811,7 @@ class HDF5CellExtraction(ProcessingStep):
         Important
         ---------
         If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
-        The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.
+        The Project class will automatically provide the most recent segmentation together with the supplied parameters.
 
         Examples
         --------
