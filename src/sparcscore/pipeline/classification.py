@@ -368,8 +368,8 @@ class MLClusterClassifier(ProcessingStep):
             num_workers=self.config["dataloader_worker_number"],
             shuffle=True,
         )
-
-        self.log(f"log transform: {self.config['log_transform']}")
+        if hasattr(self.config, "log_transform"):
+            self.log(f"log transform: {self.config['log_transform']}")
 
         # extract which inferences to make from config file
         encoders = self.config["encoders"]
@@ -404,9 +404,10 @@ class MLClusterClassifier(ProcessingStep):
 
         result = result.detach().numpy()
 
-        if self.config["log_transform"]:
-            sigma = 1e-9
-            result = np.log(result + sigma)
+        if hasattr(self.config, "log_transform"):
+            if self.config["log_transform"]:
+                sigma = 1e-9
+                result = np.log(result + sigma)
 
         label = label.numpy()
         class_id = class_id.numpy()
