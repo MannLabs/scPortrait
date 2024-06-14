@@ -5,7 +5,7 @@ Collection of functions to load pretrained models to use in the SPARCSpy environ
 from sparcscore.ml.plmodels import MultilabelSupervisedModel
 import os
 
-def _load_multilabelSupervised(checkpoint_path, hparam_path, type, eval = True, device = "cuda"):
+def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = True, device = "cuda"):
     """
     Load a pretrained model uploaded to the github repository.
 
@@ -37,7 +37,7 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, type, eval = True, 
 
     # Load model
     model = MultilabelSupervisedModel.load_from_checkpoint(
-        checkpoint_path, hparams_file=hparam_path, model_type=type, map_location=device
+        checkpoint_path, hparams_file=hparam_path, model_type=model_type, map_location=device
     )
     if eval:
         model.eval()
