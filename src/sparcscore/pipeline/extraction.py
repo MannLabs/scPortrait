@@ -795,6 +795,55 @@ class HDF5CellExtraction(ProcessingStep):
     def process_partial(
         self, input_segmentation_path, filtered_classes_path=None, n_cells=100
     ):
+        """
+        Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
+
+        Parameters
+        ----------
+        input_segmentation_path : str
+            Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+        filtered_classes_path : str, optional
+            Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
+        n_cells : int, optional
+            number of cells that should be extracted, by default 100
+        
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
+        The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            # After project is initialized and input data has been loaded and segmented
+            project.partial_extract(n_cells = 1000)
+
+        Notes
+        -----
+        The following parameters are required in the config file when running this method:
+
+        .. code-block:: yaml
+
+            HDF5CellExtraction:
+
+                compression: True
+
+                # threads used in multithreading
+                threads: 80
+
+                # image size in pixels
+                image_size: 128
+
+                # directory where intermediate results should be saved
+                cache: "/mnt/temp/cache"
+
+                # specs to define how HDF5 data should be chunked and saved
+                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
+                hdf5_rdcc_w0: 1
+                hdf5_rdcc_nslots: 50000
+        """
+        
         # setup output directory and ensure that a new temporary directory is created
         self.DEFAULT_LOG_NAME = "partial_processing.log"
         self.setup_output(folder_name=self.SELECTED_DATA_DIR)
@@ -905,7 +954,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     Functionality is the same as the HDF5CellExtraction except that the class is able to deal with an additional dimension(t)
     in the input data.
     """
-
+    
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_FILE = "single_cells.h5"
     DEFAULT_SEGMENTATION_DIR = "segmentation"
