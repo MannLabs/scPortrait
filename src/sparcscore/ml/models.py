@@ -75,7 +75,7 @@ class VGGBase(nn.Module):
         # get output feature size of CNN with chosen configuration
         
         if regression:
-            in_features = int(cfg[-2]) * 4 * 4 # needed for the STING screen since the images are big
+            in_features = int(cfg[-2]) * 4 * 4 # needed for bigger images
         else:
             in_features = int(cfg[-2]) * 2 * 2
         
