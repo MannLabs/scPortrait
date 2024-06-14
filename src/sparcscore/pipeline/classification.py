@@ -19,7 +19,7 @@ import io
 from contextlib import redirect_stdout
 
 
-class MLClusterClassifier:
+class MLClusterClassifier(ProcessingStep):
     """
     Class for classifying single cells using a pre-trained machine learning model.
 
@@ -126,38 +126,6 @@ class MLClusterClassifier:
             return True
         except ValueError:
             return False
-
-    def get_timestamp(self):
-        # Returns the current date and time as a formatted string.
-
-        # datetime object containing current date and time
-        now = datetime.now()
-
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        return "[" + dt_string + "] "
-
-    def log(self, message):
-        # Writes a message to a log file and prints it to the console if debug is True.
-
-        log_path = os.path.join(self.run_path, self.DEFAULT_LOG_NAME)
-
-        if isinstance(message, str):
-            lines = message.split("\n")
-
-        if isinstance(message, list):
-            lines = message
-
-        if isinstance(message, dict):
-            lines = []
-            for key, value in message.items():
-                lines.append(f"{key}: {value}")
-
-        for line in lines:
-            with open(log_path, "a") as myfile:
-                myfile.write(self.get_timestamp() + line + " \n")
-
-            if self.debug:
-                print(self.get_timestamp() + line)
 
     def __call__(
         self,
@@ -692,7 +660,7 @@ class EnsembleClassifier(ProcessingStep):
         self.inference(dataloader=dataloader, model_ensemble=model_ensemble)
 
 
-class CellFeaturizer:
+class CellFeaturizer(ProcessingStep):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
     The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
@@ -804,48 +772,6 @@ class CellFeaturizer:
             return True
         except ValueError:
             return False
-
-    def get_timestamp(self):
-        """
-        Returns the current date and time as a formatted string.
-
-        Returns
-        -------
-        str
-            The current date and time formatted as "[DD/MM/YYYY HH:MM:SS] ".
-        """
-        now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        return "[" + dt_string + "] "
-
-    def log(self, message):
-        """
-        Writes a message to a log file and prints it to the console if debug is True.
-
-        Parameters
-        ----------
-        message : str or list or dict
-            Message to log.
-        """
-        log_path = os.path.join(self.run_path, self.DEFAULT_LOG_NAME)
-
-        if isinstance(message, str):
-            lines = message.split("\n")
-
-        if isinstance(message, list):
-            lines = message
-
-        if isinstance(message, dict):
-            lines = []
-            for key, value in message.items():
-                lines.append(f"{key}: {value}")
-
-        for line in lines:
-            with open(log_path, "a") as myfile:
-                myfile.write(self.get_timestamp() + line + " \n")
-
-            if self.debug:
-                print(self.get_timestamp() + line)
 
     def __call__(self, extraction_dir, accessory, size=0, project_dataloader=HDF5SingleCellDataset, accessory_dataloader=HDF5SingleCellDataset):
         """
