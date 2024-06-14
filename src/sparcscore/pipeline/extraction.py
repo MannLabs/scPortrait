@@ -181,13 +181,12 @@ class HDF5CellExtraction(ProcessingStep):
     def get_output_path(self):
         return self.extraction_data_directory
 
-    def setup_output(self, folder_name = None):
-
+    def setup_output(self, folder_name=None):
         if folder_name is None:
             folder_name = self.DEFAULT_DATA_DIR
 
         self.extraction_data_directory = os.path.join(self.directory, folder_name)
-        
+
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
             self.log("Created new data directory " + self.extraction_data_directory)
@@ -331,9 +330,11 @@ class HDF5CellExtraction(ProcessingStep):
 
                 fig.tight_layout()
                 fig.show()
-        
-        #create name for output file
-        self.output_path = os.path.join(self.extraction_data_directory, self.DEFAULT_DATA_FILE)
+
+        # create name for output file
+        self.output_path = os.path.join(
+            self.extraction_data_directory, self.DEFAULT_DATA_FILE
+        )
         print(self.output_path)
 
         with h5py.File(self.output_path, "w") as hf:
@@ -806,7 +807,7 @@ class HDF5CellExtraction(ProcessingStep):
             Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
         n_cells : int, optional
             number of cells that should be extracted, by default 100
-        
+
         Important
         ---------
         If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
@@ -843,13 +844,13 @@ class HDF5CellExtraction(ProcessingStep):
                 hdf5_rdcc_w0: 1
                 hdf5_rdcc_nslots: 50000
         """
-        
+
         # setup output directory and ensure that a new temporary directory is created
         self.DEFAULT_LOG_NAME = "partial_processing.log"
         self.setup_output(folder_name=self.SELECTED_DATA_DIR)
         self.create_temp_dir()
 
-        #get required information for extraction
+        # get required information for extraction
         self.get_channel_info()
         self.parse_remapping()
 
@@ -946,6 +947,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.DEFAULT_LOG_NAME = "processing.log"
         self.clear_temp_dir()
 
+
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     """
     A class to extracts single cell images from a segmented SPARCSpy Timecourse project and save the
@@ -954,7 +956,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     Functionality is the same as the HDF5CellExtraction except that the class is able to deal with an additional dimension(t)
     in the input data.
     """
-    
+
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_FILE = "single_cells.h5"
     DEFAULT_SEGMENTATION_DIR = "segmentation"
