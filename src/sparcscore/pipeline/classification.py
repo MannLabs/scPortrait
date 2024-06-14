@@ -40,6 +40,7 @@ class MLClusterClassifier(ProcessingStep):
     overwrite : bool, optional
         When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.
     """
+
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
@@ -111,8 +112,8 @@ class MLClusterClassifier(ProcessingStep):
                 )
             else:
                 self.run_path = os.path.join(
-                self.directory,
-                str(self.current_run) + "_" + self.config["screen_label"],
+                    self.directory,
+                    str(self.current_run) + "_" + self.config["screen_label"],
                 )
         else:
             self.run_path = os.path.join(
@@ -424,6 +425,7 @@ class MLClusterClassifier(ProcessingStep):
         )
         dataframe.to_csv(path)
 
+
 class EnsembleClassifier(ProcessingStep):
     """
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
@@ -672,7 +674,7 @@ class CellFeaturizer(ProcessingStep):
     The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
-    
+
     - Area of the nucleus in pixels
     - Area of the cytosol in pixels
     - Mean intensity of the chosen channel
@@ -691,7 +693,15 @@ class CellFeaturizer(ProcessingStep):
     DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
 
-    def __init__(self, config, path, project_location, debug=False, overwrite=False, intermediate_output=True):
+    def __init__(
+        self,
+        config,
+        path,
+        project_location,
+        debug=False,
+        overwrite=False,
+        intermediate_output=True,
+    ):
         """
         Class is initiated to featurize extracted single cells.
 
@@ -779,7 +789,14 @@ class CellFeaturizer(ProcessingStep):
         except ValueError:
             return False
 
-    def __call__(self, extraction_dir, accessory, size=0, project_dataloader=HDF5SingleCellDataset, accessory_dataloader=HDF5SingleCellDataset):
+    def __call__(
+        self,
+        extraction_dir,
+        accessory,
+        size=0,
+        project_dataloader=HDF5SingleCellDataset,
+        accessory_dataloader=HDF5SingleCellDataset,
+    ):
         """
         Perform featurization on the provided HDF5 dataset.
 
