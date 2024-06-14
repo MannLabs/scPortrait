@@ -105,9 +105,9 @@ def combine_datasets_balanced(list_of_datasets, class_labels, train_per_class, v
     return train_dataset, val_dataset, test_dataset
 
 
-def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, val_size=None, fractions=None, seed=None):
+def split_dataset_fractions(list_of_datasets, train_size=None, test_size=None, val_size=None, fractions=None, seed=None):
     """
-    Split a dataset into train, test, and validation set.
+    Split a dataset into train, test, and validation set based on the provided fractions or sizes.
 
     Parameters
     ----------
@@ -120,7 +120,9 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
     val_size : int
         Number of samples in the validation set.
     fractions : list of float
-        Fractions of the dataset to be used for train, test, and validation set. Should sum up to 1.
+        Fractions of the dataset to be used for train, test, and validation set. Should sum up to 1 (100%). 
+        For example, [0.8, 0.1, 0.1] will split the dataset into 80% train, 10% test, and 10% validation set.
+
 
     Returns
     -------
@@ -137,9 +139,8 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
 
     for dataset in list_of_datasets:
         if fractions is not None:
-
             if sum(fractions) != 1:
-                raise ValueError("Fractions should sum up to 1.")
+                raise ValueError("Provided fractions of the dataset should sum up to 1.")
             
             if seed is not None:
                 gen = torch.Generator()
@@ -147,6 +148,11 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
                 train, test, val = torch.utils.data.random_split(dataset, fractions, generator=gen)
             else:
                 train, test, val = torch.utils.data.random_split(dataset, fractions)
+
+            print(f"Dataset {list_of_datasets.index(dataset)}:\n"
+                                f"Train: {len(train)}, \n"
+                                f"Test: {len(test)}, \n"
+                                f"Validation: {len(val)}")
 
             train_dataset.append(train)
             test_dataset.append(test)
@@ -166,13 +172,23 @@ def split_dataset_regression(list_of_datasets, train_size=None, test_size=None, 
                 train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size], generator=gen)
             else:
                 train, test, val, _ = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
+            
+            print(f"Dataset {list_of_datasets.index(dataset)}:\n"
+                  f"Train: {len(train)}, \n"
+                  f"Test: {len(test)}, \n"
+                  f"Validation: {len(val)}")
 
             train_dataset.append(train)
             test_dataset.append(test)
             val_dataset.append(val)
 
+    # Convert the combined datasets into torch.utils.data.Dataset objects
     train_dataset = torch.utils.data.ConcatDataset(train_dataset)
     test_dataset = torch.utils.data.ConcatDataset(test_dataset)
     val_dataset = torch.utils.data.ConcatDataset(val_dataset)
+
+    print(f"Total size of the train dataset: {len(train_dataset)}, \n"
+          f"Total size of the test dataset: {len(test_dataset)}, \n"
+          f"Total size of the validation dataset: {len(val_dataset)}")
 
     return train_dataset, test_dataset, val_dataset

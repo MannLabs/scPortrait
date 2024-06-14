@@ -58,7 +58,7 @@ class VGGBase(nn.Module):
                 i += 1
         return nn.Sequential(OrderedDict(layers))
     
-    def make_layers_MLP(self, cfg_MLP, cfg, regression = False):
+    def make_layers_MLP(self, cfg_MLP, cfg, large_image = False):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
@@ -68,14 +68,16 @@ class VGGBase(nn.Module):
             VGG architecture of the MLP
             cfg (list): A list of integers and “M” representing the specific
             VGG architecture of the CNN
+            large_image (bool, optional): Whether the image is large. Defaults to False. VGG model as implemented expects input images of 128x128 pixels.
+            For larger images, the feature maps might be 4x4, hence the need to multiply by 4*4.
 
         Returns: 
             nn.Sequential: A sequential model representing the MLP architecture.
         """
         # get output feature size of CNN with chosen configuration
-        
-        if regression:
-            in_features = int(cfg[-2]) * 4 * 4 # needed for bigger images
+       
+        if large_image: 
+            in_features = int(cfg[-2]) * 4 * 4
         else:
             in_features = int(cfg[-2]) * 2 * 2
         
@@ -90,13 +92,9 @@ class VGGBase(nn.Module):
                 layers += [linear]
                 in_features = out_features
         
-        if regression: # if regression is True, make the final layer a single output
-            linear = ("MLP_linear_final", nn.Linear(in_features, 1))
-            layers += [linear]
-        else:
-            linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
-            layers += [linear]  
-        
+        linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
+        layers += [linear]  
+    
         return nn.Sequential(OrderedDict(layers))
 
     def forward(self, x):
@@ -175,14 +173,16 @@ class VGG2_regression(VGGBase):
     def __init__(self,
                 cfg = "B",
                 cfg_MLP = "A",
-                in_channels = 1, 
+                in_channels = 1,
+                num_classes = 1,
                 ):
         
         super(VGG2_regression, self).__init__()
+        self.num_classes = num_classes
         self.norm = nn.BatchNorm2d(in_channels) 
 
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], regression=True) # regression is set to True to make the final layer a single output
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], large_image=True)
         
     def vgg(cfg, in_channels,  **kwargs):
         model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
