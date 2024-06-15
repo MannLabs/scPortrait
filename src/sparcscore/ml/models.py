@@ -29,7 +29,10 @@ class VGGBase(nn.Module):
         'B': [1024, "M", 512, "M", 256, "M",],
     }
 
-    def make_layers(self, cfg, in_channels, batch_norm = True):
+    def make_layers(self, 
+                    cfg: list, 
+                    in_channels: int, 
+                    batch_norm: bool = True):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg with optional batch normalization for the CNN.
@@ -58,7 +61,10 @@ class VGGBase(nn.Module):
                 i += 1
         return nn.Sequential(OrderedDict(layers))
     
-    def make_layers_MLP(self, cfg_MLP, cfg, large_image = False):
+    def make_layers_MLP(self, 
+                        cfg_MLP: list, 
+                        cfg: list, 
+                        image_size_factor: int = 2):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
@@ -68,18 +74,14 @@ class VGGBase(nn.Module):
             VGG architecture of the MLP
             cfg (list): A list of integers and “M” representing the specific
             VGG architecture of the CNN
-            large_image (bool, optional): Whether the image is large. Defaults to False. VGG model as implemented expects input images of 128x128 pixels.
-            For larger images, the feature maps might be 4x4, hence the need to multiply by 4*4.
+            image_size_factor (int, optional): VGG model as implemented expects input images of 128x128 pixels.
+            Defaults to 2. For example, if the input image is 256x256, the image_size_factor should be 4.
 
         Returns: 
             nn.Sequential: A sequential model representing the MLP architecture.
         """
         # get output feature size of CNN with chosen configuration
-       
-        if large_image: 
-            in_features = int(cfg[-2]) * 4 * 4
-        else:
-            in_features = int(cfg[-2]) * 2 * 2
+        in_features = int(cfg[-2]) * image_size_factor * image_size_factor
         
         layers = []
         i = 0
@@ -182,7 +184,7 @@ class VGG2_regression(VGGBase):
         self.norm = nn.BatchNorm2d(in_channels) 
 
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], large_image=True)
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], image_size_factor=4)
         
     def vgg(cfg, in_channels,  **kwargs):
         model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
