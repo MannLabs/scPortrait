@@ -106,13 +106,21 @@ class MultilabelSupervisedModel(pl.LightningModule):
     def configure_optimizers(self):
         if self.hparams["optimizer"] == "SGD":
             optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams["learning_rate"])
+
         elif self.hparams["optimizer"] == "Adam":
             #set weight decay to 0 if not specified in hparams 
             if self.hparams["weight_decay"] is None:
                 self.hparams["weight_decay"] = 0
             optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
+        elif self.hparams["optimizer"] == "AdamW":
+            #set weight decay to 0.01 if not specified in hparams 
+            if self.hparams["weight_decay"] is None:
+                self.hparams["weight_decay"] = 10 ** -2
+            optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
         else:
-            raise ValueError("No optimizier specified in hparams")
+            raise ValueError("No optimizer specified in hparams")
         return optimizer
            
     def training_step(self, batch, batch_idx):
