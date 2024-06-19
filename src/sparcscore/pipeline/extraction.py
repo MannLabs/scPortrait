@@ -28,6 +28,7 @@ from sparcscore.pipeline.base import ProcessingStep
 # to perform garbage collection
 import gc
 
+
 class HDF5CellExtraction(ProcessingStep):
     """
     A class to extracts single cell images from a segmented SPARCSpy project and save the
@@ -41,6 +42,7 @@ class HDF5CellExtraction(ProcessingStep):
     DEFAULT_CLASSES_FILE = "classes.csv"
     DEFAULT_FILTERED_CLASSES_FILE = "filtering/filtered_classes.csv"
     DEFAULT_DATA_DIR = "data"
+    SELECTED_DATA_DIR = "selected_data"
     CLEAN_LOG = False
 
     # new parameters to make workflow adaptable to other types of projects
@@ -86,9 +88,7 @@ class HDF5CellExtraction(ProcessingStep):
             )
             self.log(f"Loading classes from default classes path: {self.classes_path}")
 
-        self.output_path = os.path.join(
-            self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_DATA_FILE
-        )
+        self.setup_output()
 
         # extract required information for generating datasets
         self.get_compression_type()
@@ -179,18 +179,19 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
     def get_output_path(self):
-        self.extraction_data_directory = os.path.join(
-            self.directory, self.DEFAULT_DATA_DIR
-        )
         return self.extraction_data_directory
 
-    def setup_output(self):
-        self.extraction_data_directory = os.path.join(
-            self.directory, self.DEFAULT_DATA_DIR
-        )
+    def setup_output(self, folder_name=None):
+        if folder_name is None:
+            folder_name = self.DEFAULT_DATA_DIR
+
+        self.extraction_data_directory = os.path.join(self.directory, folder_name)
+
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
             self.log("Created new data directory " + self.extraction_data_directory)
+
+        self.log(f"Setup output folder at {self.extraction_data_directory}")
 
     def parse_remapping(self):
         self.remap = None
@@ -329,6 +330,12 @@ class HDF5CellExtraction(ProcessingStep):
 
                 fig.tight_layout()
                 fig.show()
+
+        # create name for output file
+        self.output_path = os.path.join(
+            self.extraction_data_directory, self.DEFAULT_DATA_FILE
+        )
+        print(self.output_path)
 
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
@@ -785,6 +792,160 @@ class HDF5CellExtraction(ProcessingStep):
         # transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
+
+    def process_partial(
+        self, input_segmentation_path, filtered_classes_path=None, n_cells=100
+    ):
+        """
+        Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
+
+        Parameters
+        ----------
+        input_segmentation_path : str
+            Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+        filtered_classes_path : str, optional
+            Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
+        n_cells : int, optional
+            number of cells that should be extracted, by default 100
+
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
+        The Project class will automatically provide the most recent segmentation together with the supplied parameters.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            # After project is initialized and input data has been loaded and segmented
+            project.partial_extract(n_cells = 1000)
+
+        Notes
+        -----
+        The following parameters are required in the config file when running this method:
+
+        .. code-block:: yaml
+
+            HDF5CellExtraction:
+
+                compression: True
+
+                # threads used in multithreading
+                threads: 80
+
+                # image size in pixels
+                image_size: 128
+
+                # directory where intermediate results should be saved
+                cache: "/mnt/temp/cache"
+
+                # specs to define how HDF5 data should be chunked and saved
+                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
+                hdf5_rdcc_w0: 1
+                hdf5_rdcc_nslots: 50000
+        """
+
+        # setup output directory and ensure that a new temporary directory is created
+        self.DEFAULT_LOG_NAME = "partial_processing.log"
+        self.setup_output(folder_name=self.SELECTED_DATA_DIR)
+        self.create_temp_dir()
+
+        # get required information for extraction
+        self.get_channel_info()
+        self.parse_remapping()
+
+        self.log("Started partial extraction")
+        self.log(f"Loading segmentation data from {input_segmentation_path}")
+
+        hf = h5py.File(input_segmentation_path, "r")
+        hdf_channels = hf.get(self.channel_label)
+        hdf_labels = hf.get(self.segmentation_label)
+
+        self.log("Finished loading channel data " + str(hdf_channels.shape))
+        self.log("Finished loading label data " + str(hdf_labels.shape))
+        self.n_masks = hdf_labels.shape[0]
+
+        px_centers, _cell_ids = self._calculate_centers(hdf_labels)
+
+        # get classes to extract
+        class_list = self.get_classes(filtered_classes_path)
+        if isinstance(class_list[0], str):
+            lookup_dict = {x.split(":")[0]: x.split(":")[1] for x in class_list}
+            nuclei_ids = list(lookup_dict.keys())
+            nuclei_ids = set(nuclei_ids)
+        else:
+            nuclei_ids = set([str(x) for x in class_list])
+
+        # filter cell ids found using center into those that we actually want to extract
+        _cell_ids = list(_cell_ids)
+
+        filter = [str(x) in nuclei_ids for x in _cell_ids]
+
+        px_centers = np.array(list(compress(px_centers, filter)))
+        _cell_ids = list(compress(_cell_ids, filter))
+
+        # generate new class list
+        if isinstance(class_list[0], str):
+            class_list = [f"{x}:{lookup_dict[str(x)]}" for x in _cell_ids]
+            del lookup_dict
+        else:
+            class_list = _cell_ids
+
+        self.log(
+            f"Number of classes found in filtered classes list {len(nuclei_ids)} vs number of classes for which centers were calculated {len(class_list)}"
+        )
+        del _cell_ids, filter, nuclei_ids
+
+        # subset to only get the N_cells requested from this method
+        np.random.seed(42)
+        class_list = np.random.choice(class_list, n_cells, replace=False)
+
+        self.log(f"Randomly selected {n_cells} cells to extract")
+
+        # update number of classes
+        self.num_classes = len(class_list)
+
+        # setup cache
+        self._initialize_tempmmap_array()
+
+        # start extraction
+        self.verbalise_extraction_info()
+
+        self.log(f"Starting partial extraction of {self.num_classes} classes")
+        start = timeit.default_timer()
+
+        f = partial(self._extract_classes, input_segmentation_path, px_centers)
+
+        # generate cell pairings to extract
+        lookup_saveindex = self.generate_save_index_lookup(class_list)
+        args = self._get_arg(class_list, lookup_saveindex)
+
+        with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
+            x = list(tqdm(pool.imap(f, args), total=len(args)))
+            pool.close()
+            pool.join()
+            print("multiprocessing done.")
+
+        stop = timeit.default_timer()
+        self.save_index_to_remove = flatten(x)
+
+        # calculate duration
+        duration = stop - start
+        rate = self.num_classes / duration
+
+        # generate final log entries
+        self.log(
+            f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)"
+        )
+
+        # transfer results to hdf5
+        self._transfer_tempmmap_to_hdf5()
+        self.log("Finished cleaning up cache.")
+
+        # reset variable to initial value
+        self.setup_output()
+        self.DEFAULT_LOG_NAME = "processing.log"
+        self.clear_temp_dir()
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
