@@ -1,7 +1,9 @@
+from collections import OrderedDict
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
-from collections import OrderedDict
+
 
 ### VGG Model Architecture
 class VGGBase(nn.Module): 
@@ -27,7 +29,10 @@ class VGGBase(nn.Module):
         'B': [1024, "M", 512, "M", 256, "M",],
     }
 
-    def make_layers(self, cfg, in_channels, batch_norm = True):
+    def make_layers(self, 
+                    cfg: list, 
+                    in_channels: int, 
+                    batch_norm: bool = True):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg with optional batch normalization for the CNN.
@@ -53,10 +58,13 @@ class VGGBase(nn.Module):
                 else:
                     layers += [(f"conv{i}", conv2d), (f"relu{i}", nn.ReLU(inplace=True))]
                 in_channels = v
-                i +=1
+                i += 1
         return nn.Sequential(OrderedDict(layers))
     
-    def make_layers_MLP(self, cfg_MLP, cfg):
+    def make_layers_MLP(self, 
+                        cfg_MLP: list, 
+                        cfg: list, 
+                        image_size_factor: int = 2):
         """
         Create sequential models layers according to the chosen configuration provided in 
         cfg for the MLP.
@@ -66,28 +74,29 @@ class VGGBase(nn.Module):
             VGG architecture of the MLP
             cfg (list): A list of integers and “M” representing the specific
             VGG architecture of the CNN
+            image_size_factor (int, optional): VGG model as implemented expects input images of 128x128 pixels.
+            Defaults to 2. For example, if the input image is 256x256, the image_size_factor should be 4.
 
         Returns: 
             nn.Sequential: A sequential model representing the MLP architecture.
         """
         # get output feature size of CNN with chosen configuration
-        in_features = int(cfg[-2]) * 2 * 2
+        in_features = int(cfg[-2]) * image_size_factor * image_size_factor
         
         layers = []
         i = 0
         for out_features in cfg_MLP:
             if out_features == "M":
                 layers += [(f"MLP_relu{i}", nn.ReLU(True)), (f"MLP_dropout{i}", nn.Dropout())]
-                i+=1         
+                i += 1         
             else:
                 linear = (f"MLP_linear{i}", nn.Linear(in_features, out_features))
                 layers += [linear]
                 in_features = out_features
-                
-        #add final layer with number of classes
-        linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
-        layers += [linear]    
         
+        linear = (f"MLP_linear{i}_classes", nn.Linear(in_features, self.num_classes))
+        layers += [linear]  
+    
         return nn.Sequential(OrderedDict(layers))
 
     def forward(self, x):
@@ -95,12 +104,12 @@ class VGGBase(nn.Module):
         x = self.features(x)
 
         x = torch.flatten(x, 1)
-        
+
         x = self.classifier(x)
         x = self.softmax(x)
         return x
     
-    def encoder(self, x):
+    def encoder(self, x): 
         x = self.norm(x)
         x = self.features(x)
         return torch.flatten(x, 1)
@@ -110,7 +119,7 @@ class VGG1(VGGBase):
     Instance of VGGBase with the model architecture 1.
     """
     def __init__(self,
-                cfg = "B",
+                cfg = "B", # default configuration
                 cfg_MLP = "A",
                 dimensions = 196,
                 in_channels = 1,
@@ -119,7 +128,7 @@ class VGG1(VGGBase):
         
         super(VGG1, self).__init__()
 
-        #save num_clases for use in making MLP head
+        #save num_classes for use in making MLP head
         self.num_classes = num_classes
 
         self.norm = nn.BatchNorm2d(in_channels)
@@ -146,7 +155,7 @@ class VGG2(VGGBase):
         
         super(VGG2, self).__init__()
         
-        #save num_clases for use in making MLP head
+        #save num_classes for use in making MLP head
         self.num_classes = num_classes
 
         self.norm = nn.BatchNorm2d(in_channels)
@@ -158,6 +167,35 @@ class VGG2(VGGBase):
     def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
+
+class VGG2_regression(VGGBase):
+    """
+    Instance of VGGBase with regression output.
+    """
+    def __init__(self,
+                cfg = "B",
+                cfg_MLP = "A",
+                in_channels = 1,
+                num_classes = 1,
+                ):
+        
+        super(VGG2_regression, self).__init__()
+        self.num_classes = num_classes
+        self.norm = nn.BatchNorm2d(in_channels) 
+
+        self.features = self.make_layers(self.cfgs[cfg], in_channels)
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], image_size_factor=4)
+        
+    def vgg(cfg, in_channels,  **kwargs):
+        model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
+        return model
+    
+    def forward(self, x):
+        x = self.norm(x)
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
 
 ### CAE Model Architecture
 

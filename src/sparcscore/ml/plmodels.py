@@ -1,15 +1,15 @@
-import matplotlib.pyplot as plt
-import numpy as np
-
-import gc   
+import gc
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from sparcscore.ml.models import VGG1, VGG2, CAEBase, _VGG1, _VGG2
+from sparcscore.ml.models import _VGG1, _VGG2, VGG1, VGG2, CAEBase, VGG2_regression
+
 
 class MultilabelSupervisedModel(pl.LightningModule):
     """
@@ -83,14 +83,14 @@ class MultilabelSupervisedModel(pl.LightningModule):
                                     dimensions=128,
                                     num_classes=self.hparams["num_classes"])
         
-        ## add deprecated type for backward compatability
+        ## add deprecated type for backward compatibility
         elif model_type == "VGG1_old":
             self.network = _VGG1(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
                                     dimensions=128,
                                     num_classes=self.hparams["num_classes"])
         
-        ## add deprecated type for backward compatability
+        ## add deprecated type for backward compatibility
         elif model_type == "VGG2_old":
             self.network = _VGG2(in_channels=self.hparams["num_in_channels"],
                                     cfg = "B",
@@ -122,7 +122,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
         output_softmax = self.network(data)
         loss = F.nll_loss(output_softmax, label)
 
-       #calculate accuracy
+        #calculate accuracy
         probabilities = torch.exp(output_softmax)
         pred_labels = torch.argmax(probabilities, dim=1)
         acc = self.accuracy(pred_labels, label)
@@ -164,6 +164,109 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
         return {'loss':loss, 'probabilities':probabilities, 'actual_labels':label}
 
+
+class RegressionModel(pl.LightningModule):
+
+    def __init__(self, model_type="VGG2_regression", **kwargs):
+        super().__init__()
+        self.save_hyperparameters()
+    
+        # Define the regression model
+        if model_type == "VGG2_regression":
+            self.network =  VGG2_regression(cfg="B", cfg_MLP="A", in_channels=self.hparams["num_in_channels"])
+
+        # Initialize metrics for regression model 
+        self.mse = torchmetrics.MeanSquaredError() # MSE metric for regression
+        self.mae = torchmetrics.MeanAbsoluteError() # MAE metric for regression
+
+    def forward(self, x):
+        return self.network(x)
+    
+    def configure_optimizers(self):
+        if self.hparams["optimizer"] == "SGD":
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams["learning_rate"])
+
+        elif self.hparams["optimizer"] == "Adam":
+            if self.hparams["weight_decay"] is None:
+                self.hparams["weight_decay"] = 0
+            optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
+        elif self.hparams["optimizer"] == "AdamW":
+            if self.hparams["weight_decay"] is None:
+                self.hparams["weight_decay"] = 10 ** -2
+            optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams["learning_rate"], weight_decay=self.hparams["weight_decay"])
+
+        else:
+            raise ValueError("No optimizer specified in hparams.")
+        
+        return optimizer
+    
+    def configure_loss(self):
+        if self.hparams["loss"] == "mse":
+            loss = F.mse_loss
+        elif self.hparams["loss"] == "huber":
+            if self.hparams["huber_delta"] is None:
+                self.hparams["huber_delta"] = 1.0
+            loss = F.huber_loss
+        else:
+            raise ValueError("No loss function specified in hparams.")
+        
+        return loss
+    
+    def training_step(self, batch):
+        data, target = batch
+        target = target.unsqueeze(1)
+        output = self.network(data) # Forward pass, only one output
+
+        loss_func = self.configure_loss()
+
+        if self.hparams["loss"] == "huber":
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+        else:
+            loss = loss_func(output, target)
+
+        self.log('loss/train', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/train', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/train', self.mae(output, target), on_epoch=True, prog_bar=True)
+
+        return {'loss': loss, 'predictions': output, 'targets': target}
+    
+    def validation_step(self, batch):
+        data, target = batch
+        target = target.unsqueeze(1)
+        output = self.network(data)
+
+        loss_func = self.configure_loss()
+        
+        if self.hparams["loss"] == "huber":
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+        else:
+            loss = loss_func(output, target)
+
+        self.log('loss/val', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/val', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/val', self.mae(output, target), on_epoch=True, prog_bar=True)
+
+        return {'loss': loss, 'predictions': output, 'targets': target}
+    
+    def test_step(self, batch):
+        data, target = batch
+        target = target.unsqueeze(1)
+        output = self.network(data)
+
+        loss_func = self.configure_loss()
+        
+        if self.hparams["loss"] == "huber":
+            loss = loss_func(output, target, delta=self.hparams["huber_delta"], reduction='mean')
+        else:
+            loss = loss_func(output, target)
+
+        self.log('loss/test', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('mse/test', self.mse(output, target), on_epoch=True, prog_bar=True)
+        self.log('mae/test', self.mae(output, target), on_epoch=True, prog_bar=True)
+
+        return {'loss': loss, 'predictions': output, 'targets': target}
+
 # implemented models for future use currently not applied to SPARCSpy
 
 class GeneralModel(pl.LightningModule):
@@ -189,8 +292,7 @@ class GeneralModel(pl.LightningModule):
     def on_train_start(self):
         self.logger.log_hyperparams(self.hp, {"precision/train": 0,"recall/train": 0,"precision/val": 0,"recall/val": 0})
     
-    def forward(self, x):
-        
+    def forward(self, x): 
         return self.network(x)
     
     def configure_optimizers(self):
