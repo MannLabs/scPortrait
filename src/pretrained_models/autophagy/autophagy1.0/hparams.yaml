@@ -1,6 +1,6 @@
 class_labels:
-- Unstim
-- Torin
+  - Unstim
+  - Torin
 dataset: /mnt/dss_fast/datasets/2021_10_13_autophagy_screen/Training_Data/
 epochs: 40
 grad_clipping: 0.5

@@ -1,27 +1,27 @@
 class_labels:
-- Torin
-- Unstim
+  - Torin
+  - Unstim
 datadirs:
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_C6/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_F6/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.2_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.3_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.X_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.9_0.99.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.99_0.999.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.999_1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.9_0.99.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.99_0.999.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.999_1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0_0.001.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0.01_0.1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0.001_0.01.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0_0.001.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0.01_0.1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0.001_0.01.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0_0.001.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0.01_0.1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0.001_0.01.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_C6/extraction/data/single_cells.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_F6/extraction/data/single_cells.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.2_stim_Cr203/extraction/data/single_cells.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.3_stim_Cr203/extraction/data/single_cells.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.X_stim_Cr203/extraction/data/single_cells.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.9_0.99.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.99_0.999.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.999_1.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.9_0.99.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.99_0.999.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.999_1.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0_0.001.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0.01_0.1.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0.001_0.01.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0_0.001.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0.01_0.1.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0.001_0.01.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0_0.001.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0.01_0.1.h5
+  - /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0.001_0.01.h5
 dataset: /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/
 epochs: 20
 grad_clipping: 0.5
