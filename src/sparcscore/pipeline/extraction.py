@@ -55,7 +55,7 @@ class HDF5CellExtraction(ProcessingStep):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        base_directory = self.directory.replace("/extraction", "")
+        base_directory = self.directory.replace("extraction", "")
 
         self.input_segmentation_path = os.path.join(
             base_directory,
