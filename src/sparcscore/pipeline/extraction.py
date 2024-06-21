@@ -771,7 +771,7 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
 
-        with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
+        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
             x = list(tqdm(pool.imap(f, args), total=len(args)))
             pool.close()
             pool.join()
@@ -920,7 +920,7 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
 
-        with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
+        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
             x = list(tqdm(pool.imap(f, args), total=len(args)))
             pool.close()
             pool.join()
