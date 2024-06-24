@@ -4,6 +4,7 @@ input_channels: 3
 output_channels: 5
 WGASegmentation:
     input_channels: 3
+    cache: "."
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
     lower_quantile_normalization:   0.001
     upper_quantile_normalization:   0.999
