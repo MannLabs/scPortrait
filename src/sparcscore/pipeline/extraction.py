@@ -770,12 +770,16 @@ class HDF5CellExtraction(ProcessingStep):
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
-
-        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-            x = list(tqdm(pool.imap(f, args), total=len(args)))
-            pool.close()
-            pool.join()
-            print("multiprocessing done.")
+        
+        if self.config["threads"] <= 1:
+            for arg in tqdm(args):
+                x = f(arg)
+        else:
+            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+                x = list(tqdm(pool.imap(f, args), total=len(args)))
+                pool.close()
+                pool.join()
+                print("multiprocessing done.")
 
         stop = timeit.default_timer()
         self.save_index_to_remove = flatten(x)
