@@ -317,7 +317,7 @@ class SizeFilter(BaseFilter):
             idx = np.argmin(weights)
         return idx
 
-    def _calculate_filtering_threshold(self, counts):
+    def _calculate_filtering_threshold(self, counts, return_plot = False):
         """
         Calculate the filtering thresholds for the given counts.
 
@@ -399,6 +399,9 @@ class SizeFilter(BaseFilter):
             f"Calculated threshold for {self.label} with {self.confidence_interval * 100}% confidence interval: {self.filter_threshold}"
         )
 
+        if return_plot:
+            return fig
+        
     def _get_ids_to_remove(self, input_mask):
         """
         Get the IDs to remove from the input mask based on the filtering threshold.
