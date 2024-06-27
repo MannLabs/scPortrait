@@ -934,19 +934,22 @@ class CellFeaturizer(ProcessingStep):
         cytosol_mask = img[:, 1] > 0
         cytosol_area = cytosol_mask.view(N, -1).sum(1, keepdims=True)
 
-        #apply mask to channel to only compute the statistics over the pixels that are relevant
-        img_selected = masked_tensor(img[:, channel], cytosol_mask)
+        # Select channel to calculate summary statistics over
+        img_selected = img[:, channel]
 
-        mean = img_selected.view(N, -1).mean(1, keepdim=True)
-        median = img_selected.view(N, -1).quantile(q=0.5, dim=1, keepdim=True)
-        quant75 = img_selected.view(N, -1).quantile(q=0.75, dim=1, keepdim=True)
-        quant25 = img_selected.view(N, -1).quantile(q=0.25, dim=1, keepdim=True)
+        #apply mask to channel to only compute the statistics over the pixels that are relevant
+        img_selected = masked_tensor(img_selected, cytosol_mask)
+
+        mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
+        median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
+        quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
+        quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
 
         # Calculate more complex statistics
         summed_intensity_nucleus_area = (
             masked_tensor(img_selected, nucleus_mask)
             .view(N, -1)
-            .sum(1)
+            .nansum(1)
             .reshape((N, 1))
             .to_tensor(0)
         )
@@ -954,7 +957,7 @@ class CellFeaturizer(ProcessingStep):
         summed_intensity_nucleus_area_normalized = (
             summed_intensity_nucleus_area / nucleus_area
         )
-        summed_intensity_cytosol_area = img_selected.view(N, -1).sum(1, keepdims=True)
+        summed_intensity_cytosol_area = img_selected.view(N, -1).nansum(1, keepdims=True)
         summed_intensity_cytosol_area_normalized = (
             summed_intensity_cytosol_area / cytosol_area
         )
