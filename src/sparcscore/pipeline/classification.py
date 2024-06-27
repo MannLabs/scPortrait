@@ -1039,5 +1039,5 @@ class CellFeaturizer(ProcessingStep):
 
         self.log("finished processing")
 
-        path = os.path.join(self.run_path, "calculated_features.tsv")
+        path = os.path.join(self.run_path, "calculated_features.csv")
         dataframe.to_csv(path)
