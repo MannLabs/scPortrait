@@ -938,7 +938,9 @@ class CellFeaturizer(ProcessingStep):
         img_selected = img[:, channel]
 
         #apply mask to channel to only compute the statistics over the pixels that are relevant
-        img_selected = masked_tensor(img_selected, cytosol_mask)
+        mask = cytosol_mask
+        mask[mask == 0] = torch.nan
+        img_selected = (img_selected * mask).to(torch.float32) #ensure we have correct dytpe for subsequent calculations
 
         mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
         median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
