@@ -86,6 +86,10 @@ class SizeFilter(BaseFilter):
     population_to_keep : str, optional
         For multipopulation models this parameter determines which population should be kept. Options are "largest", "smallest", "mostcommon", "leastcommon". Default is "mostcommon".
         If set to "largest" or "smallest", the model is chosen which has the largest or smallest mean. If set to "mostcommon" or "leastcommon", the model is chosen whose population is least or most common.
+    filter_lower : bool, optional
+        Whether to filter objects that are smaller than the lower threshold. Default is True.
+    filter_upper : bool, optional
+        Whether to filter objects that are larger than the upper threshold. Default is True.
     *args
         Additional positional arguments.
     **kwargs
@@ -114,6 +118,8 @@ class SizeFilter(BaseFilter):
         confidence_interval=0.95,
         n_components=1,
         population_to_keep="largest",
+        filter_lower = True,
+        filter_upper = True,
         *args,
         **kwargs,
     ):
@@ -126,6 +132,12 @@ class SizeFilter(BaseFilter):
         self.confidence_interval = confidence_interval
         self.n_components = n_components
         self.population_to_keep = population_to_keep
+        self.filter_lower = filter_lower
+        self.filter_upper = filter_upper
+
+        #sanity check to ensure that some filtering will be performed
+        if not self.filter_lower and not self.filter_upper:
+            raise ValueError("At least one of filter_lower or filter_upper must be True otherwise no filtering will be performed.")
 
         # if no directory is provided, use the current working directory
         if directory is not None:
@@ -198,18 +210,21 @@ class SizeFilter(BaseFilter):
             axs.plot(x, _pdf, "-r", label=f"Gaussian {i}")
 
         # visualize the threshold values as dotted lines
-        axs.axvline(
-            threshold[0],
-            color="blue",
-            linestyle="--",
-            label=f"Threshold Lower: {threshold[0]:.2f}",
-        )
-        axs.axvline(
-            threshold[1],
-            color="blue",
-            linestyle="--",
-            label=f"Threshold Upper: {threshold[1]:.2f}",
-        )
+        if self.filter_lower:
+            axs.axvline(
+                threshold[0],
+                color="blue",
+                linestyle="--",
+                label=f"Threshold Lower: {threshold[0]:.2f}",
+            )
+
+        if self.filter_upper:
+            axs.axvline(
+                threshold[1],
+                color="blue",
+                linestyle="--",
+                label=f"Threshold Upper: {threshold[1]:.2f}",
+            )
 
         # format the plot
         axs.legend()
@@ -421,19 +436,28 @@ class SizeFilter(BaseFilter):
             self._calculate_filtering_threshold(pixel_counts)
 
         ids_remove = []
-        _ids = counts[0][1:][np.where(pixel_counts < self.filter_threshold[0])]
-        ids_remove.extend(_ids)
 
-        self.log(
-            f"Found {len(_ids)} ids to remove from {self.label} mask which are smaller than the chosen threshold range {self.filter_threshold}."
-        )
+        if self.filter_lower:
+            _ids = counts[0][1:][np.where(pixel_counts < self.filter_threshold[0])]
+            ids_remove.extend(_ids)
 
-        _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
-        ids_remove.extend(_ids)
+            self.log(
+                f"Found {len(_ids)} ids to remove from {self.label} mask which are smaller than the chosen threshold range {self.filter_threshold}."
+            )
+        else:
+            _ids = counts[0][1:][np.where(pixel_counts < self.filter_threshold[0])]
+            self.log(f"Filtering lower threshold is disabled. Not filtering {len(_ids)} that fall below the threshold range {self.filter_threshold}.")
+        
+        if self.filter_upper:
+            _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
+            ids_remove.extend(_ids)
 
-        self.log(
-            f"Found {len(_ids)} ids to remove from {self.label} mask which are bigger than the chosen threshold range {self.filter_threshold}."
-        )
+            self.log(
+                f"Found {len(_ids)} ids to remove from {self.label} mask which are bigger than the chosen threshold range {self.filter_threshold}."
+            )
+        else:
+            _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
+            self.log(f"Filtering upper threshold is disabled. Not filtering {len(_ids)} that fall above the threshold range {self.filter_threshold}.")
 
         self.ids_to_remove = ids_remove
 
