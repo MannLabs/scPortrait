@@ -23,6 +23,8 @@ class HDF5SingleCellDataset(Dataset):
     dir_list : list of str
         List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
         containing hdf5 files.
+    index_list : list of int, or None
+        List of indices to select from the dataset. If set to None all cells are taken. Default is None.
     transform : callable, optional
         A optional user-defined function to apply transformations to the data. Default is None.
     max_level : int, optional
@@ -76,11 +78,13 @@ class HDF5SingleCellDataset(Dataset):
                  transform=None, 
                  return_id=False, 
                  return_fake_id=False,
+                 index_list=None, # list of indices to select from the index
                  select_channel=None):
         
         self.root_dir = root_dir
         self.dir_labels = dir_labels
         self.dir_list = dir_list
+        self.index_list = index_list
         self.transform = transform
         
         self.handle_list = []
@@ -112,7 +116,11 @@ class HDF5SingleCellDataset(Dataset):
     def add_hdf_to_index(self, current_label, path):       
         try:
             input_hdf = h5py.File(path, 'r')
-            index_handle = input_hdf.get('single_cell_index') # to float
+
+            if self.index_list is not None:
+                index_handle = input_hdf.get('single_cell_index')[self.index_list] # get single cell index handle
+            else:
+                index_handle = input_hdf.get('single_cell_index') # to float
 
             print(f"Adding hdf5 file {path} to index...")
 
