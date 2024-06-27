@@ -951,7 +951,7 @@ class CellFeaturizer(ProcessingStep):
         summed_intensity_nucleus_area = (
             masked_tensor(img_selected, nucleus_mask)
             .view(N, -1)
-            .nansum(1)
+            .sum(1)
             .reshape((N, 1))
             .to_tensor(0)
         )
