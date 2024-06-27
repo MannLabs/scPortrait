@@ -723,7 +723,7 @@ class Project(Logable):
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
 
-        self.classification_f(input_extraction, partial = True, *args, **kwargs)
+        self.classification_f(input_extraction, partial = process_partial, *args, **kwargs)
 
     def select(self, *args, **kwargs):
         """
