@@ -898,7 +898,12 @@ class HDF5CellExtraction(ProcessingStep):
 
         # subset to only get the N_cells requested from this method
         np.random.seed(42)
-        class_list = np.random.choice(class_list, n_cells, replace=False)
+        indices = np.random.choice(range(len(class_list)), n_cells, replace=False)
+        indices.sort()
+        indices = [int(x) for x in indices]
+        
+        class_list = list(np.array(class_list)[indices])
+        px_centers = list(np.array(px_centers)[indices])
 
         self.log(f"Randomly selected {n_cells} cells to extract")
 
