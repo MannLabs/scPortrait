@@ -25,7 +25,7 @@ class MLClusterClassifier(ProcessingStep):
 
     This class takes a pre-trained model and uses it to classify single cells,
     using the model's forward function or encoder function, depending on the
-    user's choice. The classification results are saved to a TSV file.
+    user's choice. The classification results are saved to a CSV file.
 
     Attributes
     ----------
@@ -164,7 +164,7 @@ class MLClusterClassifier(ProcessingStep):
         Returns
         -------
         None
-            Results are written to TSV files located in the project directory.
+            Results are written to CSV files located in the project directory.
 
         Important
         ---------
@@ -424,11 +424,11 @@ class MLClusterClassifier(ProcessingStep):
 
         if partial:
             path = os.path.join(
-                self.run_path, f"partial_dimension_reduction_{model_fun.__name__}.tsv"
+                self.run_path, f"partial_dimension_reduction_{model_fun.__name__}.csv"
             )
         else:
             path = os.path.join(
-                self.run_path, f"dimension_reduction_{model_fun.__name__}.tsv"
+                self.run_path, f"dimension_reduction_{model_fun.__name__}.csv"
             )
         dataframe.to_csv(path)
 
@@ -683,7 +683,7 @@ class EnsembleClassifier(ProcessingStep):
 class CellFeaturizer(ProcessingStep):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
-    The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
+    The extracted features are saved to a CSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
 
@@ -698,7 +698,7 @@ class CellFeaturizer(ProcessingStep):
     - Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area
     - Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area
 
-    The features are outputted in this order in the TSV file.
+    The features are outputted in this order in the CSV file.
     """
 
     DEFAULT_LOG_NAME = "processing.log"
@@ -829,7 +829,7 @@ class CellFeaturizer(ProcessingStep):
         Returns
         -------
         None
-            Results are written to TSV files located in the project directory.
+            Results are written to CSV files located in the project directory.
 
         Important
         ---------
@@ -1056,7 +1056,7 @@ class CellFeaturizer(ProcessingStep):
         self.log("finished processing")
 
         if partial:
-            path = os.path.join(self.run_path, "partial_calculated_features.tsv")
+            path = os.path.join(self.run_path, "partial_calculated_features.csv")
         else:
             path = os.path.join(self.run_path, "calculated_features.csv")
         dataframe.to_csv(path)
