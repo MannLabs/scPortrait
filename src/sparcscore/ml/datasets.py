@@ -78,7 +78,7 @@ class HDF5SingleCellDataset(Dataset):
                  transform=None, 
                  return_id=False, 
                  return_fake_id=False,
-                 index_list=None, # list of indices to select from the index
+                 index_list = None, # list of indices to select from the index
                  select_channel=None):
         
         self.root_dir = root_dir
@@ -96,12 +96,13 @@ class HDF5SingleCellDataset(Dataset):
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  
             current_label = self.dir_labels[i]
+            current_index_list = self.index_list[i]
 
             #check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]
                 
             if filetype in self.HDF_FILETYPES:
-                self.add_hdf_to_index(current_label, directory)
+                self.add_hdf_to_index(current_label, directory, current_index_list = current_index_list)
 
             else:
                 # recursively scan for files
@@ -113,12 +114,13 @@ class HDF5SingleCellDataset(Dataset):
         self.stats()
  
         
-    def add_hdf_to_index(self, current_label, path):       
+    def add_hdf_to_index(self, current_label, path, current_index_list):       
         try:
             input_hdf = h5py.File(path, 'r')
 
             if self.index_list is not None:
-                index_handle = input_hdf.get('single_cell_index')[self.index_list] # get single cell index handle
+                current_index_list.sort()
+                index_handle = input_hdf.get('single_cell_index')[current_index_list] # get single cell index handle
             else:
                 index_handle = input_hdf.get('single_cell_index') # to float
 
