@@ -120,7 +120,7 @@ class HDF5SingleCellDataset(Dataset):
             if self.index_list is not None:
                 index_handle = np.zeros((len(current_index_list), 2))
                 for i, ix in enumerate(current_index_list):
-                    index_handle[:] = input_hdf.get('single_cell_index')[ix]
+                    index_handle[i] = input_hdf.get('single_cell_index')[ix]
                 index_handle = index_handle.astype(np.int64)
             else:
                 index_handle = input_hdf.get('single_cell_index') # to float
