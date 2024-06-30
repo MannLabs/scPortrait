@@ -141,7 +141,7 @@ class HDF5SingleCellDataset(Dataset):
         except Exception:
             return
         
-    def scan_directory(self, path, current_label, levels_left):
+    def scan_directory(self, path, current_label, levels_left, current_index_list = None):
         
         # iterates over all files and folders in a directory
         # hdf5 files are added to the index
@@ -159,7 +159,7 @@ class HDF5SingleCellDataset(Dataset):
                 
                 if filetype in self.HDF_FILETYPES:
                     
-                    self.add_hdf_to_index(current_label, os.path.join(path, file))
+                    self.add_hdf_to_index(current_label, os.path.join(path, file), current_index_list=current_index_list)
                     
             # recursively scan subdirectories        
             for subdirectory in current_level_directories:
