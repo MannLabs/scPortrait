@@ -84,6 +84,14 @@ class HDF5SingleCellDataset(Dataset):
         self.root_dir = root_dir
         self.dir_labels = dir_labels
         self.dir_list = dir_list
+
+        #ensure index list is long enough for all directories
+        if index_list is None:
+            index_list = [None] * len(dir_list)
+        else:
+            if len(index_list) < len(dir_list):
+                raise ValueError("index_list should be as long as dir_list")
+        
         self.index_list = index_list
         self.transform = transform
         
