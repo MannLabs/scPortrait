@@ -113,7 +113,7 @@ class HDF5SingleCellDataset(Dataset):
                 self.add_hdf_to_index(current_label, directory, current_index_list = current_index_list)
             else:
                 # recursively scan for files
-                self.scan_directory(path, current_label, max_level)
+                self.scan_directory(path, current_label, max_level, current_index_list = current_index_list)
         
         # print dataset stats at the end
         self.return_id = return_id
@@ -124,7 +124,7 @@ class HDF5SingleCellDataset(Dataset):
         try:
             input_hdf = h5py.File(path, 'r')
 
-            if self.index_list is not None:
+            if current_index_list is not None:
                 index_handle = np.zeros((len(current_index_list), 2), dtype=np.int64)
                 for i, ix in enumerate(current_index_list):
                     index_handle[i] = input_hdf.get('single_cell_index')[ix]
