@@ -4,6 +4,7 @@ import warnings
 import shutil
 import tempfile
 import sys
+import platform
 
 class Logable(object):
     """
@@ -110,6 +111,8 @@ class ProcessingStep(Logable):
         self.directory = directory
         self.project_location = project_location
         self.config = config
+
+        self.get_context()
 
     def __call__(
         self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
@@ -257,3 +260,14 @@ class ProcessingStep(Logable):
             del self._tmp_dir, self._tmp_dir_path
         else:
             self.log("Temporary directory not found, skipping cleanup")
+
+    def get_context(self):
+        """
+        Define context for multiprocessing steps that should be used.
+        The context is platform dependent.
+        """ 
+
+        if platform.system() == 'Windows':
+            self.context = "spawn"
+        else:
+            self.context = "fork"

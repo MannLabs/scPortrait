@@ -936,20 +936,24 @@ class ShardedSegmentation(Segmentation):
 
         self.log(f"Beginning segmentation on {available_GPUs} GPUs.")
 
-        with Pool(
-            processes=n_processes,
-            initializer=self.initializer_function,
-            initargs=[gpu_id_list],
-        ) as pool:
-            results = list(
-                tqdm(
-                    pool.imap(self.method.call_as_shard, shard_list),
-                    total=len(shard_list),
+        if n_processes == 1:
+            for shard in shard_list:
+                shard.call_as_shard()
+        else:
+            with Pool(
+                processes=n_processes,
+                initializer=self.initializer_function,
+                initargs=[gpu_id_list],
+            ) as pool:
+                results = list(
+                    tqdm(
+                        pool.imap(self.method.call_as_shard, shard_list),
+                        total=len(shard_list),
+                    )
                 )
-            )
-            pool.close()
-            pool.join()
-            print("All segmentations are done.", flush=True)
+                pool.close()
+                pool.join()
+                print("All segmentations are done.", flush=True)
 
         # free up memory
         del shard_list
