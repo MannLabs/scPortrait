@@ -25,7 +25,7 @@ class MLClusterClassifier(ProcessingStep):
 
     This class takes a pre-trained model and uses it to classify single cells,
     using the model's forward function or encoder function, depending on the
-    user's choice. The classification results are saved to a TSV file.
+    user's choice. The classification results are saved to a CSV file.
 
     Attributes
     ----------
@@ -139,6 +139,7 @@ class MLClusterClassifier(ProcessingStep):
         extraction_dir,
         accessory,
         size=0,
+        partial = False,
         project_dataloader=HDF5SingleCellDataset,
         accessory_dataloader=HDF5SingleCellDataset,
     ):
@@ -163,7 +164,7 @@ class MLClusterClassifier(ProcessingStep):
         Returns
         -------
         None
-            Results are written to TSV files located in the project directory.
+            Results are written to CSV files located in the project directory.
 
         Important
         ---------
@@ -375,11 +376,11 @@ class MLClusterClassifier(ProcessingStep):
         encoders = self.config["encoders"]
         for encoder in encoders:
             if encoder == "forward":
-                self.inference(dataloader, model.network.forward)
+                self.inference(dataloader, model.network.forward, partial = partial)
             if encoder == "encoder":
-                self.inference(dataloader, model.network.encoder)
+                self.inference(dataloader, model.network.encoder, partial = partial)
 
-    def inference(self, dataloader, model_fun):
+    def inference(self, dataloader, model_fun, partial = False):
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
 
@@ -421,9 +422,14 @@ class MLClusterClassifier(ProcessingStep):
 
         self.log("finished processing")
 
-        path = os.path.join(
-            self.run_path, f"dimension_reduction_{model_fun.__name__}.tsv"
-        )
+        if partial:
+            path = os.path.join(
+                self.run_path, f"partial_dimension_reduction_{model_fun.__name__}.csv"
+            )
+        else:
+            path = os.path.join(
+                self.run_path, f"dimension_reduction_{model_fun.__name__}.csv"
+            )
         dataframe.to_csv(path)
 
 
@@ -515,7 +521,7 @@ class EnsembleClassifier(ProcessingStep):
                 print("Error:", e)
                 return None
 
-    def inference(self, dataloader, model_ensemble):
+    def inference(self, dataloader, model_ensemble, partial = False):
         data_iter = iter(dataloader)
         self.log(
             f"Start processing {len(data_iter)} batches with {len(model_ensemble)} models from ensemble."
@@ -574,14 +580,19 @@ class EnsembleClassifier(ProcessingStep):
         new_order = columns_to_move + other_columns
         dataframe = dataframe[new_order]
 
-        path = os.path.join(
-            self.directory, f"ensemble_inference_{self.ensemble_name}.csv"
-        )
+        if partial:
+            path = os.path.join(
+                self.directory, f"partial_ensemble_inference_{self.ensemble_name}.csv"
+            )
+        else:
+            path = os.path.join(
+                self.directory, f"ensemble_inference_{self.ensemble_name}.csv"
+            )
         dataframe.to_csv(path, sep=",")
 
         self.log(f"Results saved to file: {path}")
 
-    def __call__(self, extraction_dir):
+    def __call__(self, extraction_dir, partial = False):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -666,13 +677,13 @@ class EnsembleClassifier(ProcessingStep):
         )
 
         # perform inference
-        self.inference(dataloader=dataloader, model_ensemble=model_ensemble)
+        self.inference(dataloader=dataloader, model_ensemble=model_ensemble, partial = partial)
 
 
 class CellFeaturizer(ProcessingStep):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
-    The extracted features are saved to a TSV file. The features are calculated on the basis of a specified channel.
+    The extracted features are saved to a CSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
 
@@ -687,7 +698,7 @@ class CellFeaturizer(ProcessingStep):
     - Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area
     - Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area
 
-    The features are outputted in this order in the TSV file.
+    The features are outputted in this order in the CSV file.
     """
 
     DEFAULT_LOG_NAME = "processing.log"
@@ -795,6 +806,7 @@ class CellFeaturizer(ProcessingStep):
         extraction_dir,
         accessory,
         size=0,
+        partial=False,
         project_dataloader=HDF5SingleCellDataset,
         accessory_dataloader=HDF5SingleCellDataset,
     ):
@@ -817,7 +829,7 @@ class CellFeaturizer(ProcessingStep):
         Returns
         -------
         None
-            Results are written to TSV files located in the project directory.
+            Results are written to CSV files located in the project directory.
 
         Important
         ---------
@@ -908,7 +920,7 @@ class CellFeaturizer(ProcessingStep):
             num_workers=self.config["dataloader_worker_number"],
             shuffle=False,
         )
-        self.inference(dataloader)
+        self.inference(dataloader, partial=partial)
 
     def calculate_statistics(self, img, channel=-1):
         """
@@ -936,10 +948,18 @@ class CellFeaturizer(ProcessingStep):
 
         # Select channel to calculate summary statistics over
         img_selected = img[:, channel]
-        mean = img_selected.view(N, -1).mean(1, keepdim=True)
-        median = img_selected.view(N, -1).quantile(q=0.5, dim=1, keepdim=True)
-        quant75 = img_selected.view(N, -1).quantile(q=0.75, dim=1, keepdim=True)
-        quant25 = img_selected.view(N, -1).quantile(q=0.25, dim=1, keepdim=True)
+
+        # apply mask to channel to only compute the statistics over the pixels that are relevant
+        mask = cytosol_mask
+        mask[mask == 0] = torch.nan
+        img_selected = (img_selected * mask).to(
+            torch.float32
+        )  # ensure we have correct dytpe for subsequent calculations
+
+        mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
+        median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
+        quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
+        quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
 
         # Calculate more complex statistics
         summed_intensity_nucleus_area = (
@@ -949,10 +969,13 @@ class CellFeaturizer(ProcessingStep):
             .reshape((N, 1))
             .to_tensor(0)
         )
+
         summed_intensity_nucleus_area_normalized = (
             summed_intensity_nucleus_area / nucleus_area
         )
-        summed_intensity_cytosol_area = img_selected.view(N, -1).sum(1, keepdims=True)
+        summed_intensity_cytosol_area = img_selected.view(N, -1).nansum(
+            1, keepdims=True
+        )
         summed_intensity_cytosol_area_normalized = (
             summed_intensity_cytosol_area / cytosol_area
         )
@@ -975,7 +998,7 @@ class CellFeaturizer(ProcessingStep):
         )
         return results
 
-    def inference(self, dataloader):
+    def inference(self, dataloader, partial=False):
         """
         Perform inference for a dataloader and save the results to a file.
 
@@ -1032,5 +1055,8 @@ class CellFeaturizer(ProcessingStep):
 
         self.log("finished processing")
 
-        path = os.path.join(self.run_path, "calculated_features.tsv")
+        if partial:
+            path = os.path.join(self.run_path, "partial_calculated_features.csv")
+        else:
+            path = os.path.join(self.run_path, "calculated_features.csv")
         dataframe.to_csv(path)

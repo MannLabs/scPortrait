@@ -53,7 +53,8 @@ def _get_data_dir():
         str: path to data directory
     """
     src_code_dir, _ = os.path.split(__file__)
-    data_dir = src_code_dir.replace("sparcscore/ml", "pretrained_models/")
+    data_dir = os.path.join(src_code_dir, os.pardir, os.pardir, 'pretrained_models')
+    data_dir = os.path.abspath(data_dir)  # Get the absolute path
     return (data_dir)
 
 def autophagy_classifier1_0(device = "cuda"):

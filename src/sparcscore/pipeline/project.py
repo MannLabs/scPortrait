@@ -707,7 +707,7 @@ class Project(Logable):
         input_segmentation = self.segmentation_f.get_output()
         self.extraction_f.process_partial(input_segmentation, n_cells = n_cells, *args, **kwargs)
     
-    def classify(self, *args, **kwargs):
+    def classify(self, partial = False, *args, **kwargs):
         """
         Classify extracted single cells with the defined classification method.
         """
@@ -715,12 +715,15 @@ class Project(Logable):
         if hasattr(self, 'filtered_dataset'):
             input_extraction = self.extraction_f.get_output_path().replace("/data", f"/filtered_data/{self.filtered_dataset}")
         else:
-            input_extraction = self.extraction_f.get_output_path()
+            if partial:
+                input_extraction = self.extraction_f.get_output_path().replace("/data", "/selected_data")
+            else:
+                input_extraction = self.extraction_f.get_output_path()
 
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
 
-        self.classification_f(input_extraction, *args, **kwargs)
+        self.classification_f(input_extraction, partial = partial, *args, **kwargs)
 
     def select(self, *args, **kwargs):
         """

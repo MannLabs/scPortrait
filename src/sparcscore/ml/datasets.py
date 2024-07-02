@@ -23,6 +23,8 @@ class HDF5SingleCellDataset(Dataset):
     dir_list : list of str
         List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
         containing hdf5 files.
+    index_list : list of int, or None
+        List of indices to select from the dataset. If set to None all cells are taken. Default is None.
     transform : callable, optional
         A optional user-defined function to apply transformations to the data. Default is None.
     max_level : int, optional
@@ -76,11 +78,21 @@ class HDF5SingleCellDataset(Dataset):
                  transform=None, 
                  return_id=False, 
                  return_fake_id=False,
+                 index_list = None, # list of indices to select from the index
                  select_channel=None):
         
         self.root_dir = root_dir
         self.dir_labels = dir_labels
         self.dir_list = dir_list
+
+        #ensure index list is long enough for all directories
+        if index_list is None:
+            index_list = [None] * len(dir_list)
+        else:
+            if len(index_list) < len(dir_list):
+                raise ValueError("index_list should be as long as dir_list")
+        
+        self.index_list = index_list
         self.transform = transform
         
         self.handle_list = []
@@ -92,27 +104,32 @@ class HDF5SingleCellDataset(Dataset):
         for i, directory in enumerate(dir_list):
             path = os.path.join(self.root_dir, directory)  
             current_label = self.dir_labels[i]
+            current_index_list = self.index_list[i]
 
             #check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]
                 
             if filetype in self.HDF_FILETYPES:
-                self.add_hdf_to_index(current_label, directory)
-
+                self.add_hdf_to_index(current_label, directory, current_index_list = current_index_list)
             else:
                 # recursively scan for files
-                self.scan_directory(path, current_label, max_level)
+                self.scan_directory(path, current_label, max_level, current_index_list = current_index_list)
         
         # print dataset stats at the end
         self.return_id = return_id
         self.return_fake_id = return_fake_id
         self.stats()
- 
-        
-    def add_hdf_to_index(self, current_label, path):       
+      
+    def add_hdf_to_index(self, current_label, path, current_index_list):       
         try:
             input_hdf = h5py.File(path, 'r')
-            index_handle = input_hdf.get('single_cell_index') # to float
+
+            if current_index_list is not None:
+                index_handle = np.zeros((len(current_index_list), 2), dtype=np.int64)
+                for i, ix in enumerate(current_index_list):
+                    index_handle[i] = input_hdf.get('single_cell_index')[ix]
+            else:
+                index_handle = input_hdf.get('single_cell_index') # to float
 
             print(f"Adding hdf5 file {path} to index...")
 
@@ -124,7 +141,7 @@ class HDF5SingleCellDataset(Dataset):
         except Exception:
             return
         
-    def scan_directory(self, path, current_label, levels_left):
+    def scan_directory(self, path, current_label, levels_left, current_index_list = None):
         
         # iterates over all files and folders in a directory
         # hdf5 files are added to the index
@@ -142,7 +159,7 @@ class HDF5SingleCellDataset(Dataset):
                 
                 if filetype in self.HDF_FILETYPES:
                     
-                    self.add_hdf_to_index(current_label, os.path.join(path, file))
+                    self.add_hdf_to_index(current_label, os.path.join(path, file), current_index_list=current_index_list)
                     
             # recursively scan subdirectories        
             for subdirectory in current_level_directories:

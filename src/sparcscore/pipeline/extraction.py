@@ -770,12 +770,16 @@ class HDF5CellExtraction(ProcessingStep):
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
-
-        with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
-            x = list(tqdm(pool.imap(f, args), total=len(args)))
-            pool.close()
-            pool.join()
-            print("multiprocessing done.")
+        
+        if self.config["threads"] <= 1:
+            for arg in tqdm(args):
+                x = f(arg)
+        else:
+            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+                x = list(tqdm(pool.imap(f, args), total=len(args)))
+                pool.close()
+                pool.join()
+                print("multiprocessing done.")
 
         stop = timeit.default_timer()
         self.save_index_to_remove = flatten(x)
@@ -898,7 +902,12 @@ class HDF5CellExtraction(ProcessingStep):
 
         # subset to only get the N_cells requested from this method
         np.random.seed(42)
-        class_list = np.random.choice(class_list, n_cells, replace=False)
+        indices = np.random.choice(range(len(class_list)), n_cells, replace=False)
+        indices.sort()
+        indices = [int(x) for x in indices]
+        
+        class_list = list(np.array(class_list)[indices])
+        px_centers = list(np.array(px_centers)[indices])
 
         self.log(f"Randomly selected {n_cells} cells to extract")
 
@@ -920,7 +929,7 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
 
-        with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
+        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
             x = list(tqdm(pool.imap(f, args), total=len(args)))
             pool.close()
             pool.join()

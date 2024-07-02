@@ -9,7 +9,7 @@ jobs:
       max-parallel: 5
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
@@ -27,5 +27,5 @@ jobs:
         pip install ./    
     - name: Test with pytest
       run: |
-        conda install pytest
+        pip install pytest
         pytest
