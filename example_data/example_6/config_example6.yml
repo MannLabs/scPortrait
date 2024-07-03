@@ -4,7 +4,7 @@ output_channels: 5 #always add 2 to the number of channels
 Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
     input_channels: 3
     output_masks: 2
-    threads: 2 #the segmentation model is loaded for each segmentation process utilizing GPU memory. Depending on GPU size this needs to be adjusted
+    threads: 5 #the segmentation model is loaded for each segmentation process utilizing GPU memory. Depending on GPU size this needs to be adjusted
     cache: "." #path to where intermediate results are written to memory mapped temp arrays
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
@@ -20,7 +20,7 @@ Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
 Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     input_channels: 3
     output_masks: 2
-    threads: 2
+    threads: 5
     cache: "."
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
@@ -57,3 +57,10 @@ TimecourseHDF5CellExtraction:
     hdf5_rdcc_nbytes: 5242880000 # 5gb 2048 * 2048 * 1250
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 1250
+CellFeaturizer:
+    channel_classification: 4
+    threads: 20 
+    batch_size: 100
+    dataloader_worker_number: 5
+    inference_device: "cuda"
+    screen_label: "featurization_Ch4"
