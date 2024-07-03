@@ -1,0 +1,11 @@
+,gene_id,antibody,species,cell_line,organ,cellosaurusID,location,image_URL,image_location
+0,ENSG00000000003,HPA004109,human,U2OS,Mesenchymal,CVCL_0042,cytosol,http://images.proteinatlas.org/4109/23_H11_1_blue_red_green.jpg,images/00005.jpg
+1,ENSG00000000003,HPA004109,human,U2OS,Mesenchymal,CVCL_0042,cytosol,http://images.proteinatlas.org/4109/23_H11_2_blue_red_green.jpg,images/00006.jpg
+2,ENSG00000000460,HPA024451,human,U2OS,Mesenchymal,CVCL_0042,,http://images.proteinatlas.org/24451/226_G2_1_blue_red_green.jpg,images/00017.jpg
+3,ENSG00000000460,HPA024451,human,U2OS,Mesenchymal,CVCL_0042,,http://images.proteinatlas.org/24451/226_G2_2_blue_red_green.jpg,images/00018.jpg
+4,ENSG00000000938,HPA002024,human,U2OS,Mesenchymal,CVCL_0042,plasma membrane,http://images.proteinatlas.org/2024/59_H5_1_blue_red_green.jpg,images/00023.jpg
+5,ENSG00000000938,HPA002024,human,U2OS,Mesenchymal,CVCL_0042,plasma membrane,http://images.proteinatlas.org/2024/59_H5_2_blue_red_green.jpg,images/00024.jpg
+6,ENSG00000000971,HPA038922,human,U2OS,Mesenchymal,CVCL_0042,,http://images.proteinatlas.org/38922/603_A5_1_blue_red_green.jpg,images/00029.jpg
+7,ENSG00000000971,HPA038922,human,U2OS,Mesenchymal,CVCL_0042,,http://images.proteinatlas.org/38922/603_A5_2_blue_red_green.jpg,images/00030.jpg
+8,ENSG00000001084,CAB009569,human,U2OS,Mesenchymal,CVCL_0042,nucleoplasm,http://images.proteinatlas.org/9569/931_H5_3_blue_red_green.jpg,images/00035.jpg
+9,ENSG00000001084,CAB009569,human,U2OS,Mesenchymal,CVCL_0042,nucleoplasm,http://images.proteinatlas.org/9569/931_H5_4_blue_red_green.jpg,images/00036.jpg

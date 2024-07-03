@@ -335,7 +335,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.output_path = os.path.join(
             self.extraction_data_directory, self.DEFAULT_DATA_FILE
         )
-        print(self.output_path)
 
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
@@ -377,7 +376,7 @@ class HDF5CellExtraction(ProcessingStep):
         _tmp_single_cell_data[save_index] = stack
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
 
-    def _extract_classes(self, input_segmentation_path, px_center, arg):
+    def _extract_classes(self, input_segmentation_path, px_center, arg, return_failed_ids = False):
         """
         Processing for each individual cell that needs to be run for each center.
         """
@@ -542,9 +541,9 @@ class HDF5CellExtraction(ProcessingStep):
                 channels = required_maps + feature_channels
                 stack = np.stack(channels, axis=0).astype("float16")
 
-                if self.debug:
+                if self.deep_debug:
                     # visualize some cells for debugging purposes
-                    if index % 300 == 0:
+                    if index % 1000 == 0:
                         print(
                             f"Cell ID: {cell_id} has center at [{_px_center[0]}, {_px_center[1]}]"
                         )
@@ -598,14 +597,16 @@ class HDF5CellExtraction(ProcessingStep):
                 self._save_cell_info(
                     save_index, nucleus_id, image_index, label_info, stack
                 )  # to make more flexible for new datastructures with more labelling info
-                return []
+                if return_failed_ids:
+                    return([])
             else:
                 if self.debug:
                     print(
                         f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell."
                     )
                 self.save_index_to_remove.append(save_index)
-                return [save_index]
+                if return_failed_ids:
+                    return([save_index])
 
     def _calculate_centers(self, hdf_labels):
         # define locations to look for center and cell_ids files
@@ -772,17 +773,18 @@ class HDF5CellExtraction(ProcessingStep):
         args = self._get_arg(class_list, lookup_saveindex)
         
         if self.config["threads"] <= 1:
+            self.log("Running in single thread mode.")
             for arg in tqdm(args):
-                x = f(arg)
+                f(arg)
         else:
+            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                x = list(tqdm(pool.imap(f, args), total=len(args)))
+                tqdm(pool.imap(f, args), total=len(args))
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
 
         stop = timeit.default_timer()
-        self.save_index_to_remove = flatten(x)
 
         # calculate duration
         duration = stop - start
@@ -929,14 +931,19 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
 
-        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-            x = list(tqdm(pool.imap(f, args), total=len(args)))
-            pool.close()
-            pool.join()
-            print("multiprocessing done.")
+        if self.config["threads"] <= 1:
+            self.log("Running in single thread mode.")
+            for arg in tqdm(args):
+                f(arg)
+        else:
+            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
+            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+                tqdm(pool.imap(f, args), total=len(args))
+                pool.close()
+                pool.join()
+                print("multiprocessing done.")
 
         stop = timeit.default_timer()
-        self.save_index_to_remove = flatten(x)
 
         # calculate duration
         duration = stop - start
@@ -1272,6 +1279,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                                     image_index,
                                     label_info,
                                 ),
+                                return_failed_ids = True
                             )
                             self.save_index_to_remove.extend(x)
                     else:

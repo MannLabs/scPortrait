@@ -144,3 +144,7 @@ development/timecourse_project/segmentation/classes.csv
 development/timecourse_project/segmentation/input_segmentation.h5
 development/timecourse_project/segmentation/timing_info_None.csv
 development/timecourse_project/extraction/data/single_cells.h5
+docs_source/pages/notebooks/wga_intensity_dist.png
+docs_source/pages/notebooks/nucleus_size_dist.png
+docs_source/pages/notebooks/dapi_intensity_dist.png
+docs_source/pages/notebooks/cytosol_size_dist.png

@@ -180,6 +180,8 @@ MLClusterClassifier:
     inference_device: "cpu"
 LMDSelection:
     processes: 20
+    cache: "."
+    threads_cell_sets: 10 #number of threads for generating multiple cell_sets
 
     # defines the channel used for generating cutting masks
     # segmentation.hdf5 => labels => segmentation_channel
