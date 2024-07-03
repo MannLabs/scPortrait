@@ -376,7 +376,7 @@ class HDF5CellExtraction(ProcessingStep):
         _tmp_single_cell_data[save_index] = stack
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
 
-    def _extract_classes(self, input_segmentation_path, px_center, arg):
+    def _extract_classes(self, input_segmentation_path, px_center, arg, return_failed_ids = False):
         """
         Processing for each individual cell that needs to be run for each center.
         """
@@ -597,12 +597,16 @@ class HDF5CellExtraction(ProcessingStep):
                 self._save_cell_info(
                     save_index, nucleus_id, image_index, label_info, stack
                 )  # to make more flexible for new datastructures with more labelling info
+                if return_failed_ids:
+                    return([])
             else:
                 if self.debug:
                     print(
                         f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell."
                     )
                 self.save_index_to_remove.append(save_index)
+                if return_failed_ids:
+                    return([save_index])
 
     def _calculate_centers(self, hdf_labels):
         # define locations to look for center and cell_ids files
@@ -1275,6 +1279,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                                     image_index,
                                     label_info,
                                 ),
+                                return_failed_ids = True
                             )
                             self.save_index_to_remove.extend(x)
                     else:
