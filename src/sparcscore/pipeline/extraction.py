@@ -774,6 +774,7 @@ class HDF5CellExtraction(ProcessingStep):
             for arg in tqdm(args):
                 f(arg)
         else:
+            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
                 tqdm(pool.imap(f, args), total=len(args))
                 pool.close()
@@ -928,9 +929,11 @@ class HDF5CellExtraction(ProcessingStep):
         args = self._get_arg(class_list, lookup_saveindex)
 
         if self.config["threads"] <= 1:
+            self.log("Running in single thread mode.")
             for arg in tqdm(args):
                 f(arg)
         else:
+            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
                 tqdm(pool.imap(f, args), total=len(args))
                 pool.close()
