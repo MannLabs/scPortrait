@@ -1,0 +1,59 @@
+name: "HPA segmentation"
+input_channels: 3
+output_channels: 5 #always add 2 to the number of channels
+Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
+    input_channels: 3
+    output_masks: 2
+    threads: 2 #the segmentation model is loaded for each segmentation process utilizing GPU memory. Depending on GPU size this needs to be adjusted
+    cache: "." #path to where intermediate results are written to memory mapped temp arrays
+    lower_quantile_normalization:   0.000
+    upper_quantile_normalization:   1.000
+    median_filter_size:   4 
+    nucleus_segmentation:
+        model: "nuclei"
+        diameter: 400 #if this parameter is not set then cellpose will determine the diameter of the segemented shapes automatically
+    cytosol_segmentation:
+        model: "cyto2"
+        diameter: 700
+    chunk_size: 50
+    filtering_threshold: 0.7
+Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
+    input_channels: 3
+    output_masks: 2
+    threads: 2
+    cache: "."
+    lower_quantile_normalization:   0.000
+    upper_quantile_normalization:   1.000
+    median_filter_size:   4 
+    nucleus_segmentation:
+        model: "nuclei"
+    cytosol_segmentation:
+        model: "cyto2"
+    chunk_size: 50
+    filtering_threshold: 0.7
+    downsampling_factor: 10 #downsamples images before performing segmentation, the segmented masks are upscaled again to the original dimension
+    smoothing_kernel_size: 7
+Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
+    input_channels: 3
+    output_masks: 2
+    threads: 8
+    cache: "."
+    lower_quantile_normalization:   0.000
+    upper_quantile_normalization:   1.000
+    median_filter_size:   4 
+    nucleus_segmentation:
+        model: "nuclei"
+    cytosol_segmentation:
+        model: "cyto2"
+    chunk_size: 50
+    filtering_threshold: 0.7
+    downsampling_factor: 10
+    smoothing_kernel_size: 7
+TimecourseHDF5CellExtraction:
+    compression: True
+    threads: 8 # threads used in multithreading
+    image_size: 512 # image size in pixel
+    cache: "."
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 2048 * 2048 * 1250
+    hdf5_rdcc_w0: 1
+    hdf5_rdcc_nslots: 1250
