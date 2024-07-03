@@ -542,9 +542,9 @@ class HDF5CellExtraction(ProcessingStep):
                 channels = required_maps + feature_channels
                 stack = np.stack(channels, axis=0).astype("float16")
 
-                if self.debug:
+                if self.deep_debug:
                     # visualize some cells for debugging purposes
-                    if index % 300 == 0:
+                    if index % 1000 == 0:
                         print(
                             f"Cell ID: {cell_id} has center at [{_px_center[0]}, {_px_center[1]}]"
                         )
