@@ -335,7 +335,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.output_path = os.path.join(
             self.extraction_data_directory, self.DEFAULT_DATA_FILE
         )
-        print(self.output_path)
 
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
