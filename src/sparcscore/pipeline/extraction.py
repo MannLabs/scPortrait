@@ -598,14 +598,12 @@ class HDF5CellExtraction(ProcessingStep):
                 self._save_cell_info(
                     save_index, nucleus_id, image_index, label_info, stack
                 )  # to make more flexible for new datastructures with more labelling info
-                return []
             else:
                 if self.debug:
                     print(
                         f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell."
                     )
                 self.save_index_to_remove.append(save_index)
-                return [save_index]
 
     def _calculate_centers(self, hdf_labels):
         # define locations to look for center and cell_ids files
@@ -772,17 +770,17 @@ class HDF5CellExtraction(ProcessingStep):
         args = self._get_arg(class_list, lookup_saveindex)
         
         if self.config["threads"] <= 1:
+            self.log("Running in single thread mode.")
             for arg in tqdm(args):
-                x = f(arg)
+                f(arg)
         else:
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                x = list(tqdm(pool.imap(f, args), total=len(args)))
+                tqdm(pool.imap(f, args), total=len(args))
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
 
         stop = timeit.default_timer()
-        self.save_index_to_remove = flatten(x)
 
         # calculate duration
         duration = stop - start
@@ -929,14 +927,17 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
 
-        with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-            x = list(tqdm(pool.imap(f, args), total=len(args)))
-            pool.close()
-            pool.join()
-            print("multiprocessing done.")
+        if self.config["threads"] <= 1:
+            for arg in tqdm(args):
+                f(arg)
+        else:
+            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+                tqdm(pool.imap(f, args), total=len(args))
+                pool.close()
+                pool.join()
+                print("multiprocessing done.")
 
         stop = timeit.default_timer()
-        self.save_index_to_remove = flatten(x)
 
         # calculate duration
         duration = stop - start
