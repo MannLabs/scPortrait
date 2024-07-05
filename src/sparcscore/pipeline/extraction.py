@@ -1001,8 +1001,11 @@ class HDF5CellExtraction(ProcessingStep):
         self.DEFAULT_LOG_NAME = "processing.log"
         self.clear_temp_dir()
         #ensure times are flattened
-
-        return((flatten(times), duration))
+        try:
+            times = flatten(times)
+        except:
+            times = times
+        return(times, duration)
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
