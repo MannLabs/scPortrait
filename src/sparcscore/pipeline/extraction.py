@@ -382,6 +382,8 @@ class HDF5CellExtraction(ProcessingStep):
         """
         global norm_function, MinMax_function
 
+        start_timer_cell = timeit.default_timer()
+
         index, save_index, cell_id, image_index, label_info = self._get_label_info(
             arg
         )  # label_info not used in base case but relevant for flexibility for other classes
@@ -597,8 +599,12 @@ class HDF5CellExtraction(ProcessingStep):
                 self._save_cell_info(
                     save_index, nucleus_id, image_index, label_info, stack
                 )  # to make more flexible for new datastructures with more labelling info
+
+                stop_timer_cell = timeit.default_timer()
+
                 if return_failed_ids:
                     return([])
+                return (stop_timer_cell - start_timer_cell)
             else:
                 if self.debug:
                     print(
@@ -607,6 +613,13 @@ class HDF5CellExtraction(ProcessingStep):
                 self.save_index_to_remove.append(save_index)
                 if return_failed_ids:
                     return([save_index])
+
+    def _extract_classes_multi(self, input_segmentation_path, px_centers, arg_list):
+        results = []
+        for arg in arg_list:
+            x = self._extract_classes(input_segmentation_path, px_centers, arg)
+            results.append(x)
+        return(results)
 
     def _calculate_centers(self, hdf_labels):
         # define locations to look for center and cell_ids files
@@ -658,6 +671,17 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
         return (px_centers, _cell_ids)
+
+    def _generate_batched_args(self, args, max_batch_size = 1000):
+        if "max_batch_size" in self.config:
+            max_batch_size = self.config["max_batch_size"]
+        else:
+            max_batch_size = max_batch_size
+            
+        theoretical_max = np.ceil(len(args)/self.config['threads'])
+        batch_size = np.int64(min(max_batch_size, theoretical_max))
+        
+        return([args[i:i + batch_size] for i in range(0, len(args), batch_size)])
 
     def process(self, input_segmentation_path, filtered_classes_path=None):
         """
@@ -766,20 +790,26 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Starting extraction of {self.num_classes} classes")
         start = timeit.default_timer()
 
-        f = partial(self._extract_classes, input_segmentation_path, px_centers)
-
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
         
         if self.config["threads"] <= 1:
+            #set up function for single-threaded processing
+            f = partial(self._extract_classes, input_segmentation_path, px_centers)
+
             self.log("Running in single thread mode.")
             for arg in tqdm(args):
                 f(arg)
         else:
+            #set up function for multi-threaded processing
+            f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
+            
+            batched_args = self._generate_batched_args(args)
+        
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                tqdm(pool.imap(f, args), total=len(args))
+                tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches")
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
@@ -800,7 +830,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("Finished cleaning up cache.")
 
     def process_partial(
-        self, input_segmentation_path, filtered_classes_path=None, n_cells=100
+        self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
     ):
         """
         Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -903,7 +933,7 @@ class HDF5CellExtraction(ProcessingStep):
         del _cell_ids, filter, nuclei_ids
 
         # subset to only get the N_cells requested from this method
-        np.random.seed(42)
+        np.random.seed(seed)
         indices = np.random.choice(range(len(class_list)), n_cells, replace=False)
         indices.sort()
         indices = [int(x) for x in indices]
@@ -924,25 +954,33 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.log(f"Starting partial extraction of {self.num_classes} classes")
         start = timeit.default_timer()
-
-        f = partial(self._extract_classes, input_segmentation_path, px_centers)
-
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
+        
+        times = []
 
         if self.config["threads"] <= 1:
+            #set up function for single-threaded processing
+            f = partial(self._extract_classes, input_segmentation_path, px_centers)
+
             self.log("Running in single thread mode.")
             for arg in tqdm(args):
-                f(arg)
+                x = f(arg)
+                times.append(x)
         else:
-            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
+            #set up function for multi-threaded processing
+            f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
+            
+            batched_args = batched_args = self._generate_batched_args(args)
+
+            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads. Will process a total of {len(batched_args)} batches of cells.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                tqdm(pool.imap(f, args), total=len(args))
+                times = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
-
+        
         stop = timeit.default_timer()
 
         # calculate duration
@@ -962,6 +1000,9 @@ class HDF5CellExtraction(ProcessingStep):
         self.setup_output()
         self.DEFAULT_LOG_NAME = "processing.log"
         self.clear_temp_dir()
+        #ensure times are flattened
+
+        return((flatten(times), duration))
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
@@ -1043,6 +1084,11 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         column_labels = ["index", "cellid"] + list(self.label_names.astype("U13"))[1:]
 
         self.log("Creating HDF5 file to save results to.")
+        
+        #define output path
+        self.output_path = os.path.join(
+            self.extraction_data_directory, self.DEFAULT_DATA_FILE
+        )
 
         with h5py.File(self.output_path, "w") as hf:
             self.log(
