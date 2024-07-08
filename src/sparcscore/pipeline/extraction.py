@@ -450,6 +450,7 @@ class HDF5CellExtraction(ProcessingStep):
 
                 nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
 
+                nuclei_mask_extended = dilation(nuclei_mask, footprint=disk(6))
                 nuclei_mask_extended = gaussian(
                     nuclei_mask, preserve_range=True, sigma=5
                 )
@@ -482,12 +483,13 @@ class HDF5CellExtraction(ProcessingStep):
                     cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
                     cell_mask = binary_fill_holes(cell_mask)
 
-                    cell_mask_extended = dilation(cell_mask, footprint=disk(6))
+                    # cell_mask_extended = dilation(cell_mask, footprint=disk(6))
 
                     cell_mask = gaussian(cell_mask, preserve_range=True, sigma=1)
-                    cell_mask_extended = gaussian(
-                        cell_mask_extended, preserve_range=True, sigma=5
-                    )
+                    
+                    # cell_mask_extended = gaussian(
+                    #     cell_mask_extended, preserve_range=True, sigma=5
+                    # )
 
                     # channel 3: cellmask
 
@@ -499,7 +501,7 @@ class HDF5CellExtraction(ProcessingStep):
                         ]
 
                     channel_cytosol = norm_function(channel_cytosol)
-                    channel_cytosol = channel_cytosol * cell_mask_extended
+                    channel_cytosol = channel_cytosol * cell_mask
                     channel_cytosol = MinMax_function(channel_cytosol)
 
                 if n_channels == 1:
@@ -520,7 +522,7 @@ class HDF5CellExtraction(ProcessingStep):
                         for i in range(2, hdf_channels.shape[0]):
                             feature_channel = hdf_channels[i, window_y, window_x]
                             feature_channel = norm_function(feature_channel)
-                            feature_channel = feature_channel * cell_mask_extended
+                            feature_channel = feature_channel * cell_mask
                             feature_channel = MinMax_function(feature_channel)
 
                             feature_channels.append(feature_channel)
@@ -532,7 +534,7 @@ class HDF5CellExtraction(ProcessingStep):
                                 image_index, i, window_y, window_x
                             ]
                             feature_channel = norm_function(feature_channel)
-                            feature_channel = feature_channel * cell_mask_extended
+                            feature_channel = feature_channel * cell_mask
                             feature_channel = MinMax_function(feature_channel)
 
                             feature_channels.append(feature_channel)
