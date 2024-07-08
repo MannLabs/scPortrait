@@ -98,7 +98,6 @@ class HDF5CellExtraction(ProcessingStep):
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
-        self.benchmark_times = False
 
     def get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -315,7 +314,7 @@ class HDF5CellExtraction(ProcessingStep):
         if self.debug:
             # visualize some cells for debugging purposes
             x, y = _tmp_single_cell_index.shape
-            n_cells = 10
+            n_cells = 100
             n_cells_to_visualize = x // n_cells
 
             random_indexes = np.random.choice(x, n_cells_to_visualize, replace=False)
@@ -382,8 +381,6 @@ class HDF5CellExtraction(ProcessingStep):
         Processing for each individual cell that needs to be run for each center.
         """
         global norm_function, MinMax_function
-
-        start_timer_cell = timeit.default_timer()
 
         index, save_index, cell_id, image_index, label_info = self._get_label_info(
             arg
@@ -601,15 +598,8 @@ class HDF5CellExtraction(ProcessingStep):
                     save_index, nucleus_id, image_index, label_info, stack
                 )  # to make more flexible for new datastructures with more labelling info
 
-                stop_timer_cell = timeit.default_timer()
-                duration = stop_timer_cell - start_timer_cell
-
                 if return_failed_ids:
                     return([])
-                
-                #only return time if something was actually extracted and specified
-                if self.benchmark_times:
-                    return(duration)
             else:
                 if self.debug:
                     print(
@@ -622,9 +612,10 @@ class HDF5CellExtraction(ProcessingStep):
     def _extract_classes_multi(self, input_segmentation_path, px_centers, arg_list):
         results = []
         for arg in arg_list:
-            x = self._extract_classes(input_segmentation_path, px_centers, arg)
+            x = self._extract_classes(input_segmentation_path, px_centers, arg, return_failed_ids=True)
             results.append(x)
-        return(results)
+        
+        return(flatten(results))
 
     def _calculate_centers(self, hdf_labels):
         # define locations to look for center and cell_ids files
@@ -804,12 +795,8 @@ class HDF5CellExtraction(ProcessingStep):
             f = partial(self._extract_classes, input_segmentation_path, px_centers)
 
             self.log("Running in single thread mode.")
-            
-            results = []
             for arg in tqdm(args):
-                x = f(arg)
-                results.append(x)
-
+                f(arg)
         else:
             #set up function for multi-threaded processing
             f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
@@ -822,6 +809,8 @@ class HDF5CellExtraction(ProcessingStep):
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
+
+            self.save_index_to_remove = flatten(results)
 
         stop = timeit.default_timer()
 
@@ -838,22 +827,8 @@ class HDF5CellExtraction(ProcessingStep):
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
 
-        if self.benchmark_times:
-            #ensure times are flattened
-            try:
-                times = flatten(results)
-            except:
-                times = results
-            
-            return(times, duration)
-
     def process_partial(
-        self, 
-        input_segmentation_path, 
-        filtered_classes_path=None, 
-        n_cells=100, 
-        seed = 42, 
-        benchmark_time = False
+        self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
     ):
         """
         Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -903,9 +878,7 @@ class HDF5CellExtraction(ProcessingStep):
                 hdf5_rdcc_w0: 1
                 hdf5_rdcc_nslots: 50000
         """
-        if benchmark_time:
-            self.benchmark_times = True
-            
+
         # setup output directory and ensure that a new temporary directory is created
         self.DEFAULT_LOG_NAME = "partial_processing.log"
         self.setup_output(folder_name=self.SELECTED_DATA_DIR)
@@ -982,8 +955,6 @@ class HDF5CellExtraction(ProcessingStep):
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
-        
-        results = []
 
         if self.config["threads"] <= 1:
             #set up function for single-threaded processing
@@ -991,8 +962,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single thread mode.")
             for arg in tqdm(args):
-                x = f(arg)
-                results.append(x)
+                f(arg)
         else:
             #set up function for multi-threaded processing
             f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
@@ -1005,6 +975,8 @@ class HDF5CellExtraction(ProcessingStep):
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
+            
+            self.save_index_to_remove = flatten(results)
         
         stop = timeit.default_timer()
 
@@ -1025,15 +997,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.setup_output()
         self.DEFAULT_LOG_NAME = "processing.log"
         self.clear_temp_dir()
-        
-        if self.benchmark_times:
-            #ensure times are flattened
-            try:
-                times = flatten(results)
-            except:
-                times = results
-            
-            return(times, duration)
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
