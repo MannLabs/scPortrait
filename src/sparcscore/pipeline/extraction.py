@@ -848,7 +848,12 @@ class HDF5CellExtraction(ProcessingStep):
             return(times, duration)
 
     def process_partial(
-        self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
+        self, 
+        input_segmentation_path, 
+        filtered_classes_path=None, 
+        n_cells=100, 
+        seed = 42, 
+        benchmark_time = False
     ):
         """
         Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -898,7 +903,9 @@ class HDF5CellExtraction(ProcessingStep):
                 hdf5_rdcc_w0: 1
                 hdf5_rdcc_nslots: 50000
         """
-
+        if benchmark_time:
+            self.benchmark_times = True
+            
         # setup output directory and ensure that a new temporary directory is created
         self.DEFAULT_LOG_NAME = "partial_processing.log"
         self.setup_output(folder_name=self.SELECTED_DATA_DIR)
