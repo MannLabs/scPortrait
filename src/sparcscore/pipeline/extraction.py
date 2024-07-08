@@ -98,6 +98,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
+        self.benchmark_times = False
 
     def get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -314,7 +315,7 @@ class HDF5CellExtraction(ProcessingStep):
         if self.debug:
             # visualize some cells for debugging purposes
             x, y = _tmp_single_cell_index.shape
-            n_cells = 100
+            n_cells = 10
             n_cells_to_visualize = x // n_cells
 
             random_indexes = np.random.choice(x, n_cells_to_visualize, replace=False)
@@ -601,10 +602,14 @@ class HDF5CellExtraction(ProcessingStep):
                 )  # to make more flexible for new datastructures with more labelling info
 
                 stop_timer_cell = timeit.default_timer()
+                duration = stop_timer_cell - start_timer_cell
 
                 if return_failed_ids:
                     return([])
-                return (stop_timer_cell - start_timer_cell)
+                
+                #only return time if something was actually extracted and specified
+                if self.benchmark_times:
+                    return(duration)
             else:
                 if self.debug:
                     print(
@@ -799,8 +804,12 @@ class HDF5CellExtraction(ProcessingStep):
             f = partial(self._extract_classes, input_segmentation_path, px_centers)
 
             self.log("Running in single thread mode.")
+            
+            results = []
             for arg in tqdm(args):
-                f(arg)
+                x = f(arg)
+                results.append(x)
+
         else:
             #set up function for multi-threaded processing
             f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
@@ -809,7 +818,7 @@ class HDF5CellExtraction(ProcessingStep):
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches")
+                results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
@@ -828,6 +837,15 @@ class HDF5CellExtraction(ProcessingStep):
         # transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
+
+        if self.benchmark_times:
+            #ensure times are flattened
+            try:
+                times = flatten(results)
+            except:
+                times = results
+            
+            return(times, duration)
 
     def process_partial(
         self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
@@ -958,7 +976,7 @@ class HDF5CellExtraction(ProcessingStep):
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
         
-        times = []
+        results = []
 
         if self.config["threads"] <= 1:
             #set up function for single-threaded processing
@@ -967,7 +985,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.log("Running in single thread mode.")
             for arg in tqdm(args):
                 x = f(arg)
-                times.append(x)
+                results.append(x)
         else:
             #set up function for multi-threaded processing
             f = partial(self._extract_classes_multi, input_segmentation_path, px_centers)
@@ -976,7 +994,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads. Will process a total of {len(batched_args)} batches of cells.")
             with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
-                times = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
+                results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
                 print("multiprocessing done.")
@@ -1000,12 +1018,15 @@ class HDF5CellExtraction(ProcessingStep):
         self.setup_output()
         self.DEFAULT_LOG_NAME = "processing.log"
         self.clear_temp_dir()
-        #ensure times are flattened
-        try:
-            times = flatten(times)
-        except:
-            times = times
-        return(times, duration)
+        
+        if self.benchmark_times:
+            #ensure times are flattened
+            try:
+                times = flatten(results)
+            except:
+                times = results
+            
+            return(times, duration)
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
