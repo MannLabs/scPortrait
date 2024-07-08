@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import csv
 import h5py
 from multiprocessing import Pool, current_process
+import multiprocessing as mp
 import shutil
 import torch
 
@@ -941,7 +942,7 @@ class ShardedSegmentation(Segmentation):
             for shard in shard_list:
                 shard.call_as_shard()
         else:
-            with Pool(
+            with mp.get_context(self.context).Pool(
                 processes=n_processes,
                 initializer=self.initializer_function,
                 initargs=[gpu_id_list],
@@ -1076,7 +1077,7 @@ class ShardedSegmentation(Segmentation):
 
             self.log(f"Beginning segmentation on {available_GPUs}.")
 
-            with Pool(
+            with mp.get_context(self.context).Pool(
                 processes=n_processes,
                 initializer=self.initializer_function,
                 initargs=[gpu_id_list],
@@ -1495,7 +1496,7 @@ class MultithreadedSegmentation(TimecourseSegmentation):
 
         self.log(f"Beginning segmentation on {available_GPUs} available GPUs.")
 
-        with Pool(
+        with mp.get_context(self.context).Pool(
             processes=n_processes,
             initializer=self.initializer_function,
             initargs=[gpu_id_list],
