@@ -313,11 +313,10 @@ class HDF5CellExtraction(ProcessingStep):
 
         if self.debug:
             # visualize some cells for debugging purposes
-            x, y = _tmp_single_cell_index.shape
             n_cells = 100
-            n_cells_to_visualize = x // n_cells
+            n_cells_to_visualize = len(keep_index) // n_cells
 
-            random_indexes = np.random.choice(x, n_cells_to_visualize, replace=False)
+            random_indexes = np.random.choice(keep_index, n_cells_to_visualize, replace=False)
 
             for index in random_indexes:
                 stack = _tmp_single_cell_data[index]
