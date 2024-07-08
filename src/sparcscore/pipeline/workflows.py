@@ -41,6 +41,8 @@ class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -450,7 +452,7 @@ class WGASegmentation(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["watershed"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         return channels, segmentation
 
@@ -548,7 +550,7 @@ class DAPISegmentation(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def process(self, input_image):
@@ -618,7 +620,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
-        ).astype("uint64")
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -718,7 +720,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(np.uint32)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         return channels, segmentation
 
@@ -1175,7 +1177,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             self.log(f"Recalculation of cytosol mask successful with smoothing kernel size of {smoothing_kernel_size_cytosol}.")
             
         # combine masks into one stack
-        segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
+        segmentation = np.stack([nuc_seg, cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         del cyto_seg, nuc_seg
 
         # rescale segmentation results to original size
@@ -1324,7 +1326,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -1481,7 +1483,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         )
 
         # combine masks into one stack
-        segmentation = np.stack([cyto_seg, cyto_seg]).astype(np.uint32)
+        segmentation = np.stack([cyto_seg, cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         del cyto_seg
 
         # rescale segmentation results to original size

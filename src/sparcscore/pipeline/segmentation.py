@@ -69,6 +69,7 @@ class Segmentation(ProcessingStep):
     DEFAULT_CHANNELS_NAME = "channels"
     DEFAULT_MASK_NAME = "labels"
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
+    DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
     channel_colors = [
         "#0000FF",
@@ -1212,7 +1213,7 @@ class TimecourseSegmentation(Segmentation):
         # this required when trying to segment so many images that the results can no longer fit into memory
         _tmp_seg_path = tempmmap.create_empty_mmap(
             shape=self.shape_segmentation,
-            dtype=np.uint32,
+            dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             tmp_dir_abs_path=self._tmp_dir_path,
         )
         self._tmp_seg_path = _tmp_seg_path
@@ -1233,14 +1234,14 @@ class TimecourseSegmentation(Segmentation):
                 self.DEFAULT_MASK_NAME,
                 shape=_tmp_seg.shape,
                 chunks=(1, 2, self.shape_input_images[2], self.shape_input_images[3]),
-                dtype="uint32",
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )
 
             # using this loop structure ensures that not all results are loaded in memory at any one timepoint
             for i in range(_tmp_seg.shape[0]):
                 hf[self.DEFAULT_MASK_NAME][i] = _tmp_seg[i]
 
-            dt = h5py.special_dtype(vlen=np.dtype("uint32"))
+            dt = h5py.special_dtype(vlen=self.DEFAULT_SEGMENTATION_DTYPE)
 
             if "classes" in hf.keys():
                 del hf["classes"]
@@ -1327,7 +1328,7 @@ class TimecourseSegmentation(Segmentation):
                 final_classes = list(filtered_classes - set(edge_labels))
 
                 hdf_labels[i, :, :] = shifted_map
-                hdf_classes[i] = np.array(final_classes, dtype="uint32").reshape(
+                hdf_classes[i] = np.array(final_classes, dtype=self.DEFAULT_SEGMENTATION_DTYPE).reshape(
                     1, 1, -1
                 )
 
