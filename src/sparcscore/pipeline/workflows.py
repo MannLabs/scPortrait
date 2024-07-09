@@ -663,10 +663,14 @@ class DAPISegmentationCellpose(BaseSegmentation):
             device = torch.device("cpu")
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
+        if "diameter" in self.config["nucleus_segmentation"].keys():
+            diameter = self.config["nucleus_segmentation"]["diameter"]
+        else:
+            diameter = None
 
         # load correct segmentation model
         model = models.Cellpose(model_type="nuclei", gpu=use_GPU)
-        masks = model.eval([input_image], diameter=None, channels=[1, 0])[0]
+        masks = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
         masks = np.array(masks)  # convert to array
 
         self.log(f"Segmented mask shape: {masks.shape}")
