@@ -766,7 +766,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
             lookup_id = cpu_id % len(gpu_id_list)
             gpu_id = gpu_id_list[lookup_id]
-            if self.debug:
+            if self.deep_debug:
                 self.log(f"current process: {current}")
                 self.log(f"cpu name: {cpu_name}")
                 self.log(f"gpu id list: {gpu_id_list}")

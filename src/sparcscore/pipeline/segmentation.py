@@ -4,12 +4,12 @@ import sys
 import numpy as np
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
-import csv
 import h5py
 from multiprocessing import current_process
 import multiprocessing as mp
 import shutil
 import torch
+import time
 
 import traceback
 from PIL import Image
@@ -98,6 +98,8 @@ class Segmentation(ProcessingStep):
         self.window = None
         self.input_path = None
 
+        self.deep_debug = False
+
     def save_classes(self, classes):
         # define path where classes should be saved
         filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
@@ -174,28 +176,25 @@ class Segmentation(ProcessingStep):
             y = y2 - y1
 
             # initialize directory and load data
-            self.log(
-                f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
-            )
+            if self.deep_debug:
+                self.log(
+                    f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
+                )
             input_image = tempmmap.array(
                 shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path
             )
             input_image = hdf_input[:2, self.window[0], self.window[1]]
-            self.log("Input image loaded and mapped to memory.")
 
         # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
             try:
-                self.log(
-                    f"Beginning segmentation on shard in position [{self.window[0]}, {self.window[1]}]"
-                )
                 super().__call__(input_image)
                 self.clear_temp_dir()
             except Exception:
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
         else:
-            print(
+            self.log(
                 f"Shard in position [{self.window[0]}, {self.window[1]}] only contained zeroes."
             )
             try:
@@ -210,7 +209,8 @@ class Segmentation(ProcessingStep):
         gc.collect()
 
         # write out window location
-        self.log(f"Writing out window location to file at {self.directory}/window.csv")
+        if self.deep_debug:
+            self.log(f"Writing out window location to file at {self.directory}/window.csv")
         with open(f"{self.directory}/window.csv", "w") as f:
             f.write(f"{self.window}\n")
 
@@ -225,7 +225,8 @@ class Segmentation(ProcessingStep):
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
 
         """
-        self.log("saving segmentation")
+        if self.deep_debug:
+            self.log("saving segmentation")
 
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
@@ -523,7 +524,8 @@ class ShardedSegmentation(Segmentation):
             classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
 
         """
-        self.log("saving segmentation")
+        if self.deep_debug:
+            self.log("saving segmentation")
 
         # size (C, H, W) is expected
         # dims are expanded in case (H, W) is passed
@@ -735,7 +737,9 @@ class ShardedSegmentation(Segmentation):
                 # check to make sure windows match
                 with open(f"{local_shard_directory}/window.csv", "r") as f:
                     window_local = eval(f.read())
+                
                 if window_local != window:
+                    Warning("Sharding plans do not match.")
                     self.log("Sharding plans do not match.")
                     self.log(f"Sharding plan found locally: {window_local}")
                     self.log(f"Sharding plan found in sharding plan: {window}")
@@ -754,10 +758,11 @@ class ShardedSegmentation(Segmentation):
                 orig_input = hdf_labels[:, window[0], window[1]]
 
                 if orig_input.shape != shifted_map.shape:
-                    print("Shapes do not match")
-                    print("window", window[0], window[1])
-                    print("shifted_map shape:", shifted_map.shape)
-                    print("orig_input shape:", orig_input.shape)
+                    Warning("Shapes do not match")
+                    self.log("Shapes do not match")
+                    self.log("window", window[0], window[1])
+                    self.log("shifted_map shape:", shifted_map.shape)
+                    self.log("orig_input shape:", orig_input.shape)
 
                     # dirty fix to get this to run until we can implement a better solution
                     shifted_map = np.zeros(orig_input.shape)
@@ -961,7 +966,7 @@ class ShardedSegmentation(Segmentation):
         self.resolve_sharding(sharding_plan)
 
         # make sure to cleanup temp directories
-        self.log("=== finished segmentation === ")
+        self.log("=== finished sharded segmentation === ")
 
     def complete_segmentation(self, input_image):
         self.save_zarr = False
@@ -1096,7 +1101,7 @@ class ShardedSegmentation(Segmentation):
             self.resolve_sharding(sharding_plan_complete)
 
             # make sure to cleanup temp directories
-            self.log("=== completed segmentation === ")
+            self.log("=== completed sharded segmentation === ")
 
 
 #############################################
