@@ -269,5 +269,7 @@ class ProcessingStep(Logable):
 
         if platform.system() == 'Windows':
             self.context = "spawn"
-        else:
+        elif platform.system() == 'Darwin':
+            self.context = "spawn"
+        elif platform.system() == 'Linux':
             self.context = "fork"

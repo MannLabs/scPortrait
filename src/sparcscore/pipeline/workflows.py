@@ -41,6 +41,8 @@ class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -450,7 +452,7 @@ class WGASegmentation(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["watershed"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         return channels, segmentation
 
@@ -548,7 +550,7 @@ class DAPISegmentation(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def process(self, input_image):
@@ -618,7 +620,7 @@ class DAPISegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
-        ).astype("uint64")
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -661,10 +663,14 @@ class DAPISegmentationCellpose(BaseSegmentation):
             device = torch.device("cpu")
 
         self.log(f"GPU Status for segmentation: {use_GPU}")
+        if "diameter" in self.config["nucleus_segmentation"].keys():
+            diameter = self.config["nucleus_segmentation"]["diameter"]
+        else:
+            diameter = None
 
         # load correct segmentation model
         model = models.Cellpose(model_type="nuclei", gpu=use_GPU)
-        masks = model.eval([input_image], diameter=None, channels=[1, 0])[0]
+        masks = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
         masks = np.array(masks)  # convert to array
 
         self.log(f"Segmented mask shape: {masks.shape}")
@@ -718,7 +724,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(np.uint32)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         return channels, segmentation
 
@@ -760,7 +766,7 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
             lookup_id = cpu_id % len(gpu_id_list)
             gpu_id = gpu_id_list[lookup_id]
-            if self.debug:
+            if self.deep_debug:
                 self.log(f"current process: {current}")
                 self.log(f"cpu name: {cpu_name}")
                 self.log(f"gpu id list: {gpu_id_list}")
@@ -1175,7 +1181,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             self.log(f"Recalculation of cytosol mask successful with smoothing kernel size of {smoothing_kernel_size_cytosol}.")
             
         # combine masks into one stack
-        segmentation = np.stack([nuc_seg, cyto_seg]).astype(np.uint32)
+        segmentation = np.stack([nuc_seg, cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         del cyto_seg, nuc_seg
 
         # rescale segmentation results to original size
@@ -1324,7 +1330,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         segmentation = np.stack(
             [self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(np.uint64)
+        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
     def cellpose_segmentation(self, input_image):
@@ -1481,7 +1487,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         )
 
         # combine masks into one stack
-        segmentation = np.stack([cyto_seg, cyto_seg]).astype(np.uint32)
+        segmentation = np.stack([cyto_seg, cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         del cyto_seg
 
         # rescale segmentation results to original size
