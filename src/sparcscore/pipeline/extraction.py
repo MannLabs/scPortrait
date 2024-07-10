@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from functools import partial
 import multiprocessing as mp
+import platform
 
 from alphabase.io import tempmmap
 
@@ -98,6 +99,13 @@ class HDF5CellExtraction(ProcessingStep):
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
+
+        #check for windows and if so set threads to 1
+
+        if platform.system() == "Windows":
+            Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
+            self.config["threads"] = 1
+            
 
     def get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -805,7 +813,7 @@ class HDF5CellExtraction(ProcessingStep):
             batched_args = self._generate_batched_args(args)
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #need the fork here to be able to get the correct normalization functions! Will not work on windows.
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
@@ -971,7 +979,7 @@ class HDF5CellExtraction(ProcessingStep):
             batched_args = batched_args = self._generate_batched_args(args)
 
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads. Will process a total of {len(batched_args)} batches of cells.")
-            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:
+            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
