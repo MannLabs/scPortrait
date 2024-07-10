@@ -138,7 +138,7 @@ class LMDSelection(ProcessingStep):
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
-            threads=self.config["threads_cell_sets"],
+            processes=self.config["threads_cell_sets"],
         )
 
         shape_collection = sl(segmentation, cell_sets, calibration_marker)
