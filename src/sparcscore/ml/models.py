@@ -183,7 +183,7 @@ class VGG2_regression(VGGBase):
                 cfg_MLP = "A",
                 in_channels = 1,
                 num_classes = 1,
-                image_size_factor = 4,
+                image_size_factor = 2,
                 ):
         
         super(VGG2_regression, self).__init__()
