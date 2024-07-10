@@ -69,33 +69,36 @@ class MultilabelSupervisedModel(pl.LightningModule):
             raise ValueError("No num_classes specified in hparams")
         
         #initialize metrics to track
-        self.accuracy = torchmetrics.Accuracy(task = task_type, num_classes = self.hparams["num_classes"])
-        self.aucroc = torchmetrics.AUROC(task = task_type, thresholds = None, num_classes = self.hparams["num_classes"])
+        self.accuracy = torchmetrics.Accuracy(task=task_type, num_classes=self.hparams["num_classes"])
+        self.aucroc = torchmetrics.AUROC(task=task_type, thresholds=None, num_classes=self.hparams["num_classes"])
         
         if model_type == "VGG1":
             self.network = VGG1(in_channels=self.hparams["num_in_channels"],
-                                    cfg = "B",
-                                    dimensions=128,
-                                    num_classes=self.hparams["num_classes"])
+                                cfg="B",
+                                dimensions=128,
+                                num_classes=self.hparams["num_classes"],
+                                image_size_factor=self.hparams["image_size_factor"])
+            
         elif model_type == "VGG2":
             self.network = VGG2(in_channels=self.hparams["num_in_channels"],
-                                    cfg = "B",
-                                    dimensions=128,
-                                    num_classes=self.hparams["num_classes"])
+                                cfg="B",
+                                dimensions=128,
+                                num_classes=self.hparams["num_classes"], 
+                                image_size_factor=self.hparams["image_size_factor"])
         
         ## add deprecated type for backward compatibility
         elif model_type == "VGG1_old":
             self.network = _VGG1(in_channels=self.hparams["num_in_channels"],
-                                    cfg = "B",
-                                    dimensions=128,
-                                    num_classes=self.hparams["num_classes"])
+                                 cfg="B",
+                                 dimensions=128,
+                                 num_classes=self.hparams["num_classes"])
         
         ## add deprecated type for backward compatibility
         elif model_type == "VGG2_old":
             self.network = _VGG2(in_channels=self.hparams["num_in_channels"],
-                                    cfg = "B",
-                                    dimensions=128,
-                                    num_classes=self.hparams["num_classes"])
+                                 cfg="B",
+                                 dimensions=128,
+                                 num_classes=self.hparams["num_classes"])
         else:
             sys.exit("Incorrect network architecture specified. Please check that MultilabelSupervisedModel type parameter is set to key present in method.")
         
@@ -181,7 +184,11 @@ class RegressionModel(pl.LightningModule):
     
         # Define the regression model
         if model_type == "VGG2_regression":
-            self.network =  VGG2_regression(cfg="B", cfg_MLP="A", in_channels=self.hparams["num_in_channels"])
+            self.network =  VGG2_regression(cfg="B",
+                                            cfg_MLP="A", 
+                                            in_channels=self.hparams["num_in_channels"],
+                                            image_size_factor=self.hparams["image_size_factor"],
+                                            )
 
         # Initialize metrics for regression model 
         self.mse = torchmetrics.MeanSquaredError() # MSE metric for regression
