@@ -82,7 +82,7 @@ class VGGBase(nn.Module):
         """
         # get output feature size of CNN with chosen configuration
         in_features = int(cfg[-2]) * image_size_factor * image_size_factor
-        
+
         layers = []
         i = 0
         for out_features in cfg_MLP:
@@ -102,9 +102,7 @@ class VGGBase(nn.Module):
     def forward(self, x):
         x = self.norm(x)
         x = self.features(x)
-
         x = torch.flatten(x, 1)
-
         x = self.classifier(x)
         x = self.softmax(x)
         return x
@@ -124,18 +122,22 @@ class VGG1(VGGBase):
                 dimensions = 196,
                 in_channels = 1,
                 num_classes = 2,
+                image_size_factor = 2,
                 ):
         
         super(VGG1, self).__init__()
 
         #save num_classes for use in making MLP head
         self.num_classes = num_classes
+        self.image_size_factor = image_size_factor
 
         self.norm = nn.BatchNorm2d(in_channels)
         self.softmax = nn.LogSoftmax(dim=1)
         
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg])
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], 
+                                               self.cfgs[cfg], 
+                                               image_size_factor=image_size_factor)
         
     def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG1(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
@@ -151,18 +153,22 @@ class VGG2(VGGBase):
                 dimensions = 196,
                 in_channels = 1,
                 num_classes = 2,
+                image_size_factor = 2,
                 ):
         
         super(VGG2, self).__init__()
         
         #save num_classes for use in making MLP head
         self.num_classes = num_classes
+        self.image_size_factor = image_size_factor
 
         self.norm = nn.BatchNorm2d(in_channels)
         self.softmax = nn.LogSoftmax(dim=1)
         
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg])
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], 
+                                               self.cfgs[cfg], 
+                                               image_size_factor=image_size_factor)
         
     def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG2(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
@@ -177,14 +183,18 @@ class VGG2_regression(VGGBase):
                 cfg_MLP = "A",
                 in_channels = 1,
                 num_classes = 1,
+                image_size_factor = 4,
                 ):
         
         super(VGG2_regression, self).__init__()
         self.num_classes = num_classes
+        self.image_size_factor = image_size_factor
         self.norm = nn.BatchNorm2d(in_channels) 
 
         self.features = self.make_layers(self.cfgs[cfg], in_channels)
-        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], self.cfgs[cfg], image_size_factor=4)
+        self.classifier = self.make_layers_MLP(self.cfgs_MLP[cfg_MLP], 
+                                               self.cfgs[cfg], 
+                                               image_size_factor=image_size_factor)
         
     def vgg(cfg, in_channels,  **kwargs):
         model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
