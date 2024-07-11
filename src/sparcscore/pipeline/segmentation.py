@@ -71,6 +71,7 @@ class Segmentation(ProcessingStep):
     DEFAULT_MASK_NAME = "labels"
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
+    DEFAULT_IMAGE_DTYPE = np.uint16
 
     channel_colors = [
         "#0000FF",
@@ -181,7 +182,7 @@ class Segmentation(ProcessingStep):
                     f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
                 )
             input_image = tempmmap.array(
-                shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path
+                shape=(2, x, y), dtype=self.DEFAULT_IMAGE_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
             )
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
@@ -319,7 +320,7 @@ class Segmentation(ProcessingStep):
 
                 for seg, name in zip(segmentations, segmentation_names):
                     write_labels(
-                        labels=seg.astype("uint16"), group=group, name=name, axes="cyx"
+                        labels=seg.astype(self.DEFAULT_SEGMENTATION_DTYPE), group=group, name=name, axes="cyx"
                     )
                     write_label_metadata(
                         group=group,
@@ -503,14 +504,19 @@ class ShardedSegmentation(Segmentation):
         start = time.time()
         output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
-        input_image = input_image.astype("uint16")
+        #check dtype of input image
+        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
+            Warning(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
+            self.log(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
+
+            input_image = input_image.astype(self.DEFAULT_IMAGE_DTYPE)
 
         with h5py.File(output, "w") as hf:
             hf.create_dataset(
                 self.DEFAULT_CHANNELS_NAME,
                 data=input_image,
                 chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-                dtype="uint16",
+                dtype=self.DEFAULT_IMAGE_DTYPE,
             )
         duration = time.time() - start
         
