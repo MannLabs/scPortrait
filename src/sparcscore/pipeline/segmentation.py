@@ -499,6 +499,8 @@ class ShardedSegmentation(Segmentation):
         self.save_zarr = False
 
     def save_input_image(self, input_image):
+        
+        start = time.time()
         output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
 
         input_image = input_image.astype("uint16")
@@ -510,9 +512,10 @@ class ShardedSegmentation(Segmentation):
                 chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
                 dtype="uint16",
             )
-
+        duration = time.time() - start
+        
         self.log(
-            "Input image added to .h5. Provides data source for reading shard information."
+            f"Input image added to .h5 in {np.round(duration/60, 3)} minutes. Provides data source for reading shard information."
         )
 
     def save_segmentation(self, channels, labels, classes):
