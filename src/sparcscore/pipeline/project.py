@@ -3,14 +3,14 @@ import warnings
 import shutil
 import os
 import yaml
-from PIL import Image
+
 import PIL
 import numpy as np
 import numpy.ma as ma
 import sys
 import imagesize
 import pandas as pd
-from cv2 import imread
+from tifffile import imread
 import re
 import h5py
 from tqdm.auto import tqdm
@@ -66,7 +66,7 @@ class Project(Logable):
 
     """
     DEFAULT_CONFIG_NAME = "config.yml"
-    
+
     #input data
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
 
@@ -322,7 +322,28 @@ class Project(Logable):
             except yaml.YAMLError as exc:
                 print(exc)
 
+    def _cleanup_input_image_path(self):
+        """Ensure that if an input image was already loaded that it is deleted if overwrite is set to True. Else raise ValueError"""
+        
+        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
+        if os.path.isdir(path):
+            if self.overwrite:
+                shutil.rmtree(path)
+                self.log("Overwrite is set to True. Existing input image was deleted.")
+            else:
+                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or delete the existing input image.")
+
+    def _check_image_dtype(self, image):
+        """Check if the image dtype is the default image dtype. If not raise a warning."""
+
+        if not image.dtype == self.DEFAULT_IMAGE_DTYPE:
+            Warning(f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results.")
+            self.log(f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results.")
+
     def save_input_image(self, input_image):
+        
+        self._cleanup_input_image_path()
+        self._check_image_dtype(input_image)
 
         path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
         loc = parse_url(path, mode="w").store
@@ -353,7 +374,9 @@ class Project(Logable):
         self.input_image = np.array(zarr_reader.load("0").compute())
         time_end = time()
 
+        #check input image dtype
         self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
+        self._check_image_dtype(self.input_image)
 
     def load_input_from_file(self, file_paths, crop=[(0, -1), (0, -1)]):
         """
@@ -378,21 +401,14 @@ class Project(Logable):
             raise ValueError("Dataset has no config file loaded")
         
         #check if an input image was already loaded if so throw error if overwrite = False
-
-        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
-        if os.path.isdir(path):
-            if self.overwrite:
-                shutil.rmtree(path)
-                self.log("Overwrite is set to True. Existing input image was deleted.")
-            else:
-                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or delete the existing input image.")
+        self._cleanup_input_image_path()
 
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
 
         if not len(file_paths) == self.config["input_channels"]:
             raise ValueError(
-                "Expected {} image paths, only received {}".format(
+                "Expected {} image paths because this number of input_channels is specified in the config, but received {} instead.".format(
                     self.config["input_channels"], len(file_paths)
                 )
             )
@@ -401,8 +417,14 @@ class Project(Logable):
         channels = []
 
         for channel_path in file_paths:
-            im = Image.open(channel_path)
-            c = np.array(im, dtype="float64")[slice(*crop[0]), slice(*crop[1])]
+            im = imread(channel_path)
+
+            #add automatic conversion for uint8 as this is another very common image format
+            if im.dtype == np.uint8:
+                im = im.astype(np.uint16) * np.iinfo(np.uint8).max #leave set to np.uint16 explicilty here as this conversion assumes going from uint8 to uint16 if the dtype is changed then this will throw a warning later ensuring that this line is fixed
+                
+            self._check_image_dtype(im)
+            c = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[slice(*crop[0]), slice(*crop[1])]
 
             channels.append(c)
 
@@ -437,30 +459,24 @@ class Project(Logable):
             raise ValueError("Dataset has no config file loaded")
         
         #check if an input image was already loaded if so throw error if overwrite = False
+        self._cleanup_input_image_path()
 
-        path = os.path.join(self.project_location, self.DEFAULT_INPUT_IMAGE_NAME)
-        if os.path.isdir(path):
-            if self.overwrite:
-                shutil.rmtree(path)
-                self.log("Overwrite is set to True. Existing input image was deleted.")
-            else:
-                raise ValueError("Overwrite is set to False but an input image already written to file. Either set overwrite = False or remove the existing input image ")
-
+        #check dimensionality of input array to make sure it matches config
         if not array.shape[0] == self.config["input_channels"]:
             raise ValueError(
                 "Expected {} image paths, only received {}".format(
                     self.config["input_channels"], array.shape[0]
                 )
             )
-
-        self.input_image = np.array(array, dtype="float64")
+        self._check_image_dtype(array)
+        self.input_image = np.array(array, dtype=self.DEFAULT_IMAGE_DTYPE)
 
         if remap is not None:
             self.input_image = self.input_image[remap]
         
         self.save_input_image(self.input_image)
 
-    def load_input_from_czi(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
+    def load_input_from_czi(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None, rescale_range = (0.005, 0.995)):
         """Load image input from .czi file
 
         Args:
@@ -540,12 +556,16 @@ class Project(Logable):
 
         #perform intensity rescaling before loading images
         if intensity_rescale:
-            self.log("Performing percentile normalization on the input image with lower_percentile=0.005 and upper_percentile=0.995")
-            _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=0.005, upper_percentile=0.995) for i in range(channels)])
-            _mosaic = (_mosaic * 65535).astype('uint16') #convert to 16bit images
+            lower, upper = rescale_range
+            self.log(f"Performing percentile normalization on the input image with lower_percentile={lower} and upper_percentile={upper}")
+            _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=lower, upper_percentile=upper) for i in range(channels)])
+            _mosaic = (_mosaic * np.iinfo(self.DEFAULT_IMAGE_DTYPE).max).astype(self.DEFAULT_IMAGE_DTYPE) #convert to default image dtype after normalization
 
         else:
-            _mosaic = np.array(_mosaic).astype("uint16")
+            #check image dtype
+            self._check_image_dtype(_mosaic)
+            _mosaic = np.array(_mosaic).astype(self.DEFAULT_IMAGE_DTYPE)
+
         self.log("finished loading. array.")
         self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
 
