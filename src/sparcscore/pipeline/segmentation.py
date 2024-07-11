@@ -774,15 +774,13 @@ class ShardedSegmentation(Segmentation):
                 #since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
                 #the segmentation mask to remove unwanted shapes before merging
 
-                if self.debug:
-                    start_time_step1 = time.time()
+                start_time_step1 = time.time()
 
                 ids_discard = np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])
                 orig_input[np.isin(orig_input, ids_discard)] = 0
+                time_step1 = time.time() - start_time_step1
 
                 if self.debug: 
-                    time_step1 = time.time() - start_time_step1
-
                     orig_input_manipulation = orig_input.copy()
                     shifted_map_manipulation = shifted_map.copy()
 
@@ -796,31 +794,34 @@ class ShardedSegmentation(Segmentation):
                     plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
                     plt.colorbar()
                     plt.show()
+                    plt.savefig(f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png")
 
                     plt.figure()
                     plt.imshow(resulting_map[1])
                     plt.colorbar()
                     plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
                     plt.show()
+                    plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
 
-                if self.debug:
-                    start_time_step2 = time.time()
+                start_time_step2 = time.time()
                 shifted_map = np.where(
                     (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
                 )
                 
-                if self.debug:
-                    time_step2 = time.time() - start_time_step2
-                    total_time = time_step1 + time_step2
-                    self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}")
+                time_step2 = time.time() - start_time_step2
+                total_time = time_step1 + time_step2
+                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}")
 
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
 
                 hdf_labels[:, window[0], window[1]] = shifted_map
                 class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
+                unique_ids = set(np.unique(shifted_map[0]))
 
-                filtered_classes_combined = filtered_classes_combined.union(set(np.unique(shifted_map[0])))  #get unique nucleus ids and add them to the combined filtered class
+                self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
+                self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
 
                 local_hf.close()
                 self.log(f"Finished stitching tile {i}")
@@ -828,7 +829,7 @@ class ShardedSegmentation(Segmentation):
             #remove background class
             filtered_classes_combined = filtered_classes_combined - set([0]) 
             
-            self.log(f"Number of filtered classes combined after sharding: {len(filtered_classes_combined)}")
+            self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 
             # check filtering classes to ensure that segmentation run is properly tagged
             self.check_filter_status()
