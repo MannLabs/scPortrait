@@ -36,13 +36,6 @@ class HDF5CellExtraction(ProcessingStep):
     results to an HDF5 file.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_DATA_FILE = "single_cells.h5"
-    DEFAULT_SEGMENTATION_DIR = "segmentation"
-    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
-    DEFAULT_CLASSES_FILE = "classes.csv"
-    DEFAULT_FILTERED_CLASSES_FILE = "filtering/filtered_classes.csv"
-    DEFAULT_DATA_DIR = "data"
     SELECTED_DATA_DIR = "selected_data"
     CLEAN_LOG = False
 
@@ -60,7 +53,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.input_segmentation_path = os.path.join(
             base_directory,
-            self.DEFAULT_SEGMENTATION_DIR,
+            self.DEFAULT_SEGMENTATION_DIR_NAME,
             self.DEFAULT_SEGMENTATION_FILE,
         )
 
@@ -68,16 +61,17 @@ class HDF5CellExtraction(ProcessingStep):
         if os.path.isfile(
             os.path.join(
                 base_directory,
-                self.DEFAULT_SEGMENTATION_DIR,
+                self.DEFAULT_SEGMENTATION_DIR_NAME,
                 "needs_additional_filtering.txt",
             )
         ):
             try:
                 self.classes_path = os.path.join(
                     base_directory,
-                    self.DEFAULT_SEGMENTATION_DIR,
+                    self.DEFAULT_SEGMENTATION_FILTERING_DIR_NAME,
                     self.DEFAULT_FILTERED_CLASSES_FILE,
                 )
+
                 self.log(
                     f"Loading classes from filtered classes path: {self.classes_path}"
                 )
@@ -85,7 +79,7 @@ class HDF5CellExtraction(ProcessingStep):
                 raise ValueError("Need to run segmentation_filtering method ")
         else:
             self.classes_path = os.path.join(
-                base_directory, self.DEFAULT_SEGMENTATION_DIR, self.DEFAULT_CLASSES_FILE
+                base_directory, self.DEFAULT_SEGMENTATION_DIR_NAME, self.DEFAULT_CLASSES_FILE
             )
             self.log(f"Loading classes from default classes path: {self.classes_path}")
 
@@ -1017,12 +1011,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     in the input data.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_DATA_FILE = "single_cells.h5"
-    DEFAULT_SEGMENTATION_DIR = "segmentation"
     DEFAULT_SEGMENTATION_FILE = "input_segmentation.h5"
-
-    DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = False
 
     # new parameters to make workflow adaptable to other types of projects

@@ -18,9 +18,6 @@ from alphabase.io import tempmmap
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction."""
-    
-    DEFAULT_OUTPUT_FILE = "segmentation.h5"
-    DEFAULT_FILTER_FILE = "filtered_classes.csv"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +58,7 @@ class SegmentationFilter(ProcessingStep):
         classes : dict
             Dictionary of classes to save.
         """
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTERED_CLASSES_FILE)
         to_write = "\n".join([f"{str(x)}:{str(y)}" for x, y in classes.items()])
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
@@ -144,13 +141,11 @@ class SegmentationFilter(ProcessingStep):
         str
             Path to the output file.
         """
-        return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
 
 class TiledSegmentationFilter(SegmentationFilter):
     """TiledSegmentationFilter helper class used for creating workflows to filter generated segmentation masks using a tiled approach."""
-
-    DEFAULT_TILES_FOLDER = "tiles"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

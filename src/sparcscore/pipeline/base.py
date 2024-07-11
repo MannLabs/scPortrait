@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import sys
 import platform
+import numpy as np
 
 class Logable(object):
     """
@@ -93,6 +94,33 @@ class ProcessingStep(Logable):
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
+    #input data
+    DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
+
+    #segmentation
+    DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
+    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
+    DEFAULT_CLASSES_FILE = "classes.csv"
+
+    #filtering
+    DEFAULT_SEGMENTATION_FILTERING_DIR_NAME = "segmentation/filtering"
+    DEFAULT_FILTERED_CLASSES_FILE = "filtered_classes.csv"
+
+    #processes with tiling
+    DEFAULT_TILES_FOLDER = "tiles"
+
+    #extraction
+    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
+    DEFAULT_DATA_DIR = "data"
+    DEFAULT_DATA_FILE = "single_cells.h5"
+
+    #classification
+    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+    DEFAULT_SELECTION_DIR_NAME = "selection"
+
+    #dtypes
+    DEFAULT_IMAGE_DTYPE = np.uint16
+    DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
     def __init__(
         self,

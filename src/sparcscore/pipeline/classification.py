@@ -18,7 +18,6 @@ import pandas as pd
 import io
 from contextlib import redirect_stdout
 
-
 class MLClusterClassifier(ProcessingStep):
     """
     Class for classifying single cells using a pre-trained machine learning model.
@@ -41,8 +40,6 @@ class MLClusterClassifier(ProcessingStep):
         When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
 
     def __init__(
@@ -438,9 +435,6 @@ class EnsembleClassifier(ProcessingStep):
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_FILE_NAME = "single_cells.h5"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -673,7 +667,7 @@ class EnsembleClassifier(ProcessingStep):
 
         # generate dataloader
         dataloader = self.generate_dataloader(
-            f"{extraction_dir}/{self.DEFAULT_FILE_NAME}"
+            f"{extraction_dir}/{self.DEFAULT_DATA_FILE}"
         )
 
         # perform inference
@@ -701,8 +695,6 @@ class CellFeaturizer(ProcessingStep):
     The features are outputted in this order in the CSV file.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_DATA_DIR = "data"
     CLEAN_LOG = True
 
     def __init__(
