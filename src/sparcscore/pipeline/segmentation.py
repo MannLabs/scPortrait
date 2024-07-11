@@ -780,7 +780,7 @@ class ShardedSegmentation(Segmentation):
                 orig_input[np.isin(orig_input, ids_discard)] = 0
                 time_step1 = time.time() - start_time_step1
 
-                if self.deep_debug: 
+                if self.debug: 
                     orig_input_manipulation = orig_input.copy()
                     shifted_map_manipulation = shifted_map.copy()
 
