@@ -793,14 +793,14 @@ class ShardedSegmentation(Segmentation):
 
                     plt.figure()
                     plt.imshow(resulting_map[0])
-                    plt.title(f"Combined nucleus segmentation mask after/n resolving sharding for region {i}")
+                    plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
                     plt.colorbar()
                     plt.show()
 
                     plt.figure()
                     plt.imshow(resulting_map[1])
                     plt.colorbar()
-                    plt.title(f"Combined cytosol segmentation mask after/n resolving sharding for region {i}")
+                    plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
                     plt.show()
 
                 if self.debug:
