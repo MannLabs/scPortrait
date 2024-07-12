@@ -90,6 +90,8 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
 
     #ensure that the dtype is converted to a float before running this function
     if not isinstance(im.dtype, float):
+        im = im.astype(np.float32)
+
     # chek if data is passed as (height, width) or (channels, height, width)
     if len(im.shape) == 2:
         im = _percentile_norm(im, lower_percentile, upper_percentile)
@@ -103,7 +105,7 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
 
     return im
 
-def downsample_img(img, N=2):
+def downsample_img(img, N=2, return_dtype = np.uint16):
     """
     Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels. 
     Takes a numpy array image as input and returns a numpy array as uint16.
@@ -116,7 +118,7 @@ def downsample_img(img, N=2):
         number of pixels that should be binned together using mean between pixels
     """
     downsampled = xr.DataArray(img, dims=['c', 'x', 'y']).coarsen(c = 1, x= N, y= N, boundary = "exact").mean()
-    downsampled = (downsampled/downsampled.max()*65535).astype("uint16")
+    downsampled = (downsampled/downsampled.max()*np.iinfo(return_dtype).max).astype(return_dtype)
     return(np.array(downsampled))    
 
 def downsample_img_pxs(img, N=2):
