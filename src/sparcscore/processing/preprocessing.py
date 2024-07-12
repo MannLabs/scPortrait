@@ -65,7 +65,7 @@ def _percentile_norm(im, lower_percentile, upper_percentile):
             
     return out_im
 
-def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.999):
+def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.999, return_copy = True):
     """
     Normalize an input image channel-wise based on defined percentiles.
 
@@ -78,15 +78,21 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
         upper_percentile (float, optional): Upper percentile used for normalization, all higher values will be clipped to 1. Defaults to 0.999.
     
     Returns:
-        im (np.array): Normalized Numpy array.
+        im (np.array): Normalized Numpy array with dtype == float
 
     Example:
     >>> img = np.random.rand(3, 4, 4) # (channels, height, width)
     >>> norm_img = percentile_normalization(img, 0.001, 0.999)
     """
-    
+    #if false the input image is directly updated
+    if return_copy:
+        im = im.copy() #ensure we are working on a copy not the original data
+
+    #ensure that the dtype is converted to a float before running this function
+    if not isinstance(im.dtype, float):
+        im = im.astype(np.float32)
+
     # chek if data is passed as (height, width) or (channels, height, width)
-    
     if len(im.shape) == 2:
         im = _percentile_norm(im, lower_percentile, upper_percentile)
         
@@ -99,7 +105,7 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
 
     return im
 
-def downsample_img(img, N=2):
+def downsample_img(img, N=2, return_dtype = np.uint16):
     """
     Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels. 
     Takes a numpy array image as input and returns a numpy array as uint16.
@@ -112,7 +118,7 @@ def downsample_img(img, N=2):
         number of pixels that should be binned together using mean between pixels
     """
     downsampled = xr.DataArray(img, dims=['c', 'x', 'y']).coarsen(c = 1, x= N, y= N, boundary = "exact").mean()
-    downsampled = (downsampled/downsampled.max()*65535).astype("uint16")
+    downsampled = (downsampled/downsampled.max()*np.iinfo(return_dtype).max).astype(return_dtype)
     return(np.array(downsampled))    
 
 def downsample_img_pxs(img, N=2):

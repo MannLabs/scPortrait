@@ -41,8 +41,6 @@ class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.DEFAULT_SEGMENTATION_DTYPE = np.uint32
-
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -271,6 +269,7 @@ class BaseSegmentation(Segmentation):
         self.log("Started with fast marching")
         fmm_marker = np.ones_like(self.maps["median"][0])
         px_center = np.round(center_nuclei).astype(np.uint64)
+        
         for center in px_center[1:]:
             fmm_marker[center[0], center[1]] = 0
 
@@ -350,7 +349,7 @@ class BaseSegmentation(Segmentation):
         plt.ylabel("frequency")
         plt.yscale("log")
         plt.title("DAPI intensity distribution")
-        plt.savefig("dapi_intensity_dist.png")
+        plt.savefig(os.path.join(self.directory, "dapi_intensity_dist.png"))
         plt.show()
 
     def _cellmembrane_median_intensity_plot(self):
@@ -360,7 +359,7 @@ class BaseSegmentation(Segmentation):
         plt.ylabel("frequency")
         plt.yscale("log")
         plt.title("WGA intensity distribution")
-        plt.savefig("wga_intensity_dist.png")
+        plt.savefig(os.path.join(self.directory, "wga_intensity_dist.png"))
         plt.show()
 
     def _visualize_nucleus_segmentation(
@@ -382,7 +381,7 @@ class BaseSegmentation(Segmentation):
         plt.xlabel("px area")
         plt.ylabel("number")
         plt.title("Nucleus size distribution")
-        plt.savefig("nucleus_size_dist.png")
+        plt.savefig(os.path.join(self.directory, "nucleus_size_dist.png"))
         plt.show()
 
     def _plot_cytosol_size_distribution(self, length):
@@ -390,7 +389,7 @@ class BaseSegmentation(Segmentation):
         plt.xlabel("px area")
         plt.ylabel("number")
         plt.title("Cytosol size distribution")
-        plt.savefig("cytosol_size_dist.png")
+        plt.savefig(os.path.join(self.directory, "cytosol_size_dist.png"))
         plt.show()
 
     def _visualize_watershed_results(self, center_nuclei):
@@ -718,9 +717,9 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(np.uint16)
+            channels = np.stack(required_maps + feature_maps).astype(self.DEFAULT_IMAGE_DTYPE)
         else:
-            channels = np.stack(required_maps).astype(np.uint16)
+            channels = np.stack(required_maps).astype(self.DEFAULT_IMAGE_DTYPE)
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
@@ -785,7 +784,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache()
 
         # check that image is int
-        input_image = input_image.astype(np.uint16)
+        if input_image.dtype != np.uint16:
+            sys.exit("Image is not of type uint16, cellpose segmentation expects int input images.")
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -1018,12 +1018,12 @@ class CytosolSegmentationCellpose(BaseSegmentation):
             ),
             "nucleus_segmentation": tempmmap.array(
                 shape=input_image.shape,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
             "cytosol_segmentation": tempmmap.array(
                 shape=input_image.shape,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }
@@ -1083,9 +1083,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # Feature maps are all further channel which contain additional phenotypes e.g. for classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(np.uint16)
+            channels = np.stack(required_maps + feature_maps).astype(self.DEFAULT_IMAGE_DTYPE)
         else:
-            channels = np.stack(required_maps).astype(np.uint16)
+            channels = np.stack(required_maps).astype(self.DEFAULT_IMAGE_DTYPE)
 
         _seg_size = self.maps["nucleus_segmentation"].shape
 
@@ -1250,12 +1250,12 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             ),
             "nucleus_segmentation": tempmmap.array(
                 shape=downsampled_image_size,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
             "cytosol_segmentation": tempmmap.array(
                 shape=downsampled_image_size,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }
@@ -1351,7 +1351,9 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
         # check that image is int
-        input_image = input_image.astype(np.uint16)
+        if input_image.dtype != np.uint16:
+            sys.exit("Image is not of type uint16, cellpose segmentation expects int input images.")
+
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -1419,7 +1421,7 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
             ),
             "cytosol_segmentation": tempmmap.array(
                 shape=input_image.shape,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }
@@ -1461,9 +1463,9 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         # Feature maps are all further channel which contain phenotypes needed for the classification
         if self.maps["normalized"].shape[0] > 2:
             feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(np.uint16)
+            channels = np.stack(required_maps + feature_maps).astype(self.DEFAULT_IMAGE_DTYPE)
         else:
-            channels = np.stack(required_maps).astype(np.uint16)
+            channels = np.stack(required_maps).astype(self.DEFAULT_IMAGE_DTYPE)
 
         _seg_size = self.maps["cytosol_segmentation"].shape
 
@@ -1549,7 +1551,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             ),
             "cytosol_segmentation": tempmmap.array(
                 shape=downsampled_image_size,
-                dtype=np.uint16,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }

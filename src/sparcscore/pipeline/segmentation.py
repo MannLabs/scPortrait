@@ -33,8 +33,6 @@ class Segmentation(ProcessingStep):
     Attributes:
         maps (dict(str)): Segmentation workflows based on the :class:`.Segmentation` class can use maps for saving and loading checkpoints and perform. Maps can be numpy arrays
 
-        DEFAULT_OUTPUT_FILE (str, default ``segmentation.h5``)
-        DEFAULT_FILTER_FILE (str, default ``classes.csv``)
         DEFAULT_FILTER_ADDTIONAL_FILE (str, default ``filtered_classes.csv``)
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
 
@@ -63,14 +61,10 @@ class Segmentation(ProcessingStep):
 
     """
 
-    DEFAULT_OUTPUT_FILE = "segmentation.h5"
-    DEFAULT_FILTER_FILE = "classes.csv"
     DEFAULT_FILTER_ADDTIONAL_FILE = "needs_additional_filtering.txt"
     PRINT_MAPS_ON_DEBUG = True
     DEFAULT_CHANNELS_NAME = "channels"
     DEFAULT_MASK_NAME = "labels"
-    DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
-    DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
     channel_colors = [
         "#0000FF",
@@ -102,7 +96,7 @@ class Segmentation(ProcessingStep):
 
     def save_classes(self, classes):
         # define path where classes should be saved
-        filtered_path = os.path.join(self.directory, self.DEFAULT_FILTER_FILE)
+        filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
 
         to_write = "\n".join([str(i) for i in list(classes)])
 
@@ -181,7 +175,7 @@ class Segmentation(ProcessingStep):
                     f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
                 )
             input_image = tempmmap.array(
-                shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path
+                shape=(2, x, y), dtype=self.DEFAULT_IMAGE_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
             )
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
@@ -233,7 +227,7 @@ class Segmentation(ProcessingStep):
 
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
 
-        map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        map_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
         hf = h5py.File(map_path, "a")
 
         # check if data container already exists and if so delete
@@ -302,7 +296,7 @@ class Segmentation(ProcessingStep):
 
                 # reading labels
                 if labels is None:
-                    path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+                    path_labels = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
                     with h5py.File(path_labels, "r") as hf:
                         # initialize tempmmap array to save label results into
@@ -319,7 +313,7 @@ class Segmentation(ProcessingStep):
 
                 for seg, name in zip(segmentations, segmentation_names):
                     write_labels(
-                        labels=seg.astype("uint16"), group=group, name=name, axes="cyx"
+                        labels=seg.astype(self.DEFAULT_SEGMENTATION_DTYPE), group=group, name=name, axes="cyx"
                     )
                     write_label_metadata(
                         group=group,
@@ -470,23 +464,12 @@ class Segmentation(ProcessingStep):
             plt.close()
 
     def get_output(self):
-        return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
 
 class ShardedSegmentation(Segmentation):
-    """object which can create log entries.
-
-    Attributes:
-        DEFAULT_OUTPUT_FILE (str, default ``segmentation.h5``): Default output file name for segmentations.
-
-        DEFAULT_FILTER_FILE (str, default ``classes.csv``): Default file with filtered class IDs.
-
-        DEFAULT_INPUT_IMAGE_NAME (str, default ``input_image.h5``): Default name for the input image, which is written to disk as hdf5 file.
-
-        DEFAULT_SHARD_FOLDER (str, default ``tiles``): Date and time format used for logging.
+    """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together.
     """
-
-    DEFAULT_SHARD_FOLDER = "tiles"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -499,20 +482,28 @@ class ShardedSegmentation(Segmentation):
         self.save_zarr = False
 
     def save_input_image(self, input_image):
-        output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        
+        start = time.time()
+        output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
-        input_image = input_image.astype("uint16")
+        #check dtype of input image
+        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
+            Warning(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
+            self.log(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
+
+            input_image = input_image.astype(self.DEFAULT_IMAGE_DTYPE)
 
         with h5py.File(output, "w") as hf:
             hf.create_dataset(
                 self.DEFAULT_CHANNELS_NAME,
                 data=input_image,
                 chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-                dtype="uint16",
+                dtype=self.DEFAULT_IMAGE_DTYPE,
             )
-
+        duration = time.time() - start
+        
         self.log(
-            "Input image added to .h5. Provides data source for reading shard information."
+            f"Input image added to .h5 in {np.round(duration/60, 3)} minutes. Provides data source for reading shard information."
         )
 
     def save_segmentation(self, channels, labels, classes):
@@ -532,7 +523,7 @@ class ShardedSegmentation(Segmentation):
 
         labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
 
-        map_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        map_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
         hf = h5py.File(map_path, "w")
 
         # check if data container already exists and if so delete
@@ -558,7 +549,7 @@ class ShardedSegmentation(Segmentation):
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
 
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
         self.input_path = input_path
 
         for i, window in enumerate(sharding_plan):
@@ -581,7 +572,7 @@ class ShardedSegmentation(Segmentation):
     def initialize_shard_list_incomplete(self, sharding_plan, incomplete_indexes):
         _shard_list = []
 
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
         self.input_path = input_path
 
         for i, window in zip(incomplete_indexes, sharding_plan):
@@ -695,7 +686,7 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolve sharding plan")
 
-        output = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         if self.config["input_channels"] == 1:
             label_size = (1, self.image_size[0], self.image_size[1])
@@ -726,7 +717,7 @@ class ShardedSegmentation(Segmentation):
 
                 local_shard_directory = os.path.join(self.shard_directory, str(i))
                 local_output = os.path.join(
-                    local_shard_directory, self.DEFAULT_OUTPUT_FILE
+                    local_shard_directory, self.DEFAULT_SEGMENTATION_FILE
                 )
                 local_classes = os.path.join(local_shard_directory, "classes.csv")
 
@@ -774,15 +765,13 @@ class ShardedSegmentation(Segmentation):
                 #since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
                 #the segmentation mask to remove unwanted shapes before merging
 
-                if self.debug:
-                    start_time_step1 = time.time()
+                start_time_step1 = time.time()
 
                 ids_discard = np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])
                 orig_input[np.isin(orig_input, ids_discard)] = 0
+                time_step1 = time.time() - start_time_step1
 
                 if self.debug: 
-                    time_step1 = time.time() - start_time_step1
-
                     orig_input_manipulation = orig_input.copy()
                     shifted_map_manipulation = shifted_map.copy()
 
@@ -793,34 +782,37 @@ class ShardedSegmentation(Segmentation):
 
                     plt.figure()
                     plt.imshow(resulting_map[0])
-                    plt.title(f"Combined nucleus segmentation mask after/n resolving sharding for region {i}")
+                    plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
                     plt.colorbar()
                     plt.show()
+                    plt.savefig(f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png")
 
                     plt.figure()
                     plt.imshow(resulting_map[1])
                     plt.colorbar()
-                    plt.title(f"Combined cytosol segmentation mask after/n resolving sharding for region {i}")
+                    plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
                     plt.show()
+                    plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
 
-                if self.debug:
-                    start_time_step2 = time.time()
+                start_time_step2 = time.time()
                 shifted_map = np.where(
                     (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
                 )
                 
-                if self.debug:
-                    time_step2 = time.time() - start_time_step2
-                    total_time = time_step1 + time_step2
-                    self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}")
+                time_step2 = time.time() - start_time_step2
+                total_time = time_step1 + time_step2
+                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}")
 
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
 
                 hdf_labels[:, window[0], window[1]] = shifted_map
                 class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
+                unique_ids = set(np.unique(shifted_map[0]))
 
-                filtered_classes_combined = filtered_classes_combined.union(set(np.unique(shifted_map[0])))  #get unique nucleus ids and add them to the combined filtered class
+                self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
+                self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
 
                 local_hf.close()
                 self.log(f"Finished stitching tile {i}")
@@ -828,7 +820,7 @@ class ShardedSegmentation(Segmentation):
             #remove background class
             filtered_classes_combined = filtered_classes_combined - set([0]) 
             
-            self.log(f"Number of filtered classes combined after sharding: {len(filtered_classes_combined)}")
+            self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 
             # check filtering classes to ensure that segmentation run is properly tagged
             self.check_filter_status()
@@ -842,7 +834,7 @@ class ShardedSegmentation(Segmentation):
         self.save_zarr = True
 
         # reading labels
-        path_labels = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        path_labels = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         with h5py.File(path_labels, "r") as hf:
             # initialize tempmmap array to save label results into
@@ -860,7 +852,7 @@ class ShardedSegmentation(Segmentation):
             "finished saving segmentation results to ome.zarr from sharded segmentation."
         )
 
-        self.cleanup_shards(sharding_plan)
+        #self.cleanup_shards(sharding_plan)
 
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
@@ -868,7 +860,7 @@ class ShardedSegmentation(Segmentation):
     def process(self, input_image):
         self.save_zarr = False
         self.save_input_image(input_image)
-        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
         if not os.path.isdir(self.shard_directory):
             os.makedirs(self.shard_directory)
@@ -970,7 +962,7 @@ class ShardedSegmentation(Segmentation):
 
     def complete_segmentation(self, input_image):
         self.save_zarr = False
-        self.shard_directory = os.path.join(self.directory, self.DEFAULT_SHARD_FOLDER)
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
         # check to make sure that the shard directory exisits, if not exit and return error
         if not os.path.isdir(self.shard_directory):
@@ -1112,7 +1104,7 @@ class ShardedSegmentation(Segmentation):
 class TimecourseSegmentation(Segmentation):
     """Segmentation helper class used for creating segmentation workflows working with timecourse data."""
 
-    DEFAULT_OUTPUT_FILE = "input_segmentation.h5"
+    DEFAULT_SEGMENTATION_FILE = "input_segmentation.h5"
     DEFAULT_INPUT_IMAGE_NAME = "input_segmentation.h5"
     PRINT_MAPS_ON_DEBUG = True
     DEFAULT_CHANNELS_NAME = "input_images"
@@ -1222,7 +1214,7 @@ class TimecourseSegmentation(Segmentation):
 
     def _transfer_tempmmap_to_hdf5(self):
         _tmp_seg = tempmmap.mmap_array_from_path(self._tmp_seg_path)
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         # create hdf5 datasets with temp_arrays as input
         with h5py.File(input_path, "a") as hf:
@@ -1379,7 +1371,7 @@ class TimecourseSegmentation(Segmentation):
         self.log("resolved segmentation list")
 
     def process(self):
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         with h5py.File(input_path, "r") as hf:
             input_images = hf.get(self.DEFAULT_CHANNELS_NAME)
@@ -1427,8 +1419,7 @@ class TimecourseSegmentation(Segmentation):
 
 
 class MultithreadedSegmentation(TimecourseSegmentation):
-    DEFAULT_OUTPUT_FILE = "input_segmentation.h5"
-    DEFAULT_FILTER_FILE = "classes.csv"
+    DEFAULT_SEGMENTATION_FILE = "input_segmentation.h5"
     DEFAULT_INPUT_IMAGE_NAME = "input_segmentation.h5"
 
     def __init__(self, *args, **kwargs):
@@ -1443,7 +1434,7 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         current_process().gpu_id_list = gpu_id_list
 
     def process(self):
-        input_path = os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         with h5py.File(input_path, "r") as hf:
             input_images = hf.get(self.DEFAULT_CHANNELS_NAME)
@@ -1548,4 +1539,4 @@ class MultithreadedSegmentation(TimecourseSegmentation):
         return _shard_list
 
     def get_output(self):
-        return os.path.join(self.directory, self.DEFAULT_OUTPUT_FILE)
+        return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)

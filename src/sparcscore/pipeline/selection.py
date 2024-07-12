@@ -65,7 +65,12 @@ class LMDSelection(ProcessingStep):
             .. code-block:: yaml
 
                 LMDSelection:
+                    #the number of threads with which multithreaded tasks should be executed
                     threads: 10
+
+                    # the number of parallel processes to use for generation of cell sets each set
+                    # will processed with the designated number of threads
+                    processes_cell_sets: 1
 
                     # defines the channel used for generating cutting masks
                     # segmentation.hdf5 => labels => segmentation_channel
@@ -138,7 +143,7 @@ class LMDSelection(ProcessingStep):
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
-            processes=self.config["threads_cell_sets"],
+            processes=self.config["processes_cell_sets"],
         )
 
         shape_collection = sl(segmentation, cell_sets, calibration_marker)
