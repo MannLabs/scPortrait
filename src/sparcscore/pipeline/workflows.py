@@ -359,7 +359,7 @@ class BaseSegmentation(Segmentation):
         plt.ylabel("frequency")
         plt.yscale("log")
         plt.title("WGA intensity distribution")
-        plt.savefig(os.path.join(self.direcotry, "wga_intensity_dist.png"))
+        plt.savefig(os.path.join(self.directory, "wga_intensity_dist.png"))
         plt.show()
 
     def _visualize_nucleus_segmentation(
