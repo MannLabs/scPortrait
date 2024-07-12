@@ -349,7 +349,7 @@ class BaseSegmentation(Segmentation):
         plt.ylabel("frequency")
         plt.yscale("log")
         plt.title("DAPI intensity distribution")
-        plt.savefig("dapi_intensity_dist.png")
+        plt.savefig(os.path.join(self.directory, "dapi_intensity_dist.png"))
         plt.show()
 
     def _cellmembrane_median_intensity_plot(self):
@@ -359,7 +359,7 @@ class BaseSegmentation(Segmentation):
         plt.ylabel("frequency")
         plt.yscale("log")
         plt.title("WGA intensity distribution")
-        plt.savefig("wga_intensity_dist.png")
+        plt.savefig(os.path.join(self.direcotry, "wga_intensity_dist.png"))
         plt.show()
 
     def _visualize_nucleus_segmentation(
@@ -381,7 +381,7 @@ class BaseSegmentation(Segmentation):
         plt.xlabel("px area")
         plt.ylabel("number")
         plt.title("Nucleus size distribution")
-        plt.savefig("nucleus_size_dist.png")
+        plt.savefig(os.path.join(self.directory, "nucleus_size_dist.png"))
         plt.show()
 
     def _plot_cytosol_size_distribution(self, length):
@@ -389,7 +389,7 @@ class BaseSegmentation(Segmentation):
         plt.xlabel("px area")
         plt.ylabel("number")
         plt.title("Cytosol size distribution")
-        plt.savefig("cytosol_size_dist.png")
+        plt.savefig(os.path.join(self.directory, "cytosol_size_dist.png"))
         plt.show()
 
     def _visualize_watershed_results(self, center_nuclei):
