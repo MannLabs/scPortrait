@@ -1101,7 +1101,12 @@ class TimecourseProject(Project):
                     images = [x for x in files if channel in x]
 
                     for i, im in enumerate(images):
-                        image = imread(os.path.join(path, im), 0)
+                        image = imread(os.path.join(path, im))
+
+                        if isinstance(image.dtype, np.uint8):
+                            image = image.astype("uint16") * np.iinfo(np.uint8).max
+                        
+                        self._check_image_dtype(image)
                         imgs[i, ix, :, :] = image.astype("uint16")
 
                 # create labelling
