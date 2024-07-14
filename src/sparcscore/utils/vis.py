@@ -42,7 +42,7 @@ def plot_segmentation_mask(
     background = 0
     
     segmentation_file = os.path.join(
-        project.seg_directory, project.segmentation_f.DEFAULT_OUTPUT_FILE
+        project.seg_directory, project.segmentation_f.DEFAULT_SEGMENTATION_FILE
     )
 
     with h5py.File(segmentation_file, "r") as hf:
