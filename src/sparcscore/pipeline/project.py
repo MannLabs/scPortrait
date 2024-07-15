@@ -549,7 +549,9 @@ class Project(Logable):
                         _img.append(czi.read_mosaic(region = (box.x, box.y, box.w, box.h), C = c, Z = z).squeeze())
                     _img = np.array(_img) #convert to numpy array
                     _mosaic.append(method(_img))
-            
+            else:
+                sys.exit("Please define a method for aggregating Z-stacks for CZI files with multiple Z-stacks.")
+
         else:
             _mosaic = np.array([czi.read_mosaic(region = (box.x, box.y, box.w, box.h),
                                                 C = c).squeeze() for c in range(channels)])
