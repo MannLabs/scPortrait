@@ -568,7 +568,7 @@ class Project(Logable):
             self._check_image_dtype(_mosaic)
             _mosaic = np.array(_mosaic).astype(self.DEFAULT_IMAGE_DTYPE)
 
-        self.log("finished loading. array.")
+        self.log("finished loading array from CZI file.")
         self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
 
     #deprecate this function for the time being do to import issues
