@@ -383,7 +383,21 @@ class HDF5CellExtraction(ProcessingStep):
         return (index, save_index, cell_id, None, None)
 
     def _save_cell_info(self, save_index, cell_id, image_index, label_info, stack):
-        # save index is irrelevant for this
+        """helper function to save the extracted cell information to the temporary datastructures
+
+        Parameters
+        ----------
+        save_index : int
+            index location in the temporary datastructures where the cell in question needs to be saved
+        cell_id : int
+            unique identifier of extracted cell
+        image_index : int | None
+            index of the source image that was processed. Only relevant for TimecourseProjects. Otherwise None.
+        label_info : str | None
+            additional information that is to be saved with the extracted cell. Only relevant for TimecourseProjects. Otherwise None.
+        stack : np.array
+            extracted single cell images that are too be saved
+        """
         # label info is None so just ignore for the base case
         # image_index is none so just ignore for the base case
         global _tmp_single_cell_data, _tmp_single_cell_index
