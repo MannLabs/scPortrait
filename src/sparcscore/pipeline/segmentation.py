@@ -803,7 +803,7 @@ class ShardedSegmentation(Segmentation):
                 
                 time_step2 = time.time() - start_time_step2
                 total_time = time_step1 + time_step2
-                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}")
+                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s")
 
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
@@ -815,10 +815,13 @@ class ShardedSegmentation(Segmentation):
                 #save results to hdf_labels
                 hdf_labels[:, window[0], window[1]] = shifted_map
                 
-                self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                # updated classes list
                 filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list
                 filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
-                self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
+                
+                if self.debug:
+                    self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                    self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
 
                 local_hf.close()
                 self.log(f"Finished stitching tile {i} in {timer - time.time()} seconds.")
