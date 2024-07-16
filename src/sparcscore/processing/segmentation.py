@@ -713,7 +713,7 @@ def _class_size(mask, debug=False, background=0):
     """
 
     # Get the unique cell_ids and remove the background(0)
-    cell_ids = list(np.unique(mask).flatten())
+    cell_ids = np.unique(mask).flatten()
     if 0 in cell_ids:
         cell_ids.remove(background)
     cell_ids = np.array(cell_ids)
@@ -862,10 +862,12 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
     # this is relevant when working with segmentations that have been reindexed over different tiles
 
     # Get the unique cell_ids and remove the background (0)
-    # since np.unique returns a sorted array the first element is always the background 0
-    cell_ids = np.unique(mask).flatten()[1:]
+    cell_ids = np.unique(mask).flatten()
+    if 0 in cell_ids: #this more cumbersone way of removing the background is necessary for masks that dont have any background
+        cell_ids.remove(0)
+    cell_ids = np.array(cell_ids)
 
-    min_cell_id = np.min(cell_ids) # -1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
+    min_cell_id = np.min(cell_ids)
 
     if min_cell_id == 0:
         print("no cells in image. Only contains background with value 0.")
