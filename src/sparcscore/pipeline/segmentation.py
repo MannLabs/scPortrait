@@ -824,7 +824,7 @@ class ShardedSegmentation(Segmentation):
                     self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
 
                 local_hf.close()
-                self.log(f"Finished stitching tile {i} in {timer - time.time()} seconds.")
+                self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
             
             #remove background class
             filtered_classes_combined = filtered_classes_combined - set([0]) 
