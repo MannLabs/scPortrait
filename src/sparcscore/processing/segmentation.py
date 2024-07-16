@@ -862,7 +862,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
     # this is relevant when working with segmentations that have been reindexed over different tiles
 
     # Get the unique cell_ids and remove the background (0)
-    cell_ids = np.unique(mask).flatten()
+    cell_ids = list(np.unique(mask).flatten())
     if 0 in cell_ids: #this more cumbersone way of removing the background is necessary for masks that dont have any background
         cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
