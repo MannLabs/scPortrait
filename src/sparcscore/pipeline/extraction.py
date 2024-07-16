@@ -326,7 +326,7 @@ class HDF5CellExtraction(ProcessingStep):
                 fig, axs = plt.subplots(1, stack.shape[0])
 
                 for i, img in enumerate(stack):
-                    axs[i].imshow(img)
+                    axs[i].imshow(img, vmin = 0, vmax = 1)
                     axs[i].axis("off")
 
                 fig.tight_layout()
