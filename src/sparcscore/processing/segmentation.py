@@ -929,6 +929,11 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
         if min_cell_id != 1:
             ids[1:] += min_cell_id - 1  # leave the background at 0
 
+    # remove background ids
+    center = center[ids != 0]
+    points_class = points_class[ids != 0]
+    ids = ids[ids != 0]
+
     return center, points_class, ids.astype("int32")
 
 
