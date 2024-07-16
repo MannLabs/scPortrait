@@ -94,8 +94,7 @@ class HDF5CellExtraction(ProcessingStep):
         # set developer debug mode for super detailed output
         self.deep_debug = False
 
-        #check for windows and if so set threads to 1
-
+        #check for windows operating system and if so set threads to 1
         if platform.system() == "Windows":
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
             self.config["threads"] = 1
