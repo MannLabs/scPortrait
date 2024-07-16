@@ -647,7 +647,7 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             self.log("Started cell coordinate calculation")
             center_nuclei, length, _cell_ids = numba_mask_centroid(
-                hdf_labels[0].astype(np.uint32), debug=self.debug
+                hdf_labels[0].astype(self.DEFAULT_SEGMENTATION_DTYPE), debug=self.debug
             )
             px_centers = np.round(center_nuclei).astype(int)
 
