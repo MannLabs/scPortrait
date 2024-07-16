@@ -17,6 +17,7 @@ import skfmm
 
 from sparcscore.processing.utils import plot_image
 
+DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 #### Thresholding Functions to binarize input images
 def global_otsu(image):
@@ -861,53 +862,39 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
     # this is relevant when working with segmentations that have been reindexed over different tiles
 
     # Get the unique cell_ids and remove the background (0)
-    cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids:
-        cell_ids.remove(0)
-    cell_ids = np.array(cell_ids)
+    # since np.unique returns a sorted array the first element is always the background 0
+    cell_ids = np.unique(mask).flatten()[1:]
 
-    min_cell_id = np.min(
-        cell_ids
-    )  # need to convert to array since numba min functions requires array as input not list
-    # -1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
+    min_cell_id = np.min(cell_ids) # -1 important since otherwise the cell with the lowest id becomes 0 and is ignored (since 0 = background)
 
-    # Adjust mask by subtracting the min_cell_id - 1 from non-zero elements
-    if min_cell_id != 1:
-        mask = _numba_subtract(mask, min_cell_id - 1)
+    if min_cell_id == 0:
+        print("no cells in image. Only contains background with value 0.")
+        
+        # return empty arrays
+        return None, None, None
 
     if skip_background:
         num_classes = np.max(mask)
     else:
         num_classes = np.max(mask) + 1
-    class_range = [0, num_classes]
+    
+    #explicit conversion to int to ensure that numba can type the function correctly
+    num_classes = int(num_classes)  
 
-    # Check if there's only background
-    if class_range[1] == 0:
-        print("no cells in image. Only contains background.")
-        # return empty arrays
-        return None, None, None
-
-    num_classes = int(
-        num_classes
-    )  # add explicit conversion to int to ensure that numba can type the function correctly
+    #initialize empty arrays for storing the results
     points_class = np.zeros((num_classes,), dtype=nb.uint32)
-    center = np.zeros(
-        (
-            num_classes,
-            2,
-        )
-    )
-    ids = np.zeros((num_classes,))
+    center = np.zeros((num_classes, 2,))
+    ids = np.full((num_classes,), np.nan)
 
     if skip_background:
         for y in range(len(mask)):
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
                 if class_id != 0:
-                    class_id -= 1
-                    points_class[class_id] += 1
-                    center[class_id] += np.array([x, y])
-                    ids[class_id] = class_id + 1
+                    #index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
+                    points_class[class_id - 1] += 1
+                    center[class_id - 1] += np.array([x, y])
+                    ids[class_id - 1] = class_id
 
     else:
         for y in range(len(mask)):
@@ -922,19 +909,17 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     center = np.stack((y, x)).T
 
-    if skip_background:
-        if min_cell_id != 1:
-            ids += min_cell_id - 1
-    else:
-        if min_cell_id != 1:
-            ids[1:] += min_cell_id - 1  # leave the background at 0
+    # remove background ids
+    center = center[~np.isnan(ids)]
+    points_class = points_class[~np.isnan(ids)]
+    ids = ids[~np.isnan(ids)]
 
     # remove background ids
     center = center[ids != 0]
     points_class = points_class[ids != 0]
     ids = ids[ids != 0]
 
-    return center, points_class, ids.astype("int32")
+    return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
 
 #### Helper Numba functions to increase speed of numpy operations
