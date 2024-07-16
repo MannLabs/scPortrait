@@ -101,6 +101,7 @@ class ProcessingStep(Logable):
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
     DEFAULT_CLASSES_FILE = "classes.csv"
+    DEFAULT_REMOVED_CLASSES_FILE = "removed_classes_too_close_to_edges.csv"
 
     #filtering
     DEFAULT_SEGMENTATION_FILTERING_DIR_NAME = "segmentation/filtering"

@@ -236,6 +236,17 @@ class HDF5CellExtraction(ProcessingStep):
         self.num_classes = len(filtered_classes)
         return filtered_classes
 
+    def save_removed_classes(self, classes):
+        # define path where classes should be saved
+        filtered_path = os.path.join(self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, self.DEFAULT_REMOVED_CLASSES_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+
+        self.log(f"A total of {len(classes)} cells were too close to the image border to be extracted. Their cell_ids were saved to file {filtered_path}.")
+
     def generate_save_index_lookup(self, class_list):
         lookup = pd.DataFrame(index=class_list)
         return lookup
@@ -310,6 +321,10 @@ class HDF5CellExtraction(ProcessingStep):
 
         # get cell_ids of the cells that were successfully extracted
         _, cell_ids = _tmp_single_cell_index[keep_index].T
+        _, cell_ids_removed = _tmp_single_cell_index[self.save_index_to_remove].T
+
+        self.cell_ids_removed = cell_ids_removed #save for potentially accessing at later time point
+        self.save_removed_classes(self.cell_ids_removed)
 
         self.log("Transferring extracted single cells to .hdf5")
 
@@ -375,6 +390,21 @@ class HDF5CellExtraction(ProcessingStep):
 
         # save single cell images
         _tmp_single_cell_data[save_index] = stack
+        _tmp_single_cell_index[save_index] = [save_index, cell_id]
+    
+    def _save_failed_cell_info(self, save_index, cell_id):
+        """save the relevant information for cells that are too close to the image edges to extract
+
+        Parameters
+        ----------
+        save_index : int
+            index location in the temporary datastructures where the cell in question should have been saved, this index 
+            location will later be deleted
+        cell_id : int
+            unique identifier of the cell which was unable to be extracted
+        
+        """
+        global _tmp_single_cell_index
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
 
     def _extract_classes(self, input_segmentation_path, px_center, arg, return_failed_ids = False):
@@ -609,6 +639,8 @@ class HDF5CellExtraction(ProcessingStep):
                         f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell."
                     )
                 self.save_index_to_remove.append(save_index)
+                self._save_failed_cell_info(save_index, cell_id)
+                
                 if return_failed_ids:
                     return([save_index])
 
