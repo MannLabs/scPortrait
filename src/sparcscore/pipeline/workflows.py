@@ -991,7 +991,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 axs[1, 1].imshow(masks_cytosol[0])
                 axs[1, 1].axis("off")
                 fig.tight_layout()
-                fig.show()
+                plt.show(fig)
+
                 del fig  # delete figure after showing to free up memory again
 
         # first when the masks are finalized save them to the maps
