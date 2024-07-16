@@ -1039,7 +1039,8 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         self.cellpose_segmentation(self.maps["normalized"])
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = np.unique(self.maps["nucleus_segmentation"])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0]) # remove background as a class
+        all_classes = list(all_classes)
 
         channels, segmentation = self._finalize_segmentation_results()
         results = self.save_segmentation(channels, segmentation, all_classes)
