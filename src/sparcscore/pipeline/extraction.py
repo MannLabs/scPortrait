@@ -648,10 +648,9 @@ class HDF5CellExtraction(ProcessingStep):
                 if return_failed_ids:
                     return([])
             else:
-                if self.debug:
-                    print(
-                        f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell."
-                    )
+                if self.deep_debug:
+                    print(f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell.")
+                
                 self.save_index_to_remove.append(save_index)
                 self._save_failed_cell_info(save_index, cell_id)
                 
