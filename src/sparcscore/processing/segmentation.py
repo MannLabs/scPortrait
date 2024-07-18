@@ -167,7 +167,7 @@ def _segment_threshold(
         plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
 
     # Assign unique labels to each segmented region
-    marker = np.zeros_like(image_mask_clean).astype(int)
+    marker = np.zeros_like(image_mask).astype(DEFAULT_SEGMENTATION_DTYPE)
     for i, center in enumerate(peak_idx):
         marker[center[0], center[1]] = i + 1
 
@@ -177,6 +177,7 @@ def _segment_threshold(
     if debug:
         image = label2rgb(labels, image / np.max(image), alpha=0.2, bg_label=0)
         plot_image(image)
+    labels = labels.astype(DEFAULT_SEGMENTATION_DTYPE)
 
     return labels
 
@@ -772,7 +773,7 @@ def _class_size(mask, debug=False, background=0):
             # Check if the current class ID is not equal to the background class
             if return_id != background:
                 mean_sum[return_id] += np.array(
-                    [row, col], dtype="uint32"
+                    [row, col], dtype=np.uint32
                 )  # Add the coordinates to the corresponding class ID in mean_sum
                 length[return_id][0] += (
                     1  # Increment the number of pixels for the corresponding class ID in length
@@ -879,7 +880,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
     (array([[0.33333333, 1.66666667],
             [1.5       , 1.5       ]]),
     array([3, 2], dtype=uint32),
-    array([1, 2], dtype=int32))
+    array([1, 2], dtype=uint32))
     """
 
     # need to perform this adjustment here so that we can also work with segmentations that do not start with a seg index of 1!
