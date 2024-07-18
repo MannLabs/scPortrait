@@ -470,7 +470,7 @@ def shift_labels(
             _edge_label = [label + shift for label in edge_label]
             shifted_map = np.where(np.isin(shifted_map, _edge_label), 0, shifted_map)
 
-    return shifted_map, list(set(edge_label))
+    return shifted_map.astype(DEFAULT_SEGMENTATION_DTYPE), list(set(edge_label))
 
 
 @njit(parallel=True)
