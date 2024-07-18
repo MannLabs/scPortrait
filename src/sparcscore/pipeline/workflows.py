@@ -81,7 +81,7 @@ class BaseSegmentation(Segmentation):
         self.save_map("median")
         self.log("Median map created")
 
-    def _nucleus_thresholding(self):
+    def _nucleus_segmentation(self):
         self.log("Generating thresholded nucleus map.")
 
         nucleus_map_tr = percentile_normalization(
@@ -121,18 +121,11 @@ class BaseSegmentation(Segmentation):
             )
 
         del nucleus_map_tr
-        self.save_map("nucleus_segmentation")
-        self.log("Thresholded nucleus map created.")
 
-    def _nucleus_mask_generation(self):
-        self.log("Started with nucleus mask map")
         self.maps["nucleus_mask"] = np.clip(self.maps["nucleus_segmentation"], 0, 1)
-        self.save_map("nucleus_mask")
-        self.log(
-            "Nucleus mask map created with {} elements".format(
-                np.max(self.maps["nucleus_segmentation"])
-            )
-        )
+        
+        self.save_map("nucleus_segmentation")
+        self.log("Nucleus mask map created with {} elements".format(np.max(self.maps["nucleus_segmentation"])))
 
     def _filter_nuclei_classes(self):
         # filter nuclei based on size and contact
@@ -141,7 +134,7 @@ class BaseSegmentation(Segmentation):
         )
         all_classes = np.unique(self.maps["nucleus_segmentation"])
 
-        # ids of all nuclei  s which are unconnected and can be used for further analysis
+        # ids of all nucleis which are unconnected and can be used for further analysis
         labels_nuclei_unconnected = contact_filter(
             self.maps["nucleus_segmentation"],
             threshold=self.config["nucleus_segmentation"]["contact_filter"],
@@ -492,11 +485,7 @@ class WGASegmentation(BaseSegmentation):
         # segment dapi channels based on local tresholding
         if start_from <= 2:
             self.log("Started performing nucleus segmentation.")
-            self._nucleus_thresholding()
-
-        # Calc nucleus map
-        if start_from <= 3:
-            self._nucleus_mask_generation()
+            self._nucleus_segmentation()
 
         all_classes, filtered_classes, center_nuclei = self._filter_nuclei_classes()
 
@@ -585,11 +574,7 @@ class DAPISegmentation(BaseSegmentation):
         # segment dapi channels based on local thresholding
         if start_from <= 2:
             self.log("Started performing nucleus segmentation.")
-            self._nucleus_thresholding()
-
-        # Calc nucleus map
-        if start_from <= 3:
-            self._nucleus_mask_generation()
+            self._nucleus_segmentation()
 
         _, filtered_classes, _ = self._filter_nuclei_classes()
         channels, segmentation = self._finalize_segmentation_results()
