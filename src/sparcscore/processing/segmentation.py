@@ -737,7 +737,7 @@ def _class_size(mask, debug=False, background=0):
     """
 
     # Get the unique cell_ids and remove the background(0)
-    cell_ids = np.unique(mask).flatten()
+    cell_ids = list(np.unique(mask).flatten())
     if 0 in cell_ids:
         cell_ids.remove(background)
     cell_ids = np.array(cell_ids)
