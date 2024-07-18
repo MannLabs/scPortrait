@@ -404,6 +404,18 @@ def _return_edge_labels(input_map):
     
     return list(full_union)
 
+def remove_edge_labels(input_map):
+    """
+    Remove the labels in contact with the edges of the input_map.
+    Parameters
+    ----------
+    input_map : np.ndarray
+        Input segmentation as a 2D or 3D numpy array of integers.
+ """
+    
+    edge_labels = _return_edge_labels(input_map)
+    cleaned_map = np.where(np.isin(input_map, edge_labels), 0, input_map)
+    return(cleaned_map)
 
 def shift_labels(
     input_map, shift, return_shifted_labels=False, remove_edge_labels=True
