@@ -360,6 +360,23 @@ def _numba_subtract(array1, number):
 
 
 @njit
+def _return_edge_labels_2d(input_map):
+    top_row = input_map[0]
+    bottom_row = input_map[-1]
+    first_column = input_map[:, 0]
+    last_column = input_map[:, -1]
+
+    full_union = (
+    set(top_row.flatten())
+    .union(set(bottom_row.flatten()))
+    .union(set(first_column.flatten()))
+    .union(set(last_column.flatten()))
+    )
+    full_union = set([np.int64(i) for i in full_union])
+    full_union.discard(0)
+
+    return(list(full_union))
+
 def _return_edge_labels(input_map):
     """
     Return the unique labels in contact with the edges of the input_map.
@@ -367,7 +384,7 @@ def _return_edge_labels(input_map):
     Parameters
     ----------
     input_map : np.ndarray
-        Input segmentation as a 2D numpy array of integers.
+        Input segmentation as a 2D or 3D numpy array of integers.
 
     Returns
     -------
@@ -376,20 +393,15 @@ def _return_edge_labels(input_map):
 
     """
 
-    top_row = input_map[0]
-    bottom_row = input_map[-1]
-    first_column = input_map[:, 0]
-    last_column = input_map[:, -1]
+    if len(input_map.shape) == 3:
+        full_union = []
+        for i in range(input_map.shape[0]):
+            _ids = _return_edge_labels_2d(input_map[i])
+            full_union.extend(_ids)
 
-    full_union = (
-        set(top_row.flatten())
-        .union(set(bottom_row.flatten()))
-        .union(set(first_column.flatten()))
-        .union(set(last_column.flatten()))
-    )
-    full_union = set([np.int64(i) for i in full_union])
-    full_union.discard(0)
-
+    elif len(input_map.shape) == 2:
+        full_union = _return_edge_labels_2d(input_map)
+    
     return list(full_union)
 
 
