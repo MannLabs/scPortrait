@@ -368,12 +368,13 @@ def _return_edge_labels_2d(input_map):
     last_column = input_map[:, -1]
 
     full_union = (
-    set(top_row.flatten())
-    .union(set(bottom_row.flatten()))
-    .union(set(first_column.flatten()))
-    .union(set(last_column.flatten()))
-    )
-    full_union = set([np.int64(i) for i in full_union])
+        set(top_row.flatten())
+        .union(set(bottom_row.flatten()))
+        .union(set(first_column.flatten()))
+        .union(set(last_column.flatten()))
+        )
+    
+    full_union = set([np.uint64(i) for i in full_union])
     full_union.discard(0)
 
     return(list(full_union))
