@@ -631,6 +631,9 @@ class MatchNucleusCytosolIds(BaseFilter):
         """
         updated = np.zeros_like(cytosol_mask, dtype=bool)
 
+        #remove cytosols that need to be deleted
+        cytosol_mask = self.get_updated_mask(cytosol_mask, self.cytosol_discard_list)
+
         for nucleus_id, cytosol_id in self.nucleus_lookup_dict.items():
             condition = np.logical_and(cytosol_mask == cytosol_id, ~updated)
             cytosol_mask[condition] = nucleus_id
