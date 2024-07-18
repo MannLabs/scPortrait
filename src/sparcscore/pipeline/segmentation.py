@@ -13,10 +13,8 @@ import time
 
 import traceback
 from PIL import Image
-from skimage.color import label2rgb
 
-from sparcscore.processing.segmentation import shift_labels, sc_any
-from sparcscore.processing.utils import plot_image
+from sparcscore.processing.segmentation import shift_labels, sc_any, _return_edge_labels
 from sparcscore.pipeline.base import ProcessingStep
 
 # for export to ome.zarr
@@ -705,7 +703,7 @@ class ShardedSegmentation(Segmentation):
                 self.DEFAULT_MASK_NAME,
                 label_size,
                 chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-                dtype="int32",
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )
 
             class_id_shift = 0
@@ -769,9 +767,29 @@ class ShardedSegmentation(Segmentation):
 
                 start_time_step1 = time.time()
 
-                ids_discard = np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])
-                orig_input[np.isin(orig_input, ids_discard)] = 0
+                #assumptions: if a nucleus is discarded the cytosol must also be discarded and vice versa otherwise this could leave cells with only one of the two
+                ids_discard = set(np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])) #gets all ids that potentially need to be discarded over both masks 
+                
+                # we dont want to discard any ideas that touch the edge of the image
+                # for these ids we can not ensure when processing this shard that the entire cell is present in the shard
+                # if we would delete these ids we would potentially be deleting half of a cell
+                edge_labels = set(_return_edge_labels(orig_input))
+                ids_discard = ids_discard - edge_labels
+
+                #set ids to 0 that we dont want to keep that are already in the final map
+                orig_input[np.isin(orig_input, list(ids_discard))] = 0
+
                 time_step1 = time.time() - start_time_step1
+
+                start_time_step2 = time.time()
+
+                #identify all ids from the new map that potentially could lead to problems
+                problematic_ids = set(np.unique(shifted_map[np.where((orig_input != 0) & (shifted_map != 0))]))
+                
+                #remove all potentially problematic ids from the new map
+                shifted_map[np.isin(shifted_map, list(problematic_ids))] = 0
+
+                time_step2 = time.time() - start_time_step2
 
                 if self.deep_debug: 
                     orig_input_manipulation = orig_input.copy()
@@ -796,33 +814,56 @@ class ShardedSegmentation(Segmentation):
                     plt.show()
                     plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
 
-                start_time_step2 = time.time()
+                start_time_step3 = time.time()
                 shifted_map = np.where(
                     (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
                 )
+        
+                time_step3 = time.time() - start_time_step3
+                total_time = time_step1 + time_step2 + time_step3
                 
-                time_step2 = time.time() - start_time_step2
-                total_time = time_step1 + time_step2
                 self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s")
 
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
-
+                
                 class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
-                
-                unique_ids = set(np.unique(shifted_map[0]))
-                
+                unique_ids = set(np.unique(shifted_map[0])[1:]) #get unique cellids in the shifted map
+
                 #save results to hdf_labels
                 hdf_labels[:, window[0], window[1]] = shifted_map
-                
+
                 # updated classes list
-                filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list
+                filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list (class list is always in reference to the nucleus id!)
                 filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
                 
                 if self.debug:
-                    self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
-                    self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
+                        self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                        self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
 
+                #check if filtering of classes has been successfull
+                #ideally the classes contained in the mask should be identical with those contained in the classes file
+                #if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
+                if self.deep_debug:
+                    masks = hdf_labels[:, :, :]
+                    unique_ids = set(np.unique(masks[0])) - set([0])
+                    self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
+                    
+                    difference_classes = filtered_classes_combined.difference(unique_ids)
+                    self.log(f"Classes contained in classes list that are not found in the segmentation mask: {difference_classes}")
+
+                    difference_masks = unique_ids.difference(filtered_classes_combined)
+                    self.log(f"Classes contained in segmentation mask that are not contained in classes list: {difference_masks}")
+                    
+                    if len(difference_masks) > 0:
+                        _masks = np.isin(masks[0], list(difference_masks))
+                        plt.figure()
+                        plt.imshow(_masks)
+                        plt.set_title(f"Classes in segmentation mask that are not contained in classes list after processing shard {i}")
+                        plt.axis("off")
+                        plt.show()
+
+                    
                 local_hf.close()
                 self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
             
