@@ -15,6 +15,8 @@ from sparcscore.processing.segmentation import (
     size_filter,
     _class_size,
     global_otsu,
+    remove_edge_labels, 
+    _return_edge_labels
 )
 
 import os
@@ -123,6 +125,9 @@ class BaseSegmentation(Segmentation):
         del nucleus_map_tr
 
         self.maps["nucleus_mask"] = np.clip(self.maps["nucleus_segmentation"], 0, 1)
+
+        #ensure all edge labels are removed
+        self.maps["nucleus_segmentation"] = remove_edge_labels(self.maps["nucleus_segmentation"])
         
         self.save_map("nucleus_segmentation")
         self.log("Nucleus mask map created with {} elements".format(np.max(self.maps["nucleus_segmentation"])))
@@ -292,7 +297,10 @@ class BaseSegmentation(Segmentation):
             mask=(self.maps["wga_mask"] == 0).astype(np.int64),
         )
         self.maps["watershed"] = np.where(self.maps["wga_mask"] > 0.5, 0, wga_labels)
-
+        
+        #ensure all edge labels are removed
+        self.maps["watershed"] = remove_edge_labels(self.maps["watershed"])
+        
         if self.debug:
             self._visualize_watershed_results(center_nuclei)
 
@@ -657,6 +665,9 @@ class DAPISegmentationCellpose(BaseSegmentation):
         masks = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
         masks = np.array(masks)  # convert to array
 
+        #ensure all edge classes are removed
+        masks = remove_edge_labels(masks)
+
         self.log(f"Segmented mask shape: {masks.shape}")
         self.maps["nucleus_segmentation"] = masks.reshape(
             masks.shape[1:]
@@ -979,6 +990,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
                 plt.show(fig)
 
                 del fig  # delete figure after showing to free up memory again
+
+        #remove edge classes from masks
+        edge_labels = set(_return_edge_labels(masks_nucleus)).union(set(_return_edge_labels(masks_cytosol)))
+        masks_nucleus[np.isin(masks_nucleus, list(edge_labels))] = 0
+        masks_cytosol[np.isin(masks_cytosol, list(edge_labels))] = 0
 
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
@@ -1341,7 +1357,6 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         if input_image.dtype != np.uint16:
             sys.exit("Image is not of type uint16, cellpose segmentation expects int input images.")
 
-
         # check if GPU is available
         if torch.cuda.is_available():
             if status == "multi_GPU":
@@ -1388,6 +1403,9 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
 
         masks = model.eval([input_image], diameter=diameter, channels=model_channels)[0]
         masks = np.array(masks)  # convert to array
+
+        #ensure edge classes are removed
+        masks = remove_edge_labels(masks)
 
         self.maps["cytosol_segmentation"] = masks.reshape(
             masks.shape[1:]
