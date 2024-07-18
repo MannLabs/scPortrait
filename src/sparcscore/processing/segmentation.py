@@ -72,9 +72,6 @@ def global_otsu(image):
 def _segment_threshold(
     image,
     threshold,
-    dilation=4,
-    min_distance=10,
-    peak_footprint=7,
     speckle_kernel=4,
     debug=False,
 ):
@@ -124,14 +121,22 @@ def _segment_threshold(
     image_mask_clean = binary_erosion(image_mask, footprint=disk(speckle_kernel))
     image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel - 1))
 
+    return(image_mask_clean)
+
+def _generate_labels_from_mask(image_mask, 
+                               dilation=4,
+                               min_distance=10,
+                               peak_footprint=7,
+                               debug = False):
+    
     # Find peaks in the image mask using a distance transform
-    distance = ndimage.distance_transform_edt(image_mask_clean)
+    distance = ndimage.distance_transform_edt(image_mask)
 
     peak_idx = peak_local_max(
         distance, min_distance=min_distance, footprint=disk(peak_footprint)
     )
     local_maxi = np.zeros_like(
-        image_mask_clean, dtype=bool
+        image_mask, dtype=bool
     )  # Initialize an array of zeros with the same shape as image_mask_clean
     local_maxi[tuple(peak_idx.T)] = True
 
@@ -142,12 +147,12 @@ def _segment_threshold(
         ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
         ax.set_axis_off()
         fig.add_axes(ax)
-        ax.imshow(image_mask_clean, cmap="Greys_r")
+        ax.imshow(image_mask, cmap="Greys_r")
         plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
         plt.show()
 
     # segmentation by fast marching and watershed
-    dilated_mask = sk_dilation(image_mask_clean, footprint=disk(dilation))
+    dilated_mask = sk_dilation(image_mask, footprint=disk(dilation))
 
     fmm_marker = np.ones_like(dilated_mask)
     for center in peak_idx:
@@ -172,15 +177,9 @@ def _segment_threshold(
         marker[center[0], center[1]] = i + 1
 
     labels = watershed(distance_2, marker, mask=dilated_mask)
-
-    # If debug is True, visualize the final labels on the image
-    if debug:
-        image = label2rgb(labels, image / np.max(image), alpha=0.2, bg_label=0)
-        plot_image(image)
     labels = labels.astype(DEFAULT_SEGMENTATION_DTYPE)
 
     return labels
-
 
 def segment_global_threshold(
     image, dilation=4, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False
@@ -224,15 +223,19 @@ def segment_global_threshold(
     # calculate the global threshold
     threshold = global_otsu(image)
 
-    labels = _segment_threshold(
+    mask = _segment_threshold(
         image,
         threshold,
-        dilation=dilation,
-        min_distance=min_distance,
-        peak_footprint=peak_footprint,
+
         speckle_kernel=speckle_kernel,
         debug=debug,
     )
+
+    labels = _generate_labels_from_mask(mask, 
+                                        dilation=dilation, 
+                                        min_distance=min_distance, 
+                                        peak_footprint=peak_footprint, 
+                                        debug=debug)
 
     # returnt the segmented image
     return labels
@@ -307,15 +310,18 @@ def segment_local_threshold(
     local_threshold = resize(local_threshold, image.shape)
 
     # Segment the input image using the computed local threshold
-    labels = _segment_threshold(
+    mask = _segment_threshold(
         image,
         local_threshold,
-        dilation=dilation,
-        min_distance=min_distance,
-        peak_footprint=peak_footprint,
         speckle_kernel=speckle_kernel,
         debug=debug,
     )
+
+    labels = _generate_labels_from_mask(mask,
+                                        dilation=dilation,
+                                        min_distance=min_distance,
+                                        peak_footprint=peak_footprint,
+                                        debug=debug)
 
     return labels
 
