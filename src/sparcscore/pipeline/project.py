@@ -3,6 +3,7 @@ import warnings
 import shutil
 import os
 import yaml
+import psutil
 
 import PIL
 import numpy as np
@@ -1820,3 +1821,62 @@ class TimecourseProject(Project):
             self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "classes.csv"
         )
         self.extraction_f(input_segmentation, input_dir, *args, **kwargs)
+
+
+from spatialdata import SpatialData
+
+class SpatialProject(Logable):
+
+    DEFAULT_INPUT_IMAGE_NAME = "input_image"
+
+    DEFAULT_PREFIX_MAIN_SEG = "seg_all_"
+    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered_"
+    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected_"
+
+    DEFAULT_SEG_NAME_0 = "nucleus"
+    DEFAULT_SEG_NAME_1 = "cytosol"
+
+    DEFAULT_CENTERS_NAME = "centers_cells"
+
+    def __init__(self, project_location, overwrite=False, debug = False):
+        self.debug = debug
+        self.overwrite = overwrite
+        self.config = None
+
+        self.directory = project_location
+        self.project_location = project_location
+
+    def _check_memory(self, item):
+        """
+        Check the memory usage of the given if it were completely loaded into memory using .compute().
+        """
+        array_size = item.nbytes
+        available_memory = psutil.virtual_memory().available
+
+        return array_size < available_memory
+    
+    def _check_output_location(self):
+        """
+        Check if the output location exists and if it does cleanup if allowed, othwerwise raise an error.
+        """
+        if os.path.exists(self.new_project_location):
+            if self.overwrite:
+                self.log(
+                    f"Output location {self.new_project_location} already exists. Overwriting."
+                )
+                shutil.rmtree(self.new_project_location)
+            else:
+                raise ValueError(
+                    f"Output location {self.new_project_location} already exists. Set overwrite=True to overwrite."
+                )
+        else:
+            os.makedirs(self.new_project_location)
+
+    def _get_sdata_path(self):
+        """ 
+        Get the path to the spatialdata object.
+        """
+        return os.path.join(self.project_location, "sparcs.sdata")
+
+    def _get_sdata(self):
+        return SpatialData.read(self._get_sdata_path())
