@@ -379,7 +379,7 @@ class Project(Logable):
         self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
         self._check_image_dtype(self.input_image)
 
-    def load_input_from_file(self, file_paths, crop=[(0, -1), (0, -1)]):
+    def load_input_from_tif_files(self, file_paths, channel_names = None, crop=[(0, -1), (0, -1)]):
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
 
@@ -398,14 +398,43 @@ class Project(Logable):
             1000 px height and 2000 px width from the top left corner.
 
         """
+
+        def extract_unique_parts(paths: List[str]):
+            """helper function to get unique channel names from filepaths
+
+            Parameters
+            ----------
+            paths : str
+                _description_
+
+            Returns
+            -------
+            List[str]
+
+            """
+            # Find the common base directory
+            common_base = os.path.commonpath(paths)
+
+            # Remove the common base from each path
+            unique_paths = [os.path.relpath(path, common_base) for path in paths]
+
+            unique_parts = []
+            pattern = re.compile(r'(\d+)')  # Regex pattern to match numbers
+            
+            for file_name in unique_paths:
+                match = pattern.search(file_name)
+                if match:
+                    unique_parts.append(match.group(1))  # Extract the matched number
+                else:
+                    unique_parts.append(file_name)  # If no match, return the whole name
+            
+            return unique_parts
+        
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
         
         #check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_input_image_path()
-
-        # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
-        # default order that is expected: Nucleus channel, cell membrane channel, other channels
 
         if not len(file_paths) == self.config["input_channels"]:
             raise ValueError(
@@ -413,6 +442,15 @@ class Project(Logable):
                     self.config["input_channels"], len(file_paths)
                 )
             )
+        
+        #save channel names
+        if channel_names is None:
+            channel_names = extract_unique_parts(file_paths)
+
+        if len(channel_names) != len(file_paths):
+            raise ValueError("Number of channel names does not match number of input images. Please provide a channel name for each input image.")
+        
+        self.channel_names = channel_names
 
         # append all images channel wise and remap them according to the supplied list
         channels = []
@@ -431,12 +469,14 @@ class Project(Logable):
 
         self.input_image = np.stack(channels)
 
+        # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
+        # default order that is expected: Nucleus channel, cell membrane channel, other channels
         if self.remap is not None:
             self.input_image = self.input_image[self.remap]
         
         self.save_input_image(self.input_image)
 
-    def load_input_from_array(self, array, remap=None):
+    def load_input_from_array(self, array, channel_names = None, remap=None):
         """
         Load input image from an already loaded numpy array. 
         The numpy array needs to have the following shape: CXY. 
@@ -455,20 +495,29 @@ class Project(Logable):
             followed by other channels.
 
         """
-        # input data is not copied to the project folder
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
+        
+        #check dimensionality of input array to make sure it matches config
+        if not array.shape[0] == self.config["input_channels"]:
+            raise ValueError(
+                "Expectedimage with {} channels, but received {} channels instead".format(
+                    self.config["input_channels"], array.shape[0]
+                )
+            )
         
         #check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_input_image_path()
 
-        #check dimensionality of input array to make sure it matches config
-        if not array.shape[0] == self.config["input_channels"]:
-            raise ValueError(
-                "Expected {} image paths, only received {}".format(
-                    self.config["input_channels"], array.shape[0]
-                )
-            )
+        #save channel names
+        if channel_names is None:
+            channel_names = [f"Channel{i}" for i in range(array.shape[0])]
+
+        if len(channel_names) != array.shape[0]:
+            raise ValueError("Number of channel names does not match number of input images. Please provide a channel name for each input image.")
+        
+        self.channel_names = channel_names
+        
         self._check_image_dtype(array)
         self.input_image = np.array(array, dtype=self.DEFAULT_IMAGE_DTYPE)
 
@@ -569,79 +618,14 @@ class Project(Logable):
             self._check_image_dtype(_mosaic)
             _mosaic = np.array(_mosaic).astype(self.DEFAULT_IMAGE_DTYPE)
 
-        self.log("finished loading array from CZI file.")
-        self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
+        self.log("finished reading CZI file to array.")
+        self.load_input_from_array(np.fliplr(_mosaic), channel_names = channels, remap = remap)
 
-    #deprecate this function for the time being do to import issues
-    #new function needs to be implemented anyways that does not lead to memory issues
-    # def load_input_from_czi_2(self, czi_path, intensity_rescale = True, scene = None, z_stack_projection = None, remap=None):
-    #     """Load image input from .czi file. Slower than CZI 1 use that function instead.
+    def load_input_from_omezarr(self, ome_zarr_path):
+        pass
 
-    #     Args:
-    #         czi_path (path): path to .czi file that should be loaded
-    #         intensity_rescale (bool, optional): boolean indicator if the read image should be intensity rescaled to the 0.5% and 99.5% quantile. Defaults to True.
-    #         scene (int, optional): integer indicating which scene should be selected if the .czi contains several. Defaults to None.
-    #         z_stack_projection (int or "maximum_intensity_projection" or "EDF"): if the .czi contains Z-stacks indicator which method should be used to integrate them. If an integer is passed the z-stack with that id is used. Can also pass a string indicating the implemented methods. Defaults to None.
-    #         remap (list(int), optional): Define remapping of channels. For example use “[1, 0, 2]” to change the order of the first and the second channel. The expected order is Nucleus Channel, Cellmembrane Channel followed by other channels.
-    #     """
-    #     from aicsimageio.aics_image import AICSImage
-
-    #     self.log(f"Reading CZI file from path {czi_path}")
-    #     czi = AICSImage(czi_path)
-
-    #     n_scenes = len(czi.scenes)
-    #     n_channels = czi.dims.C
-    #     n_zstacks = czi.dims.Z
-
-    #     if n_scenes > 1:
-    #         if scene is None:
-    #             sys.exit("For multi-scene CZI files you need to select one scene that you wish to load into SPARCSpy. Please pass an integer to the parameter scene indicating which scene to choose.")
-    #         else:
-    #             self.log(f"Reading scene {czi.scenes[scene]} from CZI file.")
-    #             czi.set_scene(scene)
-        
-    #     #if there is only one scene automatically select this one
-    #     if n_scenes == 1:
-    #         scene = 0
-    #         czi.set_scene(scene)
-
-    #     #check if more than one zstack is contained
-    #     if n_zstacks > 1:
-    #         self.log(f"Found {n_zstacks} Z-stack in CZI file.")
-            
-    #         if isinstance(z_stack_projection, int):
-    #             self.log(f"Selection Z-stack {z_stack_projection}")
-    #             _mosaic = czi.get_image_dask_data("CYX", Z=z_stack_projection).compute()
-            
-    #         elif z_stack_projection is not None:
-                
-    #             #define method for aggregating z-stacks
-    #             if z_stack_projection == "maximum_intensity_projection":
-    #                 self.log("Using Maximum Intensity Projection to combine Z-stacks.")
-    #                 method = maximum_intensity_projection
-    #             elif z_stack_projection == "EDF":
-    #                 self.log("Using EDF to combine Z-stacks.")
-    #                 method = EDF
-    #             else:
-    #                 sys.exit("Please define a valid method for z_stack_projection.")
-                
-    #             #actually read data
-    #             _mosaic = []
-    #             for c in range(n_channels):
-    #                 _img = czi.get_image_dask_data("ZYX", C = c).compute()
-    #                 _mosaic.append(method(_img))
-    #             _mosaic = np.array(_mosaic)
-            
-    #     else:
-    #         _mosaic = czi.read_mosaic("CYX").compute()
-
-    #     #perform intensity rescaling before loading images
-    #     if intensity_rescale:
-    #         self.log("Performing percentile normalization on the input image with lower_percentile=0.005 and upper_percentile=0.995")
-    #         _mosaic = np.array([percentile_normalization(_mosaic[i], lower_percentile=0.005, upper_percentile=0.995) for i in range(n_channels)])
-    #         _mosaic = (_mosaic * 65535).astype('uint16') #convert to 16bit images
-
-    #     self.load_input_from_array(np.fliplr(_mosaic), remap = remap)
+    def load_input_from_sdata(self, sdata_path):
+        pass    
 
 
     def define_image_area_napari(self, napari_csv_path):
