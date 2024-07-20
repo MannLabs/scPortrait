@@ -1037,7 +1037,6 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
-
         #check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
@@ -1392,6 +1391,9 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
 
         gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
+
+        #check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
         
         # check if GPU is available
         if torch.cuda.is_available():
