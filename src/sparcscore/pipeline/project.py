@@ -1966,6 +1966,7 @@ class SpatialProject(Logable):
             self.sdata.write(self._get_sdata_path(), overwrite=True)
     
     def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8]):
+    def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8], chunks = (1, 1000, 1000)):
         """
         Write the supplied image to the spatialdata object.
 
@@ -1990,6 +1991,7 @@ class SpatialProject(Logable):
         image = Image2DModel.parse(
             image,
             dims=["c", "y", "x"],
+            chunks = chunks,
             c_coords=self.channel_names,
             scale_factors=scale_factors,
             transformations={"global": transform_original},
