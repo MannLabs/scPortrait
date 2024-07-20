@@ -131,6 +131,7 @@ class ProcessingStep(Logable):
         debug=False,
         intermediate_output=False,
         overwrite=True,
+        project = None,
     ):
         super().__init__()
 
@@ -140,6 +141,8 @@ class ProcessingStep(Logable):
         self.directory = directory
         self.project_location = project_location
         self.config = config
+
+        self.project = project
 
         self.get_context()
 
