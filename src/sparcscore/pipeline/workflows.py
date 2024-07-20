@@ -43,7 +43,7 @@ class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def transform_input_image(self, input_image):
+    def _transform_input_image(self, input_image):
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data
         return input_image
@@ -1025,7 +1025,7 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
     def process(self, input_image):
         
         #ensure the correct level is selected for the input image
-        input_image = self.transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
         #check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
