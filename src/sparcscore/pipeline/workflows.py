@@ -37,12 +37,17 @@ from skimage.color import label2rgb
 # for cellpose segmentation
 from cellpose import models
 from alphabase.io import tempmmap
-
+import xarray
 
 class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def transform_input_image(self, input_image):
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data
+        return input_image
+    
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -707,21 +712,11 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-        # The required maps are only nucleus channel
-        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
-
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        if self.maps["normalized"].shape[0] > 2:
-            feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(self.DEFAULT_IMAGE_DTYPE)
-        else:
-            channels = np.stack(required_maps).astype(self.DEFAULT_IMAGE_DTYPE)
-
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
-        return channels, segmentation
+        return segmentation
 
     def get_params_cellsize_filtering(self, type):
         absolute_filter_status = False
@@ -1011,6 +1006,10 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
+        
+        #ensure the correct level is selected for the input image
+        input_image = self.transform_input_image(input_image)
+
         # initialize location to save masks to
         self.maps = {
             "normalized": tempmmap.array(
@@ -1043,14 +1042,14 @@ class CytosolSegmentationCellpose(BaseSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0]) # remove background as a class
         all_classes = list(all_classes)
 
-        channels, segmentation = self._finalize_segmentation_results()
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        segmentation = self._finalize_segmentation_results()
+        #results = self.save_segmentation(channels, segmentation, all_classes)
+        
+        self.save_segmentation_sdata(segmentation, all_classes)
 
         # clean up memory
-        del channels, segmentation, all_classes
+        del segmentation, all_classes
         gc.collect()
-
-        return results
 
 
 class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
