@@ -2002,13 +2002,13 @@ class SpatialProject(Logable):
 
         Parameters
         ----------
-        file_paths : list(str)
+        file_paths : List[str]
             List containing paths to each channel like
             [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
             Expects a list of file paths with length “input_channel” as
             defined in the config.yml.
 
-        crop : list(tuple), optional
+        crop : List[Tuple], optional
             When set, it can be used to crop the input image. The first
             element refers to the first dimension of the image and so on.
             For example use “[(0,1000),(0,2000)]” to crop the image to
