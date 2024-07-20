@@ -2033,7 +2033,7 @@ class SpatialProject(Logable):
         self.sdata.points[points_name] = points
         self.sdata.write_element(points_name, overwrite=True)
 
-    def load_input_from_array(self, array: np.ndarray, channel_names: List(str) = None):
+    def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None):
 
         #get channel names
         if channel_names is None:
@@ -2182,6 +2182,7 @@ class SpatialProject(Logable):
         input_image = np.array(zarr_reader.load("0").compute())
         time_end = time()
         self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
+        self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
         # Access the metadata to get channel names
         zarr_group = loc.zarr_group()
