@@ -1823,6 +1823,7 @@ import dask.array as darray
 
 class SpatialProject(Logable):
 
+    DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
 
     DEFAULT_PREFIX_MAIN_SEG = "seg_all"
@@ -1854,6 +1855,53 @@ class SpatialProject(Logable):
             os.makedirs(self.project_location)
         else:
             warnings.warn("There is already a directory in the location path")
+        
+        #setup config file
+        self._get_config_file(config_path)
+
+    def _load_config_from_file(self, file_path):
+        """
+        Loads config from file and writes it to self.config
+
+        Args:
+            file_path (str): Path to the config.yml file that should be loaded.
+        """
+        self.log(f"Loading config from {file_path}")
+        
+        if not os.path.isfile(file_path):
+            raise ValueError(f"Your config path {file_path} is invalid.")
+
+        with open(file_path, "r") as stream:
+            try:
+                self.config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+
+    def _get_config_file(self, config_path):
+        #load config file
+        self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
+
+        if config_path == "":
+            # Check if there is already a config file in the dataset folder in case no config file has been specified
+
+            if os.path.isfile(self.config_path):
+                self._load_config_from_file(self.config_path)
+            else:
+                raise ValueError("No config passed and no config found in project directory.")
+
+        else:
+            if not os.path.isfile(config_path):
+                raise ValueError(f"Your config path {config_path} is invalid. Please specify a valid config path.")
+
+            else:
+                print("Updating project config file.")
+                if os.path.isfile(self.config_path):
+                    os.remove(self.config_path)
+
+                # The blueprint config file is copied to the dataset folder and renamed to the default name
+                shutil.copy(config_path, self.config_path)
+                self._load_config_from_file(self.config_path)   
+
     def _check_memory(self, item):
         """
         Check the memory usage of the given if it were completely loaded into memory using .compute().
