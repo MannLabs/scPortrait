@@ -1986,7 +1986,15 @@ class SpatialProject(Logable):
             self.sdata = SpatialData()
             self.sdata.write(self._get_sdata_path(), overwrite=True)
     
-    def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8]):
+    def view_sdata(self):
+        if self.sdata is None:
+            self._read_sdata()
+        
+        #open interactive viewer in napari
+        interactive = Interactive(self.sdata)
+        interactive.run()
+
+#### Functions for adding elements to sdata object ########
     def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8], chunks = (1, 1000, 1000)):
         """
         Write the supplied image to the spatialdata object.
