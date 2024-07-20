@@ -710,7 +710,10 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         self.maps = {"normalized": None, "nucleus_segmentation": None}
 
         # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image
+        self.maps["normalized"] = input_image.copy()
+
+        #only get first channel for cellpose segmentation to preserver GPU memory
+        input_image = [:1, :, :]
 
         self.log("Starting Cellpose DAPI Segmentation.")
 
@@ -1058,13 +1061,18 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         }
 
         # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image
+        self.maps["normalized"] = input_image.copy()
 
-        del input_image
+        #only get the first two channels for cellpose segmentation to preserve GPU memory
+        input_image = input_image[:2, :, :]
         gc.collect()
 
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(self.maps["normalized"])
+        self.cellpose_segmentation(input_image)
+
+        #free up memory
+        del input_image 
+        gc.collect()
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0]) # remove background as a class
@@ -1297,9 +1305,8 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
         self.maps["normalized"] = input_image.copy()
 
-        input_image = input_image[
-            :2, :, :
-        ]  # only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
+        # only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
+        input_image = input_image[:2, :, :]  
         gc.collect()  # cleanup to ensure memory is freed up
 
         # perform image padding to ensure that image is compatible with downsample kernel size
@@ -1330,6 +1337,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         # self.log("Starting Cellpose DAPI Segmentation.")
         self.cellpose_segmentation(input_image)
+
+        del input_image
+        gc.collect()
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
@@ -1462,14 +1472,16 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
         }
 
         # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image
+        self.maps["normalized"] = input_image.copy()
 
-        # delete input image to prevent overloading memory
-        del input_image
+        # only get the first two channels for segmentation (does not use excess space on the GPU this way)
+        input_image = input_image[:2, :, :]
         gc.collect()
 
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(self.maps["normalized"])
+        self.cellpose_segmentation(input_image)
+        del input_image
+        gc.collect()
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["cytosol_segmentation"])
