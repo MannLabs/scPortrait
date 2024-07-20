@@ -2037,13 +2037,11 @@ class SpatialProject(Logable):
         
         #ensure that the segmentation object is converted to the sparcspy Labels2DModel
         if not hasattr(segmentation_object.attrs, "cell_ids"):
-            segmentation_object = spLabels2DModel().convert(segmentation_object) 
             segmentation_object = spLabels2DModel().convert(segmentation_object, classes = classes) 
         
         self.sdata.labels[segmentation_label] = segmentation_object
         self.sdata.write_element(segmentation_label, overwrite=True) 
 
-    def _write_segmentation_sdata(self, segmentation, segmentation_label:str):
     def _write_segmentation_sdata(self, segmentation, segmentation_label:str, classes:set = None):
         transform_original = Identity()
         mask = spLabels2DModel.parse(segmentation, 
@@ -2051,7 +2049,6 @@ class SpatialProject(Logable):
                                     transformations={'global': transform_original},
                                     rgb = False)
         
-        self._write_segmentation_object(mask, segmentation_label)
         self._write_segmentation_object_sdata(mask, segmentation_label, classes = classes)
 
     def _write_table_object_sdata(self, table, table_name:str):
@@ -2215,7 +2212,6 @@ class SpatialProject(Logable):
         time_start = time()
         input_image = np.array(zarr_reader.load("0").compute())
         time_end = time()
-        self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
         self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
         # Access the metadata to get channel names
