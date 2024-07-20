@@ -1849,6 +1849,11 @@ class SpatialProject(Logable):
         self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
+        #check if project directory exists, if it does not create
+        if not os.path.isdir(self.project_location):
+            os.makedirs(self.project_location)
+        else:
+            warnings.warn("There is already a directory in the location path")
     def _check_memory(self, item):
         """
         Check the memory usage of the given if it were completely loaded into memory using .compute().
