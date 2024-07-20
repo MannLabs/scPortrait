@@ -4,6 +4,7 @@ import shutil
 import os
 import yaml
 import psutil
+from typing import List
 
 import PIL
 import numpy as np
@@ -1808,19 +1809,32 @@ class TimecourseProject(Project):
 
 
 from spatialdata import SpatialData
+from spatialdata.models import Labels2DModel, TableModel, PointsModel, Image2DModel
+
+from sparcscore.pipeline.spatialdata_classes import spLabels2DModel
+from spatialdata.transformations.transformations import Identity
+from sparcscore.utils.spatialdata_helper import (generate_region_annotation_lookuptable, 
+                                                 remap_region_annotation_table, 
+                                                 rechunk_image,
+                                                 get_chunk_size, 
+                                                 calculate_centroids
+                                                )
+import dask.array as darray
 
 class SpatialProject(Logable):
 
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
 
-    DEFAULT_PREFIX_MAIN_SEG = "seg_all_"
-    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered_"
-    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected_"
+    DEFAULT_PREFIX_MAIN_SEG = "seg_all"
+    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
+    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected"
 
     DEFAULT_SEG_NAME_0 = "nucleus"
     DEFAULT_SEG_NAME_1 = "cytosol"
 
     DEFAULT_CENTERS_NAME = "centers_cells"
+
+    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
 
     def __init__(self, project_location, overwrite=False, debug = False):
         self.debug = debug
@@ -1829,6 +1843,11 @@ class SpatialProject(Logable):
 
         self.directory = project_location
         self.project_location = project_location
+        self.sdata_path = self._get_sdata_path()
+        self.sdata = None
+
+        self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
+        self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
     def _check_memory(self, item):
         """
@@ -1839,22 +1858,46 @@ class SpatialProject(Logable):
 
         return array_size < available_memory
     
-    def _check_output_location(self):
+    def _check_chunk_size(self, elem):
+        """ 
+        Check if the chunk size of the element is the default chunk size. If not rechunk the element to the default chunk size.
         """
-        Check if the output location exists and if it does cleanup if allowed, othwerwise raise an error.
+
+        #get chunk size of element
+        chunk_size = get_chunk_size(elem)
+
+        if type(chunk_size) == list:
+            #check if all chunk sizes are the same otherwise rechunking needs to occur anyways
+            if not all([x == chunk_size[0] for x in chunk_size]):
+                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+            else:
+                #ensure that the chunk size is the default chunk size
+                if chunk_size != self.DEFAULT_CHUNK_SIZE:
+                    elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+        else:
+            #ensure that the chunk size is the default chunk size
+            if chunk_size != self.DEFAULT_CHUNK_SIZE:
+                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+        
+        return elem
+
+    def _cleanup_sdata_object(self):
         """
-        if os.path.exists(self.new_project_location):
+        Check if the output location exists and if it does cleanup if allowed, otherwise raise an error.
+        """
+
+        if os.path.exists(self.sdata_path):
             if self.overwrite:
                 self.log(
-                    f"Output location {self.new_project_location} already exists. Overwriting."
+                    f"Output location {self.sdata_path} already exists. Overwriting."
                 )
-                shutil.rmtree(self.new_project_location)
+                shutil.rmtree(self.sdata_path)
             else:
                 raise ValueError(
-                    f"Output location {self.new_project_location} already exists. Set overwrite=True to overwrite."
+                    f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                 )
         else:
-            os.makedirs(self.new_project_location)
+            os.makedirs(self.sdata_paths)
 
     def _get_sdata_path(self):
         """ 
@@ -1862,5 +1905,334 @@ class SpatialProject(Logable):
         """
         return os.path.join(self.project_location, "sparcs.sdata")
 
-    def _get_sdata(self):
-        return SpatialData.read(self._get_sdata_path())
+    def _read_sdata(self):
+        if os.path.isfile(self._get_sdata_path()):
+            self.sdata = SpatialData.read(self._get_sdata_path())
+        else:
+            self.sdata = SpatialData()
+            self.sdata.write(self._get_sdata_path(), overwrite=True)
+    
+    def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8]):
+        """
+        Write the supplied image to the spatialdata object.
+
+        Parameters
+        ----------
+        image : dask.array
+            Image to be written to the spatialdata object.
+        scale_factors : list
+            List of scale factors for the image. Default is [2, 4, 8]. This will load the image at 4 different resolutions to allow for fluid visualization.
+        """
+
+        if self.sdata is None:
+            self._read_sdata()
+
+        if channel_names is None:
+            self.channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+        else:
+            self.channel_names = channel_names
+
+        # transform to spatialdata image model
+        transform_original = Identity()
+        image = Image2DModel.parse(
+            image,
+            dims=["c", "y", "x"],
+            c_coords=self.channel_names,
+            scale_factors=scale_factors,
+            transformations={"global": transform_original},
+            rgb=False,
+        )
+
+        self.sdata.images[image_name] =image
+        self.sdata.write(self._get_sdata_path(), overwrite=True)
+
+        # track that input image has been loaded
+        self.input_image_status = True
+
+    def _write_segmentation_object_sdata(self, segmentation_object, segmentation_label:str):
+        
+        #ensure that the segmentation object is converted to the sparcspy Labels2DModel
+        if not hasattr(segmentation_object.attrs, "cell_ids"):
+            segmentation_object = spLabels2DModel().convert(segmentation_object) 
+        
+        self.sdata.labels[segmentation_label] = segmentation_object
+        self.sdata.write_element(segmentation_label, overwrite=True) 
+
+    def _write_segmentation_sdata(self, segmentation, segmentation_label:str):
+        transform_original = Identity()
+        mask = spLabels2DModel.parse(segmentation, 
+                                    dims=["y", "x"], 
+                                    transformations={'global': transform_original},
+                                    rgb = False)
+        
+        self._write_segmentation_object(mask, segmentation_label)
+
+    def _write_table_object_sdata(self, table, table_name:str):
+        self.sdata.tables[table_name] = table
+        self.sdata.write_element(table_name, overwrite=True)
+
+    def _write_points_object_sdata(self, points, points_name:str):
+        self.sdata.points[points_name] = points
+        self.sdata.write_element(points_name, overwrite=True)
+
+    def load_input_from_array(self, array: np.ndarray, channel_names: List(str) = None):
+
+        #get channel names
+        if channel_names is None:
+            channel_names = [f"channel_{i}" for i in range(array.shape[0])]
+
+        if len(channel_names) != array.shape[0]:
+            raise ValueError("Number of channel names does not match number of input images. Please provide a channel name for each input image.")
+        
+        self.channel_names = channel_names
+
+        #ensure the array is a dask array
+        image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE)
+
+        #write to sdata object
+        self._write_image_sdata(image, 
+                                channel_names = self.channel_names, 
+                                scale_factors = [2, 4, 8], 
+                                chunks = self.DEFAULT_CHUNK_SIZE)
+
+    def load_input_from_tif_files(self, file_paths, channel_names = None, crop=[(0, -1), (0, -1)]):
+
+        """
+        Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
+
+        Parameters
+        ----------
+        file_paths : list(str)
+            List containing paths to each channel like
+            [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
+            Expects a list of file paths with length “input_channel” as
+            defined in the config.yml.
+
+        crop : list(tuple), optional
+            When set, it can be used to crop the input image. The first
+            element refers to the first dimension of the image and so on.
+            For example use “[(0,1000),(0,2000)]” to crop the image to
+            1000 px height and 2000 px width from the top left corner.
+
+        """
+
+        def extract_unique_parts(paths: List[str]):
+            """helper function to get unique channel names from filepaths
+
+            Parameters
+            ----------
+            paths : str
+                _description_
+
+            Returns
+            -------
+            List[str]
+
+            """
+            # Find the common base directory
+            common_base = os.path.commonpath(paths)
+
+            # Remove the common base from each path
+            unique_paths = [os.path.relpath(path, common_base) for path in paths]
+
+            unique_parts = []
+            pattern = re.compile(r'(\d+)')  # Regex pattern to match numbers
+            
+            for file_name in unique_paths:
+                match = pattern.search(file_name)
+                if match:
+                    unique_parts.append(match.group(1))  # Extract the matched number
+                else:
+                    unique_parts.append(file_name)  # If no match, return the whole name
+            
+            return unique_parts
+        
+        if self.config is None:
+            raise ValueError("Dataset has no config file loaded")
+        
+        #check if an input image was already loaded if so throw error if overwrite = False
+        self._cleanup_sdata_object()
+
+        if not len(file_paths) == self.config["input_channels"]:
+            raise ValueError(
+                "Expected {} image paths because this number of input_channels is specified in the config, but received {} instead.".format(
+                    self.config["input_channels"], len(file_paths)
+                )
+            )
+        
+        #save channel names
+        if channel_names is None:
+            channel_names = extract_unique_parts(file_paths)
+
+        if len(channel_names) != len(file_paths):
+            raise ValueError("Number of channel names does not match number of input images. Please provide a channel name for each input image.")
+        
+        self.channel_names = channel_names
+
+        # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
+        # default order that is expected: Nucleus channel, cell membrane channel, other channels
+        if self.remap is not None:
+            file_paths = file_paths[self.remap]
+
+        for i, channel_path in enumerate(file_paths):
+            im = imread(channel_path)
+
+            #add automatic conversion for uint8 as this is another very common image format
+            if im.dtype == np.uint8:
+                im = im.astype(np.uint16) * np.iinfo(np.uint8).max #leave set to np.uint16 explicilty here as this conversion assumes going from uint8 to uint16 if the dtype is changed then this will throw a warning later ensuring that this line is fixed
+                
+            self._check_image_dtype(im)
+
+            im = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[slice(*crop[0]), slice(*crop[1])]
+
+            if i == 0:
+
+                #define shape of required tempmmap array to read results to
+                y, x = im.shape
+                c = len(file_paths)
+
+                #initialize temp array to save results to and then append to channels
+                temp_image_path = tempmmap.create_empty_mmap(
+                    shape=(c, y, x),
+                    dtype=self.DEFAULT_IMAGE_DTYPE,
+                    tmp_dir_abs_path=self._tmp_dir_path,
+                )
+
+                channels = tempmmap.mmap_array_from_path(temp_image_path)
+
+            channels[i] = im
+        
+        channels = daskmmap.dask_array_from_path(temp_image_path)
+        
+        self._write_image_sdata(channels, 
+                                channel_names = self.channel_names, 
+                                scale_factors = [2, 4, 8], 
+                                chunks = self.DEFAULT_CHUNK_SIZE)
+
+        #cleanup temp image path
+        shutil.rmtree(temp_image_path)
+
+    def load_input_from_omezarr(self, ome_zarr_path):
+        
+        # read the image data
+        self.log(f"trying to read file from {ome_zarr_path}")
+        loc = parse_url(ome_zarr_path, mode="r")
+        zarr_reader = Reader(loc).zarr
+
+        #read entire data into memory
+        time_start = time()
+        input_image = np.array(zarr_reader.load("0").compute())
+        time_end = time()
+        self.log(f"Read input image from file {path} to numpy array in {(time_end - time_start)/60} minutes.")
+
+        # Access the metadata to get channel names
+        zarr_group = loc.zarr_group()
+        metadata = zarr_group.attrs.asdict()
+        
+        if 'omero' in metadata and 'channels' in metadata['omero']:
+            channels = metadata['omero']['channels']
+            channel_names = [channel['label'] for channel in channels]
+        else:
+            channel_names = [f"channel_{i}" for i in range(input_image.shape[0])]
+        
+        #write loaded array to sdata object
+        self.load_input_from_array(input_image, channel_names=channel_names)
+
+    def load_input_from_sdata(self, 
+                              sdata_path, 
+                              input_image_name = "input_image", 
+                              nucleus_segmentation_name = None, 
+                              cytosol_segmentation_name = None):
+        """
+        Load input image from a spatialdata object.
+        """
+        #read input sdata object
+        sdata_input = SpatialData.read(sdata_path)
+        
+        self._read_sdata()
+
+        #get input image and write it to the final sdata object
+        image = sdata_input.images[input_image_name]
+
+        #ensure chunking is correct
+        image = self._check_chunk_size(image)
+        
+        #check coordinate system of input image
+        ### PLACEHOLDER
+
+        self._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME)
+        self.input_image_status = True
+        
+        #check if a nucleus segmentation exists and if so add it to the sdata object
+        if nucleus_segmentation_name is not None:
+            mask = sdata_input.labels[nucleus_segmentation_name]
+            mask = self._check_chunk_size(mask) #ensure chunking is correct
+
+            self._write_segmentation_object_sdata(mask, self.nuc_seg_name)
+
+            self.nuc_seg_status = True
+            self.log("Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
+
+
+        #check if a cytosol segmentation exists and if so add it to the sdata object
+        if cytosol_segmentation_name is not None:
+            mask = sdata_input.labels[cytosol_segmentation_name]
+            mask = self._check_chunk_size(mask) #ensure chunking is correct
+
+            self._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+
+            self.cyto_seg_status = True
+            self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
+
+        #ensure that the provided nucleus and cytosol segmentations fullfill the SPARCSpy requirements
+        #requirements are:
+        #1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
+        assert (self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
+
+        #2. the nucleus segmentation ids and the cytosol segmentation ids need to match
+        #THIS NEEDS TO BE IMPLEMENTED HERE
+
+        #check if there are any annotations that match the nucleus/cytosol segmentations
+        if self.nuc_seg_status or self.cyto_seg_status:
+            region_annotation = generate_region_annotation_lookuptable(self.sdata)
+            
+            if self.nuc_seg_status:
+                region_name = self.nuc_seg_name
+
+                #add existing nucleus annotations if available
+                if nucleus_segmentation_name in region_annotation.keys():
+                    for x in region_annotation[nucleus_segmentation_name]:
+                        table_name, table = x
+                        
+                        new_table_name = f"annot_{region_name}_{table_name}"
+                        
+                        table = remap_region_annotation_table(table, region_name = region_name)
+                        
+                        self._write_table_object_sdata(table, new_table_name)
+                        self.log(f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}.")
+                else:
+                    self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
+
+                #add centers of cells for available nucleus map
+                centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system = "global")
+                self._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
+
+                self.centers_status = True
+
+            #add cytosol segmentations if available
+            if self.cyto_seg_status:
+                if cytosol_segmentation_name in region_annotation.keys():
+                    for x in region_annotation[cytosol_segmentation_name]:
+                        table_name, table = x
+                        region_name = self.cyto_seg_name
+                        new_table_name = f"annot_{region_name}_{table_name}"
+
+                        table = remap_region_annotation_table(table, region_name = region_name)
+                        self._write_table_object_sdata(table, new_table_name)
+
+                        self.log(f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}.")
+                else:
+                    self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
+
+
+
