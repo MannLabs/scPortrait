@@ -48,6 +48,25 @@ class BaseSegmentation(Segmentation):
             input_image = input_image.data
         return input_image
     
+
+    def _read_cellpose_model(self, modeltype, name, use_GPU, device):
+        if modeltype == "pretrained":
+            model = models.Cellpose(model_type=name, gpu=use_GPU, device=device)
+        elif modeltype == "custom":
+            model = models.CellposeModel(
+                pretrained_model=name, gpu=use_GPU, device=device
+            )
+        return model
+
+    def return_empty_mask(self, input_image):
+        n_channels, x, y = input_image.shape
+        self.save_segmentation(input_image, np.zeros((2, x, y)), [])
+
+
+class WGASegmentation(BaseSegmentation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -420,24 +439,6 @@ class BaseSegmentation(Segmentation):
         visualize_class(
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][0]
         )
-
-    def _read_cellpose_model(self, modeltype, name, use_GPU, device):
-        if modeltype == "pretrained":
-            model = models.Cellpose(model_type=name, gpu=use_GPU, device=device)
-        elif modeltype == "custom":
-            model = models.CellposeModel(
-                pretrained_model=name, gpu=use_GPU, device=device
-            )
-        return model
-
-    def return_empty_mask(self, input_image):
-        n_channels, x, y = input_image.shape
-        self.save_segmentation(input_image, np.zeros((2, x, y)), [])
-
-
-class WGASegmentation(BaseSegmentation):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
         # The required maps are the nucelus channel and a membrane marker channel like WGA
