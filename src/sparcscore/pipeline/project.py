@@ -2004,16 +2004,18 @@ class SpatialProject(Logable):
         # track that input image has been loaded
         self.input_image_status = True
 
-    def _write_segmentation_object_sdata(self, segmentation_object, segmentation_label:str):
+    def _write_segmentation_object_sdata(self, segmentation_object, segmentation_label:str, classes:set = None):
         
         #ensure that the segmentation object is converted to the sparcspy Labels2DModel
         if not hasattr(segmentation_object.attrs, "cell_ids"):
             segmentation_object = spLabels2DModel().convert(segmentation_object) 
+            segmentation_object = spLabels2DModel().convert(segmentation_object, classes = classes) 
         
         self.sdata.labels[segmentation_label] = segmentation_object
         self.sdata.write_element(segmentation_label, overwrite=True) 
 
     def _write_segmentation_sdata(self, segmentation, segmentation_label:str):
+    def _write_segmentation_sdata(self, segmentation, segmentation_label:str, classes:set = None):
         transform_original = Identity()
         mask = spLabels2DModel.parse(segmentation, 
                                     dims=["y", "x"], 
@@ -2021,6 +2023,7 @@ class SpatialProject(Logable):
                                     rgb = False)
         
         self._write_segmentation_object(mask, segmentation_label)
+        self._write_segmentation_object_sdata(mask, segmentation_label, classes = classes)
 
     def _write_table_object_sdata(self, table, table_name:str):
         self.sdata.tables[table_name] = table
