@@ -630,6 +630,12 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         else:
             channels = np.stack(required_maps).astype(np.float64)
 
+        #ensure correct dtype of the maps
+        if not isinstance(self.maps["nucleus_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
+            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
+        
+        self.maps["nucleus_segmentation"] = self.maps["nucleus_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
@@ -729,6 +735,17 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
+        
+        #ensure correct dtype of maps
+        if not isinstance(self.maps["nucleus_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
+            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
+        
+        if not isinstance(self.maps["cytosol_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
+            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
+        
+        self.maps["nucleus_segmentation"] = self.maps["nucleus_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        self.maps["cytosol_segmentation"] = self.maps["cytosol_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
+
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
