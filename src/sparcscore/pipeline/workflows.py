@@ -657,6 +657,8 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         # check that image is uint 
         input_image = self._transform_input_image(input_image)
 
+        #check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
         # check if GPU is available
         if torch.cuda.is_available():
             if status == "multi_GPU":
