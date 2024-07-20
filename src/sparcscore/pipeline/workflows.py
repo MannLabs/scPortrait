@@ -660,9 +660,6 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         gc.collect()
         torch.cuda.empty_cache()
 
-        # check that image is uint 
-        input_image = self._check_input_image_dtype(input_image)
-
         # check if GPU is available
         if torch.cuda.is_available():
             if status == "multi_GPU":
@@ -705,6 +702,10 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
+        
+        #ensure that we have the correct dtype loaded
+        self._check_input_image_dtype(input_image)
+
         # initialize location to save masks to
         self.maps = {"normalized": None, "nucleus_segmentation": None}
 
@@ -804,10 +805,6 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         # clean up old cached variables to free up GPU memory
         gc.collect()
         torch.cuda.empty_cache()
-
-        # check that image is int
-        if input_image.dtype != np.uint16:
-            sys.exit("Image is not of type uint16, cellpose segmentation expects int input images.")
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -1037,6 +1034,7 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
+
         #check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
@@ -1268,6 +1266,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         return (downsampled_image_size, pad_x, pad_y)
 
     def process(self, input_image):
+        #ensure that we have the correct dtype loaded since cellpose expects int images
+        self._check_input_image_dtype(input_image)
+
         # setup the memory mapped arrays to store the results
         N = self.config["downsampling_factor"]
         downsampled_image_size, pad_x, pad_y = self._calculate_downsample_image_size(
@@ -1381,9 +1382,6 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
 
         gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
-
-        #check image dtype since cellpose expects int input images
-        self._check_input_image_dtype(input_image)
         
         # check if GPU is available
         if torch.cuda.is_available():
@@ -1445,6 +1443,10 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
+        
+        #check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
+
         # initialize location to save masks to
         self.maps = {
             "normalized": tempmmap.array(
@@ -1553,6 +1555,10 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         return channels, segmentation
 
     def process(self, input_image):
+        
+        #ensure that we have the correct dtype loaded since cellpose expects int images
+        self._check_input_image_dtype(input_image)
+
         _size = input_image.shape
         self.log(f"Input image size {_size}")
 
