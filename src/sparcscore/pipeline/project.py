@@ -1934,6 +1934,8 @@ class SpatialProject(Logable):
         
         return elem
 
+##### Functions for handling sdata object #####
+
     def _cleanup_sdata_object(self):
         """
         Check if the output location exists and if it does cleanup if allowed, otherwise raise an error.
@@ -2052,6 +2054,7 @@ class SpatialProject(Logable):
         self.sdata.points[points_name] = points
         self.sdata.write_element(points_name, overwrite=True)
 
+#### Functions to load input data ####
     def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None):
 
         #get channel names
@@ -2319,5 +2322,6 @@ class SpatialProject(Logable):
         
         self._check_sdata_status()
 
+#### Functions to perform processing ####
 
 
