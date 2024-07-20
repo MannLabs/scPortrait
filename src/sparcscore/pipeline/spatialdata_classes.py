@@ -49,7 +49,7 @@ class spLabels2DModel(Labels2DModel):
         return(data)
     
     @singledispatchmethod
-    def convert(self, data: DataTree | DataArray) -> DataTree | DataArray:
+    def convert(self, data: DataTree | DataArray, classes: set = None) -> DataTree | DataArray:
         """
         """
         raise ValueError(
@@ -57,15 +57,22 @@ class spLabels2DModel(Labels2DModel):
         )
 
     @convert.register(DataArray)
-    def _(self, data: DataArray) -> DataArray:
-        data = self._get_cell_ids(data)
+    def _(self, data: DataArray, classes: set) -> DataArray:
+        if classes is not None:
+            data.attrs["cell_ids"] = classes
+        else:
+            data = self._get_cell_ids(data)
         return(data)
 
     @convert.register(DataTree)
-    def _(self, data: DataTree) -> DataTree:
+    def _(self, data: DataTree, classes: set) -> DataTree:
+        if classes is not None:
+            for d in data:
+                data[d].attrs["cell_ids"] = classes
         for d in data:
                 data[d] = self._get_cell_ids(data[d])
         return(data)
+
 
 
         
