@@ -1958,9 +1958,28 @@ class SpatialProject(Logable):
         """
         return os.path.join(self.project_location, "sparcs.sdata")
 
+    def _check_sdata_status(self):
+        #check status of project
+        self.input_image_status = self.DEFAULT_INPUT_IMAGE_NAME in self.sdata.images
+        self.nuc_seg_status = self.nuc_seg_name in self.sdata.labels
+        self.cyto_seg_status = self.cyto_seg_name in self.sdata.labels
+        self.centers_status = self.DEFAULT_CENTERS_NAME in self.sdata.points
+
+        if self.input_image_status:
+            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            else:
+                self.input_image = None
+
     def _read_sdata(self):
         if os.path.isfile(self._get_sdata_path()):
             self.sdata = SpatialData.read(self._get_sdata_path())
+
+            #update all parameters to track status of project
+            self._check_sdata_status()
+
         else:
             self.sdata = SpatialData()
             self.sdata.write(self._get_sdata_path(), overwrite=True)
@@ -2052,6 +2071,8 @@ class SpatialProject(Logable):
                                 channel_names = self.channel_names, 
                                 scale_factors = [2, 4, 8], 
                                 chunks = self.DEFAULT_CHUNK_SIZE)
+        
+        self._check_sdata_status()
 
     def load_input_from_tif_files(self, file_paths, channel_names = None, crop=[(0, -1), (0, -1)]):
 
@@ -2167,6 +2188,7 @@ class SpatialProject(Logable):
                                 scale_factors = [2, 4, 8], 
                                 chunks = self.DEFAULT_CHUNK_SIZE)
 
+        self._check_sdata_status()
         #cleanup temp image path
         shutil.rmtree(temp_image_path)
 
@@ -2196,6 +2218,8 @@ class SpatialProject(Logable):
         
         #write loaded array to sdata object
         self.load_input_from_array(input_image, channel_names=channel_names)
+
+        self._check_sdata_status()
 
     def load_input_from_sdata(self, 
                               sdata_path, 
@@ -2292,6 +2316,8 @@ class SpatialProject(Logable):
                         self.log(f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}.")
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
+        
+        self._check_sdata_status()
 
 
 
