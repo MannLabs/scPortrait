@@ -27,6 +27,9 @@ from ome_zarr.io import parse_url
 from ome_zarr.writer import write_image
 from ome_zarr.reader import Reader
 
+from alphabase.io import tempmmap
+from sparcstools.base import daskmmap
+
 class Project(Logable):
     """
     Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
@@ -1811,6 +1814,7 @@ class TimecourseProject(Project):
 from spatialdata import SpatialData
 from spatialdata.models import Labels2DModel, TableModel, PointsModel, Image2DModel
 
+from napari_spatialdata import Interactive
 from sparcscore.pipeline.spatialdata_classes import spLabels2DModel
 from spatialdata.transformations.transformations import Identity
 from sparcscore.utils.spatialdata_helper import (generate_region_annotation_lookuptable, 
@@ -1820,6 +1824,8 @@ from sparcscore.utils.spatialdata_helper import (generate_region_annotation_look
                                                  calculate_centroids
                                                 )
 import dask.array as darray
+import datatree
+import xarray
 
 class SpatialProject(Logable):
 
@@ -1837,7 +1843,15 @@ class SpatialProject(Logable):
 
     DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
 
-    def __init__(self, project_location, overwrite=False, debug = False):
+    DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
+
+    def __init__(self, 
+                 project_location, 
+                 config_path, 
+                 segmentation_f=None,
+                 overwrite=False, 
+                 debug = False):
+        
         self.debug = debug
         self.overwrite = overwrite
         self.config = None
@@ -1850,6 +1864,8 @@ class SpatialProject(Logable):
         self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
+        self.segmentation_f = segmentation_f
+
         #check if project directory exists, if it does not create
         if not os.path.isdir(self.project_location):
             os.makedirs(self.project_location)
@@ -1858,6 +1874,30 @@ class SpatialProject(Logable):
         
         #setup config file
         self._get_config_file(config_path)
+
+        # === setup segmentation ===
+        if self.segmentation_f is not None:
+            if segmentation_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {segmentation_f.__name__} is missing from the config file."
+                )
+
+            seg_directory = os.path.join(
+                self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME
+            )
+
+            self.seg_directory = seg_directory
+
+            self.segmentation_f = segmentation_f(
+                self.config[segmentation_f.__name__],
+                self.seg_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                project = self,
+            )
+        else:
+            self.segmentation_f = None
 
     def _load_config_from_file(self, file_path):
         """
@@ -2329,4 +2369,15 @@ class SpatialProject(Logable):
 
 #### Functions to perform processing ####
 
+    def segment(self):
+        self._check_sdata_status()
 
+        #ensure that an input image has been loaded
+        if not self.input_image_status:
+            raise ValueError("No input image loaded. Please load an input image first.")
+        
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+        
+        elif self.input_image is not None:
+            self.segmentation_f(self.input_image)
