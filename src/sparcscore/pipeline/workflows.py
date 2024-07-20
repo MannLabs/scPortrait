@@ -43,6 +43,34 @@ class BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def return_empty_mask(self, input_image):
+        n_channels, x, y = input_image.shape
+        self.save_segmentation(input_image, np.zeros((2, x, y)), [])
+
+class _cellpose_segmentation(BaseSegmentation):
+    
+    def _read_cellpose_model(self, modeltype, name, use_GPU, device):
+        if modeltype == "pretrained":
+            model = models.Cellpose(model_type=name, gpu=use_GPU, device=device)
+        elif modeltype == "custom":
+            model = models.CellposeModel(
+                pretrained_model=name, gpu=use_GPU, device=device
+            )
+        return model
+    
+    def _check_input_image_dtype(self, input_image):
+        
+        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
+            if isinstance(input_image.dtype, int):
+                ValueError("Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers.")
+            else:
+                ValueError("Image is not of type uint16, cellpose segmentation expects int input images.")
+
+
+class WGASegmentation(BaseSegmentation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def _normalization(self, input_image):
         self.log("Starting with normalized map")
         if isinstance(self.config["lower_quantile_normalization"], float):
@@ -594,7 +622,7 @@ class ShardedDAPISegmentation(ShardedSegmentation):
     method = DAPISegmentation
 
 
-class DAPISegmentationCellpose(BaseSegmentation):
+class DAPISegmentationCellpose(_cellpose_segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -632,10 +660,8 @@ class DAPISegmentationCellpose(BaseSegmentation):
         gc.collect()
         torch.cuda.empty_cache()
 
-        # run this every once in a while to clean up cache and remove old variables
-
-        # check that image is int
-        input_image = input_image.astype("int64")
+        # check that image is uint 
+        input_image = self._check_input_image_dtype(input_image)
 
         # check if GPU is available
         if torch.cuda.is_available():
@@ -702,7 +728,7 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
     method = DAPISegmentationCellpose
 
 
-class CytosolSegmentationCellpose(BaseSegmentation):
+class CytosolSegmentationCellpose(_cellpose_segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1316,7 +1342,7 @@ class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
     method = CytosolSegmentationDownsamplingCellpose
 
 
-class CytosolOnlySegmentationCellpose(BaseSegmentation):
+class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1353,10 +1379,9 @@ class CytosolOnlySegmentationCellpose(BaseSegmentation):
         gc.collect()
         torch.cuda.empty_cache()  # run this every once in a while to clean up cache and remove old variables
 
-        # check that image is int
-        if input_image.dtype != np.uint16:
-            sys.exit("Image is not of type uint16, cellpose segmentation expects int input images.")
-
+        #check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
+        
         # check if GPU is available
         if torch.cuda.is_available():
             if status == "multi_GPU":
