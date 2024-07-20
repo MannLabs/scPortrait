@@ -4,6 +4,7 @@ from spatialdata._core.operations.transform import transform
 from spatialdata.transformations.operations import get_transformation
 from sparcscore.processing.segmentation import numba_mask_centroid
 import datatree
+import xarray
 
 from typing import List, Tuple, Dict, Any
 
@@ -76,13 +77,13 @@ def remap_region_annotation_table(table: TableModel,
     table = TableModel.parse(table, region_key="region", region=region_name, instance_key="cell_id")
     return(table)   
 
-def get_chunk_size(element: datatree.DataTree | datatree.DataArray) -> Tuple | List[Tuple]:
+def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> Tuple | List[Tuple]:
 
     """Get the chunk size of the image data.
     
     Parameters
     ----------
-    element : datatree.DataTree or datatree.DataArray
+    element : datatree.DataTree or xarray.DataArray
         The element to get the chunk size from. If a DataTree, then the chunk size of the first scale will be returned. If a DataArray, then the chunk size of the image data will be returned.
     
     Returns
@@ -91,7 +92,7 @@ def get_chunk_size(element: datatree.DataTree | datatree.DataArray) -> Tuple | L
         The chunk size of the image data. If a multiscale image was provided then a list of chunk sizes will be returned.
     """
 
-    if isinstance(element, datatree.DataArray):
+    if isinstance(element, xarray.DataArray):
 
         c, y, x = element.chunksizes.values()
         c, y, x = np.array([c, y, x]).flatten()
@@ -111,27 +112,27 @@ def get_chunk_size(element: datatree.DataTree | datatree.DataArray) -> Tuple | L
         
         return chunk_sizes
     else:
-        raise ValueError(f"element must be a datatree.DataTree or datatree.DataArray  but found {type(element)} instead")
+        raise ValueError(f"element must be a datatree.DataTree or xarray.DataArray  but found {type(element)} instead")
 
-def rechunk_image(element: datatree.DataTree | datatree.DataArray,
-                 chunk_size: Tuple) -> datatree.DataTree | datatree.DataArray:
+def rechunk_image(element: datatree.DataTree | xarray.DataArray,
+                 chunk_size: Tuple) -> datatree.DataTree | xarray.DataArray:
     """ 
     Rechunk the image data to the desired chunksize. This is useful for ensuring that the data is chunked in a regular manner.
 
     Parameters
     ----------
-    element : datatree.DataTree or datatree.DataArray
+    element : datatree.DataTree or xarray.DataArray
         The element to rechunk. If a DataTree, then all the scales will be rechunked. If a DataArray, then only the image data will be rechunked.
     chunk_size : tuple
         The desired chunk size. The chunk size should be a tuple of integers.
     
     Returns
     -------
-    datatree.DataTree or datatree.DataArray
+    datatree.DataTree or xarray.DataArray
         The rechunked element.
     """
 
-    if isinstance(element, datatree.DataArray):
+    if isinstance(element, xarray.DataArray):
         element["image"].data = element["image"].daya.rechunk(chunk_size)
         return element
     
@@ -143,7 +144,7 @@ def rechunk_image(element: datatree.DataTree | datatree.DataArray,
         
         return element
     else:
-        raise ValueError(f"element must be a datatree.DataTree or datatree.DataArray  but found {type(element)} instead")
+        raise ValueError(f"element must be a datatree.DataTree or xarray.DataArray  but found {type(element)} instead")
 
 def make_centers_object(
         centers: np.ndarray,
