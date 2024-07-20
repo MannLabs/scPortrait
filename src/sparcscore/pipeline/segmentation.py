@@ -263,6 +263,13 @@ class Segmentation(ProcessingStep):
 
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels=labels)
+    
+    def save_segmentation_sdata(self, labels, classes):
+        if self.project is not None:
+            self.project._write_segmentation_sdata(labels[0], self.project.nuc_seg_name, classes = classes)
+            self.project._write_segmentation_sdata(labels[1], self.project.cyto_seg_name, classes = classes)
+        else:
+            ValueError("No project object found. Please provide a project object to save segmentation data to sdata object.")
 
     def save_segmentation_zarr(self, labels=None):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
