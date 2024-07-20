@@ -1037,6 +1037,9 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         torch.cuda.empty_cache()
 
     def process(self, input_image):
+        #check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
+
         # initialize location to save masks to
         self.maps = {
             "normalized": tempmmap.array(
