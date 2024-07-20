@@ -2020,7 +2020,7 @@ class SpatialProject(Logable):
         )
 
         self.sdata.images[image_name] =image
-        self.sdata.write(self._get_sdata_path(), overwrite=True)
+        self.sdata.write_element(image_name, overwrite=True)
 
         # track that input image has been loaded
         self.input_image_status = True
@@ -2073,7 +2073,8 @@ class SpatialProject(Logable):
         self._write_image_sdata(image, 
                                 channel_names = self.channel_names, 
                                 scale_factors = [2, 4, 8], 
-                                chunks = self.DEFAULT_CHUNK_SIZE)
+                                chunks = self.DEFAULT_CHUNK_SIZE,
+                                image_name = self.DEFAULT_INPUT_IMAGE_NAME)
         
         self._check_sdata_status()
 
