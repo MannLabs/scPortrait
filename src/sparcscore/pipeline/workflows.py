@@ -32,7 +32,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # WGA Segmentation
-from skfmm import travel_time
+from skfmm import travel_time as skfmm_travel_time
 from skimage.filters import median
 from skimage.segmentation import watershed
 from skimage.color import label2rgb
@@ -856,7 +856,7 @@ class WGASegmentation(BaseSegmentation):
             fmm_marker[center[0], center[1]] = 0
 
         fmm_marker = np.ma.MaskedArray(fmm_marker, self.maps["wga_mask"])
-        travel_time = travel_time(fmm_marker, self.maps["wga_potential"])
+        travel_time = skfmm_travel_time(fmm_marker, self.maps["wga_potential"])
 
         if not isinstance(travel_time, np.ma.core.MaskedArray):
             raise TypeError(
