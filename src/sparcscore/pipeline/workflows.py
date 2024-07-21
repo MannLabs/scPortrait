@@ -1342,7 +1342,7 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         ######################
         self._setup_filtering()
         
-        if not self.filter_status:
+        if not self.filter_match_masks:
             self.log(
                 "No filtering performed. Cytosol and Nucleus IDs in the two masks do not match. Before proceeding with extraction an additional filtering step needs to be performed"
             )
