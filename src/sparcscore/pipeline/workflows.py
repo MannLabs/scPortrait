@@ -443,7 +443,7 @@ class BaseSegmentation(Segmentation):
         start_time = time.time()
         self.log("Performing filtering to match Cytosol and Nucleus IDs.")
 
-        if self.debug:
+        if debug:
             masks_nucleus_unfiltered = nucleus_mask.copy()
             masks_cytosol_unfiltered = cytosol_mask.copy()
 
@@ -460,7 +460,7 @@ class BaseSegmentation(Segmentation):
             f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain."
         )
 
-        if self.debug:
+        if debug:
             # plot nucleus and cytosol masks before and after filtering
             fig, axs = plt.subplots(2, 2, figsize=(8, 8))
             axs[0, 0].imshow(masks_nucleus_unfiltered[0])
