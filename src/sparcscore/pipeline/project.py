@@ -25,6 +25,8 @@ from ome_zarr.io import parse_url
 from ome_zarr.writer import write_image
 from ome_zarr.reader import Reader
 
+from typing import List
+
 class Project(Logable):
     """
     Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
