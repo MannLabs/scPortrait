@@ -406,7 +406,7 @@ class BaseSegmentation(Segmentation):
         # check to see if the cells should be filtered for matching nuclei/cytosols within the segmentation run
         if "match_masks" in self.config.keys():
             self.filter_match_masks = self.config["match_masks"]
-            if ["filtering_threshold_mask_matching"] in self.config.keys():
+            if "filtering_threshold_mask_matching" in self.config.keys():
                 self.mask_matching_filtering_threshold = self.config[
                     "filtering_threshold_mask_matching"
                 ]
