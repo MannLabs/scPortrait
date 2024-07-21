@@ -1349,8 +1349,6 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         self._setup_filtering()
         
         if self.filter_match_masks:
-            self.log("Performing filtering to match Cytosol and Nucleus IDs.")
-
             masks_nucleus, masks_cytosol = self._perform_mask_matching_filtering(
                 nucleus_mask=masks_nucleus,
                 cytosol_mask=masks_cytosol,
