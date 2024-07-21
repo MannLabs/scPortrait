@@ -16,7 +16,9 @@ Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
         model: "cyto2"
         diameter: 700
     chunk_size: 50
-    filtering_threshold: 0.7
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
 Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     input_channels: 3
     output_masks: 2
@@ -30,13 +32,14 @@ Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     cytosol_segmentation:
         model: "cyto2"
     chunk_size: 50
-    filtering_threshold: 0.7
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
     downsampling_factor: 10 #downsamples images before performing segmentation, the segmented masks are upscaled again to the original dimension
     smoothing_kernel_size: 7
 Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     input_channels: 3
     output_masks: 2
-    threads: 8
     cache: "."
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
@@ -46,7 +49,9 @@ Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     cytosol_segmentation:
         model: "cyto2"
     chunk_size: 50
-    filtering_threshold: 0.7
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
     downsampling_factor: 10
     smoothing_kernel_size: 7
 TimecourseHDF5CellExtraction:

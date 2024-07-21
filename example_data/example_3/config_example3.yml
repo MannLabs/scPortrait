@@ -33,6 +33,7 @@ WGASegmentation:
         min_size: 200
         max_size: 30000
     chunk_size: 50
+    filter_masks_size: False
 DAPISegmentation:
     input_channels: 3
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
@@ -54,6 +55,7 @@ DAPISegmentation:
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
     chunk_size: 50
+    filter_masks_size: False
 CytosolSegmentationCellpose:
     input_channels: 2
     output_masks: 2
@@ -71,7 +73,9 @@ CytosolSegmentationCellpose:
     cytosol_segmentation:
         model: "cyto2"
     chunk_size: 50
-    filtering_threshold: 0.95
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
 DAPISegmentationCellpose:
     input_channels: 2
     output_masks: 2
@@ -87,6 +91,7 @@ DAPISegmentationCellpose:
     nucleus_segmentation:
         model: "nuclei"
     chunk_size: 50
+    filter_masks_size: False
 HDF5CellExtraction:
     compression: True
     threads: 80 # threads used in multithreading

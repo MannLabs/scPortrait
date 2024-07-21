@@ -19,7 +19,9 @@ CytosolSegmentationCellpose:
     cytosol_segmentation:
         model: "cyto2"
     chunk_size: 50
-    filtering_threshold: 0.95
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
 ShardedCytosolSegmentationCellpose:
     input_channels: 2
     output_masks: 2
@@ -37,7 +39,9 @@ ShardedCytosolSegmentationCellpose:
     cytosol_segmentation:
         model: "cyto2"
     chunk_size: 50
-    filtering_threshold: 0.95
+    match_masks: True
+    filtering_threshold_mask_matching: 0.95
+    filter_masks_size: False
 HDF5CellExtraction:
     compression: True
     threads: 80 # threads used in multithreading
