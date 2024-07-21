@@ -1297,6 +1297,9 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model, diameter])
 
+        #remove edge labels from masks
+        masks_nucleus= remove_edge_labels(masks_nucleus)
+
         #################################
         #### Perform Cytosol Segmentation
         #################################
@@ -1310,6 +1313,9 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model, diameter])
+
+        #remove edge labels from masks
+        masks_cytosol = remove_edge_labels(masks_cytosol)
 
         ######################
         ### Perform Filtering to remove too small/too large masks if applicable
@@ -1359,12 +1365,6 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         ######################
         ### Cleanup Generated Segmentation masks
         ######################
-
-        edge_labels = set(_return_edge_labels(masks_nucleus)).union(
-            set(_return_edge_labels(masks_cytosol))
-        )
-        masks_nucleus[np.isin(masks_nucleus, list(edge_labels))] = 0
-        masks_cytosol[np.isin(masks_cytosol, list(edge_labels))] = 0
 
         # first when the masks are finalized save them to the maps
         self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
