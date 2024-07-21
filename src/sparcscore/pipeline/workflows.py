@@ -493,131 +493,9 @@ class BaseSegmentation(Segmentation):
         return masks_nucleus, masks_cytosol
 
 
-class _cellpose_segmentation(BaseSegmentation):
-    def _read_cellpose_model(
-        self, modeltype: str, name: str, gpu: str, device
-    ) -> models.Cellpose:
-        """
-        Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
-
-        Parameters
-        ----------
-        modeltype
-            either "pretrained" or "custom" depending on the model to load
-        name
-            name of the model to load
-
-        Returns
-        -------
-        cellpose model
-
-        """
-        if modeltype == "pretrained":
-            model = models.Cellpose(model_type=name, gpu=gpu, device=device)
-        elif modeltype == "custom":
-            model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
-        return model
-
-    def _load_model(
-        self, model_type: str, gpu: str, device
-    ) -> Tuple[float, models.Cellpose]:
-        """
-        Loads cellpose model
-
-        Parameters
-        ----------
-        model_type
-            either "cytosol" or "nucleus" depending on the model to load
-
-        Returns
-        -------
-        tuple of expected diameter and the cellpose model
-        """
-
-        # load correct segmentation model for cytosol
-        if "model" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model"]
-            model = self._read_cellpose_model(
-                "pretrained", model_name, gpu=gpu, device=device
-            )
-
-        elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model_path"]
-            model = self._read_cellpose_model(
-                "custom", model_name, gpu=gpu, device=device
-            )
-
-        if "diameter" in self.config[f"{model_type}_segmentation"].keys():
-            diameter = self.config[f"{model_type}_segmentation"]["diameter"]
-        else:
-            diameter = None
-
-        self.log(f"Segmenting {model_type} using the following model: {model_name}")
-        return diameter, model
-
-    def _check_input_image_dtype(self, input_image):
-        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
-            if isinstance(input_image.dtype, int):
-                ValueError(
-                    "Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers."
-                )
-            else:
-                ValueError(
-                    "Image is not of type uint16, cellpose segmentation expects int input images."
-                )
-
-    def _check_gpu_status(self):
-        """
-        Checks and updates the GPU status.
-        If a multi-GPU setup is used, the function checks the current process and returns the GPU id to use for the segmentation.
-        If no GPUs are available, the function defaults to CPU.
-        """
-
-        # get GPU information if run with workers
-        try:
-            current = multiprocessing.current_process()
-            cpu_name = current.name
-            gpu_id_list = current.gpu_id_list
-            cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
-
-            # track gpu_id and update GPU status
-            self.gpu_id = gpu_id_list[cpu_id]
-            self.status = "multi_GPU"
-
-        except Exception:
-            # default to single GPU
-            self.gpu_id = 0
-            self.status = "potentially_single_GPU"
-
-        # check if cuda GPU is available
-        if torch.cuda.is_available():
-            if self.gpu_status == "multi_GPU":
-                self.use_GPU = f"cuda:{self.gpu_id}"
-                self.device = torch.device(self.use_GPU)
-            else:
-                self.use_GPU = True
-                self.device = torch.device(
-                    "cuda"
-                )  # dont need to specify id, saying cuda will default to the one thats avaialable
-
-        # check if MPS is available
-        elif torch.backends.mps.is_available():
-            self.use_GPU = True
-            self.device = torch.device("mps")
-
-        # default to CPU
-        else:
-            self.use_GPU = False
-            self.device = torch.device("cpu")
-
-        self.log(
-            f"GPU Status for segmentation is {self.use_GPU} and will segment using the following device {self.device}."
-        )
-
-
 ###### CLASSICAL SEGMENTATION METHODS #####
 
-class WGASegmentation(BaseSegmentation):
+class ClassicalSegmentation(BaseSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -893,6 +771,7 @@ class WGASegmentation(BaseSegmentation):
 
     def _filter_cells_cytosol_size(self, all_classes, filtered_classes):
         # filter cells based on cytosol size
+        
         center_cell, length, coords = numba_mask_centroid(
             self.maps["watershed"], debug=self.debug
         )
@@ -1000,6 +879,10 @@ class WGASegmentation(BaseSegmentation):
             classes_wga_filtered, self.maps["watershed"], self.maps["normalized"][0]
         )
 
+class WGASegmentation(ClassicalSegmentation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def _finalize_segmentation_results(self):
         # The required maps are the nucelus channel and a membrane marker channel like WGA
         required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
@@ -1097,7 +980,7 @@ class ShardedWGASegmentation(ShardedSegmentation):
         super().__init__(*args, **kwargs)
 
 
-class DAPISegmentation(BaseSegmentation):
+class DAPISegmentation(ClassicalSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1161,6 +1044,128 @@ class ShardedDAPISegmentation(ShardedSegmentation):
 
 
 ##### CELLPOSE BASED SEGMENTATION METHODS #####
+
+class _cellpose_segmentation(BaseSegmentation):
+    def _read_cellpose_model(
+        self, modeltype: str, name: str, gpu: str, device
+    ) -> models.Cellpose:
+        """
+        Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
+
+        Parameters
+        ----------
+        modeltype
+            either "pretrained" or "custom" depending on the model to load
+        name
+            name of the model to load
+
+        Returns
+        -------
+        cellpose model
+
+        """
+        if modeltype == "pretrained":
+            model = models.Cellpose(model_type=name, gpu=gpu, device=device)
+        elif modeltype == "custom":
+            model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
+        return model
+
+    def _load_model(
+        self, model_type: str, gpu: str, device
+    ) -> Tuple[float, models.Cellpose]:
+        """
+        Loads cellpose model
+
+        Parameters
+        ----------
+        model_type
+            either "cytosol" or "nucleus" depending on the model to load
+
+        Returns
+        -------
+        tuple of expected diameter and the cellpose model
+        """
+
+        # load correct segmentation model for cytosol
+        if "model" in self.config[f"{model_type}_segmentation"].keys():
+            model_name = self.config[f"{model_type}_segmentation"]["model"]
+            model = self._read_cellpose_model(
+                "pretrained", model_name, gpu=gpu, device=device
+            )
+
+        elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
+            model_name = self.config[f"{model_type}_segmentation"]["model_path"]
+            model = self._read_cellpose_model(
+                "custom", model_name, gpu=gpu, device=device
+            )
+
+        if "diameter" in self.config[f"{model_type}_segmentation"].keys():
+            diameter = self.config[f"{model_type}_segmentation"]["diameter"]
+        else:
+            diameter = None
+
+        self.log(f"Segmenting {model_type} using the following model: {model_name}")
+        return diameter, model
+
+    def _check_input_image_dtype(self, input_image):
+        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
+            if isinstance(input_image.dtype, int):
+                ValueError(
+                    "Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers."
+                )
+            else:
+                ValueError(
+                    "Image is not of type uint16, cellpose segmentation expects int input images."
+                )
+
+    def _check_gpu_status(self):
+        """
+        Checks and updates the GPU status.
+        If a multi-GPU setup is used, the function checks the current process and returns the GPU id to use for the segmentation.
+        If no GPUs are available, the function defaults to CPU.
+        """
+
+        # get GPU information if run with workers
+        try:
+            current = multiprocessing.current_process()
+            cpu_name = current.name
+            gpu_id_list = current.gpu_id_list
+            cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
+
+            # track gpu_id and update GPU status
+            self.gpu_id = gpu_id_list[cpu_id]
+            self.status = "multi_GPU"
+
+        except Exception:
+            # default to single GPU
+            self.gpu_id = 0
+            self.status = "potentially_single_GPU"
+
+        # check if cuda GPU is available
+        if torch.cuda.is_available():
+            if self.gpu_status == "multi_GPU":
+                self.use_GPU = f"cuda:{self.gpu_id}"
+                self.device = torch.device(self.use_GPU)
+            else:
+                self.use_GPU = True
+                self.device = torch.device(
+                    "cuda"
+                )  # dont need to specify id, saying cuda will default to the one thats avaialable
+
+        # check if MPS is available
+        elif torch.backends.mps.is_available():
+            self.use_GPU = True
+            self.device = torch.device("mps")
+
+        # default to CPU
+        else:
+            self.use_GPU = False
+            self.device = torch.device("cpu")
+
+        self.log(
+            f"GPU Status for segmentation is {self.use_GPU} and will segment using the following device {self.device}."
+        )
+
 class DAPISegmentationCellpose(_cellpose_segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1190,12 +1195,6 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         return (channels, segmentation)
 
-        )
-
-        # run this every once in a while to clean up cache and remove old variables
-
-        # check that image is uint 
-        input_image = self._transform_input_image(input_image)
     def cellpose_segmentation(self, input_image):
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
@@ -1439,17 +1438,15 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             self.maps["cytosol_segmentation"], "cytosol_segmentation"
         )
 
-
-        _size = img.shape
         # combine masks into one stack
         segmentation = np.stack([self.maps["fullsize_nucleus_segmentation"], self.maps["fullsize_cytosol_segmentation"]])
 
+        return(segmentation)
 
     def process(self, input_image):
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
-
 
         # setup downsampling
         self._get_downsampling_parameters()
@@ -1501,7 +1498,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = np.unique(self.maps["nucleus_segmentation"])
 
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        segmentation = self._finalize_segmentation_results()
+
+        results = self.save_segmentation(segmentation, all_classes)
 
         return results
 
