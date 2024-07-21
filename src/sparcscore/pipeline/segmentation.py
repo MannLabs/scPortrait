@@ -23,7 +23,9 @@ from ome_zarr.io import parse_url
 from ome_zarr.writer import write_labels, write_label_metadata
 
 from alphabase.io import tempmmap
+import xarray
 
+from spatialdata import SpatialData
 
 class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
@@ -154,28 +156,21 @@ class Segmentation(ProcessingStep):
         """
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
 
-        with h5py.File(self.input_path, "r") as hf:
-            hdf_input = hf.get(self.DEFAULT_CHANNELS_NAME)
+        sdata = SpatialData.read(self.input_path)
+        input_image = sdata["input_image"]
 
-            # calculate shape of required datacontainer
-            c, _, _ = hdf_input.shape
-            x1 = self.window[0].start
-            x2 = self.window[0].stop
-            y1 = self.window[1].start
-            y2 = self.window[1].stop
+        input_image = self._transform_input_image(input_image)
+        input_image = input_image[:2, self.window[0], self.window[1]]
 
-            x = x2 - x1
-            y = y2 - y1
+        # calculate shape of required datacontainer
+        c, _, _ = input_image.shape
+        x1 = self.window[0].start
+        x2 = self.window[0].stop
+        y1 = self.window[1].start
+        y2 = self.window[1].stop
 
-            # initialize directory and load data
-            if self.deep_debug:
-                self.log(
-                    f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
-                )
-            input_image = tempmmap.array(
-                shape=(2, x, y), dtype=self.DEFAULT_IMAGE_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
-            )
-            input_image = hdf_input[:2, self.window[0], self.window[1]]
+        x = x2 - x1
+        y = y2 - y1
 
         # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         if sc_any(input_image):
@@ -471,10 +466,16 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
+    def _transform_input_image(self, input_image):
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data
+        return input_image
 
 class ShardedSegmentation(Segmentation):
     """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together.
     """
+
+    DEFAULT_MASK_NAME = "labels"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -554,11 +555,11 @@ class ShardedSegmentation(Segmentation):
     def initialize_shard_list(self, sharding_plan):
         _shard_list = []
 
-        input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
-        self.input_path = input_path
+        self.input_path = self.project._get_sdata_path()
 
         for i, window in enumerate(sharding_plan):
             local_shard_directory = os.path.join(self.shard_directory, str(i))
+            
             current_shard = self.method(
                 self.config,
                 local_shard_directory,
@@ -567,6 +568,7 @@ class ShardedSegmentation(Segmentation):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
+
             current_shard.initialize_as_shard(
                 i, window, self.input_path, zarr_status=False
             )
@@ -690,189 +692,180 @@ class ShardedSegmentation(Segmentation):
         """
 
         self.log("resolve sharding plan")
-
         output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         if self.config["input_channels"] == 1:
             label_size = (1, self.image_size[0], self.image_size[1])
         elif self.config["input_channels"] >= 2:
             label_size = (2, self.image_size[0], self.image_size[1])
+        
+        #initialize an empty hdf5 file that will be filled with the results of the sharded segmentation
+        # this is a workaround because as of yet labels can not be incrementally updated in spatialdata objects while being backed to disk
 
-        with h5py.File(output, "a") as hf:
-            # check if data container already exists and if so delete
-            if self.DEFAULT_MASK_NAME in hf.keys():
-                del hf[self.DEFAULT_MASK_NAME]
-                self.log(
-                    "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
-                )
-
-            hdf_labels = hf.create_dataset(
-                self.DEFAULT_MASK_NAME,
-                label_size,
-                chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
-            )
-
-            class_id_shift = 0
-
-            filtered_classes_combined = set()
-
-            for i, window in enumerate(sharding_plan):
-                timer = time.time()
-                
-                self.log(f"Stitching tile {i}")
-
-                local_shard_directory = os.path.join(self.shard_directory, str(i))
-                local_output = os.path.join(
-                    local_shard_directory, self.DEFAULT_SEGMENTATION_FILE
-                )
-                local_classes = os.path.join(local_shard_directory, "classes.csv")
-
-                #check if this file exists otherwise abort process
-                if not os.path.isfile(local_classes):
-                    sys.exit(f"File {local_classes} does not exist. Processing of Shard {i} seems to be incomplete. \nAborting process to resolve sharding. Please run project.complete_segmentation() to regenerate this shard information.")
-
-                # check to make sure windows match
-                with open(f"{local_shard_directory}/window.csv", "r") as f:
-                    window_local = eval(f.read())
-                
-                if window_local != window:
-                    Warning("Sharding plans do not match.")
-                    self.log("Sharding plans do not match.")
-                    self.log(f"Sharding plan found locally: {window_local}")
-                    self.log(f"Sharding plan found in sharding plan: {window}")
-                    self.log(
-                        "Reading sharding window from local file and proceeding with that."
-                    )
-                    window = window_local
-
-                local_hf = h5py.File(local_output, "r")
-                local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)
-
-                shifted_map, edge_labels = shift_labels(
-                    local_hdf_labels, class_id_shift, return_shifted_labels=True, remove_edge_labels=True
-                )
-
-                orig_input = hdf_labels[:, window[0], window[1]]
-
-                if orig_input.shape != shifted_map.shape:
-                    Warning("Shapes do not match")
-                    self.log("Shapes do not match")
-                    self.log("window", window[0], window[1])
-                    self.log("shifted_map shape:", shifted_map.shape)
-                    self.log("orig_input shape:", orig_input.shape)
-
-                    # dirty fix to get this to run until we can implement a better solution
-                    shifted_map = np.zeros(orig_input.shape)
-
-                # since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
-                # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the
-                # new ones from the second shard
-
-                #since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
-                #the segmentation mask to remove unwanted shapes before merging
-
-                start_time_step1 = time.time()
-
-                #assumptions: if a nucleus is discarded the cytosol must also be discarded and vice versa otherwise this could leave cells with only one of the two
-                ids_discard = set(np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])) #gets all ids that potentially need to be discarded over both masks 
-                
-                # we dont want to discard any ideas that touch the edge of the image
-                # for these ids we can not ensure when processing this shard that the entire cell is present in the shard
-                # if we would delete these ids we would potentially be deleting half of a cell
-                edge_labels = set(_return_edge_labels(orig_input))
-                ids_discard = ids_discard - edge_labels
-
-                #set ids to 0 that we dont want to keep that are already in the final map
-                orig_input[np.isin(orig_input, list(ids_discard))] = 0
-
-                time_step1 = time.time() - start_time_step1
-
-                start_time_step2 = time.time()
-
-                #identify all ids from the new map that potentially could lead to problems
-                problematic_ids = set(np.unique(shifted_map[np.where((orig_input != 0) & (shifted_map != 0))]))
-                
-                #remove all potentially problematic ids from the new map
-                shifted_map[np.isin(shifted_map, list(problematic_ids))] = 0
-
-                time_step2 = time.time() - start_time_step2
-
-                if self.deep_debug: 
-                    orig_input_manipulation = orig_input.copy()
-                    shifted_map_manipulation = shifted_map.copy()
-
-                    orig_input_manipulation[orig_input_manipulation>0] = 1
-                    shifted_map_manipulation[shifted_map_manipulation>0] = 2
-
-                    resulting_map = orig_input_manipulation + shifted_map_manipulation
-
-                    plt.figure()
-                    plt.imshow(resulting_map[0])
-                    plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
-                    plt.colorbar()
-                    plt.show()
-                    plt.savefig(f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png")
-
-                    plt.figure()
-                    plt.imshow(resulting_map[1])
-                    plt.colorbar()
-                    plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
-                    plt.show()
-                    plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
-
-                start_time_step3 = time.time()
-                shifted_map = np.where(
-                    (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
+        hdf_labels_path = tempmmap.create_empty_mmap(
+                    shape=label_size,
+                    dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                    tmp_dir_abs_path=self._tmp_dir_path,
                 )
         
-                time_step3 = time.time() - start_time_step3
-                total_time = time_step1 + time_step2 + time_step3
+        hdf_labels = tempmmap.mmap_array_from_path(hdf_labels_path)
+
+        class_id_shift = 0
+        filtered_classes_combined = set()
+
+        for i, window in enumerate(sharding_plan):
+            timer = time.time()
+            
+            self.log(f"Stitching tile {i}")
+
+            local_shard_directory = os.path.join(self.shard_directory, str(i))
+            local_output = os.path.join(local_shard_directory, self.DEFAULT_SEGMENTATION_FILE)
+            local_classes = os.path.join(local_shard_directory, "classes.csv")
+
+            #check if this file exists otherwise abort process
+            if not os.path.isfile(local_classes):
+                sys.exit(f"File {local_classes} does not exist. Processing of Shard {i} seems to be incomplete. \nAborting process to resolve sharding. Please run project.complete_segmentation() to regenerate this shard information.")
+
+            # check to make sure windows match
+            with open(f"{local_shard_directory}/window.csv", "r") as f:
+                window_local = eval(f.read())
+            
+            if window_local != window:
+                Warning("Sharding plans do not match.")
+                self.log("Sharding plans do not match.")
+                self.log(f"Sharding plan found locally: {window_local}")
+                self.log(f"Sharding plan found in sharding plan: {window}")
+                self.log(
+                    "Reading sharding window from local file and proceeding with that."
+                )
+                window = window_local
+
+            local_hf = h5py.File(local_output, "r")
+            local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)
+
+            shifted_map, edge_labels = shift_labels(
+                local_hdf_labels, class_id_shift, return_shifted_labels=True, remove_edge_labels=True
+            )
+
+            orig_input = hdf_labels[:, window[0], window[1]]
+
+            if orig_input.shape != shifted_map.shape:
+                Warning("Shapes do not match")
+                self.log("Shapes do not match")
+                self.log("window", window[0], window[1])
+                self.log("shifted_map shape:", shifted_map.shape)
+                self.log("orig_input shape:", orig_input.shape)
+
+                # dirty fix to get this to run until we can implement a better solution
+                shifted_map = np.zeros(orig_input.shape)
+
+            # since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
+            # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the
+            # new ones from the second shard
+
+            #since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
+            #the segmentation mask to remove unwanted shapes before merging
+
+            start_time_step1 = time.time()
+
+            #assumptions: if a nucleus is discarded the cytosol must also be discarded and vice versa otherwise this could leave cells with only one of the two
+            ids_discard = set(np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])) #gets all ids that potentially need to be discarded over both masks 
+            
+            # we dont want to discard any ideas that touch the edge of the image
+            # for these ids we can not ensure when processing this shard that the entire cell is present in the shard
+            # if we would delete these ids we would potentially be deleting half of a cell
+            edge_labels = set(_return_edge_labels(orig_input))
+            ids_discard = ids_discard - edge_labels
+
+            #set ids to 0 that we dont want to keep that are already in the final map
+            orig_input[np.isin(orig_input, list(ids_discard))] = 0
+
+            time_step1 = time.time() - start_time_step1
+
+            start_time_step2 = time.time()
+
+            #identify all ids from the new map that potentially could lead to problems
+            problematic_ids = set(np.unique(shifted_map[np.where((orig_input != 0) & (shifted_map != 0))]))
+            
+            #remove all potentially problematic ids from the new map
+            shifted_map[np.isin(shifted_map, list(problematic_ids))] = 0
+
+            time_step2 = time.time() - start_time_step2
+
+            if self.deep_debug: 
+                orig_input_manipulation = orig_input.copy()
+                shifted_map_manipulation = shifted_map.copy()
+
+                orig_input_manipulation[orig_input_manipulation>0] = 1
+                shifted_map_manipulation[shifted_map_manipulation>0] = 2
+
+                resulting_map = orig_input_manipulation + shifted_map_manipulation
+
+                plt.figure()
+                plt.imshow(resulting_map[0])
+                plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
+                plt.colorbar()
+                plt.show()
+                plt.savefig(f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png")
+
+                plt.figure()
+                plt.imshow(resulting_map[1])
+                plt.colorbar()
+                plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
+                plt.show()
+                plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
+
+            start_time_step3 = time.time()
+            shifted_map = np.where(
+                (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
+            )
+    
+            time_step3 = time.time() - start_time_step3
+            total_time = time_step1 + time_step2 + time_step3
+            
+            self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s")
+
+            # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
+            # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
+            
+            class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
+            unique_ids = set(np.unique(shifted_map[0])[1:]) #get unique cellids in the shifted map
+
+            #save results to hdf_labels
+            hdf_labels[:, window[0], window[1]] = shifted_map
+
+            # updated classes list
+            filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list (class list is always in reference to the nucleus id!)
+            filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
+            
+            if self.debug:
+                    self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
+                    self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
+
+            #check if filtering of classes has been successfull
+            #ideally the classes contained in the mask should be identical with those contained in the classes file
+            #if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
+            if self.deep_debug:
+                masks = hdf_labels[:, :, :]
+                unique_ids = set(np.unique(masks[0])) - set([0])
+                self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
                 
-                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s")
+                difference_classes = filtered_classes_combined.difference(unique_ids)
+                self.log(f"Classes contained in classes list that are not found in the segmentation mask: {difference_classes}")
 
-                # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
-                # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
+                difference_masks = unique_ids.difference(filtered_classes_combined)
+                self.log(f"Classes contained in segmentation mask that are not contained in classes list: {difference_masks}")
                 
-                class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
-                unique_ids = set(np.unique(shifted_map[0])[1:]) #get unique cellids in the shifted map
+                if len(difference_masks) > 0:
+                    _masks = np.isin(masks[0], list(difference_masks))
+                    plt.figure()
+                    plt.imshow(_masks)
+                    plt.set_title(f"Classes in segmentation mask that are not contained in classes list after processing shard {i}")
+                    plt.axis("off")
+                    plt.show()
 
-                #save results to hdf_labels
-                hdf_labels[:, window[0], window[1]] = shifted_map
-
-                # updated classes list
-                filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list (class list is always in reference to the nucleus id!)
-                filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
-                
-                if self.debug:
-                        self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
-                        self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
-
-                #check if filtering of classes has been successfull
-                #ideally the classes contained in the mask should be identical with those contained in the classes file
-                #if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
-                if self.deep_debug:
-                    masks = hdf_labels[:, :, :]
-                    unique_ids = set(np.unique(masks[0])) - set([0])
-                    self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
-                    
-                    difference_classes = filtered_classes_combined.difference(unique_ids)
-                    self.log(f"Classes contained in classes list that are not found in the segmentation mask: {difference_classes}")
-
-                    difference_masks = unique_ids.difference(filtered_classes_combined)
-                    self.log(f"Classes contained in segmentation mask that are not contained in classes list: {difference_masks}")
-                    
-                    if len(difference_masks) > 0:
-                        _masks = np.isin(masks[0], list(difference_masks))
-                        plt.figure()
-                        plt.imshow(_masks)
-                        plt.set_title(f"Classes in segmentation mask that are not contained in classes list after processing shard {i}")
-                        plt.axis("off")
-                        plt.show()
-
-                    
-                local_hf.close()
-                self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
+            local_hf.close()
+            self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
             
             #remove background class
             filtered_classes_combined = filtered_classes_combined - set([0]) 
@@ -887,27 +880,11 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolved sharding plan.")
 
-        # add segmentation results to ome.zarr
-        self.save_zarr = True
+        # save final segmentation to sdata
+        self.project._write_segmentation_sdata(hdf_labels[0], self.project.nuc_seg_name, classes = list(filtered_classes_combined))
+        self.project._write_segmentation_sdata(hdf_labels[1], self.project.cyto_seg_name, classes = list(filtered_classes_combined))
 
-        # reading labels
-        path_labels = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
-
-        with h5py.File(path_labels, "r") as hf:
-            # initialize tempmmap array to save label results into
-            labels = tempmmap.array(
-                shape=hf[self.DEFAULT_MASK_NAME].shape,
-                dtype=hf[self.DEFAULT_MASK_NAME].dtype,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            )
-
-            labels[0] = hf[self.DEFAULT_MASK_NAME][0]
-            labels[1] = hf[self.DEFAULT_MASK_NAME][1]
-
-        self.save_segmentation_zarr(labels=labels)
-        self.log(
-            "finished saving segmentation results to ome.zarr from sharded segmentation."
-        )
+        self.log("finished saving segmentation results to sdata object for sharded segmentation.")
 
         #self.cleanup_shards(sharding_plan)
 
@@ -915,8 +892,12 @@ class ShardedSegmentation(Segmentation):
         current_process().gpu_id_list = gpu_id_list
 
     def process(self, input_image):
+        
+        #get proper level of input image
+        input_image = self._transform_input_image(input_image)
+
         self.save_zarr = False
-        self.save_input_image(input_image)
+
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
         if not os.path.isdir(self.shard_directory):
@@ -949,12 +930,7 @@ class ShardedSegmentation(Segmentation):
                 f.write(f"{shard}\n")
 
         shard_list = self.initialize_shard_list(sharding_plan)
-        self.log(
-            f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
-        )
-
-        del input_image  # remove from memory to free up space
-        gc.collect()  # perform garbage collection
+        self.log(f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins")
 
         # check that that number of GPUS is actually available
         if "nGPUS" not in self.config.keys():
@@ -1026,9 +1002,6 @@ class ShardedSegmentation(Segmentation):
             sys.exit(
                 "No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method."
             )
-
-        #save input image to segmentation.h5
-        self.save_input_image(input_image)
 
         # check to see which tiles are incomplete
         tile_directories = os.listdir(self.shard_directory)

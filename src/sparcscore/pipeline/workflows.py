@@ -1170,30 +1170,21 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _finalize_segmentation_results(self):
-        # The required maps are only nucleus channel
-        required_maps = [self.maps["normalized"][0]]
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=["nucleus"])
 
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        if self.maps["normalized"].shape[0] > 1:
-            feature_maps = [element for element in self.maps["normalized"][1:]]
+    def _finalize_segmentation_results(self):
+        # ensure correct dtype of the maps
 
-            channels = np.stack(required_maps + feature_maps).astype(np.float64)
-        else:
-            channels = np.stack(required_maps).astype(np.float64)
+        self.maps["nucleus_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["nucleus_segmentation"], mask_name="nucleus"
+        )
 
-        #ensure correct dtype of the maps
-        if not isinstance(self.maps["nucleus_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
-            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
-        
-        self.maps["nucleus_segmentation"] = self.maps["nucleus_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
-        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        return (channels, segmentation)
+        )
+
+        return segmentation
 
     def cellpose_segmentation(self, input_image):
         self._check_gpu_status()
@@ -1232,20 +1223,33 @@ class DAPISegmentationCellpose(_cellpose_segmentation):
         self._clear_cache(vars_to_delete=[model, diameter, masks])
 
     def process(self, input_image):
-        # initialize location to save masks to
-        self.maps = {"normalized": None, "nucleus_segmentation": None}
-        
+
+        # check that the correct level of input image is used
+        self._transform_input_image(input_image)
+
         # check that the image is of the correct dtype
         self._check_input_image_dtype(input_image)
 
+        # only get the first cannel for segmentation (does not use excess space on the GPU this way)
+        input_image = input_image[:1, :, :]
+
+        # initialize location to save masks to
+        self.maps = {
+            "nucleus_segmentation": tempmmap.array(
+                shape=(1, input_image.shape[1], input_image.shape[2]),
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+        }
 
         self.log("Starting Cellpose DAPI Segmentation.")
-
         self.cellpose_segmentation(input_image)
 
+        # finalize classes list
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
-        results = self.save_segmentation(channels, segmentation, all_classes)
-        return results
+        segmentation = self._finalize_segmentation_results()
+        self.save_segmentation_sdata(segmentation, all_classes)
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1257,20 +1261,18 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-        
-        #ensure correct dtype of maps
-        if not isinstance(self.maps["nucleus_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
-            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
-        
-        if not isinstance(self.maps["cytosol_segmentation"], self.DEFAULT_SEGMENTATION_DTYPE):
-            raise Warning("Nucleus segmentation map is not of the correct dtype. Forcefully converting. This could lead to unexpected behaviour.")
-        
-        self.maps["nucleus_segmentation"] = self.maps["nucleus_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        self.maps["cytosol_segmentation"] = self.maps["cytosol_segmentation"].astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        # ensure correct dtype of maps
+
+        self.maps["nucleus_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["nucleus_segmentation"], mask_name="nucleus"
+        )
+        self.maps["cytosol_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["cytosol_segmentation"], mask_name="cytosol"
+        )
 
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        )
 
         return segmentation
 
@@ -1373,53 +1375,42 @@ class CytosolSegmentationCellpose(_cellpose_segmentation):
         self._clear_cache(vars_to_delete=[masks_nucleus, masks_cytosol])
 
     def process(self, input_image):
-        
-        #ensure the correct level is selected for the input image
+        # ensure the correct level is selected for the input image
         input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
+        # only get the first two input image channels to perform segmentation to optimize memory usage on the GPU
+        input_image = input_image[:2, :, :]
+
         # initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(
-                shape=input_image.shape,
-                dtype=float,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            ),
             "nucleus_segmentation": tempmmap.array(
-                shape=input_image.shape,
+                shape=(1, input_image.shape[1], input_image.shape[2]),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
             "cytosol_segmentation": tempmmap.array(
-                shape=input_image.shape,
+                shape=(1, input_image.shape[1], input_image.shape[2]),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }
 
-        # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image
-
-        del input_image
-        gc.collect()
+        
 
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(self.maps["normalized"])
+        self.cellpose_segmentation(input_image)
 
-        # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0]) # remove background as a class
-        all_classes = list(all_classes)
+        # finalize segmentation classes ensuring that background is removed
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        #results = self.save_segmentation(channels, segmentation, all_classes)
-        
         self.save_segmentation_sdata(segmentation, all_classes)
 
         # clean up memory
-        del segmentation, all_classes
-        gc.collect()
+        self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
 
 class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
@@ -1438,15 +1429,23 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             self.maps["cytosol_segmentation"], "cytosol_segmentation"
         )
 
+        self.maps["fullsize_nucleus_segmentation"] = self._check_seg_dtype(mask=self.maps["fullsize_nucleus_segmentation"], mask_name="nucleus")
+        self.maps["fullsize_cytosol_segmentation"] = self._check_seg_dtype(mask=self.maps["fullsize_cytosol_segmentation"], mask_name="cytosol")
+
         # combine masks into one stack
         segmentation = np.stack([self.maps["fullsize_nucleus_segmentation"], self.maps["fullsize_cytosol_segmentation"]])
 
-        return(segmentation)
+        return segmentation
 
     def process(self, input_image):
+        # ensure the correct level is selected for the input image
+        self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
+
+        # only get the first two channels to save memory consumption
+        input_image = input_image[:2, :, :] 
 
         # setup downsampling
         self._get_downsampling_parameters()
@@ -1456,11 +1455,6 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         # setup the memory mapped arrays to store the results
         self.maps = {
-            "normalized": tempmmap.array(
-                shape=input_image.shape,
-                dtype=float,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            ),
             "nucleus_segmentation": tempmmap.array(
                 shape=(1, input_image.shape[1], input_image.shape[2]),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
@@ -1483,26 +1477,16 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             ),
         }
 
-        # could add a normalization step here if so desired
-        # perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
-        self.maps["normalized"] = input_image.copy()
-
-        input_image = input_image[
-            :2, :, :
-        ]  # only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
-        gc.collect()  # cleanup to ensure memory is freed up
-
         # self.log("Starting Cellpose DAPI Segmentation.")
         self.cellpose_segmentation(input_image)
 
-        # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = np.unique(self.maps["nucleus_segmentation"])
+        # finalize classes list
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
 
-        results = self.save_segmentation(segmentation, all_classes)
-
-        return results
+        self.save_segmentation_sdata(segmentation, all_classes)
+        self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
 
 class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
@@ -1517,21 +1501,14 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
         self._check_for_size_filtering(mask_types=["cytosol"])
 
     def _finalize_segmentation_results(self):
-        # The required maps are only nucleus channel
-        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
 
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        if self.maps["normalized"].shape[0] > 2:
-            feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(np.float64)
-        else:
-            channels = np.stack(required_maps).astype(np.float64)
+        # ensure correct dtype of maps
+        self.maps["cytosol_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["cytosol_segmentation"], mask_name="cytosol"
+        )
 
         segmentation = np.stack(
             [self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        return (channels, segmentation)
-
         )
 
         return segmentation
@@ -1592,11 +1569,6 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
 
         # initialize location to save masks to
         self.maps = {
-            "normalized": tempmmap.array(
-                shape=input_image.shape,
-                dtype=float,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            ),
             "cytosol_segmentation": tempmmap.array(
                 shape=(1, input_image.shape[1], input_image.shape[2]),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
@@ -1604,28 +1576,19 @@ class CytosolOnlySegmentationCellpose(_cellpose_segmentation):
             ),
         }
 
-        # could add a normalization step here if so desired
-        self.maps["normalized"] = input_image
-
-        # delete input image to prevent overloading memory
-        del input_image
-        gc.collect()
-
         # self.log("Starting Cellpose DAPI Segmentation.")
-        self.cellpose_segmentation(self.maps["normalized"])
+        self.cellpose_segmentation(input_image)
 
-        # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = np.unique(self.maps["cytosol_segmentation"])
+        # get final classes list
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
 
-        channels, segmentation = self._finalize_segmentation_results()
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        segmentation = self._finalize_segmentation_results()
+        self.save_segmentation_sdata(segmentation, all_classes)
 
         # clean up memory
-        del channels, segmentation, all_classes
-        gc.collect()
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
-        return results
+        return None
 
 
 class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
@@ -1637,15 +1600,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self, size_padding):
-        required_maps = [self.maps["normalized"][0], self.maps["normalized"][1]]
-
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        if self.maps["normalized"].shape[0] > 2:
-            feature_maps = [element for element in self.maps["normalized"][2:]]
-            channels = np.stack(required_maps + feature_maps).astype(self.DEFAULT_IMAGE_DTYPE)
-        else:
-            channels = np.stack(required_maps).astype(self.DEFAULT_IMAGE_DTYPE)
-
         _seg_size = self.maps["cytosol_segmentation"].shape
 
         self.log(
@@ -1698,13 +1652,17 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         if segmentation.shape[2] != self.project.input_image.shape[2]:
             sys.exit("Error. Segmentation mask and image have different shapes")
 
-        return channels, segmentation
+        return segmentation
 
     def process(self, input_image) -> None:
+        # ensure the correct level is selected for the input image
+        self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
+        #get the relevant channels for processing
+        input_image = input_image[:2, :, :]
 
         # setup downsampling
         self._get_downsampling_parameters()
@@ -1714,9 +1672,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         # setup the memory mapped arrays to store the results
         self.maps = {
-            "normalized": tempmmap.array(
-                shape=input_image.shape,
-                dtype=float,
             "cytosol_segmentation": tempmmap.array(
                 shape=(1, input_image.shape[1], input_image.shape[2]),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
@@ -1728,17 +1683,17 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
                 tmp_dir_abs_path=self._tmp_dir_path,
             ),
         }
-        self.maps["normalized"] = input_image.copy()
 
         self.cellpose_segmentation(input_image)
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
 
-        channels, segmentation = self._finalize_segmentation_results(
-            size_padding=_size_padding
-        )
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        segmentation = self._finalize_segmentation_results()
 
+        self.save_segmentation_sdata(segmentation, all_classes)
+
+        return None
 
 
 class Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose(ShardedSegmentation):
