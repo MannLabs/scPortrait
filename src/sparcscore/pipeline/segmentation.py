@@ -261,6 +261,11 @@ class Segmentation(ProcessingStep):
         self.check_filter_status()
         self.save_classes(classes)
 
+        if not self.deep_debug:
+            #remove all intermediate results to free up memory
+            if "maps" in self.__dict__.keys():
+                del self.maps
+
         self.log("=== finished segmentation ===")
         self.save_segmentation_zarr(labels=labels)
 
@@ -1251,6 +1256,11 @@ class TimecourseSegmentation(Segmentation):
 
         # close connect to temmpmmap file again
         del _tmp_seg
+
+        if not self.deep_debug:
+            #remove all intermediate results to free up memory
+            if "maps" in self.__dict__.keys():
+                del self.maps
 
     def _initialize_tempmmap_array(self):
         # create an empty HDF5 file prepared for using as a memory mapped temp array to save segmentation results to

@@ -944,18 +944,15 @@ class _ClassicalSegmentation(_BaseSegmentation):
         )
         potential_map = (potential_map * 0.9 + 0.1).astype(float)
 
-        self.maps["potential_map"] = potential_map
-
         if self.debug:
             fig = plt.figure(figsize=(10, 10))
-            plt.imshow(self.maps["potential_map"], cmap="magma")
+            plt.imshow(potential_map, cmap="magma")
             plt.axis("off")
             plt.title("Potential Map")
             fig_path = os.path.join(self.directory, "potential_map.png")
             fig.savefig(fig_path)
 
         self.log("Cytosol Potential Mask generated.")
-        self._clear_cache(vars_to_delete=[potential_map])
 
         # perform fast marching and watershed segmentation
         fmm_marker = np.ones_like(self.maps["median_corrected"][0])
@@ -965,14 +962,16 @@ class _ClassicalSegmentation(_BaseSegmentation):
             fmm_marker[center[0], center[1]] = 0
 
         fmm_marker = np.ma.MaskedArray(fmm_marker, self.maps["cytosol_mask"])
-        travel_time = skfmm_travel_time(fmm_marker, self.maps["potential_map"])
+        travel_time = skfmm_travel_time(fmm_marker, potential_map)
+
+        self._clear_cache(vars_to_delete=[fmm_marker, potential_map])
 
         if not isinstance(travel_time, np.ma.core.MaskedArray):
             raise TypeError(
                 "Travel_time for WGA based segmentation returned no MaskedArray. This is most likely due to missing WGA background determination."
             )
 
-        self.maps["travel_time"] = travel_time.filled(fill_value=np.max(travel_time))
+        travel_time = travel_time.filled(fill_value=np.max(travel_time))
 
         marker = np.zeros_like(self.maps["median_corrected"][1])
 
@@ -982,7 +981,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
             ]
 
         cytosol_labels = watershed(
-            self.maps["travel_time"],
+            travel_time,
             marker.astype(np.int64),
             mask=(self.maps["cytosol_mask"] == 0).astype(np.int64),
         )
@@ -991,9 +990,13 @@ class _ClassicalSegmentation(_BaseSegmentation):
             self.maps["cytosol_mask"] > 0.5, 0, cytosol_labels
         )
 
+        self._clear_cache(vars_to_delete=[travel_time, marker, cytosol_labels, px_center])
+
         # ensure all edge labels are removed
         cytosol_segmentation = remove_edge_labels(cytosol_segmentation)
         self.maps["cytosol_segmentation"] = cytosol_segmentation
+
+        self._clear_cache(vars_to_delete=[cytosol_segmentation])
 
         if self.filter_size:
             self.maps["cytosol_segmentation"] = self._perform_size_filtering(
@@ -1093,6 +1096,7 @@ class WGASegmentation(_ClassicalSegmentation):
         channels, segmentation = self._finalize_segmentation_results()
 
         results = self.save_segmentation(channels, segmentation, all_classes)
+
         return results
 
 
