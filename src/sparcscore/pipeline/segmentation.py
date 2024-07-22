@@ -23,7 +23,9 @@ from ome_zarr.io import parse_url
 from ome_zarr.writer import write_labels, write_label_metadata
 
 from alphabase.io import tempmmap
+from dask.array.core import Array as daskArray
 import xarray
+import datatree
 
 from spatialdata import SpatialData
 
@@ -91,6 +93,7 @@ class Segmentation(ProcessingStep):
         self.identifier = None
         self.window = None
         self.input_path = None
+        self.is_shard = False
 
         self.deep_debug = False
 
@@ -147,6 +150,25 @@ class Segmentation(ProcessingStep):
         self.input_path = input_path
         self.save_zarr = zarr_status
         self.create_temp_dir()
+        self.is_shard = True
+
+    def _load_input_image(self) -> daskArray:
+        """Loads the input image from the sdatafile.
+
+        Returns:
+            daskArray: Input image as a daskArray
+        """
+
+        sdata = SpatialData.read(self.input_path)
+
+        if isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+        elif isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+        else:
+            raise ValueError("Input image could not be loaded from sdata object.")
+
+        return self._transform_input_image(input_image)
 
     def call_as_shard(self):
         """Wrapper function for calling a sharded segmentation.
@@ -156,11 +178,10 @@ class Segmentation(ProcessingStep):
         """
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
 
-        sdata = SpatialData.read(self.input_path)
-        input_image = sdata["input_image"]
+        input_image = self._load_input_image()
 
-        input_image = self._transform_input_image(input_image)
-        input_image = input_image[:2, self.window[0], self.window[1]]
+        #select the part of the image that is relevant for this shard
+        input_image = input_image[:2, self.window[0], self.window[1]] #for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
 
         # calculate shape of required datacontainer
         c, _, _ = input_image.shape
@@ -173,6 +194,8 @@ class Segmentation(ProcessingStep):
         y = y2 - y1
 
         # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
+        input_image = input_image.compute()
+        
         if sc_any(input_image):
             try:
                 super().__call__(input_image)
@@ -191,9 +214,7 @@ class Segmentation(ProcessingStep):
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
 
-        # cleanup generated temp dir and variables
-        del input_image
-        gc.collect()
+        self._clear_cache(vars_to_delete=["input_image"])
 
         # write out window location
         if self.deep_debug:
@@ -203,7 +224,7 @@ class Segmentation(ProcessingStep):
 
         self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
-    def save_segmentation(self, channels, labels, classes):
+    def save_segmentation(self, labels, classes):
         """Saves the results of a segmentation at the end of the process.
 
         Args:
@@ -236,20 +257,6 @@ class Segmentation(ProcessingStep):
             chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
         )
 
-        # check if data container already exists and if so delete
-        if self.DEFAULT_CHANNELS_NAME in hf.keys():
-            del hf[self.DEFAULT_CHANNELS_NAME]
-            self.log(
-                "channels dataset already existed in hdf5, dataset was deleted and will be overwritten."
-            )
-
-        # also save channels
-        hf.create_dataset(
-            self.DEFAULT_CHANNELS_NAME,
-            data=channels,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-        )
-
         hf.close()
 
         # save classes
@@ -260,11 +267,14 @@ class Segmentation(ProcessingStep):
         self.save_segmentation_zarr(labels=labels)
     
     def save_segmentation_sdata(self, labels, classes):
-        if self.project is not None:
-            self.project._write_segmentation_sdata(labels[0], self.project.nuc_seg_name, classes = classes)
-            self.project._write_segmentation_sdata(labels[1], self.project.cyto_seg_name, classes = classes)
+        if self.is_shard:
+            self.save_segmentation(labels, classes)
         else:
-            ValueError("No project object found. Please provide a project object to save segmentation data to sdata object.")
+            if self.project is not None:
+                self.project._write_segmentation_sdata(labels[0], self.project.nuc_seg_name, classes = classes)
+                self.project._write_segmentation_sdata(labels[1], self.project.cyto_seg_name, classes = classes)
+            else:
+                ValueError("No project object found. Please provide a project object to save segmentation data to sdata object.")
 
     def save_segmentation_zarr(self, labels=None):
         """Saves the results of a segemtnation at the end of the process to ome.zarr"""
@@ -895,6 +905,9 @@ class ShardedSegmentation(Segmentation):
         
         #get proper level of input image
         input_image = self._transform_input_image(input_image)
+
+        if self.deep_debug:
+            self.log(f"Input image of dtype {type(input_image)} with dimensions {input_image.shape} passed to sharded segmentation method.")
 
         self.save_zarr = False
 

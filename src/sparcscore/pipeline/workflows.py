@@ -60,20 +60,7 @@ class _BaseSegmentation(Segmentation):
 
     def return_empty_mask(self, input_image):
         n_channels, x, y = input_image.shape
-        self.save_segmentation(input_image, np.zeros((2, x, y)), [])
-
-    def _clear_cache(self, vars_to_delete=None):
-        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
-
-        # delete all specified variables
-        if vars_to_delete is not None:
-            for var in vars_to_delete:
-                del var
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        gc.collect()
+        self.save_segmentation_sdata(input_image, np.zeros((2, x, y)), [])
 
     def _check_seg_dtype(self, mask: np.array, mask_name: str) -> np.array:
         if not isinstance(mask, self.DEFAULT_SEGMENTATION_DTYPE):
@@ -1097,7 +1084,7 @@ class WGASegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
         channels, segmentation = self._finalize_segmentation_results()
 
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        results = self.save_segmentation_sdata(channels, segmentation, all_classes)
         return results
 
 
@@ -1160,7 +1147,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
         channels, segmentation = self._finalize_segmentation_results()
 
-        results = self.save_segmentation(channels, segmentation, all_classes)
+        results = self.save_segmentation_sdata(channels, segmentation, all_classes)
         return results
 
 

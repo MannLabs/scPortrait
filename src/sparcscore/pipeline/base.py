@@ -6,6 +6,8 @@ import tempfile
 import sys
 import platform
 import numpy as np
+import torch
+import gc
 
 class Logable(object):
     """
@@ -94,34 +96,28 @@ class ProcessingStep(Logable):
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
-    #input data
-    DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
+    DEFAULT_CONFIG_NAME = "config.yml"
+    DEFAULT_INPUT_IMAGE_NAME = "input_image"
 
-    #segmentation
+    DEFAULT_PREFIX_MAIN_SEG = "seg_all"
+    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
+    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected"
+
+    DEFAULT_SEG_NAME_0 = "nucleus"
+    DEFAULT_SEG_NAME_1 = "cytosol"
+
+    DEFAULT_CENTERS_NAME = "centers_cells"
+
+    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
+
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
-    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
-    DEFAULT_CLASSES_FILE = "classes.csv"
-    DEFAULT_REMOVED_CLASSES_FILE = "removed_classes_too_close_to_edges.csv"
+    DEFAULT_TILES_FOLDER = 'tiles'
 
-    #filtering
-    DEFAULT_SEGMENTATION_FILTERING_DIR_NAME = "segmentation/filtering"
-    DEFAULT_FILTERED_CLASSES_FILE = "filtered_classes.csv"
-
-    #processes with tiling
-    DEFAULT_TILES_FOLDER = "tiles"
-
-    #extraction
-    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
-    DEFAULT_DATA_DIR = "data"
-    DEFAULT_DATA_FILE = "single_cells.h5"
-
-    #classification
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
-    DEFAULT_SELECTION_DIR_NAME = "selection"
-
-    #dtypes
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
+    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
+    DEFAULT_CLASSES_FILE = "classes.csv"
 
     def __init__(
         self,
@@ -292,6 +288,19 @@ class ProcessingStep(Logable):
             del self._tmp_dir, self._tmp_dir_path
         else:
             self.log("Temporary directory not found, skipping cleanup")
+    
+    def _clear_cache(self, vars_to_delete=None):
+        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
+
+        # delete all specified variables
+        if vars_to_delete is not None:
+            for var in vars_to_delete:
+                del var
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        gc.collect()
 
     def get_context(self):
         """
