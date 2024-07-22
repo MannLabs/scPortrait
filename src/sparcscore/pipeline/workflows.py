@@ -132,6 +132,9 @@ class _BaseSegmentation(Segmentation):
         self.pad_x = pad_x
         self.pad_y = pad_y
 
+        # track original image size
+        self.original_image_size = img.shape
+
         return None
 
     def _downsample_image(self, img: np.array, debug: bool = False) -> np.array:
@@ -153,9 +156,6 @@ class _BaseSegmentation(Segmentation):
             f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {self.N}."
         )
 
-        # track original image size
-        self.original_image_size = img.shape
-
         # perform image padding to ensure that image is compatible with downsample kernel size
         img = np.pad(img, ((0, 0), self.pad_x, self.pad_y))
         self.padded_image_size = img.shape
@@ -171,7 +171,7 @@ class _BaseSegmentation(Segmentation):
                 f"Expected a padded image of size {self.expected_padded_image_size} but got {self.padded_image_size}. Padding did not work as expted"
             )
             sys.exit(
-                "Error. Image padding did not work as expected and returned an array of differing size."
+                f"Error. Image padding did not work as expected. Expected a padded image of size {self.expected_padded_image_size} but got {self.padded_image_size}."
             )
 
         self.log(f"Downsampling image by a factor of {self.N}x{self.N}")
@@ -250,21 +250,38 @@ class _BaseSegmentation(Segmentation):
         assert y_trim == self.pad_y[1]
 
         # actually perform trimming
-        if x_trim > 0:
-            if y_trim > 0:
-                mask = mask[:, :-x_trim, :-y_trim]
+
+        if len(mask.shape) == 3:
+            if x_trim > 0:
+                if y_trim > 0:
+                    mask = mask[:, :-x_trim, :-y_trim]
+                else:
+                    mask = mask[:, :-x_trim, :]
             else:
-                mask = mask[:, :-x_trim, :]
-        else:
-            if y_trim > 0:
-                mask = mask[:, :, :-y_trim]
+                if y_trim > 0:
+                    mask = mask[:, :, :-y_trim]
+                else:
+                    mask = mask
+        elif len(mask.shape) == 2:
+            if x_trim > 0:
+                if y_trim > 0:
+                    mask = mask[:-x_trim, :-y_trim]
+                else:
+                    mask = mask[:-x_trim, :]
             else:
-                mask = mask
+                if y_trim > 0:
+                    mask = mask[:, :-y_trim]
+                else:
+                    mask = mask
 
         # check that mask has the correct shape and matches to input image
-        assert (mask.shape[1] == self.original_image_size[1]) and (
-            mask.shape[2] == self.original_image_size[2]
-        )
+
+        if len(mask.shape) == 2:
+            assert (mask.shape[0] == self.original_image_size[1]) and (
+                mask.shape[1] == self.original_image_size[2])
+        elif len(mask.shape) == 3:
+            assert (mask.shape[1] == self.original_image_size[1]) and (
+                mask.shape[2] == self.original_image_size[2])
 
         return mask
 
@@ -1580,8 +1597,6 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         self._get_downsampling_parameters()
         self._calculate_padded_image_size(input_image)
 
-        input_image = self._downsample_image(input_image)
-
         # setup the memory mapped arrays to store the results
         self.maps = {
             "normalized": tempmmap.array(
@@ -1619,7 +1634,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         input_image = input_image[:2, :, :]
         gc.collect()  # cleanup to ensure memory is freed up
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        #perform downsampling
+        input_image = self._downsample_image(input_image)
+
         self.cellpose_segmentation(input_image)
 
         del input_image
