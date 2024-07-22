@@ -301,9 +301,7 @@ class HDF5CellExtraction(ProcessingStep):
             )
         else:
             # use a regulary numpy array instead of a tempmmap array to be able to save strings as well as ints
-            _tmp_single_cell_index = np.empty(
-                self.single_cell_index_shape, dtype="<U64"
-            )  # need to use U64 here otherwise information potentially becomes truncated
+            _tmp_single_cell_index = np.empty(self.single_cell_index_shape, dtype="<U512")  
 
     def _transfer_tempmmap_to_hdf5(self):
         global _tmp_single_cell_data, _tmp_single_cell_index
@@ -405,7 +403,7 @@ class HDF5CellExtraction(ProcessingStep):
         _tmp_single_cell_data[save_index] = stack
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
     
-    def _save_failed_cell_info(self, save_index, cell_id):
+    def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
         """save the relevant information for cells that are too close to the image edges to extract
 
         Parameters
@@ -417,6 +415,9 @@ class HDF5CellExtraction(ProcessingStep):
             unique identifier of the cell which was unable to be extracted
         
         """
+
+        #image index and label_info can be ignored for the base case is only relevant for the timecourse extraction
+
         global _tmp_single_cell_index
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
 
@@ -651,7 +652,7 @@ class HDF5CellExtraction(ProcessingStep):
                     print(f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell.")
                 
                 self.save_index_to_remove.append(save_index)
-                self._save_failed_cell_info(save_index, cell_id)
+                self._save_failed_cell_info(save_index, nucleus_id, image_index, label_info, )
                 
                 if return_failed_ids:
                     return([save_index])
@@ -1180,34 +1181,57 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         del _tmp_single_cell_data, _tmp_single_cell_index, keep_index
         gc.collect()
 
-    def _save_cell_info(self, index, cell_id, image_index, label_info, stack):
+    def _save_cell_info(self, save_index, cell_id, image_index, label_info, stack):
         global _tmp_single_cell_data, _tmp_single_cell_index
         # label info is None so just ignore for the base case
 
         # save single cell images
-        _tmp_single_cell_data[index] = stack
-
-        # #perform check to see if stack only contains zeros
-        # if np.all(stack == 0):
-        #     self.log(f"Cell with the index {index} only contains zeros. Skipping this cell.")
-        #     self.save_index_to_remove.append(index)
-        #     return
+        _tmp_single_cell_data[save_index] = stack
 
         # get label information
         with h5py.File(self.input_segmentation_path, "r") as hf:
             labelling = hf.get("labels").asstr()[image_index][1:]
-            save_value = [str(index), str(cell_id)]
+            save_value = [str(save_index), str(cell_id)]
             save_value = np.array(flatten([save_value, labelling]))
 
-            _tmp_single_cell_index[index] = save_value
+            _tmp_single_cell_index[save_index] = save_value
 
             # double check that its really the same values
-            if _tmp_single_cell_index[index][2] != label_info:
+            if _tmp_single_cell_index[save_index][2] != label_info:
                 self.log("ISSUE INDEXES DO NOT MATCH.")
-                self.log(f"index: {index}")
+                self.log(f"index: {save_index}")
                 self.log(f"image_index: {image_index}")
                 self.log(f"label_info: {label_info}")
-                self.log(f"index it should be: {_tmp_single_cell_index[index][2]}")
+                self.log(f"index it should be: {_tmp_single_cell_index[save_index][2]}")
+
+    def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
+        """save the relevant information for cells that are too close to the image edges to extract
+
+        Parameters
+        ----------
+        save_index : int
+            index location in the temporary datastructures where the cell in question should have been saved, this index 
+            location will later be deleted
+        cell_id : int
+            unique identifier of the cell which was unable to be extracted
+        
+        """
+        global _tmp_single_cell_index
+
+        with h5py.File(self.input_segmentation_path, "r") as hf:
+            labelling = hf.get("labels").asstr()[image_index][1:]
+            save_value = [str(save_index), str(cell_id)]
+            save_value = np.array(flatten([save_value, labelling]))
+
+        _tmp_single_cell_index[save_index] = save_value
+
+        # double check that its really the same values
+        if _tmp_single_cell_index[save_index][2] != label_info:
+            self.log("ISSUE INDEXES DO NOT MATCH.")
+            self.log(f"index: {save_index}")
+            self.log(f"image_index: {image_index}")
+            self.log(f"label_info: {label_info}")
+            self.log(f"index it should be: {_tmp_single_cell_index[save_index][2]}")
 
     def process(self, input_segmentation_path, filtered_classes_path=None):
         """
@@ -1268,9 +1292,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         lookup_saveindex = self.generate_save_index_lookup(complete_class_list)
 
         # define column labels for the index
-        self.column_labels = ["index", "cellid"] + list(self.label_names.astype("U13"))[
-            1:
-        ]
+        self.column_labels = ["index", "cellid"] + list(self.label_names.astype("<U512"))[1:]
 
         # setup cache
         self._initialize_tempmmap_array(index_len=len(self.column_labels))
