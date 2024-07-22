@@ -22,7 +22,7 @@ WGASegmentation:
         min_size: 200 # minimum nucleus area in pixel
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
-    wga_segmentation:
+    cytosol_segmentation:
         threshold: 0.15 # treshold above which cytosol is detected
         lower_quantile_normalization: 0.01
         upper_quantile_normalization: 0.99
@@ -33,7 +33,7 @@ WGASegmentation:
         min_size: 200
         max_size: 30000
     chunk_size: 50
-    filter_masks_size: False
+    filter_masks_size: True
 DAPISegmentation:
     input_channels: 3
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
