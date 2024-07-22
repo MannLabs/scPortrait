@@ -142,13 +142,12 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is set to True, plot the local maxima on the binary mask
     if debug:
-        fig = plt.figure(frameon=False)
+        fig = plt.figure(frameon=False, figsize = (10,10))
         fig.set_size_inches(10, 10)
-        ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
-        ax.set_axis_off()
-        fig.add_axes(ax)
-        ax.imshow(image_mask, cmap="Greys_r")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
+        plt.imshow(image_mask, cmap="Greys_r")
+        plt.title("Generated Mask")
+        plt.axis("off")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
         plt.show()
 
     # segmentation by fast marching and watershed
@@ -163,13 +162,12 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is True, plot the calculated distance_2
     if debug:
-        fig = plt.figure(frameon=False)
-        fig.set_size_inches(10, 10)
-        ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
-        ax.set_axis_off()
-        fig.add_axes(ax)
-        ax.imshow(distance_2, cmap="viridis")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], color="red")
+        fig = plt.figure(frameon=False, figsize = (10,10))
+        plt.title("Distance Transform")
+        plt.imshow(distance_2, cmap="viridis")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
+        plt.axis("off")
+        plt.show()
 
     # Assign unique labels to each segmented region
     marker = np.zeros_like(image_mask).astype(DEFAULT_SEGMENTATION_DTYPE)
