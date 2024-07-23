@@ -48,6 +48,9 @@ from alphabase.io import tempmmap
 import torch
 from cellpose import models
 
+#for visualization 
+
+from sparcscore.utils.vis import _custom_cmap
 
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
@@ -467,20 +470,40 @@ class _BaseSegmentation(Segmentation):
         )
 
         if self.debug:
+            
             # plot mask before and after filtering to visualize the results
+            if "project" in self.__dict__.keys():
+                input_image = self.project.input_image
+            elif "input_image" in self.__dict__.keys():
+                input_image = self.input_image
+            else:
+                input_image = None
 
-            fig, axs = plt.subplots(1, 2, figsize=(10, 10))
-            axs[0].imshow(unfiltered_mask)
-            axs[0].axis("off")
-            axs[0].set_title("before filtering", fontsize=6)
+            if mask_name == "nucleus":
+                image_map = input_image[0]
+            elif mask_name == "cytosol":
+                image_map = input_image[1]
+            else:
+                image_map = None
 
-            axs[1].imshow(filtered_mask)
-            axs[1].axis("off")
-            axs[1].set_title("after filtering", fontsize=6)
-            fig.tight_layout()
+            mask = filter.visualize_filtering_results(
+                plot_fig=False, return_maps=True
+            )
 
-            fig_path = os.path.join(self.directory, f"{mask_name}_size_filtering.png")
+            cmap, norm = _custom_cmap()
+
+            fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+            axs.imshow(image_map, cmap="gray")
+            axs.imshow(mask[0], cmap=cmap, norm=norm)
+            axs.axis("off")
+            axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
+            fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")
             fig.savefig(fig_path)
+
+            # clearup memory
+            self._clear_cache(
+                vars_to_delete=[fig, mask, cmap, norm, input_image]
+            )
 
         end_time = time.time()
 
@@ -552,27 +575,42 @@ class _BaseSegmentation(Segmentation):
         )
 
         if debug:
-            # plot nucleus and cytosol masks before and after filtering
-            fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-            axs[0, 0].imshow(masks_nucleus_unfiltered[0])
-            axs[0, 0].axis("off")
-            axs[0, 0].set_title("before filtering", fontsize=6)
-            axs[0, 1].imshow(masks_nucleus[0])
-            axs[0, 1].axis("off")
-            axs[0, 1].set_title("after filtering", fontsize=6)
 
-            axs[1, 0].imshow(masks_cytosol_unfiltered[0])
-            axs[1, 0].axis("off")
-            axs[1, 1].imshow(masks_cytosol[0])
-            axs[1, 1].axis("off")
+            mask_nuc, mask_cyto = filter.visualize_filtering_results(plot_fig = False, return_maps = True)
+
+            if "project" in self.__dict__.keys():
+                input_image = self.project.input_image.data
+            elif "input_image" in self.__dict__.keys():
+                input_image = self.input_image
+            else:
+                input_image = None
+
+            #convert input image from uint16 to uint8
+            input_image = (input_image / 256).astype(np.uint8)
+
+            cmap, norm = _custom_cmap()
+
+            fig, axs = plt.subplots(1, 2, figsize=(20, 10))
+
+            axs[0].imshow(input_image[0], cmap="gray")
+            axs[0].imshow(mask_nuc[0], cmap=cmap, norm = norm)
+            axs[0].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+            axs[0].axis("off")
+            axs[0].set_title("results overlayed nucleus channel")
+
+            axs[1].imshow(input_image[1], cmap="gray")
+            axs[1].imshow(mask_nuc[0], cmap=cmap, norm = norm)
+            axs[1].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+            axs[1].axis("off")
+            axs[1].set_title("results overlayed cytosol channel")
+            
             fig.tight_layout()
-
-            fig_path = os.path.join(self.directory, "mask_matching_filtering.png")
+            fig_path = os.path.join(self.directory, "Results_mask_matching.png")
             fig.savefig(fig_path)
 
             # clearup memory
             self._clear_cache(
-                vars_to_delete=[fig, masks_cytosol_unfiltered, masks_nucleus_unfiltered]
+                vars_to_delete=[fig, mask_nuc, mask_cyto, cmap, norm, input_image]
             )
 
         self.log(

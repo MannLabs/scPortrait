@@ -182,6 +182,8 @@ class Segmentation(ProcessingStep):
 
         #select the part of the image that is relevant for this shard
         input_image = input_image[:2, self.window[0], self.window[1]] #for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
+        
+        self.input_image = input_image
 
         # calculate shape of required datacontainer
         c, _, _ = input_image.shape
