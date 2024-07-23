@@ -510,8 +510,8 @@ class SizeFilter(BaseFilter):
         ids_keep = list(class_ids - set(self.ids_to_remove))
 
         #generate masks for the two classes
-        final_mask = np.where(np.isin(mask, ids_keep), 1, mask)
-        final_mask = np.where(np.isin(mask, ids_discard), 2, final_mask)
+        final_mask = np.where(np.isin(mask, ids_keep), 2, mask)
+        final_mask = np.where(np.isin(mask, ids_discard), 1, final_mask)
 
         #only plot results if requested
         if not plot_fig:
@@ -893,11 +893,11 @@ class MatchNucleusCytosolIds(BaseFilter):
         ids_keep_cyto = list(set(class_ids_cyto) - set(ids_discard_cyto))
 
         #generate masks for the two classes
-        final_mask_nuc = np.where(np.isin(nuc_mask, ids_keep_nuc), 1, nuc_mask)
-        final_mask_nuc = np.where(np.isin(nuc_mask, ids_discard_nuc), 2, final_mask_nuc)
+        final_mask_nuc = np.where(np.isin(nuc_mask, ids_keep_nuc), 2, nuc_mask)
+        final_mask_nuc = np.where(np.isin(nuc_mask, ids_discard_nuc), 1, final_mask_nuc)
 
-        final_mask_cyto = np.where(np.isin(cyto_mask, ids_keep_cyto), 1, cyto_mask)
-        final_mask_cyto = np.where(np.isin(cyto_mask, ids_discard_cyto), 2, final_mask_cyto)
+        final_mask_cyto = np.where(np.isin(cyto_mask, ids_keep_cyto), 2, cyto_mask)
+        final_mask_cyto = np.where(np.isin(cyto_mask, ids_discard_cyto), 1, final_mask_cyto)
 
         #only plot results if requested
         if not plot_fig:
