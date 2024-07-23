@@ -2070,6 +2070,8 @@ class SpatialProject(Logable):
         self.sdata.images[image_name] =image
         self.sdata.write_element(image_name, overwrite=True)
 
+        self.log(f"Image {image_name} written to sdata object.")
+
         # track that input image has been loaded
         self.input_image_status = True
 
@@ -2081,6 +2083,8 @@ class SpatialProject(Logable):
         
         self.sdata.labels[segmentation_label] = segmentation_object
         self.sdata.write_element(segmentation_label, overwrite=True) 
+
+        self.log(f"Segmentation {segmentation_label} written to sdata object.")
 
     def _write_segmentation_sdata(self, segmentation, segmentation_label:str, classes:set = None):
         transform_original = Identity()
@@ -2095,9 +2099,13 @@ class SpatialProject(Logable):
         self.sdata.tables[table_name] = table
         self.sdata.write_element(table_name, overwrite=True)
 
+        self.log(f"Table {table_name} written to sdata object.")
+        
     def _write_points_object_sdata(self, points, points_name:str):
         self.sdata.points[points_name] = points
         self.sdata.write_element(points_name, overwrite=True)
+
+        self.log(f"Points {points_name} written to sdata object.")
 
 #### Functions to load input data ####
     def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None):
