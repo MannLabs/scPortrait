@@ -3,6 +3,24 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
+from matplotlib.colors import ListedColormap, BoundaryNorm
+
+def _custom_cmap():
+
+    # Define the colors: 0 is transparent, 1 is blue, 2 is red
+    colors = [(0, 0, 0, 0),  # Transparent
+            (0, 0, 1, 0.4),  # Blue
+            (1, 0, 0, 0.4)]  # Red
+
+    # Create the colormap
+    cmap = ListedColormap(colors)
+
+    # Define the boundaries and normalization
+    bounds = [0, 0.5, 1.5, 2.5]
+    norm = BoundaryNorm(bounds, cmap.N)
+
+    return(cmap, norm)
+
 def plot_segmentation_mask(
     project,
     mask_channel=0,
