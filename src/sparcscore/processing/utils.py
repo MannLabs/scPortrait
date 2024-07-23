@@ -3,7 +3,7 @@ import numpy as np
 from skimage.color import label2rgb
 import os
 
-def plot_image(array, size = (10,10), save_name="", cmap="magma", **kwargs):
+def plot_image(array, size = (10, 10), save_name="", cmap="magma", return_fig = False, **kwargs):
     """
     Visualize and optionally save an input array as an image.
 
@@ -32,6 +32,9 @@ def plot_image(array, size = (10,10), save_name="", cmap="magma", **kwargs):
     fig.add_axes(ax)
     ax.imshow(array, cmap=cmap, **kwargs)
     
+    if return_fig:
+        return fig
+
     if save_name != "":
         plt.savefig(save_name + ".png")
         plt.show()
@@ -40,8 +43,7 @@ def plot_image(array, size = (10,10), save_name="", cmap="magma", **kwargs):
         plt.show()
         plt.close()
 
-
-def visualize_class(class_ids, seg_map, background ,*args, **kwargs):
+def visualize_class(class_ids, seg_map, image, background, all_ids = None, return_fig = False, *args, **kwargs):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
 
@@ -64,21 +66,33 @@ def visualize_class(class_ids, seg_map, background ,*args, **kwargs):
     >>> background = np.random.random((3, 3)) * 255
     >>> visualize_class(class_ids, seg_map, background)
     """
-    # Remove class ID 0 from the seg_map, as it is used to represent the background
-    index = np.argwhere(class_ids==0.)
-    class_ids_no_zero = np.delete(class_ids, index)
+    
+    #ensure the class ids are a list
+    if not isinstance(class_ids, list):
+        class_ids = list(class_ids)
+
+    if all_ids is None:
+        all_ids = set(np.unique(seg_map)) - set([0])
+    
+    #get the ids to keep
+    keep_ids = list(all_ids - set(class_ids))
+
+    mask_discard = np.isin(seg_map, keep_ids)
+    mask_keep = np.isin(seg_map, class_ids)
 
     # Set the values in the output map to 2 for the specified class IDs
-    outmap_map = np.where(np.isin(seg_map, class_ids_no_zero), 2, seg_map)
+    outmap = np.where(mask_discard, 2, seg_map)
 
     # Set the values in the output map to 1 for all class IDs other than the specified classes
-    outmap_map = np.where(np.isin(seg_map, class_ids, invert=True), 1,outmap_map)
-    
-    # Convert the output map to an RGB image with class areas highlighted
-    image = label2rgb(outmap_map,background/np.max(background),alpha=0.4, bg_label=0)
-    
-    # Display the resulting image
-    plot_image(image, **kwargs)
+    outmap = np.where(mask_keep, 1, outmap)
+
+    vis_map = label2rgb(outmap, image = image, colors=["red", "blue"], alpha=0.4, bg_label=0)
+
+    fig = plot_image(vis_map, return_fig = True, *args, **kwargs)
+
+    if return_fig:
+        return fig
+
     
 def download_testimage(folder):
     """
