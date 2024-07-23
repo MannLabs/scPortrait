@@ -387,13 +387,15 @@ class _BaseSegmentation(Segmentation):
                 thresholds, confidence_interval = self._get_params_cellsize_filtering(
                     type=mask_type
                 )
-            setattr(self, f"{mask_type}_thresholds", thresholds)
-            setattr(self, f"{mask_type}_confidence_interval", confidence_interval)
+
+                #save attributes for use later
+                setattr(self, f"{mask_type}_thresholds", thresholds)
+                setattr(self, f"{mask_type}_confidence_interval", confidence_interval)
 
     def _get_params_cellsize_filtering(
         self, type
     ) -> Tuple[Union[Tuple[float], None], Union[float, None]]:
-        self.absolute_filter_status = False
+        absolute_filter_status = False
 
         if "min_size" in self.config[f"{type}_segmentation"].keys():
             min_size = self.config[f"{type}_segmentation"]["min_size"]
@@ -403,7 +405,7 @@ class _BaseSegmentation(Segmentation):
 
         if "max_size" in self.config[f"{type}_segmentation"].keys():
             max_size = self.config[f"{type}_segmentation"]["max_size"]
-            self.absolute_filter_status = True
+            absolute_filter_status = True
         else:
             max_size = None
 
