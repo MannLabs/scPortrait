@@ -492,10 +492,10 @@ class _BaseSegmentation(Segmentation):
             
             if plot_results:
                 # get input image for visualization
-                if "project" in self.__dict__.keys():
-                    input_image = self.project.input_image
-                elif "input_image" in self.__dict__.keys():
+                if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
+                elif "project" in self.__dict__.keys():
+                    input_image = self.project.input_image
                 else:
                     input_image = None
 
@@ -505,7 +505,8 @@ class _BaseSegmentation(Segmentation):
                     image_map = input_image[1]
                 else:
                     image_map = None
-                    cmap, norm = _custom_cmap()
+                
+                cmap, norm = _custom_cmap()
 
                 fig, axs = plt.subplots(1, 1, figsize=(10, 10))
                 axs.imshow(image_map, cmap="gray")
@@ -606,10 +607,11 @@ class _BaseSegmentation(Segmentation):
                 plot_results = True
 
             if plot_results: 
-                if "project" in self.__dict__.keys():
-                    input_image = self.project.input_image.data
-                elif "input_image" in self.__dict__.keys():
+                if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
+                elif "project" in self.__dict__.keys():
+                    if self.project is not None:
+                        input_image = self.project.input_image.data
                 else:
                     input_image = None
                 
