@@ -95,7 +95,9 @@ class Segmentation(ProcessingStep):
         self.input_path = None
         self.is_shard = False
 
+        #additional parameters to configure level of debugging for developers
         self.deep_debug = False
+        self.save_filter_results = True
 
     def save_classes(self, classes):
         # define path where classes should be saved
@@ -179,7 +181,7 @@ class Segmentation(ProcessingStep):
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
 
         input_image = self._load_input_image()
-
+        
         #select the part of the image that is relevant for this shard
         input_image = input_image[:2, self.window[0], self.window[1]] #for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
         
