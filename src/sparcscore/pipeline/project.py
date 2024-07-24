@@ -2117,6 +2117,8 @@ class SpatialProject(Logable):
 
 #### Functions to load input data ####
     def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None):
+        #check if an input image was already loaded if so throw error if overwrite = False
+        self._cleanup_sdata_object()
 
         #get channel names
         if channel_names is None:
@@ -2258,6 +2260,8 @@ class SpatialProject(Logable):
         shutil.rmtree(temp_image_path)
 
     def load_input_from_omezarr(self, ome_zarr_path):
+        #check if an input image was already loaded if so throw error if overwrite = False
+        self._cleanup_sdata_object()
         
         # read the image data
         self.log(f"trying to read file from {ome_zarr_path}")
@@ -2293,6 +2297,9 @@ class SpatialProject(Logable):
         """
         Load input image from a spatialdata object.
         """
+        #check if an input image was already loaded if so throw error if overwrite = False
+        self._cleanup_sdata_object()
+
         #read input sdata object
         sdata_input = SpatialData.read(sdata_path)
         
