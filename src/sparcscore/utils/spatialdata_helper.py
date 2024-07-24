@@ -6,6 +6,8 @@ from sparcscore.processing.segmentation import numba_mask_centroid
 import datatree
 import xarray
 
+from dask.array import unique as DaskUnique
+
 from typing import List, Tuple, Dict, Any
 
 import pandas as pd
@@ -175,3 +177,26 @@ def calculate_centroids(mask, coordinate_system = "global"):
         centroids = get_centroids(mask, coordinate_system)
     
     return(centroids)
+
+def get_unique_cell_ids(data, remove_background = True):
+    """Get the unique cell ids from the segmentation mask.
+    
+    Parameters
+    ----------
+    data : xarray.DataArray
+        The segmentation mask data.
+    remove_background : bool, optional
+        Whether to remove the background class from the unique cell ids (default: True).
+    
+    Returns
+    -------
+    set
+        The unique cell ids.
+    """
+
+    cell_ids = set(DaskUnique(data.data).compute())
+    
+    if remove_background:
+        cell_ids = cell_ids - {0} #remove background class 
+    
+    return cell_ids

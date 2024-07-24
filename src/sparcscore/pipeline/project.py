@@ -30,6 +30,8 @@ from ome_zarr.reader import Reader
 from alphabase.io import tempmmap
 from sparcstools.base import daskmmap
 
+from sparcscore.utils.spatialdata_helper import get_unique_cell_ids
+
 class Project(Logable):
     """
     Project base class used to create a SPARCSpy project. This class manages all of the SPARCSpy processing steps. It directly maps
@@ -2008,6 +2010,12 @@ class SpatialProject(Logable):
         """
         return os.path.join(self.project_location, "sparcs.sdata")
 
+    def _ensure_all_labels_habe_cell_ids(self):
+        """ Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
+        for keys in list(self.sdata.labels.keys()):
+            if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
+                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
+        
     def _check_sdata_status(self, print_status = False):
 
         if self.sdata is None:
@@ -2044,6 +2052,8 @@ class SpatialProject(Logable):
     def _read_sdata(self):
         if os.path.exists(self._get_sdata_path()):
             self.sdata = SpatialData.read(self._get_sdata_path())
+
+            self._ensure_all_labels_habe_cell_ids()
 
             #update all parameters to track status of project
             self._check_sdata_status(print_status = True)
