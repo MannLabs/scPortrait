@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 import pandas as pd
 import sys
@@ -421,9 +422,11 @@ class HDF5CellExtraction(ProcessingStep):
             masks = []
             if self.extract_nucleus_mask:
                 if image_index is None:
-                    nuclei_mask = self.sdata[self.nucleus_key].data[window_y, window_x].compute()
+                    # nuclei_mask = self.sdata[self.nucleus_key].data[window_y, window_x].compute()
+                    nuclei_mask = self.seg_masks[0, window_y, window_x]
                 else:
-                    nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
+                    # nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
+                    nuclei_mask = self.seg_masks[image_index, 0, window_y, window_x]
 
                 #modify nucleus mask to only contain the nucleus of interest and perform some morphological operations
                 nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
@@ -433,9 +436,11 @@ class HDF5CellExtraction(ProcessingStep):
 
                     #then we must use the nucleus mask to mask all of the other image channels
                     if image_index is None:
-                        image_data = self.input_image[:, window_y, window_x].compute()
+                        # image_data = self.input_image[:, window_y, window_x].compute()
+                        image_data = self.image_data[:, window_y, window_x]
                     else:
-                        image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                        # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                        image_data = self.image_data[image_index, :, window_y, window_x]
 
                     image_data = self.norm_function(image_data)
                     image_data = image_data * nuclei_mask
@@ -445,9 +450,11 @@ class HDF5CellExtraction(ProcessingStep):
 
             if self.extract_cytosol_mask:
                 if image_index is None:
-                    cell_mask = self.sdata[self.cytosol_key].data[window_y, window_x].compute()
+                    # cell_mask = self.sdata[self.cytosol_key].data[window_y, window_x].compute()
+                    cell_mask = self.seg_masks[1, window_y, window_x]
                 else:
-                    cell_mask = self.sdata[self.cytosol_key].data[image_index, window_y, window_x].compute()
+                    # cell_mask = self.sdata[self.cytosol_key].data[image_index, window_y, window_x].compute()
+                    cell_mask = self.seg_masks[image_index, 1, window_y, window_x]
                 
                 #modify cell mask to only contain the cytosol of interest and perform some morphological operations
                 cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
@@ -458,9 +465,11 @@ class HDF5CellExtraction(ProcessingStep):
                 
                 #extract the relevant channels for the cell               
                 if image_index is None:
-                    image_data = self.input_image[:, window_y, window_x].compute()
+                    # image_data = self.input_image[:, window_y, window_x].compute()
+                    image_data = self.image_data[:, window_y, window_x]
                 else:
-                    image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                    # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                    nuclei_mask = self.seg_masks[0, window_y, window_x]
 
                 image_data = self.norm_function(image_data)
                 image_data = image_data * cell_mask
@@ -502,7 +511,10 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _extract_classes_multi(self, px_centers, arg_list):
         self._get_normalization()
-        self._get_sdata()
+        # self._get_sdata()
+
+        self.seg_masks = mmap_array_from_path(self.path_seg_masks)
+        self.image_data = mmap_array_from_path(self.path_image_data)
 
         results = []
         for arg in arg_list:
@@ -675,11 +687,37 @@ class HDF5CellExtraction(ProcessingStep):
         # generate cell pairings to extract
         self._generate_save_index_lookup(self.centers_cell_ids)
         args = self._get_arg(self.centers_cell_ids)
+
+        #convert input images to memory mapped temp arrays for faster reading
+        self.path_seg_masks = create_empty_mmap(shape = (self.n_masks, self.input_image_height, self.input_image_width), 
+                                           dtype = self.DEFAULT_SEGMENTATION_DTYPE, 
+                                           tmp_dir_abs_path = self._tmp_dir_path)
+        self.path_image_data = create_empty_mmap(shape = (self.n_image_channels, self.input_image_height, self.input_image_width),
+                                            dtype = self.DEFAULT_IMAGE_DTYPE,
+                                            tmp_dir_abs_path = self._tmp_dir_path)
+
+        #transfer data to memory mapped arrays
+        start_time = time.time()
         
+        self._get_sdata()
+        seg_masks = mmap_array_from_path(self.path_seg_masks)
+        image_data = mmap_array_from_path(self.path_image_data)
+
+        for i, mask in enumerate(self.masks):
+            seg_masks[i] = self.sdata[mask].data.compute()
+        
+        for i in range(self.n_image_channels):
+            image_data[i] = self.input_image[i, :, :].compute()
+        
+        self.log(f"Finished transferring data to memory mapped arrays. Time taken: {time.time() - start_time}")
+
         if self.config["threads"] <= 1:
             #set up function for single-threaded processing
             self._get_normalization()
-            self._get_sdata()
+            #self._get_sdata()
+
+            self.seg_masks = seg_masks
+            self.image_data = image_data
 
             f = func_partial(self._extract_classes, self.centers)
 
