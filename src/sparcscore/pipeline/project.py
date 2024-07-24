@@ -2008,27 +2008,45 @@ class SpatialProject(Logable):
         """
         return os.path.join(self.project_location, "sparcs.sdata")
 
-    def _check_sdata_status(self):
-        #check status of project
-        self.input_image_status = self.DEFAULT_INPUT_IMAGE_NAME in self.sdata.images
-        self.nuc_seg_status = self.nuc_seg_name in self.sdata.labels
-        self.cyto_seg_status = self.cyto_seg_name in self.sdata.labels
-        self.centers_status = self.DEFAULT_CENTERS_NAME in self.sdata.points
+    def _check_sdata_status(self, print_status = False):
 
-        if self.input_image_status:
-            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-            else:
-                self.input_image = None
+        if self.sdata is None:
+            self._read_sdata()
+            if self.sdata is None:
+                Warning("No sdata object found.")
+            return None
+        else:
+            #check status of project
+            self.input_image_status = self.DEFAULT_INPUT_IMAGE_NAME in self.sdata.images
+            self.nuc_seg_status = self.nuc_seg_name in self.sdata.labels
+            self.cyto_seg_status = self.cyto_seg_name in self.sdata.labels
+            self.centers_status = self.DEFAULT_CENTERS_NAME in self.sdata.points
+
+            if self.input_image_status:
+                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+                elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+                else:
+                    self.input_image = None
+            
+            if print_status:
+                self.log("Current Project Status:")
+                self.log("--------------------------------")
+                self.log(f"Input Image Status: {self.input_image_status}")
+                self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
+                self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
+                self.log(f"Centers Status: {self.centers_status}")
+                self.log("--------------------------------")
+            
+            return None
 
     def _read_sdata(self):
-        if os.path.isfile(self._get_sdata_path()):
+        if os.path.exists(self._get_sdata_path()):
             self.sdata = SpatialData.read(self._get_sdata_path())
 
             #update all parameters to track status of project
-            self._check_sdata_status()
+            self._check_sdata_status(print_status = True)
 
         else:
             self.sdata = SpatialData()
