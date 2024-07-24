@@ -1988,11 +1988,19 @@ class SpatialProject(Logable):
                 )
                 shutil.rmtree(self.sdata_path)
             else:
-                raise ValueError(
-                    f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
-                )
+                #check to see if the sdata object is empty
+                if len(os.listdir(self.sdata_path)) == 0:
+                    self.log(
+                        f"Output location {self.sdata_path} already exists but does not contain any data. Overwriting."
+                    )
+                else:
+                    raise ValueError(
+                        f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
+                    )
         else:
             os.makedirs(self.sdata_paths)
+        
+        self._read_sdata()
 
     def _get_sdata_path(self):
         """ 
