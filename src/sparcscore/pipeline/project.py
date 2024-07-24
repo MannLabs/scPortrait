@@ -1833,6 +1833,7 @@ class SpatialProject(Logable):
 
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
+    DEFAULT_SDATA_FILE = "sparcs.sdata"
 
     DEFAULT_PREFIX_MAIN_SEG = "seg_all"
     DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
@@ -1846,11 +1847,14 @@ class SpatialProject(Logable):
     DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
 
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
+    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
+    DEFAULT_DATA_DIR = "data"
 
     def __init__(self, 
                  project_location, 
                  config_path, 
                  segmentation_f=None,
+                 extraction_f=None,
                  overwrite=False, 
                  debug = False):
         
@@ -1867,6 +1871,7 @@ class SpatialProject(Logable):
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
         self.segmentation_f = segmentation_f
+        self.extraction_f = extraction_f
 
         #check if project directory exists, if it does not create
         if not os.path.isdir(self.project_location):
@@ -1900,6 +1905,31 @@ class SpatialProject(Logable):
             )
         else:
             self.segmentation_f = None
+        
+        # === setup extraction ===
+        if extraction_f is not None:
+            
+            extraction_directory = os.path.join(
+                self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
+            )
+
+            self.extraction_directory = extraction_directory
+
+            if extraction_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {extraction_f.__name__} is missing from the config file"
+                )
+
+            self.extraction_f = extraction_f(
+                self.config[extraction_f.__name__],
+                self.extraction_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                project = self,
+            )
+        else:
+            self.extraction_f = None
 
     def _load_config_from_file(self, file_path):
         """
@@ -2008,7 +2038,7 @@ class SpatialProject(Logable):
         """ 
         Get the path to the spatialdata object.
         """
-        return os.path.join(self.project_location, "sparcs.sdata")
+        return os.path.join(self.project_location, self.DEFAULT_SDATA_FILE)
 
     def _ensure_all_labels_habe_cell_ids(self):
         """ Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
@@ -2069,6 +2099,21 @@ class SpatialProject(Logable):
         #open interactive viewer in napari
         interactive = Interactive(self.sdata)
         interactive.run()
+
+#### Functions for operations on sdata object #####
+
+    def _get_centers(self, segmentation_label:str) -> PointsModel:
+
+        if segmentation_label not in self.sdata.labels:
+            raise ValueError(f"Segmentation {segmentation_label} not found in sdata object.")
+        
+        centers = calculate_centroids(self.sdata.labels[segmentation_label])
+
+        return centers
+    
+    def _add_centers(self, segmentation_label:str) -> None:
+        centroids_object = self._get_centers(segmentation_label)
+        self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME)
 
 #### Functions for adding elements to sdata object ########
     def _write_image_sdata(self, image, image_name, channel_names = None, scale_factors = [2, 4, 8], chunks = (1, 1000, 1000)):
@@ -2136,7 +2181,7 @@ class SpatialProject(Logable):
         self.sdata.write_element(table_name, overwrite=True)
 
         self.log(f"Table {table_name} written to sdata object.")
-        
+
     def _write_points_object_sdata(self, points, points_name:str):
         self.sdata.points[points_name] = points
         self.sdata.write_element(points_name, overwrite=True)
@@ -2330,8 +2375,6 @@ class SpatialProject(Logable):
 
         #read input sdata object
         sdata_input = SpatialData.read(sdata_path)
-        
-        self._read_sdata()
 
         #get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
@@ -2421,14 +2464,28 @@ class SpatialProject(Logable):
 #### Functions to perform processing ####
 
     def segment(self):
-        self._check_sdata_status()
 
+        #check to ensure a method has been assigned
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+        
+        self._check_sdata_status()
         #ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
         
-        if self.segmentation_f is None:
-            raise ValueError("No segmentation method defined")
-        
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
+    
+    def extract(self, partial = False, n_cells = None):
+        if self.extraction_f is None:
+            raise ValueError("No extraction method defined")
+
+        #ensure that a segmentation has been stored that can be extracted
+        self._check_sdata_status(print_status = True)
+
+        if not self.nuc_seg_status or not self.cyto_seg_status:
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
+        
+        else:
+            self.extraction_f(partial = partial, n_cells = n_cells)

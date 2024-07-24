@@ -98,6 +98,7 @@ class ProcessingStep(Logable):
     """
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
+    DEFAULT_SDATA_FILE = "sparcs.sdata"
 
     DEFAULT_PREFIX_MAIN_SEG = "seg_all"
     DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
@@ -113,11 +114,17 @@ class ProcessingStep(Logable):
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_TILES_FOLDER = 'tiles'
 
+    DEFAULT_EXTRACTIN_DIR_NAME = "extraction"
+    DEFAULT_DATA_DIR = "data"
+
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
 
     DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
     DEFAULT_CLASSES_FILE = "classes.csv"
+    DEFAULT_REMOVED_CLASSES_FILE = "removed_classes.csv"
+    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
     def __init__(
         self,
@@ -141,6 +148,8 @@ class ProcessingStep(Logable):
         self.project = project
 
         self.get_context()
+
+        self.deep_debug = False
 
     def __call__(
         self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
@@ -181,7 +190,10 @@ class ProcessingStep(Logable):
         if callable(process):
             x = self.process(*args, **kwargs)
             # clear temp directory after processing is completed
-            self.clear_temp_dir()
+            if not self.deep_debug:
+                self.clear_temp_dir()  #for deep debugging purposes, we keep the temp directory
+            else:
+                self.log("Deep debugging enabled, keeping temporary directory")
             return x
         else:
             self.clear_temp_dir()  # also ensure clearing if not callable just to make sure everything is cleaned up
