@@ -2167,12 +2167,15 @@ class SpatialProject(Logable):
 
         self.log(f"Segmentation {segmentation_label} written to sdata object.")
 
-    def _write_segmentation_sdata(self, segmentation, segmentation_label:str, classes:set = None):
+    def _write_segmentation_sdata(self, segmentation, segmentation_label:str, classes:set = None, chunks = (50, 50)):
         transform_original = Identity()
         mask = spLabels2DModel.parse(segmentation, 
                                     dims=["y", "x"], 
                                     transformations={'global': transform_original},
-                                    rgb = False)
+                                    chunks = chunks)
+        
+        if not get_chunk_size(mask) == chunks:
+            mask.data = mask.data.rechunk(chunks)
         
         self._write_segmentation_object_sdata(mask, segmentation_label, classes = classes)
 
