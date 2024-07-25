@@ -1,14 +1,12 @@
 import os
-import time
+import shutil
 import numpy as np
 import pandas as pd
 import sys
-import csv
 import h5py
 from tqdm.auto import tqdm
 from itertools import compress
 import timeit
-import _pickle as cPickle
 import matplotlib.pyplot as plt
 
 from functools import partial as func_partial
@@ -18,7 +16,6 @@ import platform
 from alphabase.io.tempmmap import mmap_array_from_path, create_empty_mmap
 
 from skimage.filters import gaussian
-from skimage.morphology import disk, dilation
 from scipy.ndimage import binary_fill_holes
 
 from sparcscore.processing.segmentation import numba_mask_centroid
@@ -27,7 +24,6 @@ from sparcscore.processing.preprocessing import percentile_normalization, MinMax
 from sparcscore.pipeline.base import ProcessingStep
 
 from spatialdata import SpatialData
-import dask.array as darray
 import datatree
 import xarray
 
@@ -65,7 +61,7 @@ class HDF5CellExtraction(ProcessingStep):
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
             self.config["threads"] = 1
 
-        self.deep_debug = True
+        self.deep_debug = False
 
     def _get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -168,8 +164,13 @@ class HDF5CellExtraction(ProcessingStep):
                                             )
 
     def _set_up_extraction(self):
+
+        if self.partial:
+            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_{self.n_cells}_{self.seed}"
+        else:
+            output_folder_name = self.DEFAULT_DATA_DIR
         
-        self._setup_output()
+        self._setup_output(folder_name=output_folder_name)
 
         self._get_segmentation_info()
         self._get_input_image_info()
@@ -271,9 +272,20 @@ class HDF5CellExtraction(ProcessingStep):
         assert set(self.centers_cell_ids) == set(self.project.sdata[self.main_segmenation_mask].attrs["cell_ids"]), "Cell ids from centers do not match those from the segmentation mask. Cannot proceed with extraction."
 
     def _get_classes_to_extract(self):
-        
+        if self.partial_processing:
+            self.log("Partial extraction mode enabled. Randomly sampling {self.n_cells} cells to extract with seed {self.seed}.")
+
+            #randomly sample n_cells from the centers
+            np.random.seed(self.seed)
+            chosen_ids = np.random.choice(list(range(len(self.centers_cell_ids))), self.n_cells, replace=False)
+            self.classes = self.centers_cell_ids[chosen_ids]
+            self.px_centers = self.centers[chosen_ids]
+        else:
+            self.classes = self.centers_cell_ids
+            self.px_centers = self.centers
+
         #get number of classes that need to be extracted
-        self.num_classes = len(self.centers_cell_ids)
+        self.num_classes = len(self.classes)
 
     def _verbalise_extraction_info(self):
         # print some output information
@@ -628,6 +640,24 @@ class HDF5CellExtraction(ProcessingStep):
         os.remove(self._tmp_single_cell_data_path)
         os.remove(self._tmp_single_cell_index_path)
 
+    def _post_extraction_cleanup(self, vars_to_delete = None):
+
+        #remove no longer required variables
+        if vars_to_delete is not None:
+            self._clear_cache(vars_to_delete = vars_to_delete)
+
+        #delete segmentation masks and input images from self if present
+        if "seg_masks" in self.__dict__:
+            del self.seg_masks
+        if "image_data" in self.__dict__:
+            del self.image_data
+        
+        #remove memory mapped temp files
+        shutil.rmtree(self.path_seg_masks)
+        shutil.rmtree(self.path_image_data)
+
+        self.clear_cache()
+
     def process(self, partial=False, n_cells = None, seed = 42):
         """
         Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -678,15 +708,25 @@ class HDF5CellExtraction(ProcessingStep):
         #set up flag for partial processing
         self.partial_processing = partial
 
+        if self.partial_processing:
+            self.n_cells = n_cells
+            self.seed = seed
+            self.DEFAULT_LOG_NAME = "partial_processing.log" #change log name so that the results are not written to the same log file as a complete extraction
+
         #run all of the extraction setup steps
         self._set_up_extraction()
 
         self.log(f"Starting single-cell image extraction process of {self.num_classes}...")
         start = timeit.default_timer()
 
+        if self.partial_processing:
+            self.log(f"Starting partial single-cell image extraction of {self.n_cells} cells...")
+        else:
+            self.log(f"Starting single-cell image extraction of {self.num_classes} cells...")
+        
         # generate cell pairings to extract
-        self._generate_save_index_lookup(self.centers_cell_ids)
-        args = self._get_arg(self.centers_cell_ids)
+        self._generate_save_index_lookup(self.classes)
+        args = self._get_arg(self.classes)
 
         #convert input images to memory mapped temp arrays for faster reading
         self.path_seg_masks = create_empty_mmap(shape = (self.n_masks, self.input_image_height, self.input_image_width), 
@@ -699,7 +739,10 @@ class HDF5CellExtraction(ProcessingStep):
         #transfer data to memory mapped arrays
         start_time = time.time()
         
+        #read the data
         self._get_sdata()
+
+        #transfer the data to the memory mapped arrays
         seg_masks = mmap_array_from_path(self.path_seg_masks)
         image_data = mmap_array_from_path(self.path_image_data)
 
@@ -712,14 +755,12 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Finished transferring data to memory mapped arrays. Time taken: {time.time() - start_time}")
 
         if self.config["threads"] <= 1:
-            #set up function for single-threaded processing
+            #set up for single-threaded processing
             self._get_normalization()
-            #self._get_sdata()
-
             self.seg_masks = seg_masks
             self.image_data = image_data
 
-            f = func_partial(self._extract_classes, self.centers)
+            f = func_partial(self._extract_classes, self.px_centers)
 
             self.log("Running in single thread mode.")
             results = []
@@ -728,7 +769,7 @@ class HDF5CellExtraction(ProcessingStep):
                 results.append(x)
         else:
             #set up function for multi-threaded processing
-            f = func_partial(self._extract_classes_multi, self.centers)
+            f = func_partial(self._extract_classes_multi, self.px_centers)
             batched_args = self._generate_batched_args(args)
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
@@ -755,121 +796,10 @@ class HDF5CellExtraction(ProcessingStep):
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
 
-    def process_partial(
-        self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
-    ):
-        """
-        Extracts the specified number of single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
+        if self.partial_processing:
+            self.DEFAULT_LOG_NAME = "processing.log" #change log name back to default
 
-        Parameters
-        ----------
-        input_segmentation_path : str
-            Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.
-        filtered_classes_path : str, optional
-            Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.
-        n_cells : int, optional
-            number of cells that should be extracted, by default 100
-
-        Important
-        ---------
-        If this class is used as part of a project processing workflow, all of the arguments will be provided by the ``Project`` class based on the previous segmentation.
-        The Project class will automatically provide the most recent segmentation together with the supplied parameters.
-
-        Examples
-        --------
-        .. code-block:: python
-
-            # After project is initialized and input data has been loaded and segmented
-            project.partial_extract(n_cells = 1000)
-
-        Notes
-        -----
-        The following parameters are required in the config file when running this method:
-
-        .. code-block:: yaml
-
-            HDF5CellExtraction:
-
-                compression: True
-
-                # threads used in multithreading
-                threads: 80
-
-                # image size in pixels
-                image_size: 128
-
-                # directory where intermediate results should be saved
-                cache: "/mnt/temp/cache"
-
-                # specs to define how HDF5 data should be chunked and saved
-                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
-                hdf5_rdcc_w0: 1
-                hdf5_rdcc_nslots: 50000
-        """
-
-        # setup output directory and ensure that a new temporary directory is created
-        self.DEFAULT_LOG_NAME = "partial_processing.log"
-        self.setup_output(folder_name=self.SELECTED_DATA_DIR)
-        self.create_temp_dir()
-
-        # get required information for extraction
-        self.get_channel_info()
-
-        self.log("Started partial extraction")
-        self.log(f"Loading segmentation data from {input_segmentation_path}")
-
-        hf = h5py.File(input_segmentation_path, "r")
-        hdf_channels = hf.get(self.channel_label)
-        hdf_labels = hf.get(self.segmentation_label)
-
-        self.log("Finished loading channel data " + str(hdf_channels.shape))
-        self.log("Finished loading label data " + str(hdf_labels.shape))
-        self.n_masks = hdf_labels.shape[0]
-
-        px_centers, _cell_ids = self._calculate_centers(hdf_labels)
-
-        # get classes to extract
-        class_list = self.get_classes(filtered_classes_path)
-        if isinstance(class_list[0], str):
-            lookup_dict = {x.split(":")[0]: x.split(":")[1] for x in class_list}
-            nuclei_ids = list(lookup_dict.keys())
-            nuclei_ids = set(nuclei_ids)
-        else:
-            nuclei_ids = set([str(x) for x in class_list])
-
-        # filter cell ids found using center into those that we actually want to extract
-        _cell_ids = list(_cell_ids)
-
-        filter = [str(x) in nuclei_ids for x in _cell_ids]
-
-        px_centers = np.array(list(compress(px_centers, filter)))
-        _cell_ids = list(compress(_cell_ids, filter))
-
-        # generate new class list
-        if isinstance(class_list[0], str):
-            class_list = [f"{x}:{lookup_dict[str(x)]}" for x in _cell_ids]
-            del lookup_dict
-        else:
-            class_list = _cell_ids
-
-        self.log(
-            f"Number of classes found in filtered classes list {len(nuclei_ids)} vs number of classes for which centers were calculated {len(class_list)}"
-        )
-        del _cell_ids, filter, nuclei_ids
-
-        # subset to only get the N_cells requested from this method
-        np.random.seed(seed)
-        indices = np.random.choice(range(len(class_list)), n_cells, replace=False)
-        indices.sort()
-        indices = [int(x) for x in indices]
-        
-        class_list = list(np.array(class_list)[indices])
-        px_centers = list(np.array(px_centers)[indices])
-
-        self.log(f"Randomly selected {n_cells} cells to extract")
-
-        # update number of classes
-        self.num_classes = len(class_list)
+        self.post_extraction_cleanup(vars_to_delete = [seg_masks, image_data])
 
         # setup cache
         self._initialize_tempmmap_array()
@@ -877,53 +807,6 @@ class HDF5CellExtraction(ProcessingStep):
         # start extraction
         self._verbalise_extraction_info()
 
-        self.log(f"Starting partial extraction of {self.num_classes} classes")
-        start = timeit.default_timer()
-        # generate cell pairings to extract
-        lookup_saveindex = self.generate_save_index_lookup(class_list)
-        args = self._get_arg(class_list, lookup_saveindex)
-
-        if self.config["threads"] <= 1:
-            #set up function for single-threaded processing
-            f = func_partial(self._extract_classes, input_segmentation_path, px_centers)
-
-            self.log("Running in single thread mode.")
-            for arg in tqdm(args):
-                f(arg)
-        else:
-            #set up function for multi-threaded processing
-            f = func_partial(self._extract_classes_multi, input_segmentation_path, px_centers)
-            
-            batched_args = batched_args = self._generate_batched_args(args)
-
-            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads. Will process a total of {len(batched_args)} batches of cells.")
-            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:
-                results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
-                pool.close()
-                pool.join()
-                print("multiprocessing done.")
-            
-            self.save_index_to_remove = flatten(results)
-        
-        stop = timeit.default_timer()
-
-        # calculate duration
-        duration = stop - start
-        rate = self.num_classes / duration
-
-        # generate final log entries
-        self.log(
-            f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)"
-        )
-
-        # transfer results to hdf5
-        self._transfer_tempmmap_to_hdf5()
-        self.log("Finished cleaning up cache.")
-
-        # reset variable to initial value
-        self.setup_output()
-        self.DEFAULT_LOG_NAME = "processing.log"
-        self.clear_temp_dir()
 
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
