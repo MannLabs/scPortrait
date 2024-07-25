@@ -107,13 +107,64 @@ class Segmentation(ProcessingStep):
     def save_classes(self, classes):
         # define path where classes should be saved
         filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
+    def _check_gpu_status(self):
+        # check if cuda GPU is available
+        if torch.cuda.is_available():
+            self.use_GPU = True
+            self.device = "cuda"
+            self.nGPUs = torch.cuda.device_count()
+        # check if MPS is available
+        elif torch.backends.mps.is_available():
+            self.use_GPU = True
+            self.device = torch.device("mps")
+            self.nGPUs  = 1
+
+        # default to CPU
+        else:
+            self.use_GPU = False
+            self.device = torch.device("cpu")
+            self.nGPUs = 0
 
         to_write = "\n".join([str(i) for i in list(classes)])
+    def _setup_processing(self):
+        """
+        Checks and updates the GPU status.
+        """
+        self.check_gpu_status()
 
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
+        #compare with config configuration
+        if "nGPUs" in self.config.keys():
+            if self.nGPUs != self.config["nGPUs"]:
+                nGPUs = self.config["nGPUs"]
+                self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
 
         self.log(f"Saved cell_id classes to file {filtered_path}.")
+                if self.nGPUs >= 1 and nGPUs >= 1:
+                    self.nGPUs = nGPUs
+                    self.log(f"Will proeceed with the number of GPUs specified in config ({self.nGPUs}).")
+                
+                else:
+                    self.log(f"Will proceed with the number of available GPUs ({self.nGPUs}).")
+
+        #set up threading
+        if "threads" in self.config.keys():
+            self.processes_per_GPU = self.config["threads"]
+        else:
+            self.processes_per_GPU = 1
+
+        if self.nGPUs >= 1:
+            self.n_processes = self.processes_per_GPU * self.nGPUs
+        else:
+            self.n_processes = self.processes_per_GPU
+
+        # initialize a list of available GPUs
+        gpu_id_list = []
+        for gpu_ids in range(self.nGPUs):
+            for _ in range(self.processes_per_GPU):
+                gpu_id_list.append(gpu_ids)
+        self.gpu_id_list = gpu_id_list
 
     def check_filter_status(self):
         # check filter status in config
@@ -939,46 +990,18 @@ class ShardedSegmentation(Segmentation):
         shard_list = self.initialize_shard_list(sharding_plan)
         self.log(f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins")
 
-        # check that that number of GPUS is actually available
-        if "nGPUS" not in self.config.keys():
-            self.config["nGPUs"] = torch.cuda.device_count()
+        #get GPU status
+        self._setup_processing()
 
-        nGPUS = self.config["nGPUs"]
-        available_GPUs = torch.cuda.device_count()
-        self.log(f"found {available_GPUs} GPUs.")
 
-        processes_per_GPU = self.config["threads"]
-
-        if available_GPUs != self.config["nGPUs"]:
-            self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
-
-        if available_GPUs >= 1:
-            n_processes = processes_per_GPU * available_GPUs
-            self.log(
-                f"Proceeding in segmentation with {n_processes} number of processes."
-            )
-        else:
-            n_processes = self.config["threads"]
-            available_GPUs = (
-                1  # default to 1 GPU if non are available and a CPU only method is run
-            )
-
-        # initialize a list of available GPUs
-        gpu_id_list = []
-        for gpu_ids in range(available_GPUs):
-            for _ in range(processes_per_GPU):
-                gpu_id_list.append(gpu_ids)
-
-        self.log(f"Beginning segmentation on {available_GPUs} GPUs.")
-
-        if n_processes == 1:
+        if self.n_processes == 1:
             for shard in shard_list:
                 shard.call_as_shard()
         else:
             with mp.get_context(self.context).Pool(
-                processes=n_processes,
+                processes=self.n_processes,
                 initializer=self.initializer_function,
-                initargs=[gpu_id_list],
+                initargs=[self.gpu_id_list],
             ) as pool:
                 results = list(
                     tqdm(
