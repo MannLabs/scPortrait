@@ -63,6 +63,7 @@ class Segmentation(ProcessingStep):
 
     """
 
+    CLEAN_LOG = True
     DEFAULT_FILTER_ADDTIONAL_FILE = "needs_additional_filtering.txt"
     PRINT_MAPS_ON_DEBUG = True
     DEFAULT_CHANNELS_NAME = "channels"
@@ -81,14 +82,18 @@ class Segmentation(ProcessingStep):
     ]
 
     def __init__(self, *args, **kwargs):
+        
+        super().__init__(*args, **kwargs)
+
+        if self.CLEAN_LOG:
+            self._clean_log_file()
+
         # if _tmp_seg is passed as an argument execute this following code (this only applies to some cases)
         if "_tmp_seg_path" in kwargs.keys():
             self._tmp_seg_path = kwargs["_tmp_seg_path"]
 
             # remove _tmp_seg from kwargs so that underlying classes do not need to account for it
             kwargs.pop("_tmp_seg_path")
-
-        super().__init__(*args, **kwargs)
 
         self.identifier = None
         self.window = None
@@ -431,19 +436,7 @@ class Segmentation(ProcessingStep):
         else:
             map_index = list(self.maps.keys()).index(map_name)
 
-            if self.intermediate_output:
-                map_path = os.path.join(
-                    self.directory, "{}_{}_map.npy".format(map_index, map_name)
-                )
-                np.save(map_path, self.maps[map_name])
-                self.log(
-                    "Saved map {} {} under path {}".format(
-                        map_index, map_name, map_path
-                    )
-                )
-
             # check if map contains more than one channel (3, 1024, 1024) vs (1024, 1024)
-
             if len(self.maps[map_name].shape) > 2:
                 for i, channel in enumerate(self.maps[map_name]):
                     channel_name = "{}_{}_{}_map".format(map_index, map_name, i)
@@ -580,7 +573,6 @@ class ShardedSegmentation(Segmentation):
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
 
             current_shard.initialize_as_shard(
@@ -604,7 +596,6 @@ class ShardedSegmentation(Segmentation):
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
             current_shard.initialize_as_shard(
                 i, window, self.input_path, zarr_status=False
@@ -1446,7 +1437,6 @@ class TimecourseSegmentation(Segmentation):
             project_location=self.project_location,
             debug=self.debug,
             overwrite=self.overwrite,
-            intermediate_output=self.intermediate_output,
         )
 
         current_shard.initialize_as_shard(
@@ -1573,7 +1563,6 @@ class MultithreadedSegmentation(TimecourseSegmentation):
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
 
             current_shard.initialize_as_shard(

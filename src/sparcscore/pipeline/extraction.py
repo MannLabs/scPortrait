@@ -36,11 +36,11 @@ class HDF5CellExtraction(ProcessingStep):
     CLEAN_LOG = True
 
     def __init__(self, *args, **kwargs):
-    
-        if self.CLEAN_LOG:
-            self._clean_log_files()
 
         super().__init__(*args, **kwargs)
+
+        if self.CLEAN_LOG:
+            self._clean_log_file()
 
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -50,6 +50,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         #initialize base variables to save results to
         self.save_index_to_remove = []
+        self.batch_size = None
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
@@ -60,8 +61,6 @@ class HDF5CellExtraction(ProcessingStep):
             self.config["threads"] = 1
 
         self.deep_debug = False
-
-
 
     def _get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None

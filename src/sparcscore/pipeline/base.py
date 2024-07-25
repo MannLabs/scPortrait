@@ -25,7 +25,8 @@ class Logable(object):
     DEFAULT_LOG_NAME = "processing.log"
     DEFAULT_FORMAT = "%d/%m/%Y %H:%M:%S"
 
-    def __init__(self, debug=False):
+    def __init__(self, directory, debug=False):
+        self.directory = directory
         self.debug = debug
 
     def log(self, message):
@@ -85,6 +86,26 @@ class Logable(object):
         dt_string = now.strftime(self.DEFAULT_FORMAT)
         return "[" + dt_string + "] "
 
+    def _clean_log_file(self):
+        """Helper function to clean up log files in the processing step directory."""
+        log_file_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
+        
+        if os.path.exists(log_file_path):
+            os.remove(log_file_path)
+
+    def _clear_cache(self, vars_to_delete=None):
+        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
+
+        # delete all specified variables
+        if vars_to_delete is not None:
+            for var in vars_to_delete:
+                del var
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        gc.collect()
+
 
 class ProcessingStep(Logable):
     """Processing step. Can load a configuration file and create a subdirectory under the project class for the processing step.
@@ -92,7 +113,6 @@ class ProcessingStep(Logable):
     Attributes:
         config (dict): Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
         directory (str): Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`sparcscore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
-        intermediate_output (bool, default ``False``): When set to True intermediate outputs will be saved where applicable.
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
@@ -134,16 +154,13 @@ class ProcessingStep(Logable):
         directory,
         project_location,
         debug=False,
-        intermediate_output=False,
         overwrite=True,
         project = None,
     ):
-        super().__init__()
+        super().__init__(directory = directory)
 
         self.debug = debug
         self.overwrite = overwrite
-        self.intermediate_output = intermediate_output
-        self.directory = directory
         self.project_location = project_location
         self.config = config
 
@@ -153,14 +170,16 @@ class ProcessingStep(Logable):
 
         self.deep_debug = False
 
-    def __call__(
-        self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
-    ):
+    def __call__(self, 
+                 *args, 
+                 debug=None, 
+                 overwrite=None, 
+                 **kwargs):
+
         """
         Call the processing step.
 
         Args:
-            intermediate_output (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True intermediate outputs will be saved where applicable.
             debug (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True debug outputs will be printed where applicable.
             overwrite (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True, the processing step directory will be completely deleted and newly created when called.
         """
@@ -168,11 +187,6 @@ class ProcessingStep(Logable):
         # set flags if provided
         self.debug = debug if debug is not None else self.debug
         self.overwrite = overwrite if overwrite is not None else self.overwrite
-        self.intermediate_output = (
-            intermediate_output
-            if intermediate_output is not None
-            else self.intermediate_output
-        )
 
         # remove directory for processing step if overwrite is enabled
         if self.overwrite:
@@ -201,24 +215,21 @@ class ProcessingStep(Logable):
             self.clear_temp_dir()  # also ensure clearing if not callable just to make sure everything is cleaned up
             warnings.warn("no process method defined")
 
-    def __call_empty__(
-        self, *args, debug=None, intermediate_output=None, overwrite=None, **kwargs
-    ):
+    def __call_empty__(self, 
+                       *args, 
+                       debug=None, 
+                       overwrite=None, 
+                       **kwargs):
+
         """Call the empty processing step.
 
         Args:
-            intermediate_output (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True intermediate outputs will be saved where applicable.
             debug (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True debug outputs will be printed where applicable.
             overwrite (bool, optional, default ``None``): Allows overriding the value set on initiation. When set to True, the processing step directory will be completely deleted and newly created when called.
         """
         # set flags if provided
         self.debug = debug if debug is not None else self.debug
         self.overwrite = overwrite if overwrite is not None else self.overwrite
-        self.intermediate_output = (
-            intermediate_output
-            if intermediate_output is not None
-            else self.intermediate_output
-        )
 
         # remove directory for processing step if overwrite is enabled
         if self.overwrite:
@@ -302,26 +313,6 @@ class ProcessingStep(Logable):
             del self._tmp_dir, self._tmp_dir_path
         else:
             self.log("Temporary directory not found, skipping cleanup")
-    
-    def _clean_log_files(self):
-        """Helper function to clean up log files in the processing step directory."""
-        log_file_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
-        
-        if os.path.exists(log_file_path):
-            os.remove(log_file_path)
-
-    def _clear_cache(self, vars_to_delete=None):
-        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
-
-        # delete all specified variables
-        if vars_to_delete is not None:
-            for var in vars_to_delete:
-                del var
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        gc.collect()
 
     def get_context(self):
         """

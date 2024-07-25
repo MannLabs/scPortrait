@@ -43,8 +43,6 @@ class Project(Logable):
         Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
     config_path : str, optional, default ""
         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-    intermediate_output : bool, default False
-        When set to True intermediate outputs will be saved where applicable.
     debug : bool, default False
         When set to True debug outputs will be printed where applicable.
     overwrite : bool, default False
@@ -119,7 +117,6 @@ class Project(Logable):
             location_path,
             config_path="",
             *args,
-            intermediate_output=False,
             debug=False,
             overwrite=False,
             segmentation_f=None,
@@ -133,7 +130,6 @@ class Project(Logable):
 
         self.debug = debug
         self.overwrite = overwrite
-        self.intermediate_output = intermediate_output
 
         self.segmentation_f = segmentation_f
         self.segmentation_filtering_f = segmentation_filtering_f
@@ -204,7 +200,6 @@ class Project(Logable):
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
         else:
             self.segmentation_f = None
@@ -228,7 +223,6 @@ class Project(Logable):
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
 
         # === setup extraction ===
@@ -250,7 +244,6 @@ class Project(Logable):
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
         else:
             self.extraction_f = None
@@ -274,7 +267,6 @@ class Project(Logable):
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
         else:
             self.classification_f = None
@@ -298,7 +290,6 @@ class Project(Logable):
                 project_location = self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                intermediate_output=self.intermediate_output,
             )
         else:
             self.selection_f = None
@@ -826,8 +817,6 @@ class TimecourseProject(Project):
         Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
     config_path : str, optional, default ""
         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-    intermediate_output : bool, default False
-        When set to True intermediate outputs will be saved where applicable.
     debug : bool, default False
         When set to True debug outputs will be printed where applicable.
     overwrite : bool, default False
@@ -1831,6 +1820,8 @@ import xarray
 
 class SpatialProject(Logable):
 
+    CLEAN_LOG = True
+
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
     DEFAULT_SDATA_FILE = "sparcs.sdata"
@@ -1872,6 +1863,9 @@ class SpatialProject(Logable):
 
         self.segmentation_f = segmentation_f
         self.extraction_f = extraction_f
+
+        if self.CLEAN_LOG:
+            self._clean_log_file()
 
         #check if project directory exists, if it does not create
         if not os.path.isdir(self.project_location):
