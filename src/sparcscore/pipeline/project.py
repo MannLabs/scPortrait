@@ -746,12 +746,12 @@ class Project(Logable):
         """
 
         if hasattr(self, 'filtered_dataset'):
-            input_extraction = self.extraction_f.get_output_path().replace("/data", f"/filtered_data/{self.filtered_dataset}")
+            input_extraction = self.extraction_f._get_output_path().replace("/data", f"/filtered_data/{self.filtered_dataset}")
         else:
             if partial:
-                input_extraction = self.extraction_f.get_output_path().replace("/data", "/selected_data")
+                input_extraction = self.extraction_f._get_output_path().replace("/data", "/selected_data")
             else:
-                input_extraction = self.extraction_f.get_output_path()
+                input_extraction = self.extraction_f._get_output_path()
 
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
