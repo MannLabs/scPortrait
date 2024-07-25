@@ -677,16 +677,22 @@ class HDF5CellExtraction(ProcessingStep):
 
                 if self.n_image_channels == 1:
                     #then we must use the nucleus mask to mask the one channel
-                    if image_index is None:
-                        # image_data = self.input_image[:, window_y, window_x].compute()
-                        image_data = channel_cytosol = hdf_channels[:, window_y, window_x]
-                    else:
-                        # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                        image_data = self.image_data[image_index, :, window_y, window_x]
+                    
+                    image_data = []
+                    
+                    for i in range(self.n_image_channels):
+                        if image_index is None:
+                            # image_data = self.input_image[:, window_y, window_x].compute()
+                            channel = hdf_channels[i, window_y, window_x]
+                        else:
+                            # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                            channel = hdf_channels[image_index, :, window_y, window_x]
 
-                    image_data = self.norm_function(image_data)
-                    image_data = image_data * nuclei_mask
-                    image_data = self.MinMax_function(image_data)
+                        channel = self.norm_function(channel)
+                        channel = channel * nuclei_mask
+                        channel = self.MinMax_function(channel)
+
+                        image_data.append(channel)
                 
                 else:
                     # mask 1: cytosol mask
@@ -708,24 +714,23 @@ class HDF5CellExtraction(ProcessingStep):
 
                     masks.append(cell_mask)
 
-                    #get all image channels and apply mask
-                    if image_index is None:
-                        # image_data = self.input_image[:, window_y, window_x].compute()
-                        image_data = channel_cytosol = hdf_channels[:, window_y, window_x]
-                    else:
-                        # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                        image_data = self.image_data[image_index, :, window_y, window_x]
+                    image_data = []
+                    
+                    for i in range(self.n_image_channels):
+                        if image_index is None:
+                            # image_data = self.input_image[:, window_y, window_x].compute()
+                            channel = hdf_channels[i, window_y, window_x]
+                        else:
+                            # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                            channel = hdf_channels[image_index, :, window_y, window_x]
 
-                    image_data = self.norm_function(image_data)
-                    image_data = image_data * cell_mask
-                    image_data = self.MinMax_function(image_data)
+                        channel = self.norm_function(channel)
+                        channel = channel * cell_mask
+                        channel = self.MinMax_function(channel)
+
+                        image_data.append(channel)
                 
-                if len(image_data.shape) == 3:
-                    inputs = masks + [image_data[i] for i in range(image_data.shape[0])]
-                else:
-                    inputs = masks + [image_data]
-
-                stack = np.stack(inputs, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
+                stack = np.stack(masks + image_data, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
 
                 if self.remap is not None:
                     stack = stack[self.remap]
