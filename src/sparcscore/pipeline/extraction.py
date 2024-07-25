@@ -87,6 +87,7 @@ class HDF5CellExtraction(ProcessingStep):
         self._get_compression_type()
 
         self.save_index_to_remove = []
+        self.batch_size = None
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
