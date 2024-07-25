@@ -435,7 +435,7 @@ class _BaseSegmentation(Segmentation):
     def _perform_size_filtering(
         self,
         mask: np.array,
-        thresholds: Tuple[float] | None,
+        thresholds: Union[Tuple[float], None],
         confidence_interval: float,
         mask_name: str,
         log: bool = True,
@@ -497,7 +497,7 @@ class _BaseSegmentation(Segmentation):
 
             fig, axs = plt.subplots(1, 1, figsize=(10, 10))
             axs.imshow(image_map, cmap="gray")
-            axs.imshow(mask[0], cmap=cmap, norm=norm)
+            axs.imshow(mask, cmap=cmap, norm=norm)
             axs.axis("off")
             axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
             fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")

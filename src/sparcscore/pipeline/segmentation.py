@@ -100,6 +100,8 @@ class Segmentation(ProcessingStep):
 
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
+            
+        self.log(f"Saved cell_id classes to file {filtered_path}.")
     
     def _check_gpu_status(self):
         # check if cuda GPU is available
@@ -132,7 +134,6 @@ class Segmentation(ProcessingStep):
                 nGPUs = self.config["nGPUs"]
                 self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
 
-        self.log(f"Saved cell_id classes to file {filtered_path}.")
                 if self.nGPUs >= 1 and nGPUs >= 1:
                     self.nGPUs = nGPUs
                     self.log(f"Will proeceed with the number of GPUs specified in config ({self.nGPUs}).")
@@ -158,7 +159,7 @@ class Segmentation(ProcessingStep):
                 gpu_id_list.append(gpu_ids)
         self.gpu_id_list = gpu_id_list
 
-    def check_filter_status(self):
+    def _check_filter_status(self):
         # check filter status in config
         if "filter_status" in self.config.keys():
             filter_status = self.config["filter_status"]
@@ -313,7 +314,7 @@ class Segmentation(ProcessingStep):
         hf.close()
 
         # save classes
-        self.check_filter_status()
+        self._check_filter_status()
         self.save_classes(classes)
 
         if not self.deep_debug:
@@ -599,7 +600,7 @@ class ShardedSegmentation(Segmentation):
 
         hf.close()
 
-        self.check_filter_status()
+        self._check_filter_status()
         self.save_classes(classes)
         self.save_segmentation_zarr(labels=labels)
         self.log("=== finished segmentation ===")
@@ -933,7 +934,7 @@ class ShardedSegmentation(Segmentation):
             self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 
             # check filtering classes to ensure that segmentation run is properly tagged
-            self.check_filter_status()
+            self._check_filter_status()
 
             # save newly generated class list
             self.save_classes(list(filtered_classes_combined))
