@@ -6,6 +6,8 @@ import tempfile
 import sys
 import platform
 import numpy as np
+import torch
+import gc
 
 class Logable(object):
     """
@@ -82,6 +84,19 @@ class Logable(object):
 
         dt_string = now.strftime(self.DEFAULT_FORMAT)
         return "[" + dt_string + "] "
+    
+    def _clear_cache(self, vars_to_delete=None):
+        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
+
+        # delete all specified variables
+        if vars_to_delete is not None:
+            for var in vars_to_delete:
+                del var
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        gc.collect()
 
 
 class ProcessingStep(Logable):
@@ -114,6 +129,7 @@ class ProcessingStep(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
     DEFAULT_DATA_FILE = "single_cells.h5"
+    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
     #classification
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
@@ -121,6 +137,7 @@ class ProcessingStep(Logable):
 
     #dtypes
     DEFAULT_IMAGE_DTYPE = np.uint16
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
     def __init__(
