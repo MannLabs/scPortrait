@@ -474,6 +474,8 @@ class HDF5CellExtraction(ProcessingStep):
         # save single cell images
         _tmp_single_cell_data[save_index] = stack
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
+        self._tmp_single_cell_data[save_index] = stack
+        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
 
     def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
         """save the relevant information for cells that are too close to the image edges to extract
@@ -491,6 +493,7 @@ class HDF5CellExtraction(ProcessingStep):
         #image index and label_info can be ignored for the base case is only relevant for the timecourse extraction
         _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
         _tmp_single_cell_index[save_index] = [save_index, cell_id]
+        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
 
     def _transfer_tempmmap_to_hdf5(self):
         self.log("Transferring results to final HDF5 data container.")
@@ -763,6 +766,10 @@ class HDF5CellExtraction(ProcessingStep):
         
         #setup normalization functions
         self._get_normalization()
+
+        #connect to temporary storage for saving results
+        self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+        self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
         
         results = []
         for arg in arg_list:
@@ -903,6 +910,10 @@ class HDF5CellExtraction(ProcessingStep):
             #set up for single-threaded processing
             self._get_normalization()
 
+            # connect to temporary storage for saving results
+            self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+            self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
+
             f = func_partial(self._extract_classes, self.input_segmentation_path, self.px_centers)
 
             self.log("Running in single threaded mode.")
@@ -916,7 +927,7 @@ class HDF5CellExtraction(ProcessingStep):
             batched_args = self._generate_batched_args(args)
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #need the fork here to be able to get the correct normalization functions! Will not work on windows.
+            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #both spawn and fork work but fork gives faster extraction speeds (probably less overhead than spawning a new process)
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
