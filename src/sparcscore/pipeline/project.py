@@ -2186,8 +2186,14 @@ class SpatialProject(Logable):
         self.log(f"Points {points_name} written to sdata object.")
 
 #### Functions to load input data ####
-    def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None):
+    def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None, overwrite = None):
         #check if an input image was already loaded if so throw error if overwrite = False
+        
+        #setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+        
         self._cleanup_sdata_object()
 
         #get channel names
@@ -2210,8 +2216,9 @@ class SpatialProject(Logable):
                                 image_name = self.DEFAULT_INPUT_IMAGE_NAME)
         
         self._check_sdata_status()
+        self.overwrite = original_overwrite #reset to original value
 
-    def load_input_from_tif_files(self, file_paths, channel_names = None, crop=[(0, -1), (0, -1)]):
+    def load_input_from_tif_files(self, file_paths, channel_names = None, crop=[(0, -1), (0, -1)], overwrite = None):
 
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
@@ -2263,6 +2270,11 @@ class SpatialProject(Logable):
             
             return unique_parts
         
+        #setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+
         if self.config is None:
             raise ValueError("Dataset has no config file loaded")
         
@@ -2329,7 +2341,14 @@ class SpatialProject(Logable):
         #cleanup temp image path
         shutil.rmtree(temp_image_path)
 
-    def load_input_from_omezarr(self, ome_zarr_path):
+        self.overwrite = original_overwrite #reset to original value
+
+    def load_input_from_omezarr(self, ome_zarr_path, overwrite = None):
+        #setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+        
         #check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_sdata_object()
         
@@ -2358,15 +2377,23 @@ class SpatialProject(Logable):
         self.load_input_from_array(input_image, channel_names=channel_names)
 
         self._check_sdata_status()
+        self.overwrite = original_overwrite #reset to original value
 
     def load_input_from_sdata(self, 
                               sdata_path, 
                               input_image_name = "input_image", 
                               nucleus_segmentation_name = None, 
-                              cytosol_segmentation_name = None):
+                              cytosol_segmentation_name = None, 
+                              overwrite = None):
         """
         Load input image from a spatialdata object.
         """
+
+        #setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+        
         #check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_sdata_object()
 
@@ -2457,6 +2484,7 @@ class SpatialProject(Logable):
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
         
         self._check_sdata_status()
+        self.overwrite = original_overwrite #reset to original value
 
 #### Functions to perform processing ####
 

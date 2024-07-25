@@ -127,8 +127,13 @@ class SizeFilter(BaseFilter):
         smoothing_kernel_size=7,
         *args,
         **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+    ):  
+        if directory is not None:
+            self.directory = directory
+        else:
+            self.directory = os.getcwd()
+
+        super().__init__(*args, directory = self.directory, **kwargs)
 
         self.log_values = log
         self.plot_qc = plot_qc
@@ -153,10 +158,7 @@ class SizeFilter(BaseFilter):
             raise ValueError("At least one of filter_lower or filter_upper must be True otherwise no filtering will be performed.")
 
         # if no directory is provided, use the current working directory
-        if directory is not None:
-            self.directory = directory
-        else:
-            self.directory = os.getcwd()
+
         
         #initialize empty placeholders for results
         self.ids_to_remove = None
@@ -649,10 +651,16 @@ class MatchNucleusCytosolIds(BaseFilter):
         downsampling_factor=None,
         erosion_dilation=True,
         smoothing_kernel_size=7,
+        directory = None,
         *args,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        if directory is not None:
+            self.directory = directory
+        else:
+            self.directory = os.getcwd()
+            
+        super().__init__(*args, directory = self.directory, **kwargs)
 
         # set relevant parameters
         self.filtering_threshold = filtering_threshold

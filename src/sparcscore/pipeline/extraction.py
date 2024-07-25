@@ -1,5 +1,4 @@
 import os
-import shutil
 import numpy as np
 import pandas as pd
 import sys
@@ -652,10 +651,12 @@ class HDF5CellExtraction(ProcessingStep):
             del self.image_data
         
         #remove memory mapped temp files
-        shutil.rmtree(self.path_seg_masks)
-        shutil.rmtree(self.path_image_data)
+        if os.path.exists(self.path_seg_masks):
+            os.remove(self.path_seg_masks)
+        if os.path.exists(self.path_image_data):
+            os.remove(self.path_image_data)
 
-        self.clear_cache()
+        self._clear_cache()
 
     def _save_benchmarking_times(self, 
                                  total_time, 
@@ -840,7 +841,6 @@ class HDF5CellExtraction(ProcessingStep):
 
         # transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
-        self.log("Finished cleaning up cache.")
 
         if self.partial_processing:
             self.DEFAULT_LOG_NAME = "processing.log" #change log name back to default

@@ -569,7 +569,7 @@ class ShardedSegmentation(Segmentation):
             
             current_shard = self.method(
                 self.config,
-                local_shard_directory,
+                directory = local_shard_directory,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -670,26 +670,26 @@ class ShardedSegmentation(Segmentation):
 
         return _sharding_plan
 
-    def cleanup_shards(self, sharding_plan):
+    def _cleanup_shards(self, sharding_plan, keep_plots = False):
         file_identifiers_plots = [".png", ".tif", ".tiff", ".jpg", ".jpeg", ".pdf"]
 
-        self.log("Moving generated plots from shard directory to main directory.")
-        for i, window in enumerate(sharding_plan):
-            local_shard_directory = os.path.join(self.shard_directory, str(i))
-            for file in os.listdir(local_shard_directory):
-                if file.endswith(tuple(file_identifiers_plots)):
-                    shutil.copyfile(
-                        os.path.join(local_shard_directory, file),
-                        os.path.join(self.directory, f"tile{i}_{file}"),
-                    )
-                    os.remove(os.path.join(local_shard_directory, file))
-                    # self.log(f"Moved file {file} from {local_shard_directory} to {self.directory} and renamed it to {i}_{file}")
+        if keep_plots:
+            self.log("Moving generated plots from shard directory to main directory.")
+            for i, window in enumerate(sharding_plan):
+                local_shard_directory = os.path.join(self.shard_directory, str(i))
+                for file in os.listdir(local_shard_directory):
+                    if file.endswith(tuple(file_identifiers_plots)):
+                        shutil.copyfile(
+                            os.path.join(local_shard_directory, file),
+                            os.path.join(self.directory, f"tile{i}_{file}"),
+                        )
+                        os.remove(os.path.join(local_shard_directory, file))
 
         # Add section here that cleans up the results from the tiles and deletes them to save memory
         self.log("Deleting intermediate tile results to free up storage space")
         shutil.rmtree(self.shard_directory, ignore_errors=True)
 
-        gc.collect()
+        self._clear_cache()
 
     def resolve_sharding(self, sharding_plan):
         """
@@ -697,7 +697,6 @@ class ShardedSegmentation(Segmentation):
         """
 
         self.log("resolve sharding plan")
-        output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         if self.config["input_channels"] == 1:
             label_size = (1, self.image_size[0], self.image_size[1])
@@ -891,7 +890,7 @@ class ShardedSegmentation(Segmentation):
 
         self.log("finished saving segmentation results to sdata object for sharded segmentation.")
 
-        #self.cleanup_shards(sharding_plan)
+        self.cleanup_shards(sharding_plan)
 
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
