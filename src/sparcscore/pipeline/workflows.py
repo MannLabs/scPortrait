@@ -64,7 +64,7 @@ class _BaseSegmentation(Segmentation):
 
     def return_empty_mask(self, input_image):
         n_channels, x, y = input_image.shape
-        self.save_segmentation_sdata(input_image, np.zeros((2, x, y)), [])
+        self._save_segmentation_sdata(np.zeros((2, x, y)), [])
 
     def _check_seg_dtype(self, mask: np.array, mask_name: str) -> np.array:
         if not isinstance(mask, self.DEFAULT_SEGMENTATION_DTYPE):
@@ -1158,7 +1158,7 @@ class WGASegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
         channels, segmentation = self._finalize_segmentation_results()
 
-        results = self.save_segmentation_sdata(channels, segmentation, all_classes)
+        results = self._save_segmentation_sdata(channels, segmentation, all_classes)
         return results
 
 
@@ -1221,7 +1221,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
         channels, segmentation = self._finalize_segmentation_results()
 
-        results = self.save_segmentation_sdata(channels, segmentation, all_classes)
+        results = self._save_segmentation_sdata(channels, segmentation, all_classes)
         return results
 
 
@@ -1436,7 +1436,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self.save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes)
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1596,7 +1596,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self.save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes)
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1672,7 +1672,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         segmentation = self._finalize_segmentation_results()
 
-        self.save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes)
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
 
@@ -1770,7 +1770,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self.save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes)
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1878,7 +1878,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         segmentation = self._finalize_segmentation_results()
 
-        self.save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes)
 
         return None
 
