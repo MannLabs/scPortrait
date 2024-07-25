@@ -414,7 +414,7 @@ class HDF5CellExtraction(ProcessingStep):
         )
         return args
     
-    def _generate_batched_args(self, args, max_batch_size = 1000):
+    def _generate_batched_args(self, args, max_batch_size = 3000, min_batch_size = 100):
         """
         Helper function to generate batched arguments for multiprocessing. 
         Batched args are mini-batches of the original arguments that are used to split the processing into smaller chunks to prevent memory issues.
@@ -425,8 +425,10 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             max_batch_size = max_batch_size
             
-        theoretical_max = np.ceil(len(args)/self.config['threads'])
-        self.batch_size = np.int64(min(max_batch_size, theoretical_max))
+        theoretical_max = np.ceil(len(args)/self.config['threads']) #ensure the batch is not larger than the max_batch_size
+        batch_size = min(max_batch_size, theoretical_max)  #ensure the batch is not smaller than the min_batch_size
+        
+        self.batch_size = np.int64(max(min_batch_size, batch_size))
 
         self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
         
