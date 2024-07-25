@@ -140,6 +140,8 @@ class ProcessingStep(Logable):
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
+    DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
+
     def __init__(
         self,
         config,
