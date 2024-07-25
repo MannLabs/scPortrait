@@ -123,6 +123,8 @@ class ProcessingStep(Logable):
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
+    DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
+
     def __init__(
         self,
         config,

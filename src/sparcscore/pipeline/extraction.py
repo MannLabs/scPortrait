@@ -90,6 +90,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.get_normalization()
 
         self.save_index_to_remove = []
+        self.batch_size = None
 
         # set developer debug mode for super detailed output
         self.deep_debug = False
@@ -166,6 +167,9 @@ class HDF5CellExtraction(ProcessingStep):
                 self.n_channels_input = hdf_channels.shape[0]
             elif len(hdf_labels.shape) == 4:
                 self.n_channels_input = hdf_channels.shape[1]
+            
+            self.input_image_width = hdf_channels.shape[-2]
+            self.input_image_height = hdf_channels.shape[-1]
 
             self.log(f"Using channel label {hdf_channels}")
             self.log(f"Using segmentation label {hdf_labels}")
@@ -724,8 +728,38 @@ class HDF5CellExtraction(ProcessingStep):
             
         theoretical_max = np.ceil(len(args)/self.config['threads'])
         batch_size = np.int64(min(max_batch_size, theoretical_max))
-        
+        self.batch_size = batch_size
         return([args[i:i + batch_size] for i in range(0, len(args), batch_size)])
+    
+    def _save_benchmarking_times(self, 
+                                 total_time, 
+                                 time_setup ,
+                                 time_arg_generation,
+                                 time_extraction,
+                                 rate_extraction):
+
+        #save benchmarking times to file
+        benchmarking_path = os.path.join(self.directory, self.DEFAULT_BENCHMARKING_FILE)
+
+        benchmarking = pd.DataFrame({"Size of image extracted from":[(self.n_channels_input, self.input_image_width, self.input_image_height)],
+                                     "Number of classes extracted": [self.num_classes],
+                                     "Number of masks used for extraction": [self.n_segmentation_channels],
+                                     "Size of extracted images": [self.config["image_size"]],
+                                     "Number of threads used": [self.config["threads"]],
+                                     "Mini_batch size": [self.batch_size],
+                                     "Total extraction time": [total_time], 
+                                     "Time taken to set up extraction": [time_setup],
+                                     "Time taken to generate arguments": [time_arg_generation],
+                                     "Time taken to extract single cell images": [time_extraction],
+                                     "Rate of extraction": [rate_extraction],
+                                    })
+
+        if os.path.exists(benchmarking_path):
+            #append to existing file
+            benchmarking.to_csv(benchmarking_path, mode = "a", header = False, index = False)
+        else:
+            #create new file
+            benchmarking.to_csv(benchmarking_path, index = False)
 
     def process(self, input_segmentation_path, filtered_classes_path=None):
         """
@@ -776,6 +810,9 @@ class HDF5CellExtraction(ProcessingStep):
         """
         # is called with the path to the segmented image
 
+        total_time_start = timeit.default_timer()
+
+        start_setup = timeit.default_timer()
         self.get_channel_info()  # needs to be called here after the segmentation is completed
         self.setup_output()
         self.parse_remapping()
@@ -831,13 +868,19 @@ class HDF5CellExtraction(ProcessingStep):
         # start extraction
         self.verbalise_extraction_info()
 
+        stop_setup = timeit.default_timer()
+        time_setup = stop_setup - start_setup
+
         self.log(f"Starting extraction of {self.num_classes} classes")
-        start = timeit.default_timer()
+        start_arg_generation = timeit.default_timer()
 
         # generate cell pairings to extract
         lookup_saveindex = self.generate_save_index_lookup(class_list)
         args = self._get_arg(class_list, lookup_saveindex)
-        
+        stop_arg_generation = timeit.default_timer()
+        time_arg_generation = stop_arg_generation - start_arg_generation
+
+        start_extraction = timeit.default_timer()
         if self.config["threads"] <= 1:
             #set up function for single-threaded processing
             f = partial(self._extract_classes, input_segmentation_path, px_centers)
@@ -860,20 +903,29 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.save_index_to_remove = flatten(results)
 
-        stop = timeit.default_timer()
+        stop_extraction = timeit.default_timer()
 
         # calculate duration
-        duration = stop - start
-        rate = self.num_classes / duration
+        time_extraction = stop_extraction - start_extraction
+        rate = self.num_classes / time_extraction
 
         # generate final log entries
         self.log(
-            f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)"
+            f"Finished extraction in {time_extraction:.2f} seconds ({rate:.2f} cells / second)"
         )
 
         # transfer results to hdf5
         self._transfer_tempmmap_to_hdf5()
         self.log("Finished cleaning up cache.")
+
+        total_time_stop = timeit.default_timer()
+        total_time = total_time_stop - total_time_start
+
+        self._save_benchmarking_times(total_time = total_time, 
+                                      time_setup = time_setup,
+                                      time_arg_generation = time_arg_generation,
+                                      time_extraction = time_extraction,
+                                      rate_extraction = rate)
 
     def process_partial(
         self, input_segmentation_path, filtered_classes_path=None, n_cells=100, seed = 42
