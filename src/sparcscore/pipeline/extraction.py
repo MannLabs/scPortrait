@@ -28,20 +28,18 @@ import datatree
 import xarray
 
 
-# to perform garbage collection
-import gc
-
-
 class HDF5CellExtraction(ProcessingStep):
     """
     A class to extracts single cell images from a segmented SPARCSpy project and save the
     results to an HDF5 file.
     """
-
-    SELECTED_DATA_DIR = "selected_data"
     CLEAN_LOG = True
 
     def __init__(self, *args, **kwargs):
+    
+        if self.CLEAN_LOG:
+            self._clean_log_files()
+
         super().__init__(*args, **kwargs)
 
         if not os.path.isdir(self.directory):
@@ -62,6 +60,8 @@ class HDF5CellExtraction(ProcessingStep):
             self.config["threads"] = 1
 
         self.deep_debug = False
+
+
 
     def _get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -856,7 +856,6 @@ class HDF5CellExtraction(ProcessingStep):
                                       rate_extraction = rate)
 
 
-
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     """
     A class to extracts single cell images from a segmented SPARCSpy Timecourse project and save the
@@ -989,7 +988,6 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             del index
 
         del _tmp_single_cell_data, _tmp_single_cell_index, keep_index
-        gc.collect()
 
     def _save_cell_info(self, save_index, cell_id, image_index, label_info, stack):
         global _tmp_single_cell_data, _tmp_single_cell_index
