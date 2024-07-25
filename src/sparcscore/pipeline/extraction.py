@@ -165,7 +165,7 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _set_up_extraction(self):
 
-        if self.partial:
+        if self.partial_processing:
             output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_{self.n_cells}_{self.seed}"
         else:
             output_folder_name = self.DEFAULT_DATA_DIR
@@ -324,11 +324,11 @@ class HDF5CellExtraction(ProcessingStep):
             max_batch_size = max_batch_size
             
         theoretical_max = np.ceil(len(args)/self.config['threads'])
-        batch_size = np.int64(min(max_batch_size, theoretical_max))
+        self.batch_size = np.int64(min(max_batch_size, theoretical_max))
 
-        self.log(f"Using batch size of {batch_size} for multiprocessing.")
+        self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
         
-        return([args[i:i + batch_size] for i in range(0, len(args), batch_size)])
+        return([args[i:i + self.batch_size] for i in range(0, len(args), self.batch_size)])
 
     def _get_label_info(self, arg):
         index, save_index, cell_id = arg
@@ -672,6 +672,9 @@ class HDF5CellExtraction(ProcessingStep):
         benchmarking = pd.DataFrame({"Size of image extracted from":[(self.n_image_channels, self.input_image_width, self.input_image_height)],
                                      "Number of classes extracted": [self.num_classes],
                                      "Number of masks used for extraction": [self.n_masks],
+                                     "Size of extracted images": [self.extracted_image_size],
+                                     "Number of threads used": [self.config["threads"]],
+                                     "Mini_batch size": [self.batch_size],
                                      "Total extraction time": [total_time], 
                                      "Time taken to set up extraction": [time_setup],
                                      "Time taken to generate arguments": [time_arg_generation],
@@ -806,7 +809,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             f = func_partial(self._extract_classes, self.px_centers)
 
-            self.log("Running in single thread mode.")
+            self.log("Running in single threaded mode.")
             results = []
             for arg in tqdm(args):
                 x = f(arg)
@@ -843,7 +846,7 @@ class HDF5CellExtraction(ProcessingStep):
         if self.partial_processing:
             self.DEFAULT_LOG_NAME = "processing.log" #change log name back to default
 
-        self.post_extraction_cleanup(vars_to_delete = [seg_masks, image_data])
+        self._post_extraction_cleanup(vars_to_delete = [seg_masks, image_data])
 
         total_time_stop = timeit.default_timer()
         total_time = total_time_stop - total_time_start
