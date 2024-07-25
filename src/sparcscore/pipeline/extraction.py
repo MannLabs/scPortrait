@@ -670,7 +670,7 @@ class HDF5CellExtraction(ProcessingStep):
                     ]
                     print("center of nucleus array \n", center_nuclei, "\n")
 
-                nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
+                nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0).astype(int)
                 nuclei_mask = gaussian(nuclei_mask, preserve_range=True, sigma=1)
 
                 masks.append(nuclei_mask)
