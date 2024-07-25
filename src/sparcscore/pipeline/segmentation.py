@@ -26,6 +26,7 @@ from alphabase.io import tempmmap
 from dask.array.core import Array as daskArray
 import xarray
 import datatree
+from typing import List
 
 from spatialdata import SpatialData
 
@@ -609,20 +610,8 @@ class ShardedSegmentation(Segmentation):
 
         return _shard_list
 
-    def calculate_sharding_plan(self, image_size):
-        # save sharding plan to file
-        sharding_plan_path = f"{self.directory}/sharding_plan.csv"
-
-        if os.path.isfile(sharding_plan_path):
-            self.log(f"sharding plan already found in directory {sharding_plan_path}.")
-            if self.overwrite:
-                self.log("Overwriting existing sharding plan.")
-                os.remove(sharding_plan_path)
-            else:
-                self.log("Reading existing sharding plan from file.")
-                with open(sharding_plan_path, "r") as f:
-                    _sharding_plan = [eval(line) for line in f.readlines()]
-                    return _sharding_plan
+    def _calculate_sharding_plan(self, image_size) -> List: 
+        """ Calculate the sharding plan for the given input image size."""
 
         _sharding_plan = []
         side_size = np.floor(np.sqrt(int(self.config["shard_size"])))
@@ -667,13 +656,50 @@ class ShardedSegmentation(Segmentation):
                 shard = (slice(lower_y, upper_y), slice(lower_x, upper_x))
                 _sharding_plan.append(shard)
 
-        # write out newly generated sharding plan
-        with open(sharding_plan_path, "w") as f:
-            for shard in _sharding_plan:
-                f.write(f"{shard}\n")
-        self.log(f"Sharding plan written to file at {sharding_plan_path}")
-
         return _sharding_plan
+
+    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> List:
+
+        #check if a sharding plan already exists
+        sharding_plan_path = f"{self.directory}/sharding_plan.csv"
+
+        if os.path.isfile(sharding_plan_path):
+            self.log(f"sharding plan already found in directory {sharding_plan_path}.")
+            if overwrite:
+                self.log("Overwriting existing sharding plan.")
+                os.remove(sharding_plan_path)
+            else:
+                self.log("Reading existing sharding plan from file.")
+                with open(sharding_plan_path, "r") as f:
+                    sharding_plan = [eval(line) for line in f.readlines()]
+                    return sharding_plan
+        
+        if force_read:
+            raise FileNotFoundError("No sharding plan found in directory. Please run project.shard_segmentation() to generate a sharding plan. Can not complete a segmentation without the original sharding plan.")
+        
+        if self.config["shard_size"] >= np.prod(self.image_size):
+            target_size = self.config["shard_size"]
+            self.log(
+                f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used."
+            )
+
+            sharding_plan = [
+                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
+            ]
+        else:
+            target_size = self.config["shard_size"]
+            self.log(
+                f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used."
+            )
+            sharding_plan = self._calculate_sharding_plan(self.image_size)
+
+        # save sharding plan to file to be able to reload later
+        self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+        with open(f"{self.directory}/sharding_plan.csv", "w") as f:
+            for shard in sharding_plan:
+                f.write(f"{shard}\n")
+        
+        return(sharding_plan)
 
     def _cleanup_shards(self, sharding_plan, keep_plots = False):
         file_identifiers_plots = [".png", ".tif", ".tiff", ".jpg", ".jpeg", ".pdf"]
@@ -900,58 +926,20 @@ class ShardedSegmentation(Segmentation):
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
 
-    def process(self, input_image):
+    def _perform_segmentation(self, shard_list):
         
-        #get proper level of input image
-        input_image = self._transform_input_image(input_image)
-
-        if self.deep_debug:
-            self.log(f"Input image of dtype {type(input_image)} with dimensions {input_image.shape} passed to sharded segmentation method.")
-
-        self.save_zarr = False
-
-        self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
-
-        if not os.path.isdir(self.shard_directory):
-            os.makedirs(self.shard_directory)
-            self.log("Created new shard directory " + self.shard_directory)
-
-        # calculate sharding plan
-        self.image_size = input_image.shape[1:]
-
-        if self.config["shard_size"] >= np.prod(self.image_size):
-            target_size = self.config["shard_size"]
-            self.log(
-                f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used."
-            )
-
-            sharding_plan = [
-                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
-            ]
-        else:
-            target_size = self.config["shard_size"]
-            self.log(
-                f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used."
-            )
-            sharding_plan = self.calculate_sharding_plan(self.image_size)
-
-        # save sharding plan to file to be able to reload later
-        self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
-        with open(f"{self.directory}/sharding_plan.csv", "w") as f:
-            for shard in sharding_plan:
-                f.write(f"{shard}\n")
-
-        shard_list = self.initialize_shard_list(sharding_plan)
-        self.log(f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins")
-
         #get GPU status
         self._setup_processing()
 
-
+        #run in single-threaded mode
         if self.n_processes == 1:
             for shard in shard_list:
                 shard.call_as_shard()
-        else:
+            
+            self.log("Finished serial segmentation")
+
+        # run in multithreaded mode
+        elif self.n_processes > 1:
             with mp.get_context(self.context).Pool(
                 processes=self.n_processes,
                 initializer=self.initializer_function,
@@ -965,27 +953,61 @@ class ShardedSegmentation(Segmentation):
                 )
                 pool.close()
                 pool.join()
-                print("All segmentations are done.", flush=True)
+            self.log("Finished parallel segmentation")
+        
+    def process(self, input_image):
+        
+        #get proper level of input image
+        input_image = self._transform_input_image(input_image)
+        self.image_size = input_image.shape[1:]
 
-        # free up memory
-        del shard_list
-        gc.collect()
+        if self.deep_debug:
+            self.log(f"Input image of dtype {type(input_image)} with dimensions {input_image.shape} passed to sharded segmentation method.")
 
-        self.log("Finished parallel segmentation")
+        self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
+
+        if not os.path.isdir(self.shard_directory):
+            os.makedirs(self.shard_directory)
+            self.log("Created new shard directory " + self.shard_directory)
+        
+        #get sharding plan
+        sharding_plan = self._get_sharding_plan(overwrite=self.overwrite)
+
+        #generate shard list
+        shard_list = self.initialize_shard_list(sharding_plan)
+        self.log(f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins")
+
+        #perform segmentation
+        self._perform_segmentation(shard_list)
+        self._clear_cache(vars_to_delete=[shard_list])
+
         self.resolve_sharding(sharding_plan)
 
         # make sure to cleanup temp directories
         self.log("=== finished sharded segmentation === ")
 
-    def complete_segmentation(self, input_image):
-        self.save_zarr = False
+    def complete_segmentation(self, input_image, force_run = False):
+
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
+        #check status of sdata object
+        self.project._check_sdata_status()
+
+        if self.project.nuc_seg_status:
+            self.log("Nucleus segmentation already exists in sdata object.")
+        if self.project.cyto_seg_status:
+            self.log("Cytosol segmentation already exists in sdata object.")
+        
         # check to make sure that the shard directory exisits, if not exit and return error
         if not os.path.isdir(self.shard_directory):
-            sys.exit(
-                "No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method."
-            )
+            if not self.project.nuc_seg_status or not self.project.cyto_seg_status:
+                raise FileNotFoundError("No shard directory found. Please run project.shard_segmentation() to generate a sharding instead of project.complete_segmentation().")
+            else:
+                raise ValueError("Completed segmentation found and no shard directory found. Unclear what processing should be performed. If you believe this to be an error please send your example to the developers.")
+        else:
+            if not force_run:
+                if self.project.nuc_seg_status or self.project.cyto_seg_status:
+                    raise ValueError("Completed segmentation found in addition to shard directory. If you want to force overwrite of these segmentations with the sharded segmentation results found in the shard directory please rerurn the project.complete_segmentation() method with the force_run flag set to True.")
 
         # check to see which tiles are incomplete
         tile_directories = os.listdir(self.shard_directory)
@@ -995,119 +1017,43 @@ class ShardedSegmentation(Segmentation):
                 incomplete_indexes.append(int(tile))
                 self.log(f"Shard with ID {tile} not completed.")
 
-        # calculate sharding plan
+        # get input image size
+        input_image = self._transform_input_image(input_image)
         self.image_size = input_image.shape[1:]
 
-        if self.config["shard_size"] >= np.prod(self.image_size):
-            target_size = self.config["shard_size"]
-            self.log(
-                f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used."
-            )
-
-            sharding_plan = [
-                (slice(0, self.image_size[0]), slice(0, self.image_size[1]))
-            ]
-        else:
-            target_size = self.config["shard_size"]
-            self.log(
-                f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used."
-            )
-
-            # read sharding plan from file
-            with open(f"{self.directory}/sharding_plan.csv", "r") as f:
-                sharding_plan = [eval(line) for line in f.readlines()]
-
-            self.log(f"Sharding plan read from file {self.directory}/sharding_plan.csv")
+        #load sharding plan
+        sharding_plan = self._get_sharding_plan(overwrite=False, force_read=True)
 
         # check to make sure that calculated sharding plan matches to existing sharding results
-        if len(sharding_plan) != len(tile_directories):
-            sys.exit(
-                "Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results."
-            )
-
+        assert len(sharding_plan) == len(tile_directories), "Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results."
+        
         # select only those shards that did not complete successfully for further processing
         sharding_plan_complete = sharding_plan
 
-        if len(incomplete_indexes) == 0:
-            if os.path.isfile(f"{self.directory}/classes.csv"):
-                self.log("All segmentations already done")
-            else:
-                self.log(
-                    "Segmentations already completed. Performing Stitching of individual tiles."
-                )
-                self.resolve_sharding(sharding_plan_complete)
+        if len(incomplete_indexes)> 0:
 
-                # make sure to cleanup temp directories
-                self.log("=== completed segmentation === ")
-        else:
+            #adjust current sharding plan to only contain incomplete elements
             sharding_plan = [
                 shard
                 for i, shard in enumerate(sharding_plan)
                 if i in incomplete_indexes
             ]
+            
             self.log(
                 f"Adjusted sharding plan to only proceed with the {len(incomplete_indexes)} incomplete shards."
             )
 
-            shard_list = self.initialize_shard_list_incomplete(
-                sharding_plan, incomplete_indexes
-            )
-            self.log(f"sharding plan with {len(sharding_plan)} elements generated")
+            shard_list = self.initialize_shard_list(sharding_plan)
+            self.log(f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins")
 
-            del input_image  # remove from memory to free up space
-            gc.collect()  # perform garbage collection
+            #perform segmentation
+            self._perform_segmentation(shard_list)
+            self._clear_cache(vars_to_delete=[shard_list])
 
-            # check that that number of GPUS is actually available
-            if "nGPUS" not in self.config.keys():
-                self.config["nGPUs"] = torch.cuda.device_count()
+        self.resolve_sharding(sharding_plan_complete)
+        self._cleanup_shards(sharding_plan_complete, keep_plots = False)
 
-            nGPUS = self.config["nGPUs"]
-            available_GPUs = torch.cuda.device_count()
-            self.log(f"found {available_GPUs} GPUs.")
-
-            processes_per_GPU = self.config["threads"]
-
-            if available_GPUs != self.config["nGPUs"]:
-                self.log(f"Found {available_GPUs} but {nGPUS} specified in config.")
-
-            if available_GPUs >= 1:
-                n_processes = processes_per_GPU * available_GPUs
-            else:
-                n_processes = self.config["threads"]
-                available_GPUs = 1  # default to 1 GPU if non are available and a CPU only method is run
-
-            # initialize a list of available GPUs
-            gpu_id_list = []
-            for gpu_ids in range(available_GPUs):
-                for _ in range(processes_per_GPU):
-                    gpu_id_list.append(gpu_ids)
-
-            self.log(f"Beginning segmentation on {available_GPUs}.")
-
-            with mp.get_context(self.context).Pool(
-                processes=n_processes,
-                initializer=self.initializer_function,
-                initargs=[gpu_id_list],
-            ) as pool:
-                results = list(
-                    tqdm(
-                        pool.imap(self.method.call_as_shard, shard_list),
-                        total=len(shard_list),
-                    )
-                )
-                pool.close()
-                pool.join()
-                print("All segmentations are done.", flush=True)
-
-            # free up memory
-            del shard_list
-            gc.collect()
-
-            self.log("Finished parallel segmentation of missing shards")
-            self.resolve_sharding(sharding_plan_complete)
-
-            # make sure to cleanup temp directories
-            self.log("=== completed sharded segmentation === ")
+        self.log("=== completed sharded segmentation === ")
 
 
 #############################################
