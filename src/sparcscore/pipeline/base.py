@@ -126,6 +126,8 @@ class ProcessingStep(Logable):
     DEFAULT_REMOVED_CLASSES_FILE = "removed_classes.csv"
     DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
+    DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
+
     def __init__(
         self,
         config,

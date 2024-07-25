@@ -658,6 +658,35 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.clear_cache()
 
+    def _save_benchmarking_times(self, 
+                                 total_time, 
+                                 time_setup ,
+                                 time_arg_generation,
+                                 time_data_transfer,
+                                 time_extraction,
+                                 rate_extraction):
+
+        #save benchmarking times to file
+        benchmarking_path = os.path.join(self.directory, self.DEFAULT_BENCHMARKING_FILE)
+
+        benchmarking = pd.DataFrame({"Size of image extracted from":[(self.n_image_channels, self.input_image_width, self.input_image_height)],
+                                     "Number of classes extracted": [self.num_classes],
+                                     "Number of masks used for extraction": [self.n_masks],
+                                     "Total extraction time": [total_time], 
+                                     "Time taken to set up extraction": [time_setup],
+                                     "Time taken to generate arguments": [time_arg_generation],
+                                     "Time taken to transfer data to memory mapped arrays": [time_data_transfer],
+                                     "Time taken to extract single cell images": [time_extraction],
+                                     "Rate of extraction": [rate_extraction],
+                                    })
+
+        if os.path.exists(benchmarking_path):
+            #append to existing file
+            benchmarking.to_csv(benchmarking_path, mode = "a", header = False, index = False)
+        else:
+            #create new file
+            benchmarking.to_csv(benchmarking_path, index = False)
+
     def process(self, partial=False, n_cells = None, seed = 42):
         """
         Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -705,6 +734,10 @@ class HDF5CellExtraction(ProcessingStep):
                 hdf5_rdcc_w0: 1
                 hdf5_rdcc_nslots: 50000
         """
+
+        total_time_start = timeit.default_timer()
+
+        start_setup = timeit.default_timer()
         #set up flag for partial processing
         self.partial_processing = partial
 
@@ -715,9 +748,8 @@ class HDF5CellExtraction(ProcessingStep):
 
         #run all of the extraction setup steps
         self._set_up_extraction()
-
-        self.log(f"Starting single-cell image extraction process of {self.num_classes}...")
-        start = timeit.default_timer()
+        stop_setup = timeit.default_timer()
+        time_setup = stop_setup - start_setup
 
         if self.partial_processing:
             self.log(f"Starting partial single-cell image extraction of {self.n_cells} cells...")
@@ -725,19 +757,24 @@ class HDF5CellExtraction(ProcessingStep):
             self.log(f"Starting single-cell image extraction of {self.num_classes} cells...")
         
         # generate cell pairings to extract
+        start_arg_generation = timeit.default_timer()
+        
         self._generate_save_index_lookup(self.classes)
         args = self._get_arg(self.classes)
+        stop_arg_generation = timeit.default_timer()
+        time_arg_generation = stop_arg_generation - start_arg_generation
 
         #convert input images to memory mapped temp arrays for faster reading
+        start_data_transfer = timeit.default_timer()
+
+
+        #initialize empty memory mapped arrays to store the data
         self.path_seg_masks = create_empty_mmap(shape = (self.n_masks, self.input_image_height, self.input_image_width), 
                                            dtype = self.DEFAULT_SEGMENTATION_DTYPE, 
                                            tmp_dir_abs_path = self._tmp_dir_path)
         self.path_image_data = create_empty_mmap(shape = (self.n_image_channels, self.input_image_height, self.input_image_width),
                                             dtype = self.DEFAULT_IMAGE_DTYPE,
                                             tmp_dir_abs_path = self._tmp_dir_path)
-
-        #transfer data to memory mapped arrays
-        start_time = time.time()
         
         #read the data
         self._get_sdata()
@@ -752,8 +789,15 @@ class HDF5CellExtraction(ProcessingStep):
         for i in range(self.n_image_channels):
             image_data[i] = self.input_image[i, :, :].compute()
         
-        self.log(f"Finished transferring data to memory mapped arrays. Time taken: {time.time() - start_time}")
+        stop_data_transfer = timeit.default_timer()
+        time_data_transfer = stop_data_transfer - start_data_transfer
 
+        if self.debug:
+            self.log(f"Finished transferring data to memory mapped arrays. Time taken: {time_data_transfer:.2f} seconds.")
+        
+        #actually perform single-cell image extraction
+        start_extraction = timeit.default_timer()
+        
         if self.config["threads"] <= 1:
             #set up for single-threaded processing
             self._get_normalization()
@@ -773,7 +817,7 @@ class HDF5CellExtraction(ProcessingStep):
             batched_args = self._generate_batched_args(args)
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context(self.context).Pool(processes=self.config["threads"]) as pool:   #need the fork here to be able to get the correct normalization functions! Will not work on windows.
+            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #need the fork here to be able to get the correct normalization functions! Will not work on windows.
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
@@ -781,15 +825,15 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.save_index_to_remove = flatten(results)
 
-        stop = timeit.default_timer()
+        stop_extraction = timeit.default_timer()
 
         # calculate duration
-        duration = stop - start
-        rate = self.num_classes / duration
+        time_extraction = stop_extraction - start_extraction
+        rate = self.num_classes / time_extraction
 
         # generate final log entries
         self.log(
-            f"Finished extraction in {duration:.2f} seconds ({rate:.2f} cells / second)"
+            f"Finished extraction in {time_extraction:.2f} seconds ({rate:.2f} cells / second)"
         )
 
         # transfer results to hdf5
@@ -801,11 +845,15 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.post_extraction_cleanup(vars_to_delete = [seg_masks, image_data])
 
-        # setup cache
-        self._initialize_tempmmap_array()
+        total_time_stop = timeit.default_timer()
+        total_time = total_time_stop - total_time_start
 
-        # start extraction
-        self._verbalise_extraction_info()
+        self._save_benchmarking_times(total_time = total_time, 
+                                      time_setup = time_setup,
+                                      time_arg_generation = time_arg_generation,
+                                      time_data_transfer = time_data_transfer,
+                                      time_extraction = time_extraction,
+                                      rate_extraction = rate)
 
 
 
