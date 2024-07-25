@@ -104,9 +104,6 @@ class Segmentation(ProcessingStep):
         self.deep_debug = False
         self.save_filter_results = True
 
-    def save_classes(self, classes):
-        # define path where classes should be saved
-        filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
     def _check_gpu_status(self):
         # check if cuda GPU is available
         if torch.cuda.is_available():
@@ -125,22 +122,18 @@ class Segmentation(ProcessingStep):
             self.device = torch.device("cpu")
             self.nGPUs = 0
 
-        to_write = "\n".join([str(i) for i in list(classes)])
     def _setup_processing(self):
         """
         Checks and updates the GPU status.
         """
         self.check_gpu_status()
 
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
         #compare with config configuration
         if "nGPUs" in self.config.keys():
             if self.nGPUs != self.config["nGPUs"]:
                 nGPUs = self.config["nGPUs"]
                 self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
 
-        self.log(f"Saved cell_id classes to file {filtered_path}.")
                 if self.nGPUs >= 1 and nGPUs >= 1:
                     self.nGPUs = nGPUs
                     self.log(f"Will proeceed with the number of GPUs specified in config ({self.nGPUs}).")
@@ -166,7 +159,11 @@ class Segmentation(ProcessingStep):
                 gpu_id_list.append(gpu_ids)
         self.gpu_id_list = gpu_id_list
 
-    def check_filter_status(self):
+        self.log(
+            f"GPU Status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.n_processes_per_GPU} processes per device in parallel."
+        )
+
+    def _check_filter_status(self):
         # check filter status in config
         if "filter_status" in self.config.keys():
             filter_status = self.config["filter_status"]
@@ -192,6 +189,17 @@ class Segmentation(ProcessingStep):
                 "Filtering has been performed during segmentation. Nucleus and Cytosol IDs match. No additional steps are required."
             )
 
+    def save_classes(self, classes):
+        # define path where classes should be saved
+        filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+
+        self.log(f"Saved cell_id classes to file {filtered_path}.")
+
     def initialize_as_shard(self, identifier, window, input_path, zarr_status=True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
@@ -209,25 +217,7 @@ class Segmentation(ProcessingStep):
         self.save_zarr = zarr_status
         self.create_temp_dir()
         self.is_shard = True
-
-    def _load_input_image(self) -> daskArray:
-        """Loads the input image from the sdatafile.
-
-        Returns:
-            daskArray: Input image as a daskArray
-        """
-
-        sdata = SpatialData.read(self.input_path)
-
-        if isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
-            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-        elif isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-        else:
-            raise ValueError("Input image could not be loaded from sdata object.")
-
-        return self._transform_input_image(input_image)
-
+    
     def call_as_shard(self):
         """Wrapper function for calling a sharded segmentation.
 
@@ -284,6 +274,29 @@ class Segmentation(ProcessingStep):
 
         self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
+    def _load_input_image(self) -> daskArray:
+        """Loads the input image from the sdatafile.
+
+        Returns:
+            daskArray: Input image as a daskArray
+        """
+
+        sdata = SpatialData.read(self.input_path)
+
+        if isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+        elif isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+        else:
+            raise ValueError("Input image could not be loaded from sdata object.")
+
+        return self._transform_input_image(input_image)
+    
+    def _transform_input_image(self, input_image):
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data
+        return input_image
+
     def save_segmentation(self, labels, classes):
         """Saves the results of a segmentation at the end of the process.
 
@@ -320,7 +333,7 @@ class Segmentation(ProcessingStep):
         hf.close()
 
         # save classes
-        self.check_filter_status()
+        self._check_filter_status()
         self.save_classes(classes)
 
         self.log("=== finished segmentation ===")
@@ -401,61 +414,6 @@ class Segmentation(ProcessingStep):
         else:
             self.log("save_zarr attribute not found")
 
-    def load_maps_from_disk(self):
-        """Tries to load all maps which were defined in ``self.maps`` and returns the current state of processing.
-
-        Returns
-            (int): Index of the first map which could not be loaded. An index of zero indicates that computation needs to start at the first map.
-
-        """
-
-        if not hasattr(self, "maps"):
-            raise AttributeError(
-                "No maps have been defined. Therefore saving and loading of maps as checkpoints is not supported. Initialize maps in the process method of the segmentation like self.maps = {'map1': None,'map2': None}"
-            )
-
-        if not hasattr(self, "directory"):
-            self.directory = self.get_directory(self)
-            # raise AttributeError("No directory is defined where maps should be saved. Therefore saving and loading of maps as checkpoints is not supported.")
-
-        # iterating over all maps
-        for map_index, map_name in enumerate(self.maps.keys()):
-            try:
-                map_path = os.path.join(
-                    self.directory, "{}_{}_map.npy".format(map_index, map_name)
-                )
-
-                if os.path.isfile(map_path):
-                    map = np.load(map_path)
-                    self.log(
-                        "Loaded map {} {} from path {}".format(
-                            map_index, map_name, map_path
-                        )
-                    )
-                    self.maps[map_name] = map
-                else:
-                    self.log(
-                        "No existing map {} {} found at path {}, new one will be created".format(
-                            map_index, map_name, map_path
-                        )
-                    )
-                    self.maps[map_name] = None
-
-            except Exception:
-                self.log(
-                    "Error loading map {} {} from path {}".format(
-                        map_index, map_name, map_path
-                    )
-                )
-                self.maps[map_name] = None
-
-        # determine where to start based on precomputed maps and parameters
-        # get index of lowest map which could not be loaded
-        # results in index of step where to start
-
-        is_not_none = [el is not None for el in self.maps.values()]
-        return np.argmin(is_not_none) if not all(is_not_none) else len(is_not_none)
-
     def save_map(self, map_name):
         """Saves newly computed map.
 
@@ -524,11 +482,7 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
-    def _transform_input_image(self, input_image):
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data
-        return input_image
-
+ 
 class ShardedSegmentation(Segmentation):
     """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together.
     """
@@ -605,7 +559,7 @@ class ShardedSegmentation(Segmentation):
 
         hf.close()
 
-        self.check_filter_status()
+        self._check_filter_status()
         self.save_classes(classes)
         self.save_segmentation_zarr(labels=labels)
         self.log("=== finished segmentation ===")
@@ -928,7 +882,7 @@ class ShardedSegmentation(Segmentation):
             self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 
             # check filtering classes to ensure that segmentation run is properly tagged
-            self.check_filter_status()
+            self._check_filter_status()
 
             # save newly generated class list
             self.save_classes(list(filtered_classes_combined))
