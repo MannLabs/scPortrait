@@ -608,7 +608,6 @@ class HDF5CellExtraction(ProcessingStep):
         """
         Processing for each individual cell that needs to be run for each center.
         """
-        global norm_function, MinMax_function
 
         index, save_index, cell_id, image_index, label_info = self._get_label_info(
             arg
@@ -786,18 +785,22 @@ class HDF5CellExtraction(ProcessingStep):
         return(flatten(results))
     
     def _post_extraction_cleanup(self, vars_to_delete = None):
-
-        #remove no longer required variables
-        if vars_to_delete is not None:
-            self._clear_cache(vars_to_delete = vars_to_delete)
-
+        # delete normalizaton functions from self if present to ensure that subsequent multiprocessing runs still run correctly
+        if "norm_function" in self.__dict__:
+            del self.norm_function
+        if "MinMax_function" in self.__dict__:
+            del self.MinMax_function
+            
         #delete segmentation masks and input images from self if present
         if "seg_masks" in self.__dict__:
             del self.seg_masks
         if "image_data" in self.__dict__:
             del self.image_data
 
-        self._clear_cache()
+        #remove no longer required variables
+        if vars_to_delete is not None:
+            self._clear_cache(vars_to_delete = vars_to_delete)
+
     
     def _save_benchmarking_times(self, 
                                  total_time, 
