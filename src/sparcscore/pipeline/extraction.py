@@ -429,8 +429,13 @@ class HDF5CellExtraction(ProcessingStep):
         batch_size = min(max_batch_size, theoretical_max)  #ensure the batch is not smaller than the min_batch_size
         
         self.batch_size = np.int64(max(min_batch_size, batch_size))
-
         self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
+
+        #dynamically adjust the number of threads to ensure that we dont initiate more threads than we have arguments
+        self.threads = min(self.config["threads"], np.ceil(len(args)/self.batch_size))
+        
+        if self.threads != self.config["threads"]:
+            self.log(f"Reducing number of threads to {self.threads} to match number of cell batches to process.")
         
         return([args[i:i + self.batch_size] for i in range(0, len(args), self.batch_size)])
     
@@ -793,7 +798,6 @@ class HDF5CellExtraction(ProcessingStep):
         #remove no longer required variables
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete = vars_to_delete)
-
     
     def _save_benchmarking_times(self, 
                                  total_time, 
@@ -929,8 +933,8 @@ class HDF5CellExtraction(ProcessingStep):
             f = func_partial(self._extract_classes_multi,  self.input_segmentation_path, self.px_centers)
             batched_args = self._generate_batched_args(args)
         
-            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #both spawn and fork work but fork gives faster extraction speeds (probably less overhead than spawning a new process)
+            self.log(f"Running in multiprocessing mode with {self.threads} threads.")
+            with mp.get_context("fork").Pool(processes=self.threads) as pool:   #both spawn and fork work but fork gives faster extraction speeds (probably less overhead than spawning a new process)
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
