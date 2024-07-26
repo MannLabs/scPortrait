@@ -310,7 +310,7 @@ class HDF5CellExtraction(ProcessingStep):
         )
         return args
  
-    def _generate_batched_args(self, args, max_batch_size = 1000):
+    def _generate_batched_args(self, args, max_batch_size = 1000, min_batch_size = 100):
         """
         Helper function to generate batched arguments for multiprocessing. 
         Batched args are mini-batches of the original arguments that are used to split the processing into smaller chunks to prevent memory issues.
@@ -322,9 +322,16 @@ class HDF5CellExtraction(ProcessingStep):
             max_batch_size = max_batch_size
             
         theoretical_max = np.ceil(len(args)/self.config['threads'])
-        self.batch_size = np.int64(min(max_batch_size, theoretical_max))
+        batch_size = np.int64(min(max_batch_size, theoretical_max))
 
+        self.batch_size = np.int64(max(min_batch_size, batch_size))
         self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
+
+        #dynamically adjust the number of threads to ensure that we dont initiate more threads than we have arguments
+        self.threads = np.int64(min(self.config["threads"], np.ceil(len(args)/self.batch_size)))
+        
+        if self.threads != self.config["threads"]:
+            self.log(f"Reducing number of threads to {self.threads} to match number of cell batches to process.")
         
         return([args[i:i + self.batch_size] for i in range(0, len(args), self.batch_size)])
 
@@ -828,8 +835,8 @@ class HDF5CellExtraction(ProcessingStep):
             f = func_partial(self._extract_classes_multi, self.px_centers)
             batched_args = self._generate_batched_args(args)
         
-            self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #both spawn and fork work but fork is faster so forcing fork here
+            self.log(f"Running in multiprocessing mode with {self.threads} threads.")
+            with mp.get_context("fork").Pool(processes=self.threads) as pool:   #both spawn and fork work but fork is faster so forcing fork here
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
