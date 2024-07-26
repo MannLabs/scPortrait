@@ -164,7 +164,7 @@ class HDF5CellExtraction(ProcessingStep):
     def _set_up_extraction(self):
 
         if self.partial_processing:
-            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_{self.n_cells}_{self.seed}"
+            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_ncells_{self.n_cells}_seed_{self.seed}"
         else:
             output_folder_name = self.DEFAULT_DATA_DIR
         
