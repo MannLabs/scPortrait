@@ -639,16 +639,22 @@ class HDF5CellExtraction(ProcessingStep):
         os.remove(self._tmp_single_cell_index_path)
 
     def _post_extraction_cleanup(self, vars_to_delete = None):
-
-        #remove no longer required variables
-        if vars_to_delete is not None:
-            self._clear_cache(vars_to_delete = vars_to_delete)
+        
+        #remove normalization functions becuase other subsequent multiprocessing calls will fail
+        if "norm_function" in self.__dict__:
+            del self.norm_function
+        if "MinMax_function" in self.__dict__:
+            del self.MinMax_function
 
         #delete segmentation masks and input images from self if present
         if "seg_masks" in self.__dict__:
             del self.seg_masks
         if "image_data" in self.__dict__:
             del self.image_data
+
+        #remove no longer required variables
+        if vars_to_delete is not None:
+            self._clear_cache(vars_to_delete = vars_to_delete)
         
         #remove memory mapped temp files
         if os.path.exists(self.path_seg_masks):
