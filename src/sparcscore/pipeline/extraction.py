@@ -261,7 +261,7 @@ class HDF5CellExtraction(ProcessingStep):
         centers = np.round(centers).astype(int)
 
         self.centers = centers
-        self.centers_cell_ids = self.project.sdata[self.DEFAULT_CENTERS_NAME].index
+        self.centers_cell_ids = self.project.sdata[self.DEFAULT_CENTERS_NAME].index.values.compute()
 
         #ensure that the centers ids are unique
         assert len(self.centers_cell_ids) == len(set(self.centers_cell_ids)), "Cell ids in centers are not unique. Cannot proceed with extraction."
