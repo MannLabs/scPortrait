@@ -469,13 +469,8 @@ class HDF5CellExtraction(ProcessingStep):
         """
         # label info is None so just ignore for the base case
         # image_index is none so just ignore for the base case
-        
-        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        _tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
 
         # save single cell images
-        _tmp_single_cell_data[save_index] = stack
-        _tmp_single_cell_index[save_index] = [save_index, cell_id]
         self._tmp_single_cell_data[save_index] = stack
         self._tmp_single_cell_index[save_index] = [save_index, cell_id]
 
@@ -493,8 +488,6 @@ class HDF5CellExtraction(ProcessingStep):
         """
 
         #image index and label_info can be ignored for the base case is only relevant for the timecourse extraction
-        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        _tmp_single_cell_index[save_index] = [save_index, cell_id]
         self._tmp_single_cell_index[save_index] = [save_index, cell_id]
 
     def _transfer_tempmmap_to_hdf5(self):
