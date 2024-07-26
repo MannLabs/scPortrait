@@ -375,13 +375,11 @@ class HDF5CellExtraction(ProcessingStep):
         """
         # label info is None so just ignore for the base case
         # image_index is none so just ignore for the base case
-        
-        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        _tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
+    
 
         # save single cell images
-        _tmp_single_cell_data[save_index] = stack
-        _tmp_single_cell_index[save_index] = [save_index, cell_id]
+        self._tmp_single_cell_data[save_index] = stack
+        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
     
     def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
         """save the relevant information for cells that are too close to the image edges to extract
@@ -397,8 +395,7 @@ class HDF5CellExtraction(ProcessingStep):
         """
 
         #image index and label_info can be ignored for the base case is only relevant for the timecourse extraction
-        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        _tmp_single_cell_index[save_index] = [save_index, cell_id]
+        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
 
     def _extract_classes(self, px_center, arg, return_failed_ids = False):
         """
@@ -521,10 +518,12 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _extract_classes_multi(self, px_centers, arg_list):
         self._get_normalization()
-        # self._get_sdata()
 
         self.seg_masks = mmap_array_from_path(self.path_seg_masks)
         self.image_data = mmap_array_from_path(self.path_image_data)
+
+        self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+        self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
 
         results = []
         for arg in arg_list:
@@ -579,6 +578,7 @@ class HDF5CellExtraction(ProcessingStep):
                 fig.show()
 
         self.log("Transferring extracted single cells to .hdf5")
+        
         # create name for output file
         self.output_path = os.path.join(
             self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE
@@ -741,9 +741,9 @@ class HDF5CellExtraction(ProcessingStep):
         total_time_start = timeit.default_timer()
 
         start_setup = timeit.default_timer()
+        
         #set up flag for partial processing
         self.partial_processing = partial
-
         if self.partial_processing:
             self.n_cells = n_cells
             self.seed = seed
@@ -807,6 +807,9 @@ class HDF5CellExtraction(ProcessingStep):
             self.seg_masks = seg_masks
             self.image_data = image_data
 
+            self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+            self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
+
             f = func_partial(self._extract_classes, self.px_centers)
 
             self.log("Running in single threaded mode.")
@@ -820,7 +823,7 @@ class HDF5CellExtraction(ProcessingStep):
             batched_args = self._generate_batched_args(args)
         
             self.log(f"Running in multiprocessing mode with {self.config['threads']} threads.")
-            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #need the fork here to be able to get the correct normalization functions! Will not work on windows.
+            with mp.get_context("fork").Pool(processes=self.config["threads"]) as pool:   #both spawn and fork work but fork is faster so forcing fork here
                 results = list(tqdm(pool.imap(f, batched_args), total=len(batched_args), desc="Processing cell batches"))
                 pool.close()
                 pool.join()
