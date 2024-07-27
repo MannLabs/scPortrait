@@ -2488,7 +2488,7 @@ class SpatialProject(Logable):
 
 #### Functions to perform processing ####
 
-    def segment(self):
+    def segment(self, overwrite: Union[bool, None] = None):
 
         #check to ensure a method has been assigned
         if self.segmentation_f is None:
@@ -2499,10 +2499,18 @@ class SpatialProject(Logable):
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
         
+        #setup overwrite if specified in call
+        original_overwrite = self.segmentation_f.overwrite
+        if overwrite is not None:
+            self.segmentation_f.overwrite = overwrite
+
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
+        
+        self.segmentation_f.overwrite = original_overwrite #reset to original value
     
     def extract(self, partial = False, n_cells = None):
+    def extract(self, partial = False, n_cells = None, overwrite: Union[bool, None] = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
@@ -2512,5 +2520,11 @@ class SpatialProject(Logable):
         if not self.nuc_seg_status or not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
         
-        else:
-            self.extraction_f(partial = partial, n_cells = n_cells)
+        #setup overwrite if specified in call
+        original_overwrite = self.extraction_f.overwrite
+        if overwrite is not None:
+            self.extraction_f.overwrite = overwrite
+
+        self.extraction_f(partial = partial, n_cells = n_cells)
+
+        self.extraction_f.overwrite = original_overwrite #reset to original value
