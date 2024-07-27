@@ -2128,7 +2128,7 @@ class SpatialProject(Logable):
         # get chunk size of element
         chunk_size = get_chunk_size(elem)
 
-        if type(chunk_size) == list:
+        if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
             if not all([x == chunk_size[0] for x in chunk_size]):
                 elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
