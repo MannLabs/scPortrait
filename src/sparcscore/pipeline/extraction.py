@@ -1,31 +1,27 @@
 import os
-import numpy as np
-import pandas as pd
 import sys
-import h5py
-from tqdm.auto import tqdm
 from itertools import compress
 import timeit
-import matplotlib.pyplot as plt
-
 from functools import partial as func_partial
 import multiprocessing as mp
 import platform
 
-from alphabase.io.tempmmap import mmap_array_from_path, create_empty_mmap
-
+import h5py
+from tqdm.auto import tqdm
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from skimage.filters import gaussian
 from scipy.ndimage import binary_fill_holes
+from alphabase.io.tempmmap import mmap_array_from_path, create_empty_mmap
+from spatialdata import SpatialData
+import datatree
+import xarray
 
 from sparcscore.processing.segmentation import numba_mask_centroid
 from sparcscore.processing.utils import flatten
 from sparcscore.processing.preprocessing import percentile_normalization, MinMax
 from sparcscore.pipeline.base import ProcessingStep
-
-from spatialdata import SpatialData
-import datatree
-import xarray
-
 
 class HDF5CellExtraction(ProcessingStep):
     """
@@ -876,7 +872,6 @@ class HDF5CellExtraction(ProcessingStep):
                                       time_data_transfer = time_data_transfer,
                                       time_extraction = time_extraction,
                                       rate_extraction = rate)
-
 
 class TimecourseHDF5CellExtraction(HDF5CellExtraction):
     """

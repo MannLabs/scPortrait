@@ -5,9 +5,10 @@ import shutil
 import tempfile
 import sys
 import platform
+import gc
+
 import numpy as np
 import torch
-import gc
 
 class Logable(object):
     """
