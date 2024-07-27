@@ -196,7 +196,7 @@ class VGG2_regression(VGGBase):
                                                self.cfgs[cfg], 
                                                image_size_factor=image_size_factor)
         
-    def vgg(cfg, in_channels,  **kwargs):
+    def vgg(self, cfg, in_channels,  **kwargs):
         model = VGG2_regression(self.make_layers(self.cfgs[cfg], in_channels), **kwargs)
         return model
     
