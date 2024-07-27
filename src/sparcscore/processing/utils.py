@@ -43,7 +43,7 @@ def plot_image(array, size = (10, 10), save_name="", cmap="magma", return_fig = 
         plt.show()
         plt.close()
 
-def visualize_class(class_ids, seg_map, image, background, all_ids = None, return_fig = False, *args, **kwargs):
+def visualize_class(class_ids, seg_map, image, all_ids = None, return_fig = False, *args, **kwargs):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
 
@@ -53,7 +53,7 @@ def visualize_class(class_ids, seg_map, image, background, all_ids = None, retur
     Args:
         class_ids (array-like): A list or array of integers representing the class IDs to be highlighted.
         seg_map (2D array-like): A 2D array representing the segmentation map, where each value corresponds to a class ID.
-        background (2D/3D array-like): Background image (2D or 3D) on which the classes will be highlighted. Its size should match that of `seg_map`.
+        image (2D/3D array-like): Background image (2D or 3D) on which the classes will be highlighted. Its size should match that of `seg_map`.
         *args: Any additional positional arguments that are passed to the underlying plotting functions.
         **kwargs: Any additional keyword arguments that are passed underlying plotting functions.
 
