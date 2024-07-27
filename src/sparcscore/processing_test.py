@@ -373,7 +373,6 @@ def test_processing_step_init():
         assert processing_step.debug
         assert config == processing_step.config
 
-
 def test_processing_step_register_parameter():
     config = {"setting1": "value1"}
     with tempfile.TemporaryDirectory() as temp_dir:
