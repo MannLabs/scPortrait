@@ -157,7 +157,7 @@ class ProcessingStep(Logable):
         directory,
         project_location,
         debug=False,
-        overwrite=True,
+        overwrite=False,
         project = None,
     ):
         super().__init__(directory = directory)
@@ -166,6 +166,7 @@ class ProcessingStep(Logable):
         self.overwrite = overwrite
         self.project_location = project_location
         self.config = config
+        self.overwrite = overwrite
 
         self.project = project
 
