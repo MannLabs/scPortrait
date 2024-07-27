@@ -126,7 +126,7 @@ class Segmentation(ProcessingStep):
         """
         Checks and updates the GPU status.
         """
-        self.check_gpu_status()
+        self._check_gpu_status()
 
         #compare with config configuration
         if "nGPUs" in self.config.keys():
