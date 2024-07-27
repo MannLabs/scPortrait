@@ -345,14 +345,14 @@ from sparcscore.pipeline.base import Logable, ProcessingStep
 
 
 def test_logable_init():
-    logable = Logable()
-    assert not logable.debug
+    with tempfile.TemporaryDirectory() as temp_dir:
+        logable = Logable(directory=temp_dir, debug=False)
+        assert not logable.debug
 
 
 def test_logable_log():
     with tempfile.TemporaryDirectory() as temp_dir:
-        logable = Logable(debug=True)
-        logable.directory = temp_dir
+        logable = Logable(directory = temp_dir, debug=True)
         logable.log("Testing")
 
         log_path = os.path.join(temp_dir, logable.DEFAULT_LOG_NAME)
