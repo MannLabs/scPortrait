@@ -38,8 +38,8 @@ class _ClassificationBase(ProcessingStep):
 
         self._setup_channel_classification()
 
-        #setup deep debugging
-        self.deep_debug = True
+        # setup deep debugging
+        self.deep_debug = False
 
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
@@ -301,9 +301,9 @@ class _ClassificationBase(ProcessingStep):
         return model
 
     def _post_processing_cleanup(self):
-
-        memory_usage = self._get_gpu_memory_usage()
-        self.log(f"GPU memory before performing cleanup: {memory_usage}")
+        if self.debug:
+            memory_usage = self._get_gpu_memory_usage()
+            self.log(f"GPU memory before performing cleanup: {memory_usage}")
 
         if "dataloader" in self.__dict__.keys():
             del self.dataloader
