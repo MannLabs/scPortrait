@@ -1,56 +1,644 @@
-from datetime import datetime
 import os
-import sys
+from typing import Union, List
+import io
+from contextlib import redirect_stdout
+from functools import partial as func_partial
+import shutil
+import platform
+
 import numpy as np
+import pandas as pd
 
 import torch
 from torch.masked import masked_tensor
+import pytorch_lightning as pl
+from torchvision import transforms
 
 from sparcscore.ml.datasets import HDF5SingleCellDataset
 from sparcscore.ml.transforms import ChannelSelector
 from sparcscore.ml.plmodels import MultilabelSupervisedModel
 from sparcscore.pipeline.base import ProcessingStep
 
-from torchvision import transforms
+class _ClassificationBase(ProcessingStep):
+    PRETRAINED_MODEL_NAMES = list(["autophagy_classifier1.0",
+        "autophagy_classifier2.0",
+        "autophagy_classifier2.1",])
 
-import pandas as pd
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-import io
-from contextlib import redirect_stdout
+        self.label = self.config["label"]
+        self.num_workers = self.config["dataloader_worker_number"]
+        self.batch_size = self.config["batch_size"]
 
-class MLClusterClassifier(ProcessingStep):
+        self.model_class = None
+        self.model = None
+        self.transforms = None
+        self.expected_imagesize = None
+
+        self._setup_channel_classification()
+
+        #setup deep debugging
+        self.deep_debug = True
+
+        if "overwrite_run_path" not in self.__dict__.keys():
+            self.overwrite_run_path = self.overwrite
+
+    def _setup_output(self):
+        """Helper function to generate the output directory for the classification results."""
+
+        # Create classification directory
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+
+        self.run_path = os.path.join(self.directory, f"{self.data_type}_{self.label}")
+
+        if not os.path.isdir(self.run_path):
+            os.makedirs(self.run_path)
+            self.log(
+                f"Created new directory for classification results: {self.run_path}"
+            )
+        else:
+            if self.overwrite:
+                self.log(
+                    "Overwrite flag is set, deleting existing directory for classification results."
+                )
+                shutil.rmtree(self.run_path)
+                os.makedirs(self.run_path)
+                self.log(
+                    f"Created new directory for classification results: {self.run_path}"
+                )
+            elif self.overwrite_run_path:
+                self.log(
+                    "Overwrite flag is set, deleting existing directory for classification results."
+                )
+                shutil.rmtree(self.run_path)
+                os.makedirs(self.run_path)
+                self.log(
+                    f"Created new directory for classification results: {self.run_path}"
+                )
+            else:
+                raise ValueError(
+                    f"Directory for classification results already exists at {self.run_path}. Please set the overwrite flag to True if you wish to overwrite the existing directory."
+                )
+
+    def _setup_log_transform(self):
+        if "log_transform" in self.config.keys():
+            self.log_transform = self.config["log_transform"]
+        else:
+            self.log_transform = False  # default value
+
+    def _setup_channel_classification(self):
+        if "channel_classification" in self.config.keys():
+            self.channel_classification = self.config["channel_classification"]
+        else:
+            self.channel_classification = None
+
+    def _detect_automatic_inference_device(self):
+        """Automatically detect the best inference device available on the system."""
+
+        if torch.cuda.is_available():
+            inference_device = "cuda"
+        if torch.backends.mps.is_available():
+            inference_device = torch.device("mps")
+        else:
+            inference_device = "cpu"
+
+        return inference_device
+
+    def _setup_inference_device(self):
+        """
+        Configure the classification run to use the specified inference device.
+        If no device is specified, the device is automatically detected.
+        """
+
+        if "inference_device" in self.config.keys():
+            self.inference_device = self.config["inference_device"]
+
+            # check that the selected inference device is also available
+            if self.inference_device in ("cuda", torch.device("cuda")):
+                if not torch.cuda.is_available():
+                    if torch.backends.mps.is_available():
+                        self.log(
+                            "CUDA specified in config file but CUDA not available on system, switching to MPS for inference."
+                        )
+                        self.inference_device = torch.device("mps")
+                    else:
+                        self.log(
+                            "CUDA specified in config file but CUDA not available on system, switching to CPU for inference."
+                        )
+                        self.inference_device = "cpu"
+                else:
+                    self.inference_device = torch.device(
+                        "cuda"
+                    )  # ensure that the complete device is always specified
+
+            elif self.inference_device in ("mps", torch.device("mps")):
+                if not torch.backends.mps.is_available():
+                    if torch.cuda.is_available():
+                        self.log(
+                            "MPS specified in config file but MPS not available on system, switching to CUDA for inference."
+                        )
+                        self.inference_device = "cuda"
+                    else:
+                        self.log(
+                            "MPS specified in config file but MPIS not available on system, switching to CPU for inference."
+                        )
+                        self.inference_device = "cpu"
+                else:
+                    self.inference_device = torch.device(
+                        "mps"
+                    )  # ensure that the complete device is always specified
+
+            elif self.inference_device in("automatic", "auto"):
+                self.inference_device = self._detect_automatic_inference_device()
+                self.log(
+                    f"Automatically configured inference device to {self.inference_device}"
+                )
+
+            elif self.inference_device == "cpu":
+                if torch.backends.mps.is_available():
+                    self.log(
+                        "CPU specified in config file but MPS available on system. Consider changing the device for the next run."
+                    )
+                if torch.cuda.is_available():
+                    self.log(
+                        "CPU specified in config file but CUDA available on system. Consider changing the device for the next run."
+                    )
+            else:
+                raise ValueError(
+                    "Invalid inference device specified in config file. Please use one of ['cuda', 'mps', 'cpu', 'automatic', 'auto']."
+                )
+
+        else:
+            self.inference_device = self._detect_automatic_inference_device()
+            self.log(
+                f"Automatically configured inferece device to {self.inference_device}"
+            )
+
+    def _general_setup(self):
+        """Helper function to execute all setup functions that are common to all classification steps."""
+
+        self._setup_output()
+        self._setup_log_transform()
+        self._setup_inference_device()
+
+    def _get_model_specs(self):
+        # model location
+        self.network_dir = self.config["network"]
+
+        # hparams locatoin
+        if "hparams_path" in self.config.keys():
+            self.hparams_path = self.config["hparams_path"]
+        else:
+            self.hparams_path = None
+
+        # model loading strategy
+        if "model_loading_strategy" in self.config.keys():
+            strategy = self.config["model_loading_strategy"]
+            if strategy not in ("max", "min", "latest", "path"):
+                raise ValueError(
+                    f"Invalid model loading strategy {strategy} specified. Please use one of ['max', 'min', 'latest', 'path']"
+                )
+
+            self.model_loading_strategy = self.config["model_loading_strategy"]
+        else:
+            self.model_loading_strategy = "max"
+
+        # modelclass
+        if self.model_class is None:
+            if "model_class" in self.config.keys():
+                self.define_model_class(eval(self.config["model_class"]))
+            else:
+                self.define_model_class(self.DEFAULT_MODEL_CLASS)  # default model class
+        else:
+            self.log(
+                f"Model class already defined as {self.model_class} will not overwrite. If this behaviour was unintended please set the model class to none by executing 'project.classification_f.model_class = None'"
+            )
+
+        if "model_type" in self.config.keys():
+            self.model_type = self.config["model_type"]
+        else:
+            self.model_type = None
+
+    def _get_gpu_memory_usage(self):
+        if self.inference_device == "cpu":
+            return None
+
+        elif self.inference_device == torch.device("cuda"):
+            try:
+                memory_usage = []
+
+                for i in range(torch.cuda.device_count()):
+                    gpu_memory = (
+                        torch.cuda.memory_reserved(i) / 1024**2
+                    )  # Convert bytes to MiB
+                    memory_usage.append(gpu_memory)
+                results = {
+                    f"GPU_{i}": f"{memory_usage[i]} MiB"
+                    for i in range(len(memory_usage))
+                }
+                return results
+            except Exception as e:
+                print("Error:", e)
+                return None
+
+        elif self.inference_device == torch.device("mps"):
+            try:
+                # MPS currently does not have a direct way to query memory usage like CUDA.
+                # As a workaround, we can use the available memory as a proxy for memory usage.
+                from torch._C import _mps_get_memory_info
+
+                free_memory, total_memory = _mps_get_memory_info()
+                used_memory = total_memory - free_memory
+                memory_usage = used_memory / 1024**2  # Convert bytes to MiB
+                return {"MPS": f"{memory_usage} MiB"}
+            except Exception as e:
+                print("Error:", e)
+                return None
+
+        else:
+            raise ValueError("Invalid inference device specified.")
+
+    def _load_pretrained_model(self, model_name: str):
+        """
+        Load a pretrained model from the SPARCScore library.
+
+        Parameters
+        ----------
+        model_name : str
+            Name of the pretrained model to load.
+
+        Returns
+        -------
+        MultilabelSupervisedModel
+            The loaded model.
+        """
+
+        if model_name == "autophagy_classifier1.0":
+            from sparcscore.ml.pretrained_models import autophagy_classifier1_0
+
+            model = autophagy_classifier1_0(device=self.config["inference_device"])
+            self.expected_imagesize = (128, 128)
+        elif model_name == "autophagy_classifier2.0":
+            from sparcscore.ml.pretrained_models import autophagy_classifier2_0
+
+            model = autophagy_classifier2_0(device=self.config["inference_device"])
+            #self.expected_imagesize = (128, 128)
+
+        elif model_name == "autophagy_classifier2.1":
+            from sparcscore.ml.pretrained_models import autophagy_classifier2_1
+
+            model = autophagy_classifier2_1(device=self.config["inference_device"])
+            self.expected_imagesize = (128, 128)
+        else:
+            raise ValueError(
+                f"Invalid model name {model_name} specified for pretrained model. The available pretrained models are {self.PRETRAINED_MODEL_NAMES}"
+            )
+
+        # set to eval mode and move to device
+        model.eval()
+        model.to(self.inference_device)
+
+        return model
+
+    def _post_processing_cleanup(self):
+
+        memory_usage = self._get_gpu_memory_usage()
+        self.log(f"GPU memory before performing cleanup: {memory_usage}")
+
+        if "dataloader" in self.__dict__.keys():
+            del self.dataloader
+        
+        if "models" in self.__dict__.keys():
+            del self.models
+
+        if "model" in self.__dict__.keys():
+            del self.model
+        
+        if "overwrite_run_path" in self.__dict__.keys():
+            del self.overwrite_run_path
+        
+        if "n_masks" in self.__dict__.keys():
+            del self.n_masks
+        
+        if "data_type" in self.__dict__.keys():
+            del self.data_type
+        
+        if "log_transform" in self.__dict__.keys():
+            del self.log_transform
+        
+        if "channel_names" in self.__dict__.keys():
+            del self.channel_names
+        
+        if "column_names" in self.__dict__.keys():
+            del self.column_names
+        
+        #reset to init values to ensure that subsequent runs are not affected by previous runs
+        self.model_class = None
+        self.transforms = None
+        self.channel_classification = None
+        self.model = None
+
+        self._clear_cache()
+
+        memory_usage = self._get_gpu_memory_usage()
+        self.log(f"GPU memory before performing cleanup: {memory_usage}")
+
+        #this needs to be called after the memory usage has been assesed
+        if "inference_device" in self.__dict__.keys():
+            del self.inference_device
+    
+    def define_model_class(self, model_class, force_load=False):
+        if isinstance(model_class, str):
+            model_class = eval(model_class)  # convert string to class by evaluating it
+
+        # check that it is a valid model class
+
+        if force_load:
+            if not issubclass(model_class, pl.LightningModule):
+                Warning(
+                    "Forcing the loading of the model class despite the provided model class not being a subclass of pl.LightningModule. This can lead to unexpected behaviour."
+                )
+            else:
+                Warning(
+                    "Forcing the loading of the model class is on but the provided model class is a subclass of pl.LightningModule. Consider setting the force_load parameter to False as this is not a recommended default setup."
+                )
+        else:
+            if not issubclass(model_class, pl.LightningModule):
+                raise ValueError(
+                    "The provided model class is not a subclass of pl.LightningModule. Please provide a valid model class. If you are sure you wish to proceed with this, please reload the model class with the force_load parameter set to True."
+                )
+
+        self.model_class = model_class
+        self.log(f"Model class defined as {model_class}")
+
+    def _load_model(
+        self,
+        ckpt_path,
+        hparams_path: Union[str, None] = None,
+        model_type: Union[str, None] = None,
+    ) -> pl.LightningModule:
+        """Load a model from a checkpoint file and transfer it to the inference device.
+
+        Parameters
+        ----------
+        ckpt_path : str
+            Path to the checkpoint file.
+        hparams_path : str, optional
+            Path to the hparams file. If not provided, the hparams file is assumed to be in the same directory as the checkpoint file.
+        model_type : str, optional
+            Type of the model architecture to load. Default is None. For MultiLabelSupervisedModel, this can also be specified in the hparams file under the key model_type.
+
+        Returns
+        -------
+        pl.LightningModule
+            The loaded model.
+        """
+
+        if self.model_class is None:
+            raise ValueError(
+                "Model class not defined. Please define a model class before loading a model."
+            )
+
+        self.log(f"Loading model from checkpoint path: {ckpt_path}")
+
+        # get path to hparams file
+
+        if hparams_path is None:
+            self.log(
+                "No hparams file provided, assuming hparams file is in the same directory as the checkpoint file. Trying to load from default location."
+            )
+            hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
+
+            if not os.path.isfile(hparams_path):
+                hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yaml")
+                
+                if not os.path.isfile(hparams_path):
+                    raise ValueError(
+                        f"No hparams file found at {hparams_path}. Please provide a valid hparams file path."
+                    )
+
+            self.log(f"Loading hparams file from {hparams_path}")
+
+        if model_type is None:
+            model = self.model_class.load_from_checkpoint(
+                checkpoint_path=ckpt_path,
+                hparams_file=hparams_path,
+                map_location=self.inference_device,
+            )
+        else:
+            model = self.model_class.load_from_checkpoint(
+                checkpoint_path=ckpt_path,
+                hparams_file=hparams_path,
+                map_location=self.inference_device,
+                model_type=model_type,
+            )
+
+        model = model.eval()
+        model.to(self.inference_device)
+
+        self.log(
+            f"model loaded, set to eval mode and transferred to device {self.inference_device}"
+        )
+
+        return model
+    
+    def _assign_model(self, model):
+
+        self.log(f"Model assigned to classification function.")
+        self.model = model
+        
+        #check if the hparams specify an expected image size
+        if "expected_imagesize" in model.hparams.keys():
+            self.expected_imagesize = model.hparams["expected_imagesize"]
+
+    def load_model(self,
+        ckpt_path,
+        hparams_path: Union[str, None] = None,
+        model_type: Union[str, None] = None,
+    ):
+        model = self._load_model(ckpt_path, hparams_path, model_type)
+        self._assign_model(model)
+
+    def configure_transforms(self, selected_transforms: List):
+        self.transforms = transforms.Compose(selected_transforms)
+        self.log(f"The following transforms were applied: {self.transforms}")
+
+    def generate_dataloader(
+        self,
+        extraction_dir: str,
+        selected_transforms: transforms.Compose = transforms.Compose([]),
+        size:int =0,
+        seed:Union[int, None] = 42,
+        dataset_class=HDF5SingleCellDataset,
+    ) -> torch.utils.data.DataLoader:
+        """Create a pytorch dataloader from the provided single-cell image dataset.
+s
+        Parameters
+        ----------
+        extraction_dir : str
+            Path to the directory containing the extracted single-cell images.
+        selected_transforms : list of torchvision.transforms
+            List of transforms to apply to the images.
+        size : int, optional
+            Number of cells to select from the dataset. Default is 0, which means all samples are selected.
+        seed : int, optional
+            Seed for the random number generator if splitting the dataset and only using a subset. Default is 42.
+
+        Returns
+        -------
+        torch.utils.data.DataLoader
+            The generated dataloader.
+
+        """
+        # generate dataset
+        self.log(f"Reading data from path: {extraction_dir}")
+
+        assert isinstance(self.transforms, transforms.Compose), f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        t = self.transforms
+
+        if self.expected_imagesize is not None:
+            self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
+            t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            dataset = dataset_class(
+                [extraction_dir],
+                [0],
+                "/",
+                transform=t,
+                return_id=True,
+                select_channel=self.channel_classification,
+            )
+
+        if size > 0:
+            if size > len(dataset):
+                raise ValueError(
+                    f"Selected size {size} is larger than the dataset size {len(dataset)}. Please select a smaller size."
+                )
+            if size < len(dataset):
+                residual_size = len(dataset) - size
+                if seed is not None:
+                    self.log(f"Using a seeded generator with seed {seed} to split dataset")
+                    gen = torch.Generator()
+                    gen.manual_seed(seed)
+                    dataset, _ = torch.utils.data.random_split(
+                        dataset, [size, residual_size], generator=gen
+                    )
+                else:
+                    self.log("Using a random generator to split dataset.")
+                    dataset, _ = torch.utils.data.random_split(
+                        dataset, [size, residual_size]
+                    )
+            # randomly select n elements from the dataset to process
+            dataset = torch.utils.data.Subset(dataset, range(size))
+        
+        # check operating system
+        if platform.system() == 'Windows':
+            context = "spawn"
+            num_workers = 0 #need to disable multiprocessing otherwise it will throw an error
+        elif platform.system() == 'Darwin':
+            context = "fork"
+            num_workers = self.num_workers
+        elif platform.system() == 'Linux':
+            context = "fork"
+            num_workers = self.num_workers
+
+        # generate dataloader
+
+        if num_workers > 0:
+            dataloader = torch.utils.data.DataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+                drop_last=False,
+                multiprocessing_context= context, 
+            )
+        else:
+            dataloader = torch.utils.data.DataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+                drop_last=False,
+            )
+
+        self.log(
+            f"Dataloader generated with a batchsize of {self.batch_size} and {self.num_workers} workers. Dataloader contains {len(dataloader)} entries."
+        )
+
+        return dataloader
+
+    def inference(self, dataloader, model_fun, output_name, column_names=None):
+        """
+        # 1. performs inference for a dataloader and a given network call
+        # 2. saves the results to file
+        """
+        self.log(f"Started processing of {len(dataloader)} batches.")
+
+        data_iter = iter(dataloader)
+        with torch.no_grad():
+            x, label, class_id = next(data_iter)
+            r = model_fun(x.to(self.inference_device))
+            result = r.cpu().detach()
+
+            #add check to ensure this only runs if we have more than one batch in the dataset
+            if len(dataloader) > 1:
+                for i in range(len(dataloader) - 1):
+                    if i % 10 == 0:
+                        self.log(f"processing batch {i}")
+                    x, _label, id = next(data_iter)
+
+                    r = model_fun(x.to(self.inference_device))
+                    result = torch.cat((result, r.cpu().detach()), 0)
+                    label = torch.cat((label, _label), 0)
+                    class_id = torch.cat((class_id, id), 0)
+
+        result = result.detach().numpy()
+
+        if self.log_transform:
+            self.log("Applying log transformation to results.")
+            sigma = 1e-9  # to avoid log(0)
+            result = np.log(result + sigma)
+
+        label = label.numpy()
+        class_id = class_id.numpy()
+
+        # save inferred activations / predictions
+
+        if column_names is None:
+            column_names = [f"result_{i}" for i in range(result.shape[1])]
+
+        dataframe = pd.DataFrame(data=result, columns=column_names)
+        dataframe["label"] = label
+        dataframe["cell_id"] = class_id.astype("int")
+
+        self.log("finished processing.")
+
+        path = os.path.join(self.run_path, f"{output_name}.csv")
+        dataframe.to_csv(path)
+
+        self.log(f"Results saved to file: {path}")
+
+
+###### DeepLearning based Classification ######
+class MLClusterClassifier(_ClassificationBase):
     """
     Class for classifying single cells using a pre-trained machine learning model.
 
     This class takes a pre-trained model and uses it to classify single cells,
     using the model's forward function or encoder function, depending on the
     user's choice. The classification results are saved to a CSV file.
-
-    Attributes
-    ----------
-    config : dict
-        Config file which is passed by the Project class when called. It is loaded from the project based on the name of the class.
-    directory : str
-        Directory which should be used by the processing step. The directory will be newly created if it does not exist yet. When used with the :class:`sparcscore.pipeline.project.Project` class, a subdirectory of the project directory is passed.
-    intermediate_output : bool, optional
-        When set to True, intermediate outputs will be saved where applicable. Default is False.
-    debug : bool, optional
-        When set to True, debug outputs will be printed where applicable. Default is False.
-    overwrite : bool, optional
-        When set to True, the processing step directory will be completely deleted and newly created when called. Default is False.
     """
 
     CLEAN_LOG = True
+    DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
+    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
-    def __init__(
-        self,
-        config,
-        path,
-        project_location,
-        debug=False,
-        overwrite=False,
-        intermediate_output=True,
-    ):
+    def __init__(self, *args, **kwargs):
         """
         Class is initiated to classify extracted single cells.
 
@@ -59,7 +647,7 @@ class MLClusterClassifier(ProcessingStep):
         config : dict
             Configuration for the extraction passed over from the :class:`pipeline.Project`.
 
-        path : str
+        directory : str
             Directory for the extraction log and results. Will be created if not existing yet.
 
         debug : bool, optional, default=False
@@ -68,78 +656,129 @@ class MLClusterClassifier(ProcessingStep):
         overwrite : bool, optional, default=False
             Flag used to overwrite existing results.
         """
+        super().__init__(*args, **kwargs)
 
-        self.debug = debug
-        self.overwrite = overwrite
-        self.config = config
-        self.intermediate_output = intermediate_output
-        self.project_location = project_location
-
-        if "filtered_dataset" in config.keys():
-            self.filtered_dataset = self.config["filtered_dataset"]
-
-        # Create classification directory
-        self.directory = path
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory)
-
-        # Set up log and clean old log
         if self.CLEAN_LOG:
-            log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
-            if os.path.isfile(log_path):
-                os.remove(log_path)
+            self._clean_log_file()
 
-        # check latest cluster run
-        current_level_directories = [
-            name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))
-        ]
-        runs = [int(i) for i in current_level_directories if self.is_Int(i)]
+    def _get_network_dir(self) -> pl.LightningModule:
+        if self.network_dir in self.PRETRAINED_MODEL_NAMES:
+            pass
+        else:
+            if self.model_loading_strategy == "path":
+                pass
 
-        self.current_run = max(runs) + 1 if len(runs) > 0 else 0
-
-        if hasattr(self, "filtered_dataset"):
-            if self.filtered_dataset is not None:
-                self.run_path = os.path.join(
-                    self.directory,
-                    str(self.current_run)
-                    + "_"
-                    + self.config["screen_label"]
-                    + "_"
-                    + self.filtered_dataset,
+            elif self.network_dir.endswith(".ckpt"):
+                Warning(
+                    "Provided network ends in .ckpt, assuming this is a complete model path. To avoid this warning in the future please set the config parameter 'model_loading_strategy' to 'path'."
+                )
+                self.log(
+                    "Provided network ends in .ckpt, assuming this is a complete model path. To avoid this warning in the future please set the config parameter 'model_loading_strategy' to 'path'."
                 )
             else:
-                self.run_path = os.path.join(
-                    self.directory,
-                    str(self.current_run) + "_" + self.config["screen_label"],
-                )
+                # then we assume this is a directory containing multiple checkpoints and we want to load a specific one based on the model_loading_strategy
+
+                model_path = self.network_dir
+                checkpoints = [
+                    file for file in os.listdir(model_path) if file.endswith(".ckpt")
+                ]
+                checkpoints.sort()
+
+                if len(checkpoints) < 1:
+                    raise ValueError(f"No checkpoint files found at {model_path}")
+
+                if len(checkpoints) == 1:
+                    self.log("Only one checkpoint found in network directory.")
+
+                    # update network_dir to the path of the checkpoint
+                    self.network_dir = os.path.join(model_path, checkpoints[0])
+                else:
+                    if self.model_loading_strategy == "max":
+                        max_epoch = max(
+                            [
+                                int(file.split("epoch=")[1].split("-")[0])
+                                for file in checkpoints
+                            ]
+                        )
+                        max_epoch_file = [
+                            file for file in checkpoints if f"epoch={max_epoch}" in file
+                        ][0]
+                        self.network_dir = os.path.join(model_path, max_epoch_file)
+                        self.log(
+                            f"Using model selection strategy 'max', selecting model with the maximum epoch {max_epoch} from path {self.network_dir}"
+                        )
+                    elif self.model_loading_strategy == "min":
+                        min_epoch = min(
+                            [
+                                int(file.split("epoch=")[1].split("-")[0])
+                                for file in checkpoints
+                            ]
+                        )
+                        min_epoch_file = [
+                            file for file in checkpoints if f"epoch={min_epoch}" in file
+                        ][0]
+                        self.network_dir = os.path.join(model_path, min_epoch_file)
+                        self.log(
+                            f"Using model selection strategy 'min', selecting model with the minimum epoch {min_epoch} from path {self.network_dir}"
+                        )
+                    elif self.model_loading_strategy == "latest":
+                        self.network_dir = os.path.join(model_path, checkpoints[-1])
+                        self.log(
+                            f"Using model selection strategy 'latest', selecting the latest model from path {self.network_dir}"
+                        )
+                    else:
+                        raise ValueError(
+                            f"Invalid model loading strategy {self.model_loading_strategy} specified. Please use one of ['max', 'min', 'latest'] if not provding a path to a model cpkt."
+                        )
+    
+    def _setup_encoders(self):
+        # extract which inferences to make from config file
+        if "encoders" in self.config.keys():
+            encoders = self.config["encoders"]
         else:
-            self.run_path = os.path.join(
-                self.directory,
-                str(self.current_run) + "_" + self.config["screen_label"],
-            )  # to ensure that you can tell by directory name what is being classified
+            encoders = ["forward"] #default parameter
 
-        if not os.path.isdir(self.run_path):
-            os.makedirs(self.run_path)
-            self.log("Created new directory " + self.run_path)
+        self.models = []
 
-        self.log(f"current run: {self.current_run}")
+        for encoder in encoders:
+            if encoder == "forward":
+                self.models.append(self.model.network.forward)
+            if encoder == "encoder":
+                self.models.append(self.model.network.encoder)
 
-    def is_Int(self, s):
-        try:
-            int(s)
-            return True
-        except ValueError:
-            return False
+    def _setup_transforms(self) -> None:
 
-    def __call__(
-        self,
-        extraction_dir,
-        accessory,
-        size=0,
-        partial = False,
-        project_dataloader=HDF5SingleCellDataset,
-        accessory_dataloader=HDF5SingleCellDataset,
-    ):
+        if self.transforms is not None:
+            self.log(
+                "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.classification_f.transforms = None'"
+            )
+            return
+
+        if "transforms" in self.config.keys():
+            self.transforms = eval(self.config["transforms"])
+        else:
+            self.transforms = transforms.Compose([]) # default is no transforms
+        
+        return
+
+    def _setup(self):
+        self._general_setup()
+        self._get_model_specs()
+        self._get_network_dir()
+
+        if self.network_dir in self.PRETRAINED_MODEL_NAMES:
+            model = self._load_pretrained_model(self.network_dir)
+        else:
+            model = self._load_model(ckpt_path=self.network_dir,
+                hparams_path=self.hparams_path,
+                model_type=self.model_type)
+        
+        self._assign_model(model)
+
+        self._setup_encoders()
+        self._setup_transforms()
+
+    def process(self, extraction_dir: str, size: int = 0):
         """
         Perform classification on the provided HDF5 dataset.
 
@@ -148,15 +787,8 @@ class MLClusterClassifier(ProcessingStep):
         extraction_dir : str
             Directory containing the extracted HDF5 files from the project. If this class is used as part of
             a project processing workflow, this argument will be provided automatically.
-        accessory : list
-            List containing accessory datasets on which inference should be performed in addition to the cells
-            contained within the current project.
         size : int, optional
             How many cells should be selected for inference. Default is 0, which means all cells are selected.
-        project_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the project dataset. Default is HDF5SingleCellDataset.
-        accessory_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
         Returns
         -------
@@ -173,11 +805,7 @@ class MLClusterClassifier(ProcessingStep):
         --------
         .. code-block:: python
 
-            # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
-            # Leave empty if you only want to infer on all extracted cells in the current project
-
-            accessory = ([], [], [])
-            project.classify(accessory=accessory)
+            project.classify()
 
         Notes
         -----
@@ -190,7 +818,6 @@ class MLClusterClassifier(ProcessingStep):
                 channel_classification: 4
 
                 # Number of threads to use for dataloader
-                threads: 24
                 dataloader_worker_number: 24
 
                 # Batch size to pass to GPU
@@ -208,7 +835,7 @@ class MLClusterClassifier(ProcessingStep):
                 epoch: "max"
 
                 # Name of the classifier used for saving the classification results to a directory
-                screen_label: "Autophagy_15h_classifier1"
+                label: "Autophagy_15h_classifier1"
 
                 # List of which inference methods should be performed
                 # Available: "forward" and "encoder"
@@ -219,374 +846,95 @@ class MLClusterClassifier(ProcessingStep):
                 # On which device inference should be performed
                 # For speed, should be "cuda"
                 inference_device: "cuda"
+
+                #define dataset transforms
+                transforms:
+                    resize: 128
+
         """
+        self.log("Started MLClusterClassifier classification.")
 
-        # is called with the path to the segmented image
-        # Size: number of datapoints of the project dataset considered
-        # ===== Dataloaders =====
-        # should be HDF5SingleCellDataset for .h5 datasets
-        # project_dataloader: dataloader for the project dataset
-        # accessory_dataloader: dataloader for the accesssory datasets
+        # perform setup
+        self._setup()
 
-        self.log("Started classification")
-        self.log(f"starting with run {self.current_run}")
-        self.log(self.config)
-
-        accessory_sizes, accessory_labels, accessory_paths = accessory
-
-        self.log(f"{len(accessory_sizes)} different accessory datasets specified")
-
-        # Load model and parameters
-        network_dir = self.config["network"]
-
-        if network_dir in [
-            "autophagy_classifier1.0",
-            "autophagy_classifier2.0",
-            "autophagy_classifier2.1",
-        ]:
-            if network_dir == "autophagy_classifier1.0":
-                from sparcscore.ml.pretrained_models import autophagy_classifier1_0
-
-                model = autophagy_classifier1_0(device=self.config["inference_device"])
-            elif network_dir == "autophagy_classifier2.0":
-                from sparcscore.ml.pretrained_models import autophagy_classifier2_0
-
-                model = autophagy_classifier2_0(device=self.config["inference_device"])
-            elif network_dir == "autophagy_classifier2.1":
-                from sparcscore.ml.pretrained_models import autophagy_classifier2_1
-
-                model = autophagy_classifier2_1(device=self.config["inference_device"])
-            else:
-                sys.exit("incorrect specification for pretrained model.")
-        else:
-            checkpoint_path = os.path.join(network_dir, "checkpoints")
-            self.log(f"Checkpoints being read from path: {checkpoint_path}")
-            checkpoints = [
-                name
-                for name in os.listdir(checkpoint_path)
-                if os.path.isfile(os.path.join(checkpoint_path, name))
-            ]
-            checkpoints = [
-                x for x in checkpoints if x.endswith(".ckpt")
-            ]  # ensure we only have actualy checkpoint files
-            checkpoints.sort()
-
-            if len(checkpoints) < 1:
-                raise ValueError(
-                    f"No model parameters found at: {self.config['network']}"
-                )
-
-            # ensure that the most recent version is used if more than one is saved
-            if len(checkpoints) > 1:
-                # get max epoch number
-                epochs = [int(x.split("epoch=")[1].split("-")[0]) for x in checkpoints]
-                if self.config["epoch"] == "max":
-                    max_value = max(epochs)
-                    max_index = epochs.index(max_value)
-                    self.log(f"Maximum epoch number found {max_value}")
-
-                    # get checkpoint with the max epoch number
-                    latest_checkpoint_path = os.path.join(
-                        checkpoint_path, checkpoints[max_index]
-                    )
-                elif isinstance(self.config["epoch"], int):
-                    _index = epochs.index(self.config["epoch"])
-                    self.log(f"Using epoch number {self.config['epoch']}")
-
-                    # get checkpoint with the max epoch number
-                    latest_checkpoint_path = os.path.join(
-                        checkpoint_path, checkpoints[_index]
-                    )
-
-            else:
-                latest_checkpoint_path = os.path.join(checkpoint_path, checkpoints[0])
-
-            # add log message to ensure that it is always 100% transparent which classifier is being used
-            self.log(
-                f"Using the following classifier checkpoint: {latest_checkpoint_path}"
-            )
-            hparam_path = os.path.join(network_dir, "hparams.yaml")
-
-            model = MultilabelSupervisedModel.load_from_checkpoint(
-                latest_checkpoint_path,
-                hparams_file=hparam_path,
-                type=self.config["classifier_architecture"],
-                map_location=self.config["inference_device"],
-            )
-
-        model.eval()
-        model.to(self.config["inference_device"])
-
-        self.log(f"model parameters loaded from {self.config['network']}")
-
-        # generate project dataset dataloader
-        # transforms like noise, random rotations, channel selection are still hardcoded
-        t = transforms.Compose(
-            [ChannelSelector([self.config["channel_classification"]])]
+        self.dataloader = self.generate_dataloader(
+            extraction_dir,
+            selected_transforms=self.transforms,
+            size=size,
+            dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
-        self.log(f"loading {extraction_dir}")
+        # perform inference
+        for model in self.models:
+            self.log(f"Starting inference for model encoder {model.__name__}")
+            self.inference(self.dataloader, model, output_name=f"inference_{model.__name__}")
 
-        # redirect stdout to capture dataset size
-        f = io.StringIO()
-        with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset(
-                [extraction_dir], [0], "/", transform=t, return_id=True
-            )
+        #perform post processing cleanup
+        if not self.deep_debug:
+            self._post_processing_cleanup()
 
-            if size == 0:
-                size = len(dataset)
-            residual = len(dataset) - size
-            dataset, _ = torch.utils.data.random_split(dataset, [size, residual])
-
-        # Load accessory dataset
-        for i in range(len(accessory_sizes)):
-            self.log(f"loading {accessory_paths[i]}")
-            with redirect_stdout(f):
-                local_dataset = HDF5SingleCellDataset(
-                    [accessory_paths[i]], [i + 1], "/", transform=t, return_fake_id=True
-                )
-
-            if len(local_dataset) > accessory_sizes[i]:
-                residual = len(local_dataset) - accessory_sizes[i]
-                local_dataset, _ = torch.utils.data.random_split(
-                    local_dataset, [accessory_sizes[i], residual]
-                )
-
-            dataset = torch.utils.data.ConcatDataset([dataset, local_dataset])
-
-        # log stdout
-        out = f.getvalue()
-        self.log(out)
-
-        # classify samples
-        dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.config["batch_size"],
-            num_workers=self.config["dataloader_worker_number"],
-            shuffle=True,
-        )
-        if hasattr(self.config, "log_transform"):
-            self.log(f"log transform: {self.config['log_transform']}")
-
-        # extract which inferences to make from config file
-        encoders = self.config["encoders"]
-        for encoder in encoders:
-            if encoder == "forward":
-                self.inference(dataloader, model.network.forward, partial = partial)
-            if encoder == "encoder":
-                self.inference(dataloader, model.network.encoder, partial = partial)
-
-    def inference(self, dataloader, model_fun, partial = False):
-        # 1. performs inference for a dataloader and a given network call
-        # 2. saves the results to file
-
-        data_iter = iter(dataloader)
-        self.log(
-            f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference"
-        )
-        with torch.no_grad():
-            x, label, class_id = next(data_iter)
-            r = model_fun(x.to(self.config["inference_device"]))
-            result = r.cpu().detach()
-
-            for i in range(len(dataloader) - 1):
-                if i % 10 == 0:
-                    self.log(f"processing batch {i}")
-                x, _label, id = next(data_iter)
-
-                r = model_fun(x.to(self.config["inference_device"]))
-                result = torch.cat((result, r.cpu().detach()), 0)
-                label = torch.cat((label, _label), 0)
-                class_id = torch.cat((class_id, id), 0)
-
-        result = result.detach().numpy()
-
-        if hasattr(self.config, "log_transform"):
-            if self.config["log_transform"]:
-                sigma = 1e-9
-                result = np.log(result + sigma)
-
-        label = label.numpy()
-        class_id = class_id.numpy()
-
-        # save inferred activations / predictions
-        result_labels = [f"result_{i}" for i in range(result.shape[1])]
-
-        dataframe = pd.DataFrame(data=result, columns=result_labels)
-        dataframe["label"] = label
-        dataframe["cell_id"] = class_id.astype("int")
-
-        self.log("finished processing")
-
-        if partial:
-            path = os.path.join(
-                self.run_path, f"partial_dimension_reduction_{model_fun.__name__}.csv"
-            )
-        else:
-            path = os.path.join(
-                self.run_path, f"dimension_reduction_{model_fun.__name__}.csv"
-            )
-        dataframe.to_csv(path)
-
-
-class EnsembleClassifier(ProcessingStep):
+class EnsembleClassifier(_ClassificationBase):
     """
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
 
+    CLEAN_LOG = True
+    DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
+    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # create directory if it does not yet exist
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory, exist_ok=True)
+        if self.CLEAN_LOG:
+            self._clean_log_file()
 
-        self.ensemble_name = self.config["classification_label"]
-
-        # generate directory where results should be saved
-        self.directory = os.path.join(self.directory, self.ensemble_name)
-
-    def load_model(self, ckpt_path):
-        self.log(f"Loading model from checkpoing: {ckpt_path}")
-        hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
-        model = MultilabelSupervisedModel.load_from_checkpoint(
-            checkpoint_path=ckpt_path,
-            hparams_file=hparams_path,
-            map_location=self.config["inference_device"],
-        )
-        model = model.eval()
-        model.to(self.config["inference_device"])
-        self.log(
-            f"model loaded and transferred to device {self.config['inference_device']}"
-        )
-
-        return model
-
-    def generate_dataloader(self, extraction_dir):
-        # generate dataset
-        self.log(f"Reading data from path: {extraction_dir}")
-        px_size = self.config["input_image_px"]
-        t = transforms.Compose([transforms.Resize((px_size, px_size), antialias=True)])
-        self.log(f"Transforming input images to shape {px_size}x{px_size}")
-
-        f = io.StringIO()
-        with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset(
-                [extraction_dir],
-                [0],
-                "/",
-                transform=t,
-                return_id=True,
-                select_channel=self.config["channel_classification"],
+    def _setup_transforms(self):
+        if self.transforms is not None:
+            self.log(
+                "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.classification_f.transforms = None'"
             )
-
-        # generate dataloader
-        dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.config["batch_size"],
-            shuffle=False,
-            num_workers=self.config["dataloader_worker_number"],
-            drop_last=False,
-        )
-
-        self.log(
-            f"Dataloader generated with a batchsize of {self.config['batch_size']} and {self.config['dataloader_worker_number']} workers. Dataloader contains {len(dataloader)} entries."
-        )
-        return dataloader
-
-    def get_gpu_memory_usage(self):
-        if self.config["inference_device"] == "cpu":
-            return None
+            return
         else:
-            try:
-                memory_usage = []
-                for i in range(torch.cuda.device_count()):
-                    gpu_memory = (
-                        torch.cuda.memory_reserved(i) / 1024**2
-                    )  # Convert bytes to MiB
-                    memory_usage.append(gpu_memory)
-                results = {
-                    f"GPU_{i}": f"{memory_usage[i]} MiB"
-                    for i in range(len(memory_usage))
-                }
-                return results
-            except Exception as e:
-                print("Error:", e)
-                return None
+            self.transforms = transforms.Compose([])
+        
+    def _load_models(self):
+        # load models and generate ensemble
+        self.model = []
+        self.model_names = []
 
-    def inference(self, dataloader, model_ensemble, partial = False):
-        data_iter = iter(dataloader)
-        self.log(
-            f"Start processing {len(data_iter)} batches with {len(model_ensemble)} models from ensemble."
-        )
+        for model_name, model_path in self.network_dir.items():
+            model = self._load_model(ckpt_path=model_path, hparams_path=self.hparams_path)
 
-        with torch.no_grad():
-            x, label, class_id = next(data_iter)
-            x = x.to(self.config["inference_device"])
+            #check for hparams expected_imagesize
+            if self.expected_imagesize is None:
+                if "expected_imagesize" in model.hparams.keys():
+                    self.expected_imagesize = model.hparams["expected_imagesize"]
+            else:
+                if "expected_imagesize" in model.hparams.keys():
+                    if self.expected_imagesize != model.hparams["expected_imagesize"]:
+                        raise ValueError("Expected image sizes of models in ensemble do not match.")
+                
+            self.model.append(model)
+            self.model_names.append(model_name)
 
-            for ix, model_fun in enumerate(model_ensemble):
-                r = model_fun(x)
-                r = r.cpu().detach()
+        self.log(f"Model Ensemble generated with a total of {len(self.model)} models.")
+        memory_usage = self._get_gpu_memory_usage()
+        self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-                if ix == 0:
-                    _result = r
-                else:
-                    _result = torch.cat((_result, r), 1)
+    def _setup(self):
+        self._general_setup()
+        self._get_model_specs()
+        self._setup_transforms()
 
-            result = _result
-
-            for i in range(len(dataloader) - 1):
-                if i % 10 == 0:
-                    self.log(f"processing batch {i}")
-                x, _label, id = next(data_iter)
-                x = x.to(self.config["inference_device"])
-
-                for ix, model_fun in enumerate(model_ensemble):
-                    r = model_fun(x)
-                    r = r.cpu().detach()
-
-                    if ix == 0:
-                        _result = r
-                    else:
-                        _result = torch.cat((_result, r), 1)
-
-                result = torch.cat((result, _result), 0)
-                label = torch.cat((label, _label), 0)
-                class_id = torch.cat((class_id, id), 0)
-
-        result = result.detach().numpy()
-        label = label.numpy()
-        class_id = class_id.numpy()
-
-        # save inferred activations / predictions
-        result_labels = []
-        for model in self.model_names:
-            _result_labels = [f"{model}_result_{i}" for i in range(r.shape[1])]
-            result_labels = result_labels + _result_labels
-
-        dataframe = pd.DataFrame(data=result, columns=result_labels)
-        dataframe["cell_id"] = class_id.astype("int")
-
-        # reorder columns to make it more readable
-        columns_to_move = ["cell_id"]
-        other_columns = [col for col in dataframe.columns if col not in columns_to_move]
-        new_order = columns_to_move + other_columns
-        dataframe = dataframe[new_order]
-
-        if partial:
-            path = os.path.join(
-                self.directory, f"partial_ensemble_inference_{self.ensemble_name}.csv"
+        # ensure that the network_dir is a dictionary
+        if not isinstance(self.network_dir, dict):
+            raise ValueError(
+                "network_dir should be a dictionary containing the model names and paths to the model checkpoints."
             )
-        else:
-            path = os.path.join(
-                self.directory, f"ensemble_inference_{self.ensemble_name}.csv"
-            )
-        dataframe.to_csv(path, sep=",")
 
-        self.log(f"Results saved to file: {path}")
+        self._load_models()
 
-    def __call__(self, extraction_dir, partial = False):
+    def process(self, extraction_dir, size=0):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -641,47 +989,163 @@ class EnsembleClassifier(ProcessingStep):
 
         self.log("Starting Ensemble Classification")
 
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory, exist_ok=True)
-            self.log(
-                f"Created new directory {self.directory} to save classification results to."
-            )
+        self._setup()
 
-        # load models and generate ensemble
-        model_ensemble = []
-        model_names = []
-
-        for model_name, model_path in self.config["networks"].items():
-            model = self.load_model(model_path)
-            model_ensemble.append(model.network.forward)
-            model_names.append(model_name)
-
-        self.model_names = model_names
-
-        self.log(
-            f"Model Ensemble generated with a total of {len(model_ensemble)} models."
-        )
-
-        memory_usage = self.get_gpu_memory_usage()
-        self.log(f"GPU memory usage after loading models: {memory_usage}")
-
-        # generate dataloader
-        dataloader = self.generate_dataloader(
-            f"{extraction_dir}/{self.DEFAULT_DATA_FILE}"
+        self.dataloader = self.generate_dataloader(
+            extraction_dir,
+            selected_transforms=self.transforms,
+            size=size,
+            dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
         # perform inference
-        self.inference(dataloader=dataloader, model_ensemble=model_ensemble, partial = partial)
+        for model_name, model in zip(self.model_names, self.model):
+            self.log(f"Starting inference for model {model_name}")
+            self.inference(
+                self.dataloader, model, output_name=f"ensemble_inference_{model_name}"
+            )
+
+        #perform post processing cleanup
+        if not self.deep_debug:
+            self._post_processing_cleanup()
+
+####### CellFeaturization based on Classic Featurecalculation #######
+class _cellFeaturizerBase(_ClassificationBase):
+    
+    CLEAN_LOG = True
+    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
+    
+    #define the output column names
+    MASK_NAMES = ["nucleus", "cytosol"]
+    MASK_STATISTICS = ["area"]
+    CHANNEL_STATISTICS = ["mean", "median", "quant75", "quant25"]
+    MASK_CHANNEL_STATISTICS = ["summed_area_intensity", "summed_intensity_area_normalized"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.CLEAN_LOG:
+            self._clean_log_file()
+
+    def _setup_transforms(self):
+        if self.transforms is not None:
+            self.log(
+                "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.classification_f.transforms = None'"
+            )
+            return
+
+        self.transforms = transforms.Compose([])
+        return
+
+    def _get_channel_specs(self):
+        if "channel_names" in self.project.__dict__.keys():
+            self.channel_names = self.project.channel_names
+        else:
+            self.channel_names = self.project.input_image.c.values
+    
+    def _generate_column_names(self, n_masks:int = 2, n_channels:int = 3, channel_names: Union[List, None] = None) -> None:
+        
+        column_names = []
+
+        #get the mask names with the mask attributes
+        for mask in self.MASK_NAMES:
+            for mask_stat in self.MASK_STATISTICS:
+                column_names.append(f"{mask}_{mask_stat}")
+        
+        if channel_names is None:
+            channel_names = [f"channel_{i}" for i in range(n_channels)]
+
+        for channel_name in channel_names:
+            for channel_stat in self.CHANNEL_STATISTICS:
+                column_names.append(f"{channel_name}_{channel_stat}")
+
+            for mask in self.MASK_NAMES:
+                for mask_channel_stat in self.MASK_CHANNEL_STATISTICS:
+                    column_names.append(f"{channel_name}_{mask}_{mask_channel_stat}")
+
+        self.column_names = column_names
+    
+    def calculate_statistics(self, img, n_masks = 2):
+        """
+        Calculate statistics for an image batch.
+
+        Parameters
+        ----------
+        img : torch.Tensor
+            Tensor containing the image batch.
+        n_masks : int
+            Number of masks in the image. Masks are always the first images in the image stack. Default is 2.
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor containing the calculated statistics.
+        """
+        N, _, _, _ = img.shape
+
+        mask_statistics = []
+        masks = []
+        
+        for i in range(n_masks):
+            mask = img[:, i] > 0
+            area = mask.view(N, -1).sum(1, keepdims=True)
+
+            masks.append(mask)
+            mask_statistics.append(area)
+
+        # Select channel to calculate summary statistics over
+        mask = masks[-1] #the last mask is used for masking
+        mask[mask == 0] = torch.nan
+        
+        channel_statistics = []
+
+        for channel in range(n_masks, img.shape[1]):
+            img_selected = img[:, channel]
+
+            # apply mask to channel to only compute the statistics over the pixels that are relevant
+            img_selected = (img_selected * mask).to(
+                torch.float32
+            )  # ensure we have correct dytpe for subsequent calculations
+
+            mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
+            median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
+            quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
+            quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
 
 
-class CellFeaturizer(ProcessingStep):
+            #save results
+            channel_statistics.extend([mean,
+                                        median,
+                                        quant75,
+                                        quant25])
+
+            # Calculate more complex statistics
+            for i in range(n_masks):
+                summed_intensity_area = (
+                    masked_tensor(img_selected, masks[i])
+                    .view(N, -1)
+                    .sum(1)
+                    .reshape((N, 1))
+                    .to_tensor(0)
+                )
+                summed_intensity_area_normalized = summed_intensity_area / mask_statistics[i]
+ 
+                channel_statistics.extend([summed_intensity_area, summed_intensity_area_normalized])
+
+        # Generate results tensor with all values and return
+        items = mask_statistics + channel_statistics
+        results = torch.concat(items, 1,)
+
+        return results
+
+class CellFeaturizer(_cellFeaturizerBase):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
     The extracted features are saved to a CSV file. The features are calculated on the basis of a specified channel.
 
     The features which are calculated are:
 
-    - Area of the nucleus in pixels
+    - Area of the masks in pixels
     - Area of the cytosol in pixels
     - Mean intensity of the chosen channel
     - Median intensity of the chosen channel
@@ -692,116 +1156,20 @@ class CellFeaturizer(ProcessingStep):
     - Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area
     - Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area
 
-    The features are outputted in this order in the CSV file.
+    The features are outputed in this order in the CSV file.
     """
 
-    CLEAN_LOG = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def __init__(
-        self,
-        config,
-        path,
-        project_location,
-        debug=False,
-        overwrite=False,
-        intermediate_output=True,
-    ):
-        """
-        Class is initiated to featurize extracted single cells.
+        self.channel_classification = None #ensure that all images are passed to the function
 
-        Parameters
-        ----------
-        config : dict
-            Configuration for the extraction passed over from the :class:`pipeline.Project`.
-        path : str
-            Directory for the extraction log and results. Will be created if not existing yet.
-        project_location : str
-            Location of the project directory.
-        debug : bool, optional, default=False
-            Flag used to output debug information and map images.
-        overwrite : bool, optional, default=False
-            Flag used to recalculate all images, not yet implemented.
-        intermediate_output : bool, optional, default=True
-            Flag to save intermediate outputs.
-        """
-        self.debug = debug
-        self.overwrite = overwrite
-        self.config = config
-        self.intermediate_output = intermediate_output
-        self.project_location = project_location
+    def _setup(self):
+        self._general_setup()
+        self._setup_transforms()
+        self._get_channel_specs()
 
-        if "filtered_dataset" in config.keys():
-            self.filtered_dataset = self.config["filtered_dataset"]
-
-        # Create classification directory
-        self.directory = path
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory)
-
-        # Set up log and clean old log
-        if self.CLEAN_LOG:
-            log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
-            if os.path.isfile(log_path):
-                os.remove(log_path)
-
-        # check latest cluster run
-        current_level_directories = [
-            name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))
-        ]
-        runs = [int(i) for i in current_level_directories if self.is_Int(i)]
-
-        self.current_run = max(runs) + 1 if len(runs) > 0 else 0
-
-        if hasattr(self, "filtered_dataset"):
-            self.run_path = os.path.join(
-                self.directory,
-                str(self.current_run)
-                + "_"
-                + self.config["screen_label"]
-                + "_"
-                + self.filtered_dataset,
-            )
-        else:
-            self.run_path = os.path.join(
-                self.directory,
-                str(self.current_run) + "_" + self.config["screen_label"],
-            )
-
-        if not os.path.isdir(self.run_path):
-            os.makedirs(self.run_path)
-            self.log("Created new directory " + self.run_path)
-
-        self.log(f"current run: {self.current_run}")
-
-    def is_Int(self, s):
-        """
-        Check if a string represents an integer.
-
-        Parameters
-        ----------
-        s : str
-            String to check.
-
-        Returns
-        -------
-        bool
-            True if the string represents an integer, False otherwise.
-        """
-        try:
-            int(s)
-            return True
-        except ValueError:
-            return False
-
-    def __call__(
-        self,
-        extraction_dir,
-        accessory,
-        size=0,
-        partial=False,
-        project_dataloader=HDF5SingleCellDataset,
-        accessory_dataloader=HDF5SingleCellDataset,
-    ):
+    def process(self, extraction_dir, size=0):
         """
         Perform featurization on the provided HDF5 dataset.
 
@@ -809,14 +1177,8 @@ class CellFeaturizer(ProcessingStep):
         ----------
         extraction_dir : str
             Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
-        accessory : list
-            List containing accessory datasets on which inference should be performed in addition to the cells contained within the current project.
         size : int, optional, default=0
             How many cells should be selected for inference. Default is 0, meaning all cells are selected.
-        project_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the project dataset. Default is HDF5SingleCellDataset.
-        accessory_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
 
         Returns
         -------
@@ -834,8 +1196,7 @@ class CellFeaturizer(ProcessingStep):
             # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
             # Leave empty if you only want to infer on all extracted cells in the current project
 
-            accessory = ([], [], [])
-            project.classify(accessory=accessory)
+            project.classify()
 
         Notes
         -----
@@ -860,195 +1221,76 @@ class CellFeaturizer(ProcessingStep):
                 # Label under which the results should be saved
                 screen_label: "Ch3_Featurization"
         """
-        self.log("Started classification")
-        self.log(f"starting with run {self.current_run}")
-        self.log(self.config)
+        self.log("Started CellFeaturization of all available channels.")
 
-        accessory_sizes, accessory_labels, accessory_paths = accessory
+        # perform setup
+        self._setup()
 
-        self.log(f"{len(accessory_sizes)} different accessory datasets specified")
-
-        # Generate project dataset dataloader
-        t = transforms.Compose([])
-
-        self.log(f"loading {extraction_dir}")
-
-        # Redirect stdout to capture dataset size
-        f = io.StringIO()
-        with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset(
-                [extraction_dir], [0], "/", transform=t, return_id=True
-            )
-
-            if size == 0:
-                size = len(dataset)
-            residual = len(dataset) - size
-            dataset, _ = torch.utils.data.random_split(dataset, [size, residual])
-
-        # Load accessory dataset
-        for i in range(len(accessory_sizes)):
-            self.log(f"loading {accessory_paths[i]}")
-            with redirect_stdout(f):
-                local_dataset = HDF5SingleCellDataset(
-                    [accessory_paths[i]], [i + 1], "/", transform=t, return_fake_id=True
-                )
-
-            if len(local_dataset) > accessory_sizes[i]:
-                residual = len(local_dataset) - accessory_sizes[i]
-                local_dataset, _ = torch.utils.data.random_split(
-                    local_dataset, [accessory_sizes[i], residual]
-                )
-
-            dataset = torch.utils.data.ConcatDataset([dataset, local_dataset])
-
-        # Log stdout
-        out = f.getvalue()
-        self.log(out)
-
-        # Classify samples
-        dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.config["batch_size"],
-            num_workers=self.config["dataloader_worker_number"],
-            shuffle=False,
-        )
-        self.inference(dataloader, partial=partial)
-
-    def calculate_statistics(self, img, channel=-1):
-        """
-        Calculate statistics for an image batch.
-
-        Parameters
-        ----------
-        img : torch.Tensor
-            Tensor containing the image batch.
-        channel : int, optional, default=-1
-            Channel to calculate statistics over.
-
-        Returns
-        -------
-        torch.Tensor
-            Tensor containing the calculated statistics.
-        """
-        N, _, _, _ = img.shape
-
-        # Calculate area statistics
-        nucleus_mask = img[:, 0] > 0
-        nucleus_area = nucleus_mask.view(N, -1).sum(1, keepdims=True)
-        cytosol_mask = img[:, 1] > 0
-        cytosol_area = cytosol_mask.view(N, -1).sum(1, keepdims=True)
-
-        # Select channel to calculate summary statistics over
-        img_selected = img[:, channel]
-
-        # apply mask to channel to only compute the statistics over the pixels that are relevant
-        mask = cytosol_mask
-        mask[mask == 0] = torch.nan
-        img_selected = (img_selected * mask).to(
-            torch.float32
-        )  # ensure we have correct dytpe for subsequent calculations
-
-        mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
-        median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
-        quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
-        quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
-
-        # Calculate more complex statistics
-        summed_intensity_nucleus_area = (
-            masked_tensor(img_selected, nucleus_mask)
-            .view(N, -1)
-            .sum(1)
-            .reshape((N, 1))
-            .to_tensor(0)
+        dataloader = self.generate_dataloader(
+            extraction_dir,
+            selected_transforms=self.transforms,
+            size=size,
+            dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
-        summed_intensity_nucleus_area_normalized = (
-            summed_intensity_nucleus_area / nucleus_area
+        #get first example image from dataloader
+        x, _, _ = next(iter(dataloader))
+        N, c, x, y = x.shape
+
+        #perform sanity check on the number of channels
+        assert (self.n_masks + len(self.channel_names)) == c, f"Number of images in the dataset ({c}) does not match the number of masks ({self.n_masks}) and channel names ({len(self.channel_names)}) specified in the project."
+
+        #generate column names
+        self._generate_column_names(n_masks=self.n_masks, n_channels=c, channel_names=self.channel_names)
+
+        #define inference function
+        f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
+
+        self.inference(dataloader, f, output_name="calculated_image_features", column_names=self.column_names)
+        
+        #perform post processing cleanup
+        if not self.deep_debug:
+            self._post_processing_cleanup()
+class CellFeaturizer_single_channel(_cellFeaturizerBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def _setup_channel_selection(self):
+        if self.n_masks == 2:
+            self.channel_classification = [0, 1, self.channel_classification]
+        if self.n_masks == 1:
+            self.channel_classification = [0, self.channel_classification]
+        return
+    
+    def _setup(self):
+        self._general_setup()
+        self._setup_channel_selection()
+        self._setup_transforms()
+        self._get_channel_specs()
+    
+    def process(self, extraction_dir, size = 0):
+        self.log(f"Started CellFeaturization of selected channel {self.channel_classification}.")
+
+        # perform setup
+        self._setup()
+
+        self.dataloader = self.generate_dataloader(
+            extraction_dir,
+            selected_transforms=self.transforms,
+            size=size,
+            dataset_class=self.DEFAULT_DATA_LOADER,
         )
-        summed_intensity_cytosol_area = img_selected.view(N, -1).nansum(
-            1, keepdims=True
-        )
-        summed_intensity_cytosol_area_normalized = (
-            summed_intensity_cytosol_area / cytosol_area
-        )
 
-        # Generate results tensor with all values and return
-        results = torch.concat(
-            [
-                nucleus_area,
-                cytosol_area,
-                mean,
-                median,
-                quant75,
-                quant25,
-                summed_intensity_nucleus_area,
-                summed_intensity_cytosol_area,
-                summed_intensity_nucleus_area_normalized,
-                summed_intensity_cytosol_area_normalized,
-            ],
-            1,
-        )
-        return results
+        #generate column names
+        channel_name = self.channel_names[self.channel_classification[-1] - self.n_masks]
+        self._generate_column_names(n_masks=self.n_masks, n_channels=1, channel_names = [channel_name])
 
-    def inference(self, dataloader, partial=False):
-        """
-        Perform inference for a dataloader and save the results to a file.
+        #define inference function
+        f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
 
-        Parameters
-        ----------
-        dataloader : torch.utils.data.DataLoader
-            Dataloader to perform inference on.
+        self.inference(self.dataloader, f, output_name=f"calculated_image_features_Channel_{channel_name}", column_names=self.column_names)
 
-        Returns
-        -------
-        None
-        """
-        data_iter = iter(dataloader)
-        self.log(f"start processing {len(data_iter)} batches")
-        with torch.no_grad():
-            x, label, class_id = next(data_iter)
-            r = self.calculate_statistics(
-                x, channel=self.config["channel_classification"]
-            )
-            result = r
-
-            for i in range(len(dataloader) - 1):
-                if i % 10 == 0:
-                    self.log(f"processing batch {i}")
-                x, _label, id = next(data_iter)
-
-                r = self.calculate_statistics(
-                    x, channel=self.config["channel_classification"]
-                )
-                result = torch.cat((result, r), 0)
-                label = torch.cat((label, _label), 0)
-                class_id = torch.cat((class_id, id), 0)
-
-        label = label.numpy()
-        class_id = class_id.numpy()
-
-        # Save inferred activations / predictions
-        result_labels = [
-            "nucleus_area",
-            "cytosol_area",
-            "mean",
-            "median",
-            "quant75",
-            "quant25",
-            "summed_intensity_nucleus_area",
-            "summed_intensity_cytosol_area",
-            "summed_intensity_nucleus_area_normalized",
-            "summed_intensity_cytosol_area_normalized",
-        ]
-
-        dataframe = pd.DataFrame(data=result, columns=result_labels)
-        dataframe["label"] = label
-        dataframe["cell_id"] = class_id.astype("int")
-
-        self.log("finished processing")
-
-        if partial:
-            path = os.path.join(self.run_path, "partial_calculated_features.csv")
-        else:
-            path = os.path.join(self.run_path, "calculated_features.csv")
-        dataframe.to_csv(path)
+        #perform post processing cleanup
+        if not self.deep_debug:
+            self._post_processing_cleanup()
