@@ -929,7 +929,7 @@ class MLClusterClassifier(_ClassificationBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
             
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label = model.__name__)
+            self._write_results_sdata(results, label = f"{self.label}_{model.__name__}")
 
         self.log(f"Results saved to file: {path}")
 
@@ -1244,7 +1244,15 @@ class _cellFeaturizerBase(_ClassificationBase):
             table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[0]}"], region_key="region", instance_key="instance_id")
 
-            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{self.label}_{self.MASK_NAMES[0]}", overwrite = self.overwrite_run_path)
+            #define name to save table under
+            label = self.label.replace("CellFeaturizer_", "") # remove class name from label to ensure we dont have duplicates
+            
+            if self.channel_classification is not None:
+                table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[0]}"
+            else:
+                table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
+
+            self.project._write_table_object_sdata(table, table_name, overwrite = self.overwrite_run_path)
         
         if self.project.cyto_seg_status:
                 
@@ -1268,7 +1276,13 @@ class _cellFeaturizerBase(_ClassificationBase):
             table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[1]}"], region_key="region", instance_key="instance_id")
 
-            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{self.label}_{self.MASK_NAMES[1]}", overwrite = self.overwrite_run_path)
+            #define name to save table under
+            if self.channel_classification is not None:
+                table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[1]}"
+            else:
+                table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
+
+            self.project._write_table_object_sdata(table, table_name, overwrite = self.overwrite_run_path)
         
 class CellFeaturizer(_cellFeaturizerBase):
     """
