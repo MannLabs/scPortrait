@@ -82,6 +82,28 @@ class HDF5SingleCellDataset(Dataset):
                  select_channel=None):
         
         self.root_dir = root_dir
+        """
+        Parameters
+        ----------
+        dir_list : list of str
+            List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
+            containing hdf5 files.
+        dir_labels : list of int
+            List of labels corresponding to the directories in dir_list.
+        max_level : int, optional
+            Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+        transform : callable, optional
+            A optional user-defined function to apply transformations to the data. Default is None.
+        return_id : bool, optional
+            Whether to return the index of the cell with the data. Default is False.
+        return_fake_id : bool, optional
+            Whether to return a fake index (0) with the data. Default is False.
+        index_list : list of int, or None
+            List of indices to select from the dataset. If set to None all cells are taken. Default is None.
+        select_channel : int, optional
+            Specify a specific channel to select from the data. Default is None, which returns all channels.
+        """
+        
         self.dir_labels = dir_labels
         self.dir_list = dir_list
 
