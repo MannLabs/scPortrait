@@ -4,7 +4,7 @@ import shutil
 import os
 import yaml
 import psutil
-from typing import List
+from typing import List, Union
 
 import PIL
 import numpy as np
@@ -2529,7 +2529,6 @@ class SpatialProject(Logable):
         
         self.segmentation_f.overwrite = original_overwrite #reset to original value
     
-    def extract(self, partial = False, n_cells = None):
     def extract(self, partial = False, n_cells = None, overwrite: Union[bool, None] = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
@@ -2598,3 +2597,5 @@ class SpatialProject(Logable):
         self.classification_f.data_type = data_type
         
         self.classification_f(cells_path, size = n_cells)
+
+        self.classification_f.overwrite = original_overwrite #reset to original value
