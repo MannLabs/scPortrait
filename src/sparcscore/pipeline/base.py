@@ -148,6 +148,8 @@ class ProcessingStep(Logable):
 
     DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
 
+    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+
     def __init__(
         self,
         config,
