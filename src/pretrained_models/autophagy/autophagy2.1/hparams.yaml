@@ -5,3 +5,4 @@ learning_rate: 0.001
 num_classes: 2
 num_in_channels: 1
 optimizer: SGD
+expected_imagesize: [128, 128]
