@@ -1,22 +1,7 @@
-class_labels:
-- Torin
-- Unstim
-datadirs:
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_C6/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_01_stim_Cr203_F6/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.2_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.3_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/T_2.X_stim_Cr203/extraction/data/single_cells.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_unstim_screen/extraction/data/single_cells_0.999_1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_unstim_screen/extraction/data/single_cells_0.999_1.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.X_stim_WT/extraction/data/single_cells_0_0.001.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.2_stim_wt/extraction/data/single_cells_0_0.001.h5
-- /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_filtered/T_2.3_stim_WT/extraction/data/single_cells_0_0.001.h5
-dataset: /mnt/dss_fast/datasets/Autophagy_Screen_2/Training_Data_final/
+model_type: VGG2_old
 epochs: 20
 grad_clipping: 0.5
 learning_rate: 0.001
 num_classes: 2
 num_in_channels: 1
 optimizer: SGD
-version: SGD_1e-3_learning_rate_run0_version3

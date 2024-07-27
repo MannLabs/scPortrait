@@ -1,11 +1,7 @@
-class_labels:
-- Unstim
-- Torin
-dataset: /mnt/dss_fast/datasets/2021_10_13_autophagy_screen/Training_Data/
+model_type: VGG1_old
 epochs: 40
 grad_clipping: 0.5
 learning_rate: 0.001
 num_classes: 2
 num_in_channels: 1
 optimizer: SGD
-version: SGD_1e-3_learning_rate_trainer_1
