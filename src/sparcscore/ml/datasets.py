@@ -1,7 +1,8 @@
 import os
 
-import h5py
 import numpy as np
+
+import h5py
 import torch
 from torch.utils.data import Dataset
 
@@ -16,8 +17,6 @@ class HDF5SingleCellDataset(Dataset):
 
     Attributes
     ----------
-    root_dir : str
-        Root directory where the hdf5 files are located.
     dir_labels : list of int
         List of labels corresponding to the directories in dir_list.
     dir_list : list of str
@@ -52,9 +51,8 @@ class HDF5SingleCellDataset(Dataset):
     Examples
     --------
     >>> hdf5_data = HDF5SingleCellDataset(
-    ...     dir_list=['data1.hdf5', 'data2.hdf5'],
+    ...     dir_list=['path/to/data/data1.hdf5', 'path/to/data2/data2.hdf5'],
     ...     dir_labels=[0, 1],
-    ...     root_dir='/path/to/data',
     ...     transform=None,
     ...     return_id=True
     ... )
@@ -71,9 +69,9 @@ class HDF5SingleCellDataset(Dataset):
     
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"] # supported hdf5 filetypes 
 
-    def __init__(self, dir_list, 
+    def __init__(self, 
+                 dir_list, 
                  dir_labels, 
-                 root_dir, 
                  max_level=5, 
                  transform=None, 
                  return_id=False, 
@@ -81,7 +79,6 @@ class HDF5SingleCellDataset(Dataset):
                  index_list = None, # list of indices to select from the index
                  select_channel=None):
         
-        self.root_dir = root_dir
         """
         Parameters
         ----------
@@ -124,7 +121,7 @@ class HDF5SingleCellDataset(Dataset):
         
         # scan all directories
         for i, directory in enumerate(dir_list):
-            path = os.path.join(self.root_dir, directory)  
+            path = os.path.abspath(directory)  
             current_label = self.dir_labels[i]
             current_index_list = self.index_list[i]
 
@@ -174,7 +171,7 @@ class HDF5SingleCellDataset(Dataset):
             # get files and directories at current level
             current_level_directories = [os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
 
-            current_level_files = [ name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
+            current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
                         
             for i, file in enumerate(current_level_files):
                 filetype = file.split(".")[-1]
@@ -191,6 +188,7 @@ class HDF5SingleCellDataset(Dataset):
             return
         
     def stats(self): # print dataset statistics
+        """Print the dataset statistics."""
         labels = [el[0] for el in self.data_locator]
 
         print("Total: {}".format(len(labels)))
@@ -240,7 +238,7 @@ class HDF5SingleCellDataset(Dataset):
 
 class HDF5SingleCellDatasetRegression(Dataset):
     """
-    Class for handling SPARCSpy single cell datasets stored in HDF5 files for regression tasks.
+    Class for handling SPARCSpy single cell datasets stored in HDF5 files where the label should be read from the dataset itself.
     """ 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"] # supported hdf5 filetypes 
 
@@ -248,7 +246,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
                  dir_list: list[str], 
                  target_col: list[int],
                  hours: False,
-                 root_dir: str, 
                  max_level: int = 5, 
                  transform = None, 
                  return_id: bool = False, 
@@ -258,7 +255,6 @@ class HDF5SingleCellDatasetRegression(Dataset):
         self.dir_list = dir_list # list of directories with hdf5 files
         self.target_col = target_col # list of indices for target columns, maps 1 to 1 with dir_list, i.e. target_col[i] is the target column for dir_list[i]
         self.hours = hours # convert target to hours
-        self.root_dir = root_dir 
         self.transform = transform 
         self.select_channel = select_channel
 
@@ -267,7 +263,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
-            path = os.path.join(self.root_dir, directory)  # get full path
+            path = os.path.abspath(directory)  # get full path
             target_col = self.target_col[i] # get the target column for the current directory
             filetype = directory.split(".")[-1] # get filetype
 
@@ -366,7 +362,6 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
                  target_col: list[int],
                  index_list: list[int], # list of indices to select from the index
                  hours: False,
-                 root_dir: str, 
                  max_level: int = 5, 
                  transform = None, 
                  return_id: bool = False, 
@@ -378,7 +373,6 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
         self.index_list = index_list
         self.index_list = sorted(self.index_list)
         self.hours = hours
-        self.root_dir = root_dir 
         self.transform = transform 
         self.select_channel = select_channel
 
@@ -387,7 +381,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
 
         # scan all directories in dir_list
         for i, directory in enumerate(dir_list):
-            path = os.path.join(self.root_dir, directory)  # get full path
+            path = os.path.abspath(directory)  # get full path
             
             target_col = self.target_col[i] # get the target column for the current directory
             
