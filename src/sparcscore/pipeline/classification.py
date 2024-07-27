@@ -245,13 +245,11 @@ class _ClassificationBase(ProcessingStep):
 
         elif self.inference_device == torch.device("mps"):
             try:
-                # MPS currently does not have a direct way to query memory usage like CUDA.
-                # As a workaround, we can use the available memory as a proxy for memory usage.
-                from torch._C import _mps_get_memory_info
-
-                free_memory, total_memory = _mps_get_memory_info()
-                used_memory = total_memory - free_memory
-                memory_usage = used_memory / 1024**2  # Convert bytes to MiB
+                used_memory = (
+                    torch.mps.driver_allocated_memory()
+                    + torch.mps.driver_allocated_memory()
+                )
+                used_memory = used_memory / 1024**2  # Convert bytes to MiB
                 return {"MPS": f"{memory_usage} MiB"}
             except Exception as e:
                 print("Error:", e)
