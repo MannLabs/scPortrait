@@ -2028,26 +2028,40 @@ class SpatialProject(Logable):
                 project=self,
             )
         # === setup classification ===
-        if classification_f is not None:
-            if classification_f.__name__ not in self.config:
+        self._setup_classification_f(classification_f)
+
+    def _setup_classification_f(self, classification_f):
+        if classification_f.__name__ not in self.config:
                 raise ValueError(
                     f"Config for {classification_f.__name__} is missing from the config file"
                 )
 
-            classification_directory = os.path.join(
-                self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
-            )
+        classification_directory = os.path.join(
+            self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
+        )
 
-            self.classification_directory = classification_directory
+        self.classification_directory = classification_directory
 
-            self.classification_f = classification_f(
-                self.config[classification_f.__name__],
-                self.classification_directory,
-                project_location=self.project_location,
-                debug=self.debug,
-                overwrite=self.overwrite,
-                project=self,
-            )
+        self.classification_f = classification_f(
+            self.config[classification_f.__name__],
+            self.classification_directory,
+            project_location=self.project_location,
+            debug=self.debug,
+            overwrite=self.overwrite,
+            project=self,
+        )
+
+    def update_classification_f(self, classification_f) -> None:
+        """Update the classification method chosen for the project without reinitializing the entire project.
+        
+        Parameters
+        ----------
+        classification_f : class
+            The classification method that should be used for the project.
+        
+        """
+        self.log(f"Replacing current classification method {self.classification_f.__class__} with {classification_f}")
+        self._setup_classification_f(classification_f)
 
     def _load_config_from_file(self, file_path):
         """
