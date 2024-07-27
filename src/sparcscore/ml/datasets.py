@@ -218,8 +218,8 @@ class HDF5SingleCellDataset(Dataset):
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
-            idx = idx.tolist()  # convert tensor to list
-
+            idx = idx.tolist() # convert tensor to list
+        
         # get the label, filename and directory for the current dataset
         data_info = self.data_locator[idx]
 
@@ -227,11 +227,23 @@ class HDF5SingleCellDataset(Dataset):
             cell_tensor = self.handle_list[data_info[1]][
                 data_info[2], self.select_channel
             ]
+
+            #convert to tensor
             t = torch.from_numpy(cell_tensor)
-            t = torch.unsqueeze(t, 0)
+            
+            if t.ndim == 2:
+            # If t is 2D (Y, X), add a channel dimension
+                t = torch.unsqueeze(t, 0)
+            
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
+
         else:
             cell_tensor = self.handle_list[data_info[1]][data_info[2]]
+
+            #convert to tensor
             t = torch.from_numpy(cell_tensor)
+            
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
 
         t = t.float()  # convert to float tensor
 
