@@ -60,6 +60,10 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
         self.save_hyperparameters()
 
+        #if modeltype is availabel in hparams load from there
+        if ["model_type"] in self.hparams:
+            model_type = self.hparams["model_type"]
+        
         #initialize metrics
         if self.hparams["num_classes"] == 2:
             task_type = "binary"
