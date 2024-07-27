@@ -2348,12 +2348,14 @@ class SpatialProject(Logable):
 
         if overwrite:
             try:
-                del self.sdata[table_name]
+                if table_name in self.sdata.tables:
+                    del self.sdata[table_name]
                 self.sdata.tables[table_name] = table
                 self.sdata.write_element(table_name, overwrite=True)
             except:
                 #perform the nuclear option that ensures its written to disk
-                del self.sdata[table_name]
+                if table_name in self.sdata.tables:
+                    del self.sdata[table_name]
                 shutil.rmtree(os.path.join(self.sdata_path, "tables", table_name))
                 
                 self.sdata.tables[table_name] = table
