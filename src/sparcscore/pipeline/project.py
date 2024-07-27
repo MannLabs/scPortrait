@@ -1841,11 +1841,13 @@ class SpatialProject(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
+    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
     def __init__(self, 
                  project_location, 
                  config_path, 
                  segmentation_f=None,
                  extraction_f=None,
+                 classification_f=None,
                  overwrite=False, 
                  debug = False):
         
@@ -1863,6 +1865,7 @@ class SpatialProject(Logable):
 
         self.segmentation_f = segmentation_f
         self.extraction_f = extraction_f
+        self.classification_f = classification_f
 
         if self.CLEAN_LOG:
             self._clean_log_file()
@@ -1924,7 +1927,28 @@ class SpatialProject(Logable):
             )
         else:
             self.extraction_f = None
+        # === setup classification ===
+        if classification_f is not None:
+            if classification_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {classification_f.__name__} is missing from the config file"
+                )
 
+            classification_directory = os.path.join(
+                self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
+            )
+
+            self.classification_directory = classification_directory
+
+            self.classification_f = classification_f(
+                self.config[classification_f.__name__],
+                self.classification_directory,
+                project_location = self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                project = self,
+            )
+        
     def _load_config_from_file(self, file_path):
         """
         Loads config from file and writes it to self.config
@@ -2528,3 +2552,53 @@ class SpatialProject(Logable):
         self.extraction_f(partial = partial, n_cells = n_cells)
 
         self.extraction_f.overwrite = original_overwrite #reset to original value
+
+    def classify(self, n_cells = 0, data_type = "complete", partial_seed = None, overwrite: Union[bool, None] = None):
+        
+        if self.classification_f is None:
+            raise ValueError("No classification method defined")
+        
+        self._check_sdata_status(print_status = True)
+
+        if not self.nuc_seg_status or not self.cyto_seg_status:
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
+        
+        extraction_dir = self.extraction_f.get_directory()
+
+        if data_type == "complete":
+            cells_path = f"{extraction_dir}/data/single_cells.h5"
+        
+        if data_type == "partial":
+            partial_runs = [x for x in os.listdir(extraction_dir) if x.startswith("partial_data")]
+            selected_runs = [x for x in partial_runs if f"ncells_{n_cells}" in x]
+
+            if len(selected_runs) == 0:
+                raise ValueError(f"No partial data found for n_cells = {n_cells}.")
+            
+            if len(selected_runs) > 1:
+                if partial_seed is None:
+                    raise ValueError(f"Multiple partial data runs found for n_cells = {n_cells} with varying seed number. Please select one by specifying partial_seed.")
+                else:
+                    selected_run = [x for x in selected_runs if f"seed_{partial_seed}" in x]
+                    if len(selected_run) == 0:
+                        raise ValueError(f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}.")
+                    else:
+                        cells_path = f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
+            else:
+                cells_path = f"{extraction_dir}/{selected_runs[0]}/single_cells.h5"
+        
+        if data_type == "filtered":
+            raise ValueError("Filtered data not yet implemented.")
+
+        print("Using extraction directory:", cells_path)
+
+        #setup overwrite if specified in call
+        original_overwrite = self.classification_f.overwrite
+        if overwrite is not None:
+            self.classification_f.overwrite = overwrite
+
+        #update the number of masks that are available in the segmentation object
+        self.classification_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
+        self.classification_f.data_type = data_type
+        
+        self.classification_f(cells_path, size = n_cells)
