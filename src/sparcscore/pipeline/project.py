@@ -2359,7 +2359,7 @@ class SpatialProject(Logable):
 
         #read entire data into memory
         time_start = time()
-        input_image = np.array(zarr_reader.load("0").compute())
+        input_image = np.array(zarr_reader.load("0").compute())   ### adapt here to not read the entire image to memory TODO
         time_end = time()
         self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
