@@ -43,7 +43,7 @@ def plot_image(array, size = (10, 10), save_name="", cmap="magma", return_fig = 
         plt.show()
         plt.close()
 
-def visualize_class(class_ids, seg_map, image, background, all_ids = None, return_fig = False, *args, **kwargs):
+def visualize_class(class_ids, seg_map, image, all_ids = None, return_fig = False, *args, **kwargs):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
 
