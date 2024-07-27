@@ -669,6 +669,10 @@ class HDF5CellExtraction(ProcessingStep):
         if os.path.exists(self.path_image_data):
             os.remove(self.path_image_data)
 
+        #ensure that the save_index_to_remove is deleted to clear up memory and prevent issues with subsequent calls
+        if "save_index_to_remove" in self.__dict__:
+            del self.save_index_to_remove
+
         self._clear_cache()
 
     def _save_benchmarking_times(self, 
