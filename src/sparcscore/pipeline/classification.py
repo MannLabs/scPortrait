@@ -9,8 +9,10 @@ import platform
 import numpy as np
 import pandas as pd
 
+from anndata import AnnData
+from spatialdata.models import TableModel
+
 import torch
-from torch.masked import masked_tensor
 import pytorch_lightning as pl
 from torchvision import transforms
 
@@ -27,6 +29,7 @@ class _ClassificationBase(ProcessingStep):
             "autophagy_classifier2.1",
         ]
     )
+    MASK_NAMES = ["nucleus", "cytosol"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -588,7 +591,7 @@ class _ClassificationBase(ProcessingStep):
 
         return dataloader
 
-    def inference(self, dataloader, model_fun, output_name, column_names=None):
+    def inference(self, dataloader, model_fun, column_names=None) -> pd.DataFrame:
         """
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
@@ -634,11 +637,46 @@ class _ClassificationBase(ProcessingStep):
 
         self.log("finished processing.")
 
-        path = os.path.join(self.run_path, f"{output_name}.csv")
-        dataframe.to_csv(path)
+        return(dataframe)
 
+    def _write_results_csv(self, results, path):
+        results.to_csv(path, index =False)
         self.log(f"Results saved to file: {path}")
+    
+    def _write_results_sdata(self, results, label, mask_type = "seg_all"):
 
+        results.set_index("cell_id", inplace = True)
+        results.drop(columns = ["label"], inplace = True)
+
+        feature_matrix = results.to_numpy()
+        var_names = results.columns
+        obs_indices = results.index.astype(str)
+
+        if self.project.nuc_seg_status:
+            # save nucleus segmentation
+            obs = pd.DataFrame()
+            obs.index = obs_indices
+            obs["instance_id"] = obs_indices
+            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
+            obs["region"] = obs["region"].astype("category")
+
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[0]}"], region_key="region", instance_key="instance_id")
+
+            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}", overwrite = self.overwrite_run_path)
+        
+        if self.project.cyto_seg_status:
+            # save cytoplasm segmentation
+            obs = pd.DataFrame()
+            obs.index = obs_indices
+            obs["instance_id"] = obs_indices
+            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
+            obs["region"] = obs["region"].astype("category")
+
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[1]}"], region_key="region", instance_key="instance_id")
+
+            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}", overwrite = self.overwrite_run_path)
 
 ###### DeepLearning based Classification ######
 class MLClusterClassifier(_ClassificationBase):
@@ -885,9 +923,15 @@ class MLClusterClassifier(_ClassificationBase):
         # perform inference
         for model in self.models:
             self.log(f"Starting inference for model encoder {model.__name__}")
-            self.inference(
-                self.dataloader, model, output_name=f"inference_{model.__name__}"
-            )
+            results = self.inference(self.dataloader, model)
+
+            output_name=f"inference_{model.__name__}"
+            path = os.path.join(self.run_path, f"{output_name}.csv")
+            
+            self._write_results_csv(results, path)
+            self._write_results_sdata(results, label = model.__name__)
+
+        self.log(f"Results saved to file: {path}")
 
         # perform post processing cleanup
         if not self.deep_debug:
@@ -1027,9 +1071,13 @@ class EnsembleClassifier(_ClassificationBase):
         # perform inference
         for model_name, model in zip(self.model_names, self.model):
             self.log(f"Starting inference for model {model_name}")
-            self.inference(
-                self.dataloader, model, output_name=f"ensemble_inference_{model_name}"
-            )
+            results = self.inference(self.dataloader, model)
+
+            output_name= f"ensemble_inference_{model_name}"
+            path = os.path.join(self.run_path, f"{output_name}.csv")
+
+            self._write_results_csv(results, path)
+            self._write_results_sdata(results, label = model_name)
 
         # perform post processing cleanup
         if not self.deep_debug:
@@ -1042,13 +1090,9 @@ class _cellFeaturizerBase(_ClassificationBase):
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
     # define the output column names
-    MASK_NAMES = ["nucleus", "cytosol"]
+    MASK_NAMES = ["nucleus", "cytosol", "cytosol_only"]
     MASK_STATISTICS = ["area"]
-    CHANNEL_STATISTICS = ["mean", "median", "quant75", "quant25"]
-    MASK_CHANNEL_STATISTICS = [
-        "summed_area_intensity",
-        "summed_intensity_area_normalized",
-    ]
+    CHANNEL_STATISTICS = ["mean", "median", "quant75", "quant25", "summed_intensity", "summed_intensity_area_normalized"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1080,8 +1124,22 @@ class _cellFeaturizerBase(_ClassificationBase):
     ) -> None:
         column_names = []
 
+        if n_masks == 1:
+            self.project._check_sdata_status()
+
+            if self.project.nuc_seg_status:
+                mask_name = self.MASK_NAMES[0]
+            elif self.project.cyto_seg_status:
+                mask_name = self.MASK_NAMES[1]
+            else:
+                raise ValueError("no segmentation mask found in sdata object.")
+            mask_names = [mask_name]
+
+        elif n_masks == 2:
+            mask_names = self.MASK_NAMES
+
         # get the mask names with the mask attributes
-        for mask in self.MASK_NAMES:
+        for mask in mask_names:
             for mask_stat in self.MASK_STATISTICS:
                 column_names.append(f"{mask}_{mask_stat}")
 
@@ -1089,12 +1147,9 @@ class _cellFeaturizerBase(_ClassificationBase):
             channel_names = [f"channel_{i}" for i in range(n_channels)]
 
         for channel_name in channel_names:
-            for channel_stat in self.CHANNEL_STATISTICS:
-                column_names.append(f"{channel_name}_{channel_stat}")
-
-            for mask in self.MASK_NAMES:
-                for mask_channel_stat in self.MASK_CHANNEL_STATISTICS:
-                    column_names.append(f"{channel_name}_{mask}_{mask_channel_stat}")
+            for mask in mask_names:
+                for channel_stat in self.CHANNEL_STATISTICS:
+                    column_names.append(f"{channel_name}_{channel_stat}_{mask}")
 
         self.column_names = column_names
 
@@ -1120,50 +1175,41 @@ class _cellFeaturizerBase(_ClassificationBase):
         masks = []
 
         for i in range(n_masks):
-            mask = img[:, i] > 0
+            mask = (img[:, i] > 0)
             area = mask.view(N, -1).sum(1, keepdims=True)
 
             masks.append(mask)
             mask_statistics.append(area)
+        
+        if n_masks == 2:
+            mask = (masks[1] ^ masks[0])
+            area = mask.view(N, -1).sum(1, keepdims=True)
 
-        # Select channel to calculate summary statistics over
-        mask = masks[-1]  # the last mask is used for masking
-        mask[mask == 0] = torch.nan
+            masks.append(mask)
+            mask_statistics.append(area)
 
         channel_statistics = []
 
         for channel in range(n_masks, img.shape[1]):
             img_selected = img[:, channel]
 
-            # apply mask to channel to only compute the statistics over the pixels that are relevant
-            img_selected = (img_selected * mask).to(
-                torch.float32
-            )  # ensure we have correct dytpe for subsequent calculations
+            for mask in masks:
+                mask[mask == 0] = torch.nan
 
-            mean = img_selected.view(N, -1).nanmean(1, keepdim=True)
-            median = img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
-            quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
-            quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
+                # apply mask to channel to only compute the statistics over the pixels that are relevant
+                _img_selected = (img_selected * mask).to(
+                    torch.float32
+                )  # ensure we have correct dytpe for subsequent calculations
 
-            # save results
-            channel_statistics.extend([mean, median, quant75, quant25])
-
-            # Calculate more complex statistics
-            for i in range(n_masks):
-                summed_intensity_area = (
-                    masked_tensor(img_selected, masks[i])
-                    .view(N, -1)
-                    .sum(1)
-                    .reshape((N, 1))
-                    .to_tensor(0)
-                )
-                summed_intensity_area_normalized = (
-                    summed_intensity_area / mask_statistics[i]
-                )
-
-                channel_statistics.extend(
-                    [summed_intensity_area, summed_intensity_area_normalized]
-                )
+                mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
+                median = _img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
+                quant75 = _img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
+                quant25 = _img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
+                summed_intensity = _img_selected.view(N, -1).sum(1, keepdim=True)
+                summed_intensity_area_normalized = summed_intensity / mask_statistics[-1]
+            
+                # save results
+                channel_statistics.extend([mean, median, quant75, quant25, summed_intensity, summed_intensity_area_normalized])
 
         # Generate results tensor with all values and return
         items = mask_statistics + channel_statistics
@@ -1174,7 +1220,56 @@ class _cellFeaturizerBase(_ClassificationBase):
 
         return results
 
+    def _write_results_sdata(self, results, mask_type = "seg_all"):
 
+        if self.project.nuc_seg_status:
+
+            # save nucleus segmentation
+            columns_drop = [ x for x in results.columns if self.MASK_NAMES[1] in x]
+
+            _results = results.drop(columns = columns_drop)
+            _results.set_index("cell_id", inplace = True)
+            _results.drop(columns = ["label"], inplace = True)
+
+            feature_matrix = _results.to_numpy()
+            var_names = _results.columns
+            obs_indices = _results.index.astype(str)
+
+            obs = pd.DataFrame()
+            obs.index = obs_indices
+            obs["instance_id"] = obs_indices
+            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
+            obs["region"] = obs["region"].astype("category")
+
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[0]}"], region_key="region", instance_key="instance_id")
+
+            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{self.label}_{self.MASK_NAMES[0]}", overwrite = self.overwrite_run_path)
+        
+        if self.project.cyto_seg_status:
+                
+            # save cytosol segmentation
+            columns_drop = [ x for x in results.columns if self.MASK_NAMES[0] in x]
+
+            _results = results.drop(columns = columns_drop)
+            _results.set_index("cell_id", inplace = True)
+            _results.drop(columns = ["label"], inplace = True)
+
+            feature_matrix = _results.to_numpy()
+            var_names = _results.columns
+            obs_indices = _results.index.astype(str)
+
+            obs = pd.DataFrame()
+            obs.index = obs_indices
+            obs["instance_id"] = obs_indices
+            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
+            obs["region"] = obs["region"].astype("category")
+
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[1]}"], region_key="region", instance_key="instance_id")
+
+            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{self.label}_{self.MASK_NAMES[1]}", overwrite = self.overwrite_run_path)
+        
 class CellFeaturizer(_cellFeaturizerBase):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
@@ -1183,15 +1278,12 @@ class CellFeaturizer(_cellFeaturizerBase):
     The features which are calculated are:
 
     - Area of the masks in pixels
-    - Area of the cytosol in pixels
-    - Mean intensity of the chosen channel
-    - Median intensity of the chosen channel
-    - 75% quantile of the chosen channel
-    - 25% quantile of the chosen channel
-    - Summed intensity of the chosen channel in the region labeled as nucleus
-    - Summed intensity of the chosen channel in the region labeled as cytosol
-    - Summed intensity of the chosen channel in the region labeled as nucleus normalized to the nucleus area
-    - Summed intensity of the chosen channel in the region labeled as cytosol normalized to the cytosol area
+    - Mean intensity of the chosen channel in the regions labelled by each of the masks
+    - Median intensity of the chosen channel in the regions labelled by each of the masks
+    - 75% quantile of the chosen channel in the regions labelled by each of the masks
+    - 25% quantile of the chosen channel in the regions labelled by each of the masks
+    - Summed intensity of the chosen channel in the regions labelled by each of the masks
+    - Summed intensity of the chosen channel in the region labelled by each of the masks normalized for area
 
     The features are outputed in this order in the CSV file.
     """
@@ -1267,7 +1359,7 @@ class CellFeaturizer(_cellFeaturizerBase):
         # perform setup
         self._setup()
 
-        dataloader = self.generate_dataloader(
+        self.dataloader = self.generate_dataloader(
             extraction_dir,
             selected_transforms=self.transforms,
             size=size,
@@ -1275,7 +1367,7 @@ class CellFeaturizer(_cellFeaturizerBase):
         )
 
         # get first example image from dataloader
-        x, _, _ = next(iter(dataloader))
+        x, _, _ = next(iter(self.dataloader))
         N, c, x, y = x.shape
 
         # perform sanity check on the number of channels
@@ -1291,17 +1383,21 @@ class CellFeaturizer(_cellFeaturizerBase):
         # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
 
-        self.inference(
-            dataloader,
+        results = self.inference(
+            self.dataloader,
             f,
-            output_name="calculated_image_features",
             column_names=self.column_names,
         )
+
+        output_name="calculated_image_features"
+        path = os.path.join(self.run_path, f"{output_name}.csv")
+            
+        self._write_results_csv(results, path)
+        self._write_results_sdata(results)
 
         # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
-
 
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
@@ -1348,12 +1444,17 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
 
-        self.inference(
+        results = self.inference(
             self.dataloader,
             f,
-            output_name=f"calculated_image_features_Channel_{channel_name}",
             column_names=self.column_names,
         )
+
+        output_name=f"calculated_image_features_Channel_{channel_name}"
+        path = os.path.join(self.run_path, f"{output_name}.csv")
+            
+        self._write_results_csv(results, path)
+        self._write_results_sdata(results)
 
         # perform post processing cleanup
         if not self.deep_debug:
