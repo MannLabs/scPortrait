@@ -2344,9 +2344,23 @@ class SpatialProject(Logable):
 
         self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes)
 
-    def _write_table_object_sdata(self, table, table_name: str):
-        self.sdata.tables[table_name] = table
-        self.sdata.write_element(table_name, overwrite=True)
+    def _write_table_object_sdata(self, table, table_name: str, overwrite = False):
+
+        if overwrite:
+            try:
+                del self.sdata[table_name]
+                self.sdata.tables[table_name] = table
+                self.sdata.write_element(table_name, overwrite=True)
+            except:
+                #perform the nuclear option that ensures its written to disk
+                del self.sdata[table_name]
+                shutil.rmtree(os.path.join(self.sdata_path, "tables", table_name))
+                
+                self.sdata.tables[table_name] = table
+                self.sdata.write_element(table_name, overwrite=True)
+        else:
+            self.sdata.tables[table_name] = table
+            self.sdata.write_element(table_name, overwrite=False)
 
         self.log(f"Table {table_name} written to sdata object.")
 
