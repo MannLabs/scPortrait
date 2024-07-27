@@ -2027,6 +2027,7 @@ class SpatialProject(Logable):
                 overwrite=self.overwrite,
                 project=self,
             )
+        
         # === setup classification ===
         self._setup_classification_f(classification_f)
 
@@ -2731,13 +2732,11 @@ class SpatialProject(Logable):
             )
 
         # setup overwrite if specified in call
-        original_overwrite = self.extraction_f.overwrite
         if overwrite is not None:
-            self.extraction_f.overwrite = overwrite
+            self.extraction_f.overwrite_run_path = overwrite
 
         self.extraction_f(partial=partial, n_cells=n_cells)
 
-        self.extraction_f.overwrite = original_overwrite  # reset to original value
 
     def classify(
         self,
@@ -2796,14 +2795,11 @@ class SpatialProject(Logable):
         print("Using extraction directory:", cells_path)
 
         # setup overwrite if specified in call
-        original_overwrite = self.classification_f.overwrite
         if overwrite is not None:
-            self.classification_f.overwrite = overwrite
+            self.classification_f.overwrite_run_path = overwrite
 
         # update the number of masks that are available in the segmentation object
         self.classification_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
         self.classification_f.data_type = data_type
 
         self.classification_f(cells_path, size=n_cells)
-
-        self.classification_f.overwrite = original_overwrite  # reset to original value

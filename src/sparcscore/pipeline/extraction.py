@@ -5,6 +5,7 @@ import timeit
 from functools import partial as func_partial
 import multiprocessing as mp
 import platform
+import shutil
 
 import h5py
 from tqdm.auto import tqdm
@@ -55,7 +56,8 @@ class HDF5CellExtraction(ProcessingStep):
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
             self.config["threads"] = 1
 
-        self.deep_debug = False
+        if not "overwrite_run_path" in self.__dict__.keys():
+            self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -127,6 +129,32 @@ class HDF5CellExtraction(ProcessingStep):
 
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
+            self.log(
+                    f"Created new directory for extraction results: {self.extraction_data_directory}"
+                )
+        else:
+            if self.overwrite_run_path:
+                self.log(
+                    f"Output folder at {self.extraction_data_directory} already exists. Overwriting..."
+                )
+                shutil.rmtree(self.extraction_data_directory)
+                os.makedirs(self.extraction_data_directory)
+                self.log(
+                    f"Created new directory for extraction results: {self.extraction_data_directory}"
+                )
+
+            elif self.overwrite_run_path:
+                self.log(
+                    f"Output folder at {self.extraction_data_directory} already exists. Overwriting..."
+                )
+                shutil.rmtree(self.extraction_data_directory)
+                os.makedirs(self.extraction_data_directory)
+                self.log(
+                    f"Created new directory for extraction results: {self.extraction_data_directory}"
+                )
+                
+            else:
+                raise ValueError("Output folder already exists. Set overwrite_run_path to True to overwrite.")
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
     
