@@ -15,14 +15,18 @@ import pytorch_lightning as pl
 from torchvision import transforms
 
 from sparcscore.ml.datasets import HDF5SingleCellDataset
-from sparcscore.ml.transforms import ChannelSelector
 from sparcscore.ml.plmodels import MultilabelSupervisedModel
 from sparcscore.pipeline.base import ProcessingStep
 
+
 class _ClassificationBase(ProcessingStep):
-    PRETRAINED_MODEL_NAMES = list(["autophagy_classifier1.0",
-        "autophagy_classifier2.0",
-        "autophagy_classifier2.1",])
+    PRETRAINED_MODEL_NAMES = list(
+        [
+            "autophagy_classifier1.0",
+            "autophagy_classifier2.0",
+            "autophagy_classifier2.1",
+        ]
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -150,7 +154,7 @@ class _ClassificationBase(ProcessingStep):
                         "mps"
                     )  # ensure that the complete device is always specified
 
-            elif self.inference_device in("automatic", "auto"):
+            elif self.inference_device in ("automatic", "auto"):
                 self.inference_device = self._detect_automatic_inference_device()
                 self.log(
                     f"Automatically configured inference device to {self.inference_device}"
@@ -282,7 +286,7 @@ class _ClassificationBase(ProcessingStep):
             from sparcscore.ml.pretrained_models import autophagy_classifier2_0
 
             model = autophagy_classifier2_0(device=self.config["inference_device"])
-            #self.expected_imagesize = (128, 128)
+            # self.expected_imagesize = (128, 128)
 
         elif model_name == "autophagy_classifier2.1":
             from sparcscore.ml.pretrained_models import autophagy_classifier2_1
@@ -307,32 +311,32 @@ class _ClassificationBase(ProcessingStep):
 
         if "dataloader" in self.__dict__.keys():
             del self.dataloader
-        
+
         if "models" in self.__dict__.keys():
             del self.models
 
         if "model" in self.__dict__.keys():
             del self.model
-        
+
         if "overwrite_run_path" in self.__dict__.keys():
             del self.overwrite_run_path
-        
+
         if "n_masks" in self.__dict__.keys():
             del self.n_masks
-        
+
         if "data_type" in self.__dict__.keys():
             del self.data_type
-        
+
         if "log_transform" in self.__dict__.keys():
             del self.log_transform
-        
+
         if "channel_names" in self.__dict__.keys():
             del self.channel_names
-        
+
         if "column_names" in self.__dict__.keys():
             del self.column_names
-        
-        #reset to init values to ensure that subsequent runs are not affected by previous runs
+
+        # reset to init values to ensure that subsequent runs are not affected by previous runs
         self.model_class = None
         self.transforms = None
         self.channel_classification = None
@@ -340,13 +344,14 @@ class _ClassificationBase(ProcessingStep):
 
         self._clear_cache()
 
-        memory_usage = self._get_gpu_memory_usage()
-        self.log(f"GPU memory before performing cleanup: {memory_usage}")
+        if self.debug:
+            memory_usage = self._get_gpu_memory_usage()
+            self.log(f"GPU memory after performing cleanup: {memory_usage}")
 
-        #this needs to be called after the memory usage has been assesed
+        # this needs to be called after the memory usage has been assesed
         if "inference_device" in self.__dict__.keys():
             del self.inference_device
-    
+
     def define_model_class(self, model_class, force_load=False):
         if isinstance(model_class, str):
             model_class = eval(model_class)  # convert string to class by evaluating it
@@ -404,20 +409,24 @@ class _ClassificationBase(ProcessingStep):
         # get path to hparams file
 
         if hparams_path is None:
-            self.log(
-                "No hparams file provided, assuming hparams file is in the same directory as the checkpoint file. Trying to load from default location."
-            )
+            if self.debug:
+                self.log(
+                    "No hparams file provided, assuming hparams file is in the same directory as the checkpoint file. Trying to load from default location."
+                )
             hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
 
             if not os.path.isfile(hparams_path):
-                hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yaml")
-                
+                hparams_path = ckpt_path.replace(
+                    os.path.basename(ckpt_path), "hparams.yaml"
+                )
+
                 if not os.path.isfile(hparams_path):
                     raise ValueError(
                         f"No hparams file found at {hparams_path}. Please provide a valid hparams file path."
                     )
 
-            self.log(f"Loading hparams file from {hparams_path}")
+            if self.debug:
+                self.log(f"Loading hparams file from {hparams_path}")
 
         if model_type is None:
             model = self.model_class.load_from_checkpoint(
@@ -436,22 +445,23 @@ class _ClassificationBase(ProcessingStep):
         model = model.eval()
         model.to(self.inference_device)
 
-        self.log(
-            f"model loaded, set to eval mode and transferred to device {self.inference_device}"
-        )
+        if self.debug:
+            self.log(
+                f"model loaded, set to eval mode and transferred to device {self.inference_device}"
+            )
 
         return model
-    
-    def _assign_model(self, model):
 
-        self.log(f"Model assigned to classification function.")
+    def _assign_model(self, model):
+        self.log("Model assigned to classification function.")
         self.model = model
-        
-        #check if the hparams specify an expected image size
+
+        # check if the hparams specify an expected image size
         if "expected_imagesize" in model.hparams.keys():
             self.expected_imagesize = model.hparams["expected_imagesize"]
 
-    def load_model(self,
+    def load_model(
+        self,
         ckpt_path,
         hparams_path: Union[str, None] = None,
         model_type: Union[str, None] = None,
@@ -467,12 +477,12 @@ class _ClassificationBase(ProcessingStep):
         self,
         extraction_dir: str,
         selected_transforms: transforms.Compose = transforms.Compose([]),
-        size:int =0,
-        seed:Union[int, None] = 42,
+        size: int = 0,
+        seed: Union[int, None] = 42,
         dataset_class=HDF5SingleCellDataset,
     ) -> torch.utils.data.DataLoader:
         """Create a pytorch dataloader from the provided single-cell image dataset.
-s
+
         Parameters
         ----------
         extraction_dir : str
@@ -493,11 +503,15 @@ s
         # generate dataset
         self.log(f"Reading data from path: {extraction_dir}")
 
-        assert isinstance(self.transforms, transforms.Compose), f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        assert isinstance(
+            self.transforms, transforms.Compose
+        ), f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
         t = self.transforms
 
         if self.expected_imagesize is not None:
-            self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
+            self.log(
+                f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size."
+            )
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
         f = io.StringIO()
@@ -519,7 +533,9 @@ s
             if size < len(dataset):
                 residual_size = len(dataset) - size
                 if seed is not None:
-                    self.log(f"Using a seeded generator with seed {seed} to split dataset")
+                    self.log(
+                        f"Using a seeded generator with seed {seed} to split dataset"
+                    )
                     gen = torch.Generator()
                     gen.manual_seed(seed)
                     dataset, _ = torch.utils.data.random_split(
@@ -532,15 +548,17 @@ s
                     )
             # randomly select n elements from the dataset to process
             dataset = torch.utils.data.Subset(dataset, range(size))
-        
+
         # check operating system
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             context = "spawn"
-            num_workers = 0 #need to disable multiprocessing otherwise it will throw an error
-        elif platform.system() == 'Darwin':
+            num_workers = (
+                0  # need to disable multiprocessing otherwise it will throw an error
+            )
+        elif platform.system() == "Darwin":
             context = "fork"
             num_workers = self.num_workers
-        elif platform.system() == 'Linux':
+        elif platform.system() == "Linux":
             context = "fork"
             num_workers = self.num_workers
 
@@ -553,7 +571,7 @@ s
                 shuffle=False,
                 num_workers=num_workers,
                 drop_last=False,
-                multiprocessing_context= context, 
+                multiprocessing_context=context,
             )
         else:
             dataloader = torch.utils.data.DataLoader(
@@ -583,7 +601,7 @@ s
             r = model_fun(x.to(self.inference_device))
             result = r.cpu().detach()
 
-            #add check to ensure this only runs if we have more than one batch in the dataset
+            # add check to ensure this only runs if we have more than one batch in the dataset
             if len(dataloader) > 1:
                 for i in range(len(dataloader) - 1):
                     if i % 10 == 0:
@@ -633,6 +651,7 @@ class MLClusterClassifier(_ClassificationBase):
     """
 
     CLEAN_LOG = True
+    DEFAULT_LOG_NAME = "processing_MLClusterClassifier.log"
     DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
@@ -728,13 +747,13 @@ class MLClusterClassifier(_ClassificationBase):
                         raise ValueError(
                             f"Invalid model loading strategy {self.model_loading_strategy} specified. Please use one of ['max', 'min', 'latest'] if not provding a path to a model cpkt."
                         )
-    
+
     def _setup_encoders(self):
         # extract which inferences to make from config file
         if "encoders" in self.config.keys():
             encoders = self.config["encoders"]
         else:
-            encoders = ["forward"] #default parameter
+            encoders = ["forward"]  # default parameter
 
         self.models = []
 
@@ -745,7 +764,6 @@ class MLClusterClassifier(_ClassificationBase):
                 self.models.append(self.model.network.encoder)
 
     def _setup_transforms(self) -> None:
-
         if self.transforms is not None:
             self.log(
                 "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.classification_f.transforms = None'"
@@ -755,8 +773,8 @@ class MLClusterClassifier(_ClassificationBase):
         if "transforms" in self.config.keys():
             self.transforms = eval(self.config["transforms"])
         else:
-            self.transforms = transforms.Compose([]) # default is no transforms
-        
+            self.transforms = transforms.Compose([])  # default is no transforms
+
         return
 
     def _setup(self):
@@ -767,10 +785,12 @@ class MLClusterClassifier(_ClassificationBase):
         if self.network_dir in self.PRETRAINED_MODEL_NAMES:
             model = self._load_pretrained_model(self.network_dir)
         else:
-            model = self._load_model(ckpt_path=self.network_dir,
+            model = self._load_model(
+                ckpt_path=self.network_dir,
                 hparams_path=self.hparams_path,
-                model_type=self.model_type)
-        
+                model_type=self.model_type,
+            )
+
         self._assign_model(model)
 
         self._setup_encoders()
@@ -865,11 +885,14 @@ class MLClusterClassifier(_ClassificationBase):
         # perform inference
         for model in self.models:
             self.log(f"Starting inference for model encoder {model.__name__}")
-            self.inference(self.dataloader, model, output_name=f"inference_{model.__name__}")
+            self.inference(
+                self.dataloader, model, output_name=f"inference_{model.__name__}"
+            )
 
-        #perform post processing cleanup
+        # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
+
 
 class EnsembleClassifier(_ClassificationBase):
     """
@@ -877,6 +900,7 @@ class EnsembleClassifier(_ClassificationBase):
     """
 
     CLEAN_LOG = True
+    DEFAULT_LOG_NAME = "processing_EnsembleClassifier.log"
     DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
@@ -894,24 +918,28 @@ class EnsembleClassifier(_ClassificationBase):
             return
         else:
             self.transforms = transforms.Compose([])
-        
+
     def _load_models(self):
         # load models and generate ensemble
         self.model = []
         self.model_names = []
 
         for model_name, model_path in self.network_dir.items():
-            model = self._load_model(ckpt_path=model_path, hparams_path=self.hparams_path)
+            model = self._load_model(
+                ckpt_path=model_path, hparams_path=self.hparams_path
+            )
 
-            #check for hparams expected_imagesize
+            # check for hparams expected_imagesize
             if self.expected_imagesize is None:
                 if "expected_imagesize" in model.hparams.keys():
                     self.expected_imagesize = model.hparams["expected_imagesize"]
             else:
                 if "expected_imagesize" in model.hparams.keys():
                     if self.expected_imagesize != model.hparams["expected_imagesize"]:
-                        raise ValueError("Expected image sizes of models in ensemble do not match.")
-                
+                        raise ValueError(
+                            "Expected image sizes of models in ensemble do not match."
+                        )
+
             self.model.append(model)
             self.model_names.append(model_name)
 
@@ -1003,21 +1031,24 @@ class EnsembleClassifier(_ClassificationBase):
                 self.dataloader, model, output_name=f"ensemble_inference_{model_name}"
             )
 
-        #perform post processing cleanup
+        # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
 
+
 ####### CellFeaturization based on Classic Featurecalculation #######
 class _cellFeaturizerBase(_ClassificationBase):
-    
     CLEAN_LOG = True
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
-    
-    #define the output column names
+
+    # define the output column names
     MASK_NAMES = ["nucleus", "cytosol"]
     MASK_STATISTICS = ["area"]
     CHANNEL_STATISTICS = ["mean", "median", "quant75", "quant25"]
-    MASK_CHANNEL_STATISTICS = ["summed_area_intensity", "summed_intensity_area_normalized"]
+    MASK_CHANNEL_STATISTICS = [
+        "summed_area_intensity",
+        "summed_intensity_area_normalized",
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1040,16 +1071,20 @@ class _cellFeaturizerBase(_ClassificationBase):
             self.channel_names = self.project.channel_names
         else:
             self.channel_names = self.project.input_image.c.values
-    
-    def _generate_column_names(self, n_masks:int = 2, n_channels:int = 3, channel_names: Union[List, None] = None) -> None:
-        
+
+    def _generate_column_names(
+        self,
+        n_masks: int = 2,
+        n_channels: int = 3,
+        channel_names: Union[List, None] = None,
+    ) -> None:
         column_names = []
 
-        #get the mask names with the mask attributes
+        # get the mask names with the mask attributes
         for mask in self.MASK_NAMES:
             for mask_stat in self.MASK_STATISTICS:
                 column_names.append(f"{mask}_{mask_stat}")
-        
+
         if channel_names is None:
             channel_names = [f"channel_{i}" for i in range(n_channels)]
 
@@ -1062,8 +1097,8 @@ class _cellFeaturizerBase(_ClassificationBase):
                     column_names.append(f"{channel_name}_{mask}_{mask_channel_stat}")
 
         self.column_names = column_names
-    
-    def calculate_statistics(self, img, n_masks = 2):
+
+    def calculate_statistics(self, img, n_masks=2):
         """
         Calculate statistics for an image batch.
 
@@ -1083,7 +1118,7 @@ class _cellFeaturizerBase(_ClassificationBase):
 
         mask_statistics = []
         masks = []
-        
+
         for i in range(n_masks):
             mask = img[:, i] > 0
             area = mask.view(N, -1).sum(1, keepdims=True)
@@ -1092,9 +1127,9 @@ class _cellFeaturizerBase(_ClassificationBase):
             mask_statistics.append(area)
 
         # Select channel to calculate summary statistics over
-        mask = masks[-1] #the last mask is used for masking
+        mask = masks[-1]  # the last mask is used for masking
         mask[mask == 0] = torch.nan
-        
+
         channel_statistics = []
 
         for channel in range(n_masks, img.shape[1]):
@@ -1110,12 +1145,8 @@ class _cellFeaturizerBase(_ClassificationBase):
             quant75 = img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
             quant25 = img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
 
-
-            #save results
-            channel_statistics.extend([mean,
-                                        median,
-                                        quant75,
-                                        quant25])
+            # save results
+            channel_statistics.extend([mean, median, quant75, quant25])
 
             # Calculate more complex statistics
             for i in range(n_masks):
@@ -1126,15 +1157,23 @@ class _cellFeaturizerBase(_ClassificationBase):
                     .reshape((N, 1))
                     .to_tensor(0)
                 )
-                summed_intensity_area_normalized = summed_intensity_area / mask_statistics[i]
- 
-                channel_statistics.extend([summed_intensity_area, summed_intensity_area_normalized])
+                summed_intensity_area_normalized = (
+                    summed_intensity_area / mask_statistics[i]
+                )
+
+                channel_statistics.extend(
+                    [summed_intensity_area, summed_intensity_area_normalized]
+                )
 
         # Generate results tensor with all values and return
         items = mask_statistics + channel_statistics
-        results = torch.concat(items, 1,)
+        results = torch.concat(
+            items,
+            1,
+        )
 
         return results
+
 
 class CellFeaturizer(_cellFeaturizerBase):
     """
@@ -1157,10 +1196,14 @@ class CellFeaturizer(_cellFeaturizerBase):
     The features are outputed in this order in the CSV file.
     """
 
+    DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.channel_classification = None #ensure that all images are passed to the function
+        self.channel_classification = (
+            None  # ensure that all images are passed to the function
+        )
 
     def _setup(self):
         self._general_setup()
@@ -1231,44 +1274,58 @@ class CellFeaturizer(_cellFeaturizerBase):
             dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
-        #get first example image from dataloader
+        # get first example image from dataloader
         x, _, _ = next(iter(dataloader))
         N, c, x, y = x.shape
 
-        #perform sanity check on the number of channels
-        assert (self.n_masks + len(self.channel_names)) == c, f"Number of images in the dataset ({c}) does not match the number of masks ({self.n_masks}) and channel names ({len(self.channel_names)}) specified in the project."
+        # perform sanity check on the number of channels
+        assert (
+            (self.n_masks + len(self.channel_names)) == c
+        ), f"Number of images in the dataset ({c}) does not match the number of masks ({self.n_masks}) and channel names ({len(self.channel_names)}) specified in the project."
 
-        #generate column names
-        self._generate_column_names(n_masks=self.n_masks, n_channels=c, channel_names=self.channel_names)
+        # generate column names
+        self._generate_column_names(
+            n_masks=self.n_masks, n_channels=c, channel_names=self.channel_names
+        )
 
-        #define inference function
+        # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
 
-        self.inference(dataloader, f, output_name="calculated_image_features", column_names=self.column_names)
-        
-        #perform post processing cleanup
+        self.inference(
+            dataloader,
+            f,
+            output_name="calculated_image_features",
+            column_names=self.column_names,
+        )
+
+        # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
+
+
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
+    DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
+
     def _setup_channel_selection(self):
         if self.n_masks == 2:
             self.channel_classification = [0, 1, self.channel_classification]
         if self.n_masks == 1:
             self.channel_classification = [0, self.channel_classification]
         return
-    
+
     def _setup(self):
         self._general_setup()
         self._setup_channel_selection()
         self._setup_transforms()
         self._get_channel_specs()
-    
-    def process(self, extraction_dir, size = 0):
-        self.log(f"Started CellFeaturization of selected channel {self.channel_classification}.")
+
+    def process(self, extraction_dir, size=0):
+        self.log(
+            f"Started CellFeaturization of selected channel {self.channel_classification}."
+        )
 
         # perform setup
         self._setup()
@@ -1280,15 +1337,24 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
-        #generate column names
-        channel_name = self.channel_names[self.channel_classification[-1] - self.n_masks]
-        self._generate_column_names(n_masks=self.n_masks, n_channels=1, channel_names = [channel_name])
+        # generate column names
+        channel_name = self.channel_names[
+            self.channel_classification[-1] - self.n_masks
+        ]
+        self._generate_column_names(
+            n_masks=self.n_masks, n_channels=1, channel_names=[channel_name]
+        )
 
-        #define inference function
+        # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
 
-        self.inference(self.dataloader, f, output_name=f"calculated_image_features_Channel_{channel_name}", column_names=self.column_names)
+        self.inference(
+            self.dataloader,
+            f,
+            output_name=f"calculated_image_features_Channel_{channel_name}",
+            column_names=self.column_names,
+        )
 
-        #perform post processing cleanup
+        # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
