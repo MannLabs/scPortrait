@@ -1900,8 +1900,6 @@ class SpatialProject(Logable):
                 overwrite=self.overwrite,
                 project = self,
             )
-        else:
-            self.segmentation_f = None
         
         # === setup extraction ===
         if extraction_f is not None:
@@ -1925,8 +1923,6 @@ class SpatialProject(Logable):
                 overwrite=self.overwrite,
                 project = self,
             )
-        else:
-            self.extraction_f = None
         # === setup classification ===
         if classification_f is not None:
             if classification_f.__name__ not in self.config:
