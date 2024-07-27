@@ -170,6 +170,10 @@ class ProcessingStep(Logable):
 
         self.deep_debug = False
 
+        if  "cache" not in self.config.keys():
+            self.config["cache"] = os.path.abspath(os.getcwd())
+            self.log(f"No cache directory specified in config using current working directory {self.config['cache']}.")
+
     def __call__(self, 
                  *args, 
                  debug=None, 
@@ -299,9 +303,7 @@ class ProcessingStep(Logable):
                 f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
             )
         else:
-            self.log(
-                "No cache directory specified in config. Skipping temporary directory creation"
-            )
+            raise ValueError("No cache directory specified in config.")
 
     def clear_temp_dir(self):
         """Delete created temporary directory."""
