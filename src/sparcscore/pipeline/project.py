@@ -37,6 +37,7 @@ from sparcscore.utils.spatialdata_helper import (
     calculate_centroids,
 )
 
+
 class SpatialProject(Logable):
     CLEAN_LOG = True
 
@@ -74,12 +75,11 @@ class SpatialProject(Logable):
         segmentation_f=None,
         extraction_f=None,
         classification_f=None,
-        selection_f = None,
+        selection_f=None,
         overwrite=False,
         debug=False,
     ):
-        
-        super().__init__(directory = project_location, debug = debug)
+        super().__init__(directory=project_location, debug=debug)
 
         self.project_location = project_location
         self.overwrite = overwrite
@@ -110,15 +110,15 @@ class SpatialProject(Logable):
 
         # === setup extraction ===
         self._setup_extraction_f(extraction_f)
-        
+
         # === setup classification ===
         self._setup_classification_f(classification_f)
 
         # ==== setup selection ===
         self._setup_selection(selection_f)
-    
+
     ##### Setup Functions #####
-    
+
     def _load_config_from_file(self, file_path):
         """
         Loads config from file and writes it to self.config
@@ -212,9 +212,9 @@ class SpatialProject(Logable):
 
     def _setup_classification_f(self, classification_f):
         if classification_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {classification_f.__name__} is missing from the config file"
-                )
+            raise ValueError(
+                f"Config for {classification_f.__name__} is missing from the config file"
+            )
 
         classification_directory = os.path.join(
             self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
@@ -232,11 +232,10 @@ class SpatialProject(Logable):
         )
 
     def _setup_selection(self, selection_f):
-
         if selection_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {selection_f.__name__} is missing from the config file"
-                )
+            raise ValueError(
+                f"Config for {selection_f.__name__} is missing from the config file"
+            )
 
         selection_directory = os.path.join(
             self.project_location, self.DEFAULT_SELECTION_DIR_NAME
@@ -250,19 +249,21 @@ class SpatialProject(Logable):
             project_location=self.project_location,
             debug=self.debug,
             overwrite=self.overwrite,
-            project = self,
+            project=self,
         )
 
     def update_classification_f(self, classification_f) -> None:
         """Update the classification method chosen for the project without reinitializing the entire project.
-        
+
         Parameters
         ----------
         classification_f : class
             The classification method that should be used for the project.
-        
+
         """
-        self.log(f"Replacing current classification method {self.classification_f.__class__} with {classification_f}")
+        self.log(
+            f"Replacing current classification method {self.classification_f.__class__} with {classification_f}"
+        )
         self._setup_classification_f(classification_f)
 
     ##### General small helper functions ####
@@ -298,7 +299,7 @@ class SpatialProject(Logable):
                 elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
 
         return elem
-    
+
     def _check_image_dtype(self, image):
         """Check if the image dtype is the default image dtype. If not raise a warning."""
 
@@ -309,7 +310,7 @@ class SpatialProject(Logable):
             self.log(
                 f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results."
             )
-    
+
     def _create_temp_dir(self, path):
         """
         Create a temporary directory in the specified directory with the name of the class.s
@@ -322,7 +323,7 @@ class SpatialProject(Logable):
         self.log(
             f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
         )
-    
+
     def _clear_temp_dir(self):
         if "_tmp_dir" in self.__dict__.keys():
             shutil.rmtree(self._tmp_dir_path)
@@ -331,7 +332,7 @@ class SpatialProject(Logable):
             del self._tmp_dir, self._tmp_dir_path
         else:
             self.log("Temporary directory not found, skipping cleanup")
-    
+
     ##### Functions for handling sdata object #####
 
     def _cleanup_sdata_object(self):
@@ -533,8 +534,7 @@ class SpatialProject(Logable):
 
         self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes)
 
-    def _write_table_object_sdata(self, table, table_name: str, overwrite = False):
-
+    def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
         if overwrite:
             try:
                 if table_name in self.sdata.tables:
@@ -542,11 +542,11 @@ class SpatialProject(Logable):
                 self.sdata.tables[table_name] = table
                 self.sdata.write_element(table_name, overwrite=True)
             except:
-                #perform the nuclear option that ensures its written to disk
+                # perform the nuclear option that ensures its written to disk
                 if table_name in self.sdata.tables:
                     del self.sdata[table_name]
                 shutil.rmtree(os.path.join(self.sdata_path, "tables", table_name))
-                
+
                 self.sdata.tables[table_name] = table
                 self.sdata.write_element(table_name, overwrite=True)
         else:
@@ -563,53 +563,55 @@ class SpatialProject(Logable):
 
     #### Functions for getting elements from sdata object #####
 
-    def _load_seg_to_memmap(self, seg_name:List[str], tmp_dir_abs_path:str):
+    def _load_seg_to_memmap(self, seg_name: List[str], tmp_dir_abs_path: str):
         """
         Helper function to load segmentation masks from sdata to memory mapped temp arrays for faster access.
-        Loading happens in a chunked manner to avoid memory issues. 
-        
+        Loading happens in a chunked manner to avoid memory issues.
+
         The function will return the path to the memory mapped array.
-        
+
         Parameters
         ----------
         seg_name : List[str]
             List of segmentation element names that should be loaded found in the sdata object.
-            The segmentation elments need to have the same size. 
+            The segmentation elments need to have the same size.
         tmp_dir_abs_path : str
             Absolute path to the directory where the memory mapped arrays should be stored.
-        
+
         Returns
         -------
         str
-            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path` 
+            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path`
             function from the alphabase.io.tempmmap module.
         """
 
-        #ensure all elements are loaded
+        # ensure all elements are loaded
         if self.sdata is None:
             self._check_sdata_status()
 
         # get the segmentation object
-        assert all([seg in self.sdata.labels for seg in seg_name]), "Not all passed segmentation elements found in sdata object."
+        assert all(
+            [seg in self.sdata.labels for seg in seg_name]
+        ), "Not all passed segmentation elements found in sdata object."
         seg_objects = [self.sdata.labels[seg] for seg in seg_name]
 
         # get the shape of the segmentation
         shapes = [seg.shape for seg in seg_objects]
-        
+
         Z, Y, X = None, None, None
         for shape in shapes:
             if len(shape) == 2:
                 if Y is None:
                     Y, X = shape
                 else:
-                    #ensure that all seg masks have the same shape
+                    # ensure that all seg masks have the same shape
                     assert Y == shape[0]
                     assert X == shape[1]
             elif len(shape) == 3:
                 if Z is None:
                     Z, Y, X = shape
                 else:
-                    #ensure that all seg masks have the same shape
+                    # ensure that all seg masks have the same shape
                     assert Z == shape[0]
                     assert Y == shape[1]
                     assert X == shape[2]
@@ -622,15 +624,17 @@ class SpatialProject(Logable):
         else:
             shape = (n_masks, Y, X)
 
-        #initialize empty memory mapped arrays to store the data
-        path_seg_masks = tempmmap.create_empty_mmap(shape = shape, 
-                                                dtype = self.DEFAULT_SEGMENTATION_DTYPE, 
-                                                tmp_dir_abs_path = tmp_dir_abs_path)
+        # initialize empty memory mapped arrays to store the data
+        path_seg_masks = tempmmap.create_empty_mmap(
+            shape=shape,
+            dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+            tmp_dir_abs_path=tmp_dir_abs_path,
+        )
 
-        #create the empty mmap array
+        # create the empty mmap array
         seg_masks = tempmmap.mmap_array_from_path(path_seg_masks)
 
-        #load the data into the mmap array in chunks
+        # load the data into the mmap array in chunks
         for i, seg in enumerate(seg_objects):
             if Z is not None:
                 for z in range(Z):
@@ -638,55 +642,57 @@ class SpatialProject(Logable):
                         seg_masks[i, z, y, :] = seg.data[z, y, :].compute()
             else:
                 for y in range(Y):
-                    seg_masks[i, y, :] = seg.data[y, :].compute() 
+                    seg_masks[i, y, :] = seg.data[y, :].compute()
 
-        #cleanup the cache
+        # cleanup the cache
         self._clear_cache(vars_to_delete=[seg_objects, seg_masks, seg])
 
         return path_seg_masks
-    
-    def _load_input_image_to_memmap(self, tmp_dir_abs_path:str):
+
+    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str):
         """
         Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
-        Loading happens in a chunked manner to avoid memory issues. 
-        
+        Loading happens in a chunked manner to avoid memory issues.
+
         The function will return the path to the memory mapped array.
 
         Parameters
         ----------
         tmp_dir_abs_path : str
             Absolute path to the directory where the memory mapped arrays should be stored.
-        
+
         Returns
         -------
         str
-            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path` 
+            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path`
             function from the alphabase.io.tempmmap module.
         """
-        #ensure all elements are loaded
+        # ensure all elements are loaded
         if self.sdata is None:
             self._check_sdata_status()
 
         if not self.input_image_status:
             raise ValueError("Input image not found in sdata object.")
-        
+
         shape = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image.shape
 
-        #initialize empty memory mapped arrays to store the data
-        path_input_image = tempmmap.create_empty_mmap(shape = shape, 
-                                                dtype = self.DEFAULT_IMAGE_DTYPE, 
-                                                tmp_dir_abs_path = tmp_dir_abs_path)
-        
-        #create the empty mmap array
+        # initialize empty memory mapped arrays to store the data
+        path_input_image = tempmmap.create_empty_mmap(
+            shape=shape,
+            dtype=self.DEFAULT_IMAGE_DTYPE,
+            tmp_dir_abs_path=tmp_dir_abs_path,
+        )
+
+        # create the empty mmap array
         input_image = tempmmap.mmap_array_from_path(path_input_image)
 
-        #load the data into the mmap array in chunks
+        # load the data into the mmap array in chunks
         Z = None
         if len(shape) == 3:
             C, Y, X = shape
         elif len(shape) == 4:
             Z, C, Y, X = shape
-        
+
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
@@ -697,10 +703,10 @@ class SpatialProject(Logable):
                 for y in range(Y):
                     input_image[c, y, :] = self.input_image[c, y, :].compute()
 
-        #cleanup the cache
+        # cleanup the cache
         self._clear_cache(vars_to_delete=[input_image])
 
-        return path_input_image                     
+        return path_input_image
 
     #### Functions to load input data ####
     def load_input_from_array(
@@ -742,7 +748,13 @@ class SpatialProject(Logable):
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_tif_files(
-        self, file_paths, channel_names=None, crop=[(0, -1), (0, -1)], overwrite=None, remap = None, cache = None
+        self,
+        file_paths,
+        channel_names=None,
+        crop=[(0, -1), (0, -1)],
+        overwrite=None,
+        remap=None,
+        cache=None,
     ):
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
@@ -827,7 +839,7 @@ class SpatialProject(Logable):
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
         if remap is not None:
             file_paths = file_paths[remap]
-        
+
         if cache is None:
             cache = os.getcwd()
         self._create_temp_dir(cache)
@@ -876,7 +888,7 @@ class SpatialProject(Logable):
         self._check_sdata_status()
         self.overwrite = original_overwrite  # reset to original value
 
-        #cleanup variables and temp dir
+        # cleanup variables and temp dir
         self._clear_cache(vars_to_delete=[temp_image_path, im, channels])
         self._clear_temp_dir()
 
@@ -1154,34 +1166,40 @@ class SpatialProject(Logable):
         self.classification_f.data_type = data_type
 
         self.classification_f(cells_path, size=n_cells)
-    
-    def select(self,
-               segmentation_name: str, 
-               cell_sets: List[Dict], 
-               calibration_markers: Union[np.array, None] = None,
-               name: Union[str, None] = None):
-        
+
+    def select(
+        self,
+        segmentation_name: str,
+        cell_sets: List[Dict],
+        calibration_markers: Union[np.array, None] = None,
+        name: Union[str, None] = None,
+    ):
         """
         Select specified classes using the defined selection method.
         """
 
         if self.selection_f is None:
             raise ValueError("No selection method defined")
-        
+
         self._check_sdata_status()
 
         if not self.nuc_seg_status or not self.cyto_seg_status:
             raise ValueError(
                 "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
             )
-        
-        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
 
-        self.selection_f(segmentation_name = segmentation_name, 
-                         cell_sets = cell_sets, 
-                         calibration_markers = calibration_markers, 
-                         name = name)
-        
+        assert (
+            segmentation_name in self.sdata.labels
+        ), f"Segmentation {segmentation_name} not found in sdata object."
+
+        self.selection_f(
+            segmentation_name=segmentation_name,
+            cell_sets=cell_sets,
+            calibration_markers=calibration_markers,
+            name=name,
+        )
+
+
 # this class has not yet been set up to be used with spatialdata
 # class TimecourseProject(SpatialProject):
 #     """
@@ -1252,7 +1270,7 @@ class SpatialProject(Logable):
 
 #         """
 #         Function to load imaging data from an array into the TimecourseProject.
-        
+
 #         The provided array needs to fullfill the following conditions:
 #         - shape: NCYX
 #         - all images need to have the same dimensions and the same number of channels
