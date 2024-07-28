@@ -4,7 +4,8 @@ import shutil
 import os
 import yaml
 import psutil
-from typing import List, Union
+from typing import List, Union, Dict
+import tempfile
 
 import PIL
 import numpy as np
