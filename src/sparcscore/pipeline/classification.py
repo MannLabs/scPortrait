@@ -266,7 +266,7 @@ class _ClassificationBase(ProcessingStep):
             raise ValueError("Invalid inference device specified.")
 
     ### Functions for model loading and setup
-    
+
     def _assign_model(self, model):
         self.log("Model assigned to classification function.")
         self.model = model
@@ -274,7 +274,7 @@ class _ClassificationBase(ProcessingStep):
         # check if the hparams specify an expected image size
         if "expected_imagesize" in model.hparams.keys():
             self.expected_imagesize = model.hparams["expected_imagesize"]
-    
+
     def define_model_class(self, model_class, force_load=False):
         if isinstance(model_class, str):
             model_class = eval(model_class)  # convert string to class by evaluating it
@@ -593,18 +593,17 @@ class _ClassificationBase(ProcessingStep):
 
         self.log("finished processing.")
 
-        return(dataframe)
+        return dataframe
 
     #### Results writing functions ####
 
     def _write_results_csv(self, results, path):
-        results.to_csv(path, index =False)
+        results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")
-    
-    def _write_results_sdata(self, results, label, mask_type = "seg_all"):
 
-        results.set_index("cell_id", inplace = True)
-        results.drop(columns = ["label"], inplace = True)
+    def _write_results_sdata(self, results, label, mask_type="seg_all"):
+        results.set_index("cell_id", inplace=True)
+        results.drop(columns=["label"], inplace=True)
 
         feature_matrix = results.to_numpy()
         var_names = results.columns
@@ -618,11 +617,22 @@ class _ClassificationBase(ProcessingStep):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[0]}"], region_key="region", instance_key="instance_id")
+            table = AnnData(
+                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
+            )
+            table = TableModel.parse(
+                table,
+                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
+                region_key="region",
+                instance_key="instance_id",
+            )
 
-            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}", overwrite = self.overwrite_run_path)
-        
+            self.project._write_table_object_sdata(
+                table,
+                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}",
+                overwrite=self.overwrite_run_path,
+            )
+
         if self.project.cyto_seg_status:
             # save cytoplasm segmentation
             obs = pd.DataFrame()
@@ -631,13 +641,24 @@ class _ClassificationBase(ProcessingStep):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[1]}"], region_key="region", instance_key="instance_id")
+            table = AnnData(
+                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
+            )
+            table = TableModel.parse(
+                table,
+                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
+                region_key="region",
+                instance_key="instance_id",
+            )
 
-            self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}", overwrite = self.overwrite_run_path)
+            self.project._write_table_object_sdata(
+                table,
+                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}",
+                overwrite=self.overwrite_run_path,
+            )
 
     #### Cleanup Functions ####
-    
+
     def _post_processing_cleanup(self):
         if self.debug:
             memory_usage = self._get_gpu_memory_usage()
@@ -690,6 +711,7 @@ class _ClassificationBase(ProcessingStep):
 ###############################################
 ###### DeepLearning based Classification ######
 ###############################################
+
 
 class MLClusterClassifier(_ClassificationBase):
     """
@@ -937,11 +959,11 @@ class MLClusterClassifier(_ClassificationBase):
             self.log(f"Starting inference for model encoder {model.__name__}")
             results = self.inference(self.dataloader, model)
 
-            output_name=f"inference_{model.__name__}"
+            output_name = f"inference_{model.__name__}"
             path = os.path.join(self.run_path, f"{output_name}.csv")
-            
+
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label = f"{self.label}_{model.__name__}")
+            self._write_results_sdata(results, label=f"{self.label}_{model.__name__}")
 
         self.log(f"Results saved to file: {path}")
 
@@ -1085,11 +1107,11 @@ class EnsembleClassifier(_ClassificationBase):
             self.log(f"Starting inference for model {model_name}")
             results = self.inference(self.dataloader, model)
 
-            output_name= f"ensemble_inference_{model_name}"
+            output_name = f"ensemble_inference_{model_name}"
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label = model_name)
+            self._write_results_sdata(results, label=model_name)
 
         # perform post processing cleanup
         if not self.deep_debug:
@@ -1104,7 +1126,14 @@ class _cellFeaturizerBase(_ClassificationBase):
     # define the output column names
     MASK_NAMES = ["nucleus", "cytosol", "cytosol_only"]
     MASK_STATISTICS = ["area"]
-    CHANNEL_STATISTICS = ["mean", "median", "quant75", "quant25", "summed_intensity", "summed_intensity_area_normalized"]
+    CHANNEL_STATISTICS = [
+        "mean",
+        "median",
+        "quant75",
+        "quant25",
+        "summed_intensity",
+        "summed_intensity_area_normalized",
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1187,14 +1216,14 @@ class _cellFeaturizerBase(_ClassificationBase):
         masks = []
 
         for i in range(n_masks):
-            mask = (img[:, i] > 0)
+            mask = img[:, i] > 0
             area = mask.view(N, -1).sum(1, keepdims=True)
 
             masks.append(mask)
             mask_statistics.append(area)
-        
+
         if n_masks == 2:
-            mask = (masks[1] ^ masks[0])
+            mask = masks[1] ^ masks[0]
             area = mask.view(N, -1).sum(1, keepdims=True)
 
             masks.append(mask)
@@ -1214,14 +1243,31 @@ class _cellFeaturizerBase(_ClassificationBase):
                 )  # ensure we have correct dytpe for subsequent calculations
 
                 mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
-                median = _img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
-                quant75 = _img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
-                quant25 = _img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
+                median = _img_selected.view(N, -1).nanquantile(
+                    q=0.5, dim=1, keepdim=True
+                )
+                quant75 = _img_selected.view(N, -1).nanquantile(
+                    q=0.75, dim=1, keepdim=True
+                )
+                quant25 = _img_selected.view(N, -1).nanquantile(
+                    q=0.25, dim=1, keepdim=True
+                )
                 summed_intensity = _img_selected.view(N, -1).sum(1, keepdim=True)
-                summed_intensity_area_normalized = summed_intensity / mask_statistics[-1]
-            
+                summed_intensity_area_normalized = (
+                    summed_intensity / mask_statistics[-1]
+                )
+
                 # save results
-                channel_statistics.extend([mean, median, quant75, quant25, summed_intensity, summed_intensity_area_normalized])
+                channel_statistics.extend(
+                    [
+                        mean,
+                        median,
+                        quant75,
+                        quant25,
+                        summed_intensity,
+                        summed_intensity_area_normalized,
+                    ]
+                )
 
         # Generate results tensor with all values and return
         items = mask_statistics + channel_statistics
@@ -1232,16 +1278,14 @@ class _cellFeaturizerBase(_ClassificationBase):
 
         return results
 
-    def _write_results_sdata(self, results, mask_type = "seg_all"):
-
+    def _write_results_sdata(self, results, mask_type="seg_all"):
         if self.project.nuc_seg_status:
-
             # save nucleus segmentation
-            columns_drop = [ x for x in results.columns if self.MASK_NAMES[1] in x]
+            columns_drop = [x for x in results.columns if self.MASK_NAMES[1] in x]
 
-            _results = results.drop(columns = columns_drop)
-            _results.set_index("cell_id", inplace = True)
-            _results.drop(columns = ["label"], inplace = True)
+            _results = results.drop(columns=columns_drop)
+            _results.set_index("cell_id", inplace=True)
+            _results.drop(columns=["label"], inplace=True)
 
             feature_matrix = _results.to_numpy()
             var_names = _results.columns
@@ -1253,27 +1297,37 @@ class _cellFeaturizerBase(_ClassificationBase):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[0]}"], region_key="region", instance_key="instance_id")
+            table = AnnData(
+                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
+            )
+            table = TableModel.parse(
+                table,
+                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
+                region_key="region",
+                instance_key="instance_id",
+            )
 
-            #define name to save table under
-            label = self.label.replace("CellFeaturizer_", "") # remove class name from label to ensure we dont have duplicates
-            
+            # define name to save table under
+            label = self.label.replace(
+                "CellFeaturizer_", ""
+            )  # remove class name from label to ensure we dont have duplicates
+
             if self.channel_classification is not None:
                 table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[0]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
-            self.project._write_table_object_sdata(table, table_name, overwrite = self.overwrite_run_path)
-        
-        if self.project.cyto_seg_status:
-                
-            # save cytosol segmentation
-            columns_drop = [ x for x in results.columns if self.MASK_NAMES[0] in x]
+            self.project._write_table_object_sdata(
+                table, table_name, overwrite=self.overwrite_run_path
+            )
 
-            _results = results.drop(columns = columns_drop)
-            _results.set_index("cell_id", inplace = True)
-            _results.drop(columns = ["label"], inplace = True)
+        if self.project.cyto_seg_status:
+            # save cytosol segmentation
+            columns_drop = [x for x in results.columns if self.MASK_NAMES[0] in x]
+
+            _results = results.drop(columns=columns_drop)
+            _results.set_index("cell_id", inplace=True)
+            _results.drop(columns=["label"], inplace=True)
 
             feature_matrix = _results.to_numpy()
             var_names = _results.columns
@@ -1285,17 +1339,27 @@ class _cellFeaturizerBase(_ClassificationBase):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(table, region=[f"{mask_type}_{self.MASK_NAMES[1]}"], region_key="region", instance_key="instance_id")
+            table = AnnData(
+                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
+            )
+            table = TableModel.parse(
+                table,
+                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
+                region_key="region",
+                instance_key="instance_id",
+            )
 
-            #define name to save table under
+            # define name to save table under
             if self.channel_classification is not None:
                 table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[1]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
-            self.project._write_table_object_sdata(table, table_name, overwrite = self.overwrite_run_path)
-        
+            self.project._write_table_object_sdata(
+                table, table_name, overwrite=self.overwrite_run_path
+            )
+
+
 class CellFeaturizer(_cellFeaturizerBase):
     """
     Class for extracting general image features from SPARCS single-cell image datasets.
@@ -1415,15 +1479,16 @@ class CellFeaturizer(_cellFeaturizerBase):
             column_names=self.column_names,
         )
 
-        output_name="calculated_image_features"
+        output_name = "calculated_image_features"
         path = os.path.join(self.run_path, f"{output_name}.csv")
-            
+
         self._write_results_csv(results, path)
         self._write_results_sdata(results)
 
         # perform post processing cleanup
         if not self.deep_debug:
             self._post_processing_cleanup()
+
 
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
@@ -1476,9 +1541,9 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             column_names=self.column_names,
         )
 
-        output_name=f"calculated_image_features_Channel_{channel_name}"
+        output_name = f"calculated_image_features_Channel_{channel_name}"
         path = os.path.join(self.run_path, f"{output_name}.csv")
-            
+
         self._write_results_csv(results, path)
         self._write_results_sdata(results)
 
