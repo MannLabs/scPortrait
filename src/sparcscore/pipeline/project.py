@@ -1946,6 +1946,9 @@ class SpatialProject(Logable):
 
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
 
+    DEFAULT_IMAGE_DTYPE = np.uint16
+    DEFAULT_SEGMENTATION_DTYPE = np.uint32
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
     def __init__(
         self,
         project_location,
