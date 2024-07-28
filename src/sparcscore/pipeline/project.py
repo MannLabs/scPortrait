@@ -6,54 +6,36 @@ import yaml
 import psutil
 from typing import List, Union, Dict
 import tempfile
-
-import PIL
-import numpy as np
-import numpy.ma as ma
-import sys
-import imagesize
-import pandas as pd
-from tifffile import imread
 import re
-import h5py
-from tqdm.auto import tqdm
 from time import time
 
-from sparcscore.pipeline.base import Logable
-from sparcscore.processing.preprocessing import (
-    percentile_normalization,
-    EDF,
-    maximum_intensity_projection,
-)
-from sparcscore.pipeline.utils import _read_napari_csv, _generate_mask_polygon
+import numpy as np
+from alphabase.io import tempmmap
+import dask.array as darray
+import datatree
+import xarray
 
-import zarr
+from tifffile import imread
 from ome_zarr.io import parse_url
-from ome_zarr.writer import write_image
 from ome_zarr.reader import Reader
 
-from alphabase.io import tempmmap
+from spatialdata import SpatialData
+from spatialdata.transformations.transformations import Identity
+from spatialdata.models import PointsModel, Image2DModel
+from napari_spatialdata import Interactive
+
 from sparcstools.base import daskmmap
 
-from sparcscore.utils.spatialdata_helper import get_unique_cell_ids
-
-from spatialdata import SpatialData
-from spatialdata.models import Labels2DModel, TableModel, PointsModel, Image2DModel
-
-from napari_spatialdata import Interactive
+from sparcscore.pipeline.base import Logable
 from sparcscore.pipeline.spatialdata_classes import spLabels2DModel
-from spatialdata.transformations.transformations import Identity
 from sparcscore.utils.spatialdata_helper import (
+    get_unique_cell_ids,
     generate_region_annotation_lookuptable,
     remap_region_annotation_table,
     rechunk_image,
     get_chunk_size,
     calculate_centroids,
 )
-import dask.array as darray
-import datatree
-import xarray
-
 
 class SpatialProject(Logable):
     CLEAN_LOG = True
