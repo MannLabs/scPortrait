@@ -2589,7 +2589,7 @@ class SpatialProject(Logable):
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_tif_files(
-        self, file_paths, channel_names=None, crop=[(0, -1), (0, -1)], overwrite=None
+        self, file_paths, channel_names=None, crop=[(0, -1), (0, -1)], overwrite=None, remap = None, cache = None
     ):
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
@@ -2672,8 +2672,12 @@ class SpatialProject(Logable):
 
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
-        if self.remap is not None:
-            file_paths = file_paths[self.remap]
+        if remap is not None:
+            file_paths = file_paths[remap]
+        
+        if cache is None:
+            cache = os.getcwd()
+        self._create_temp_dir(cache)
 
         for i, channel_path in enumerate(file_paths):
             im = imread(channel_path)
@@ -2710,16 +2714,18 @@ class SpatialProject(Logable):
 
         self._write_image_sdata(
             channels,
+            self.DEFAULT_INPUT_IMAGE_NAME,
             channel_names=self.channel_names,
             scale_factors=[2, 4, 8],
             chunks=self.DEFAULT_CHUNK_SIZE,
         )
 
         self._check_sdata_status()
-        # cleanup temp image path
-        shutil.rmtree(temp_image_path)
-
         self.overwrite = original_overwrite  # reset to original value
+
+        #cleanup variables and temp dir
+        self._clear_cache(vars_to_delete=[temp_image_path, im, channels])
+        self._clear_temp_dir()
 
     def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
         # setup overwrite
