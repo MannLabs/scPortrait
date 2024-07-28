@@ -2203,7 +2203,7 @@ class SpatialProject(Logable):
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )
         else:
-            os.makedirs(self.sdata_paths)
+            os.makedirs(self.sdata_path)
 
         self._read_sdata()
 
