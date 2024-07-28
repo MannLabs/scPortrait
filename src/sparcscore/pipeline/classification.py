@@ -265,6 +265,40 @@ class _ClassificationBase(ProcessingStep):
         else:
             raise ValueError("Invalid inference device specified.")
 
+    ### Functions for model loading and setup
+    
+    def _assign_model(self, model):
+        self.log("Model assigned to classification function.")
+        self.model = model
+
+        # check if the hparams specify an expected image size
+        if "expected_imagesize" in model.hparams.keys():
+            self.expected_imagesize = model.hparams["expected_imagesize"]
+    
+    def define_model_class(self, model_class, force_load=False):
+        if isinstance(model_class, str):
+            model_class = eval(model_class)  # convert string to class by evaluating it
+
+        # check that it is a valid model class
+
+        if force_load:
+            if not issubclass(model_class, pl.LightningModule):
+                Warning(
+                    "Forcing the loading of the model class despite the provided model class not being a subclass of pl.LightningModule. This can lead to unexpected behaviour."
+                )
+            else:
+                Warning(
+                    "Forcing the loading of the model class is on but the provided model class is a subclass of pl.LightningModule. Consider setting the force_load parameter to False as this is not a recommended default setup."
+                )
+        else:
+            if not issubclass(model_class, pl.LightningModule):
+                raise ValueError(
+                    "The provided model class is not a subclass of pl.LightningModule. Please provide a valid model class. If you are sure you wish to proceed with this, please reload the model class with the force_load parameter set to True."
+                )
+
+        self.model_class = model_class
+        self.log(f"Model class defined as {model_class}")
+
     def _load_pretrained_model(self, model_name: str):
         """
         Load a pretrained model from the SPARCScore library.
@@ -306,78 +340,6 @@ class _ClassificationBase(ProcessingStep):
         model.to(self.inference_device)
 
         return model
-
-    def _post_processing_cleanup(self):
-        if self.debug:
-            memory_usage = self._get_gpu_memory_usage()
-            self.log(f"GPU memory before performing cleanup: {memory_usage}")
-
-        if "dataloader" in self.__dict__.keys():
-            del self.dataloader
-
-        if "models" in self.__dict__.keys():
-            del self.models
-
-        if "model" in self.__dict__.keys():
-            del self.model
-
-        if "overwrite_run_path" in self.__dict__.keys():
-            del self.overwrite_run_path
-
-        if "n_masks" in self.__dict__.keys():
-            del self.n_masks
-
-        if "data_type" in self.__dict__.keys():
-            del self.data_type
-
-        if "log_transform" in self.__dict__.keys():
-            del self.log_transform
-
-        if "channel_names" in self.__dict__.keys():
-            del self.channel_names
-
-        if "column_names" in self.__dict__.keys():
-            del self.column_names
-
-        # reset to init values to ensure that subsequent runs are not affected by previous runs
-        self.model_class = None
-        self.transforms = None
-        self.channel_classification = None
-        self.model = None
-
-        self._clear_cache()
-
-        if self.debug:
-            memory_usage = self._get_gpu_memory_usage()
-            self.log(f"GPU memory after performing cleanup: {memory_usage}")
-
-        # this needs to be called after the memory usage has been assesed
-        if "inference_device" in self.__dict__.keys():
-            del self.inference_device
-
-    def define_model_class(self, model_class, force_load=False):
-        if isinstance(model_class, str):
-            model_class = eval(model_class)  # convert string to class by evaluating it
-
-        # check that it is a valid model class
-
-        if force_load:
-            if not issubclass(model_class, pl.LightningModule):
-                Warning(
-                    "Forcing the loading of the model class despite the provided model class not being a subclass of pl.LightningModule. This can lead to unexpected behaviour."
-                )
-            else:
-                Warning(
-                    "Forcing the loading of the model class is on but the provided model class is a subclass of pl.LightningModule. Consider setting the force_load parameter to False as this is not a recommended default setup."
-                )
-        else:
-            if not issubclass(model_class, pl.LightningModule):
-                raise ValueError(
-                    "The provided model class is not a subclass of pl.LightningModule. Please provide a valid model class. If you are sure you wish to proceed with this, please reload the model class with the force_load parameter set to True."
-                )
-
-        self.model_class = model_class
-        self.log(f"Model class defined as {model_class}")
 
     def _load_model(
         self,
@@ -455,14 +417,6 @@ class _ClassificationBase(ProcessingStep):
 
         return model
 
-    def _assign_model(self, model):
-        self.log("Model assigned to classification function.")
-        self.model = model
-
-        # check if the hparams specify an expected image size
-        if "expected_imagesize" in model.hparams.keys():
-            self.expected_imagesize = model.hparams["expected_imagesize"]
-
     def load_model(
         self,
         ckpt_path,
@@ -472,6 +426,7 @@ class _ClassificationBase(ProcessingStep):
         model = self._load_model(ckpt_path, hparams_path, model_type)
         self._assign_model(model)
 
+    ### Functions regarding dataloading and transforms ####
     def configure_transforms(self, selected_transforms: List):
         self.transforms = transforms.Compose(selected_transforms)
         self.log(f"The following transforms were applied: {self.transforms}")
@@ -591,6 +546,7 @@ class _ClassificationBase(ProcessingStep):
 
         return dataloader
 
+    #### Inference functions ####
     def inference(self, dataloader, model_fun, column_names=None) -> pd.DataFrame:
         """
         # 1. performs inference for a dataloader and a given network call
@@ -639,6 +595,8 @@ class _ClassificationBase(ProcessingStep):
 
         return(dataframe)
 
+    #### Results writing functions ####
+
     def _write_results_csv(self, results, path):
         results.to_csv(path, index =False)
         self.log(f"Results saved to file: {path}")
@@ -678,7 +636,61 @@ class _ClassificationBase(ProcessingStep):
 
             self.project._write_table_object_sdata(table, f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}", overwrite = self.overwrite_run_path)
 
+    #### Cleanup Functions ####
+    
+    def _post_processing_cleanup(self):
+        if self.debug:
+            memory_usage = self._get_gpu_memory_usage()
+            self.log(f"GPU memory before performing cleanup: {memory_usage}")
+
+        if "dataloader" in self.__dict__.keys():
+            del self.dataloader
+
+        if "models" in self.__dict__.keys():
+            del self.models
+
+        if "model" in self.__dict__.keys():
+            del self.model
+
+        if "overwrite_run_path" in self.__dict__.keys():
+            del self.overwrite_run_path
+
+        if "n_masks" in self.__dict__.keys():
+            del self.n_masks
+
+        if "data_type" in self.__dict__.keys():
+            del self.data_type
+
+        if "log_transform" in self.__dict__.keys():
+            del self.log_transform
+
+        if "channel_names" in self.__dict__.keys():
+            del self.channel_names
+
+        if "column_names" in self.__dict__.keys():
+            del self.column_names
+
+        # reset to init values to ensure that subsequent runs are not affected by previous runs
+        self.model_class = None
+        self.transforms = None
+        self.channel_classification = None
+        self.model = None
+
+        self._clear_cache()
+
+        if self.debug:
+            memory_usage = self._get_gpu_memory_usage()
+            self.log(f"GPU memory after performing cleanup: {memory_usage}")
+
+        # this needs to be called after the memory usage has been assesed
+        if "inference_device" in self.__dict__.keys():
+            del self.inference_device
+
+
+###############################################
 ###### DeepLearning based Classification ######
+###############################################
+
 class MLClusterClassifier(_ClassificationBase):
     """
     Class for classifying single cells using a pre-trained machine learning model.
