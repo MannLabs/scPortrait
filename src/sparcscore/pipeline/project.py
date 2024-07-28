@@ -106,6 +106,67 @@ class SpatialProject(Logable):
             warnings.warn("There is already a directory in the location path")
 
         # === setup segmentation ===
+        self._setup_segmentation_f(segmentation_f)
+
+        # === setup extraction ===
+        self._setup_extraction_f(extraction_f)
+        
+        # === setup classification ===
+        self._setup_classification_f(classification_f)
+
+        # ==== setup selection ===
+        self._setup_selection(selection_f)
+    
+    ##### Setup Functions #####
+    
+    def _load_config_from_file(self, file_path):
+        """
+        Loads config from file and writes it to self.config
+
+        Args:
+            file_path (str): Path to the config.yml file that should be loaded.
+        """
+        self.log(f"Loading config from {file_path}")
+
+        if not os.path.isfile(file_path):
+            raise ValueError(f"Your config path {file_path} is invalid.")
+
+        with open(file_path, "r") as stream:
+            try:
+                self.config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+
+    def _get_config_file(self, config_path):
+        # load config file
+        self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
+
+        if config_path == "":
+            # Check if there is already a config file in the dataset folder in case no config file has been specified
+
+            if os.path.isfile(self.config_path):
+                self._load_config_from_file(self.config_path)
+            else:
+                raise ValueError(
+                    "No config passed and no config found in project directory."
+                )
+
+        else:
+            if not os.path.isfile(config_path):
+                raise ValueError(
+                    f"Your config path {config_path} is invalid. Please specify a valid config path."
+                )
+
+            else:
+                print("Updating project config file.")
+                if os.path.isfile(self.config_path):
+                    os.remove(self.config_path)
+
+                # The blueprint config file is copied to the dataset folder and renamed to the default name
+                shutil.copy(config_path, self.config_path)
+                self._load_config_from_file(self.config_path)
+
+    def _setup_segmentation_f(self, segmentation_f):
         if self.segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
                 raise ValueError(
@@ -127,7 +188,7 @@ class SpatialProject(Logable):
                 project=self,
             )
 
-        # === setup extraction ===
+    def _setup_extraction_f(self, extraction_f):
         if extraction_f is not None:
             extraction_directory = os.path.join(
                 self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
@@ -148,12 +209,6 @@ class SpatialProject(Logable):
                 overwrite=self.overwrite,
                 project=self,
             )
-        
-        # === setup classification ===
-        self._setup_classification_f(classification_f)
-
-        # ==== setup selection ===
-        self._setup_selection(selection_f)
 
     def _setup_classification_f(self, classification_f):
         if classification_f.__name__ not in self.config:
@@ -210,52 +265,7 @@ class SpatialProject(Logable):
         self.log(f"Replacing current classification method {self.classification_f.__class__} with {classification_f}")
         self._setup_classification_f(classification_f)
 
-    def _load_config_from_file(self, file_path):
-        """
-        Loads config from file and writes it to self.config
-
-        Args:
-            file_path (str): Path to the config.yml file that should be loaded.
-        """
-        self.log(f"Loading config from {file_path}")
-
-        if not os.path.isfile(file_path):
-            raise ValueError(f"Your config path {file_path} is invalid.")
-
-        with open(file_path, "r") as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-
-    def _get_config_file(self, config_path):
-        # load config file
-        self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
-
-        if config_path == "":
-            # Check if there is already a config file in the dataset folder in case no config file has been specified
-
-            if os.path.isfile(self.config_path):
-                self._load_config_from_file(self.config_path)
-            else:
-                raise ValueError(
-                    "No config passed and no config found in project directory."
-                )
-
-        else:
-            if not os.path.isfile(config_path):
-                raise ValueError(
-                    f"Your config path {config_path} is invalid. Please specify a valid config path."
-                )
-
-            else:
-                print("Updating project config file.")
-                if os.path.isfile(self.config_path):
-                    os.remove(self.config_path)
-
-                # The blueprint config file is copied to the dataset folder and renamed to the default name
-                shutil.copy(config_path, self.config_path)
-                self._load_config_from_file(self.config_path)
+    ##### General small helper functions ####
 
     def _check_memory(self, item):
         """
@@ -2173,4 +2183,3 @@ class SpatialProject(Logable):
 #             self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "classes.csv"
 #         )
 #         self.extraction_f(input_segmentation, input_dir, *args, **kwargs)
-
