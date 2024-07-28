@@ -1947,6 +1947,8 @@ class SpatialProject(Logable):
 
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
 
+    DEFAULT_SELECTION_DIR_NAME = "selection"
+
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
@@ -1958,6 +1960,7 @@ class SpatialProject(Logable):
         segmentation_f=None,
         extraction_f=None,
         classification_f=None,
+        selection_f = None,
         overwrite=False,
         debug=False,
     ):
@@ -2035,6 +2038,9 @@ class SpatialProject(Logable):
         # === setup classification ===
         self._setup_classification_f(classification_f)
 
+        # ==== setup selection ===
+        self._setup_selection(selection_f)
+
     def _setup_classification_f(self, classification_f):
         if classification_f.__name__ not in self.config:
                 raise ValueError(
@@ -2054,6 +2060,28 @@ class SpatialProject(Logable):
             debug=self.debug,
             overwrite=self.overwrite,
             project=self,
+        )
+
+    def _setup_selection(self, selection_f):
+
+        if selection_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {selection_f.__name__} is missing from the config file"
+                )
+
+        selection_directory = os.path.join(
+            self.project_location, self.DEFAULT_SELECTION_DIR_NAME
+        )
+
+        self.selection_directory = selection_directory
+
+        self.selection_f = selection_f(
+            self.config[selection_f.__name__],
+            self.selection_directory,
+            project_location=self.project_location,
+            debug=self.debug,
+            overwrite=self.overwrite,
+            project = self,
         )
 
     def update_classification_f(self, classification_f) -> None:
@@ -3003,3 +3031,30 @@ class SpatialProject(Logable):
 
         self.classification_f(cells_path, size=n_cells)
     
+    def select(self,
+               segmentation_name: str, 
+               cell_sets: List[Dict], 
+               calibration_markers: Union[np.array, None] = None,
+               name: Union[str, None] = None):
+        
+        """
+        Select specified classes using the defined selection method.
+        """
+
+        if self.selection_f is None:
+            raise ValueError("No selection method defined")
+        
+        self._check_sdata_status()
+
+        if not self.nuc_seg_status or not self.cyto_seg_status:
+            raise ValueError(
+                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+            )
+        
+        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
+
+        self.selection_f(segmentation_name = segmentation_name, 
+                         cell_sets = cell_sets, 
+                         calibration_markers = calibration_markers, 
+                         name = name)
+        

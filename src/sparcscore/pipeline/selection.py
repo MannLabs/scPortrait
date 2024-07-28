@@ -1,13 +1,17 @@
-from sparcscore.pipeline.base import ProcessingStep
+
 import os
+from typing import List, Dict, Union
+
 import numpy as np
 import h5py
 from lmd.lib import SegmentationLoader
 from alphabase.io import tempmmap
 
+from sparcscore.pipeline.base import ProcessingStep
+
 class LMDSelection(ProcessingStep):
     """
-    Select single cells from a segmented hdf5 file and generate cutting data for the Leica LMD microscope.
+    Select single cells from a segmented sdata file and generate cutting data for the Leica LMD microscope.
     This method class relies on the functionality of the pylmd library.
     """
 
@@ -17,21 +21,48 @@ class LMDSelection(ProcessingStep):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def process(self, hdf_location, cell_sets, calibration_marker, name=None):
+        self.name = None
+        self.cell_sets = None
+        self.calibration_marker = None
+
+    def _setup_selection(self):
+        #set orientation transform
+        self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
+
+        #configure name of extraction
+        if self.name is None:
+            try:
+                name = "_".join([cell_set["name"] for cell_set in self.cell_sets])
+            except Exception:
+                name = "selected_cells"
+
+        #create savepath
+        savename = name.replace(" ", "_") + ".xml"
+        self.savepath = os.path.join(self.directory, savename)
+        
+    def _post_processing_cleanup(self, vars_to_delete: Union[List, None] =  None):
+        if vars_to_delete is not None:
+            self._clear_cache(vars_to_delete=vars_to_delete)
+
+        # remove temporary files
+        if hasattr(self, "path_seg_mask"):
+            os.remove(self.path_seg_mask)
+        
+        self._clear_cache()
+
+    def process(self, 
+                segmentation_name: str, 
+                cell_sets: List[Dict], 
+                calibration_marker: np.array, 
+                name: Union[str, None] = None):
         """
         Process function for selecting cells and generating their XML.
         Under the hood this method relies on the pylmd library and utilizies its `SegmentationLoader` Class.
 
         Args:
-            hdf_location (str): Path of the segmentation hdf5 file. If this class is used as part of a project processing workflow, this argument will be provided.
-            cell_sets (list of dict): List of dictionaries containing the sets of cells which should be sorted into a single well.
+            segmentation_name (str): Name of the segmentation to be used for shape generation in the sdata object.
+            cell_sets (list of dict): List of dictionaries containing the sets of cells which should be sorted into a single well. Mandatory keys for each dictionary are: name, classes. Optional keys are: well.
             calibration_marker (numpy.array): Array of size ‘(3,2)’ containing the calibration marker coordinates in the ‘(row, column)’ format.
-
-        Important:
-
-            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
-            class based on the previous segmentation. Therefore, only the second and third argument need to be provided. The Project
-            class will automaticly provide the most recent segmentation forward together with the supplied parameters.
 
         Example:
 
@@ -120,7 +151,13 @@ class LMDSelection(ProcessingStep):
 
         """
 
-        self.log("Selection process started")
+        self.log("Selection process started.")
+
+        self.name = name
+        self.cell_sets = cell_sets
+        self.calibration_marker = calibration_marker
+
+        self._setup_selection()
 
         ## TO Do
         # check if classes and seglookup table already exist as pickle file
@@ -128,40 +165,26 @@ class LMDSelection(ProcessingStep):
         # else load them and proceed with selection
 
         # load segmentation from hdf5
-        hf = h5py.File(hdf_location, "r")
-        hdf_labels = hf.get("labels")
-
-        # create memory mapped temporary array for saving the segmentation
-        c, x, y = hdf_labels.shape
-        segmentation = tempmmap.array(
-            shape=(x, y), dtype=hdf_labels.dtype, tmp_dir_abs_path=self._tmp_dir_path
-        )
-        segmentation = hdf_labels[self.config["segmentation_channel"], :, :]
-
-        self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
-
+        self.path_seg_mask = self.project.__load_seg_to_memmap(segmentation_name, tmp_dir_abs_path = self._tmp_dir_path)
+        segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
+        
+        #create segmentation loader
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
 
-        shape_collection = sl(segmentation, cell_sets, calibration_marker)
+        #get shape collections
+        shape_collection = sl(segmentation, self.cell_sets, self.calibration_marker)
 
         if self.debug:
             shape_collection.plot(calibration=True)
             shape_collection.stats()
 
-        if name is None:
-            try:
-                name = "_".join([cell_set["name"] for cell_set in cell_sets])
-            except Exception:
-                name = "selected_cells"
+        shape_collection.save(self.savepath)
 
-        savename = name.replace(" ", "_") + ".xml"
-        savepath = os.path.join(self.directory, savename)
-        shape_collection.save(savepath)
+        self.log(f"Saved output at {self.savepath}")
 
-        del segmentation
-
-        self.log(f"Saved output at {savepath}")
+        #perform post processing cleanup
+        self._post_processing_cleanup(vars_to_delete=[shape_collection, sl, segmentation])
