@@ -10,6 +10,7 @@ import gc
 import numpy as np
 import torch
 
+
 class Logable(object):
     """
     Object which can create log entries.
@@ -90,7 +91,7 @@ class Logable(object):
     def _clean_log_file(self):
         """Helper function to clean up log files in the processing step directory."""
         log_file_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
-        
+
         if os.path.exists(log_file_path):
             os.remove(log_file_path)
 
@@ -104,7 +105,7 @@ class Logable(object):
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        
+
         if torch.backends.mps.is_available():
             torch.mps.empty_cache()
 
@@ -120,6 +121,7 @@ class ProcessingStep(Logable):
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
+
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
     DEFAULT_SDATA_FILE = "sparcs.sdata"
@@ -136,7 +138,7 @@ class ProcessingStep(Logable):
     DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
 
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
-    DEFAULT_TILES_FOLDER = 'tiles'
+    DEFAULT_TILES_FOLDER = "tiles"
 
     DEFAULT_EXTRACTIN_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
@@ -153,6 +155,7 @@ class ProcessingStep(Logable):
     DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
 
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+    DEFAULT_SELECTION_DIR_NAME = "selection"
 
     def __init__(
         self,
@@ -161,9 +164,9 @@ class ProcessingStep(Logable):
         project_location,
         debug=False,
         overwrite=False,
-        project = None,
+        project=None,
     ):
-        super().__init__(directory = directory)
+        super().__init__(directory=directory)
 
         self.debug = debug
         self.overwrite = overwrite
@@ -177,16 +180,13 @@ class ProcessingStep(Logable):
 
         self.deep_debug = False
 
-        if  "cache" not in self.config.keys():
+        if "cache" not in self.config.keys():
             self.config["cache"] = os.path.abspath(os.getcwd())
-            self.log(f"No cache directory specified in config using current working directory {self.config['cache']}.")
+            self.log(
+                f"No cache directory specified in config using current working directory {self.config['cache']}."
+            )
 
-    def __call__(self, 
-                 *args, 
-                 debug=None, 
-                 overwrite=None, 
-                 **kwargs):
-
+    def __call__(self, *args, debug=None, overwrite=None, **kwargs):
         """
         Call the processing step.
 
@@ -218,7 +218,7 @@ class ProcessingStep(Logable):
             x = self.process(*args, **kwargs)
             # clear temp directory after processing is completed
             if not self.deep_debug:
-                self.clear_temp_dir()  #for deep debugging purposes, we keep the temp directory
+                self.clear_temp_dir()  # for deep debugging purposes, we keep the temp directory
             else:
                 self.log("Deep debugging enabled, keeping temporary directory")
             return x
@@ -226,12 +226,7 @@ class ProcessingStep(Logable):
             self.clear_temp_dir()  # also ensure clearing if not callable just to make sure everything is cleaned up
             warnings.warn("no process method defined")
 
-    def __call_empty__(self, 
-                       *args, 
-                       debug=None, 
-                       overwrite=None, 
-                       **kwargs):
-
+    def __call_empty__(self, *args, debug=None, overwrite=None, **kwargs):
         """Call the empty processing step.
 
         Args:
@@ -327,11 +322,11 @@ class ProcessingStep(Logable):
         """
         Define context for multiprocessing steps that should be used.
         The context is platform dependent.
-        """ 
+        """
 
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             self.context = "spawn"
-        elif platform.system() == 'Darwin':
+        elif platform.system() == "Darwin":
             self.context = "spawn"
-        elif platform.system() == 'Linux':
+        elif platform.system() == "Linux":
             self.context = "fork"
