@@ -356,8 +356,6 @@ class SpatialProject(Logable):
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )
-        else:
-            os.makedirs(self.sdata_path)
 
         self._read_sdata()
 
