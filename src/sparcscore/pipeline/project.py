@@ -2372,6 +2372,147 @@ class SpatialProject(Logable):
 
         self.log(f"Points {points_name} written to sdata object.")
 
+    #### Functions for getting elements from sdata object #####
+
+    def _load_seg_to_memmap(self, seg_name:List[str], tmp_dir_abs_path:str):
+        """
+        Helper function to load segmentation masks from sdata to memory mapped temp arrays for faster access.
+        Loading happens in a chunked manner to avoid memory issues. 
+        
+        The function will return the path to the memory mapped array.
+        
+        Parameters
+        ----------
+        seg_name : List[str]
+            List of segmentation element names that should be loaded found in the sdata object.
+            The segmentation elments need to have the same size. 
+        tmp_dir_abs_path : str
+            Absolute path to the directory where the memory mapped arrays should be stored.
+        
+        Returns
+        -------
+        str
+            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path` 
+            function from the alphabase.io.tempmmap module.
+        """
+
+        #ensure all elements are loaded
+        if self.sdata is None:
+            self._check_sdata_status()
+
+        # get the segmentation object
+        assert all([seg in self.sdata.labels for seg in seg_name]), "Not all passed segmentation elements found in sdata object."
+        seg_objects = [self.sdata.labels[seg] for seg in seg_name]
+
+        # get the shape of the segmentation
+        shapes = [seg.shape for seg in seg_objects]
+        
+        Z, Y, X = None, None, None
+        for shape in shapes:
+            if len(shape) == 2:
+                if Y is None:
+                    Y, X = shape
+                else:
+                    #ensure that all seg masks have the same shape
+                    assert Y == shape[0]
+                    assert X == shape[1]
+            elif len(shape) == 3:
+                if Z is None:
+                    Z, Y, X = shape
+                else:
+                    #ensure that all seg masks have the same shape
+                    assert Z == shape[0]
+                    assert Y == shape[1]
+                    assert X == shape[2]
+
+        # get the number of masks
+        n_masks = len(seg_objects)
+
+        if Z is not None:
+            shape = (n_masks, Z, Y, X)
+        else:
+            shape = (n_masks, Y, X)
+
+        #initialize empty memory mapped arrays to store the data
+        path_seg_masks = tempmmap.create_empty_mmap(shape = shape, 
+                                                dtype = self.DEFAULT_SEGMENTATION_DTYPE, 
+                                                tmp_dir_abs_path = tmp_dir_abs_path)
+
+        #create the empty mmap array
+        seg_masks = tempmmap.mmap_array_from_path(path_seg_masks)
+
+        #load the data into the mmap array in chunks
+        for i, seg in enumerate(seg_objects):
+            if Z is not None:
+                for z in range(Z):
+                    for y in range(Y):
+                        seg_masks[i, z, y, :] = seg.data[z, y, :].compute()
+            else:
+                for y in range(Y):
+                    seg_masks[i, y, :] = seg.data[y, :].compute() 
+
+        #cleanup the cache
+        self._clear_cache(vars_to_delete=[seg_objects, seg_masks, seg])
+
+        return path_seg_masks
+    
+    def _load_input_image_to_memmap(self, tmp_dir_abs_path:str):
+        """
+        Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
+        Loading happens in a chunked manner to avoid memory issues. 
+        
+        The function will return the path to the memory mapped array.
+
+        Parameters
+        ----------
+        tmp_dir_abs_path : str
+            Absolute path to the directory where the memory mapped arrays should be stored.
+        
+        Returns
+        -------
+        str
+            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path` 
+            function from the alphabase.io.tempmmap module.
+        """
+        #ensure all elements are loaded
+        if self.sdata is None:
+            self._check_sdata_status()
+
+        if not self.input_image_status:
+            raise ValueError("Input image not found in sdata object.")
+        
+        shape = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image.shape
+
+        #initialize empty memory mapped arrays to store the data
+        path_input_image = tempmmap.create_empty_mmap(shape = shape, 
+                                                dtype = self.DEFAULT_IMAGE_DTYPE, 
+                                                tmp_dir_abs_path = tmp_dir_abs_path)
+        
+        #create the empty mmap array
+        input_image = tempmmap.mmap_array_from_path(path_input_image)
+
+        #load the data into the mmap array in chunks
+        Z = None
+        if len(shape) == 3:
+            C, Y, X = shape
+        elif len(shape) == 4:
+            Z, C, Y, X = shape
+        
+        if Z is not None:
+            for z in range(Z):
+                for c in range(C):
+                    for y in range(Y):
+                        input_image[z, c, y, :] = self.input_image[z, c, y, :].compute()
+        else:
+            for c in range(C):
+                for y in range(Y):
+                    input_image[c, y, :] = self.input_image[c, y, :].compute()
+
+        #cleanup the cache
+        self._clear_cache(vars_to_delete=[input_image])
+
+        return path_input_image                     
+
     #### Functions to load input data ####
     def load_input_from_array(
         self, array: np.ndarray, channel_names: List[str] = None, overwrite=None

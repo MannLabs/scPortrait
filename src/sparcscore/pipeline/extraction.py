@@ -811,27 +811,9 @@ class HDF5CellExtraction(ProcessingStep):
         #convert input images to memory mapped temp arrays for faster reading
         start_data_transfer = timeit.default_timer()
 
-
-        #initialize empty memory mapped arrays to store the data
-        self.path_seg_masks = create_empty_mmap(shape = (self.n_masks, self.input_image_height, self.input_image_width), 
-                                           dtype = self.DEFAULT_SEGMENTATION_DTYPE, 
-                                           tmp_dir_abs_path = self._tmp_dir_path)
-        self.path_image_data = create_empty_mmap(shape = (self.n_image_channels, self.input_image_height, self.input_image_width),
-                                            dtype = self.DEFAULT_IMAGE_DTYPE,
-                                            tmp_dir_abs_path = self._tmp_dir_path)
-        
-        #read the data
-        self._get_sdata()
-
-        #transfer the data to the memory mapped arrays
-        seg_masks = mmap_array_from_path(self.path_seg_masks)
-        image_data = mmap_array_from_path(self.path_image_data)
-
-        for i, mask in enumerate(self.masks):
-            seg_masks[i] = self.sdata[mask].data.compute()
-        
-        for i in range(self.n_image_channels):
-            image_data[i] = self.input_image[i, :, :].compute()
+        self.path_seg_masks = self.project._load_seg_to_memmap(seg_name = self.masks, 
+                                                               tmp_dir_abs_path = self._tmp_dir_path)
+        self.path_image_data = self.project._input_image_to_memmap(tmp_dir_abs_path = self._tmp_dir_path)
         
         stop_data_transfer = timeit.default_timer()
         time_data_transfer = stop_data_transfer - start_data_transfer
@@ -845,8 +827,8 @@ class HDF5CellExtraction(ProcessingStep):
         if self.config["threads"] <= 1:
             #set up for single-threaded processing
             self._get_normalization()
-            self.seg_masks = seg_masks
-            self.image_data = image_data
+            self.seg_masks = mmap_array_from_path(self.path_seg_masks)
+            self.image_data = mmap_array_from_path(self.path_image_data)
 
             self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
             self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
@@ -889,7 +871,7 @@ class HDF5CellExtraction(ProcessingStep):
         if self.partial_processing:
             self.DEFAULT_LOG_NAME = "processing.log" #change log name back to default
 
-        self._post_extraction_cleanup(vars_to_delete = [seg_masks, image_data])
+        self._post_extraction_cleanup()
 
         total_time_stop = timeit.default_timer()
         total_time = total_time_stop - total_time_start
