@@ -1949,6 +1949,7 @@ class SpatialProject(Logable):
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
+
     def __init__(
         self,
         project_location,
@@ -1959,12 +1960,14 @@ class SpatialProject(Logable):
         overwrite=False,
         debug=False,
     ):
-        self.debug = debug
+        
+        super().__init__(directory = project_location, debug = debug)
+
+        self.project_location = project_location
         self.overwrite = overwrite
         self.config = None
+        self._get_config_file(config_path)
 
-        self.directory = project_location
-        self.project_location = project_location
         self.sdata_path = self._get_sdata_path()
         self.sdata = None
 
@@ -1983,9 +1986,6 @@ class SpatialProject(Logable):
             os.makedirs(self.project_location)
         else:
             warnings.warn("There is already a directory in the location path")
-
-        # setup config file
-        self._get_config_file(config_path)
 
         # === setup segmentation ===
         if self.segmentation_f is not None:
@@ -2145,7 +2145,40 @@ class SpatialProject(Logable):
                 elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
 
         return elem
+    
+    def _check_image_dtype(self, image):
+        """Check if the image dtype is the default image dtype. If not raise a warning."""
 
+        if not image.dtype == self.DEFAULT_IMAGE_DTYPE:
+            Warning(
+                f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results."
+            )
+            self.log(
+                f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results."
+            )
+    
+    def _create_temp_dir(self, path):
+        """
+        Create a temporary directory in the specified directory with the name of the class.s
+        """
+
+        path = os.path.join(path, f"{self.__class__.__name__}_")
+        self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
+        self._tmp_dir_path = self._tmp_dir.name
+
+        self.log(
+            f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
+        )
+    
+    def _clear_temp_dir(self):
+        if "_tmp_dir" in self.__dict__.keys():
+            shutil.rmtree(self._tmp_dir_path)
+            self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
+
+            del self._tmp_dir, self._tmp_dir_path
+        else:
+            self.log("Temporary directory not found, skipping cleanup")
+    
     ##### Functions for handling sdata object #####
 
     def _cleanup_sdata_object(self):
