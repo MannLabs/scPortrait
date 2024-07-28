@@ -1,13 +1,12 @@
-
 import os
 from typing import List, Dict, Union
 
 import numpy as np
-import h5py
 from lmd.lib import SegmentationLoader
 from alphabase.io import tempmmap
 
 from sparcscore.pipeline.base import ProcessingStep
+
 
 class LMDSelection(ProcessingStep):
     """
@@ -26,35 +25,37 @@ class LMDSelection(ProcessingStep):
         self.calibration_marker = None
 
     def _setup_selection(self):
-        #set orientation transform
+        # set orientation transform
         self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
 
-        #configure name of extraction
+        # configure name of extraction
         if self.name is None:
             try:
                 name = "_".join([cell_set["name"] for cell_set in self.cell_sets])
             except Exception:
                 name = "selected_cells"
 
-        #create savepath
+        # create savepath
         savename = name.replace(" ", "_") + ".xml"
         self.savepath = os.path.join(self.directory, savename)
-        
-    def _post_processing_cleanup(self, vars_to_delete: Union[List, None] =  None):
+
+    def _post_processing_cleanup(self, vars_to_delete: Union[List, None] = None):
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete=vars_to_delete)
 
         # remove temporary files
         if hasattr(self, "path_seg_mask"):
             os.remove(self.path_seg_mask)
-        
+
         self._clear_cache()
 
-    def process(self, 
-                segmentation_name: str, 
-                cell_sets: List[Dict], 
-                calibration_marker: np.array, 
-                name: Union[str, None] = None):
+    def process(
+        self,
+        segmentation_name: str,
+        cell_sets: List[Dict],
+        calibration_marker: np.array,
+        name: Union[str, None] = None,
+    ):
         """
         Process function for selecting cells and generating their XML.
         Under the hood this method relies on the pylmd library and utilizies its `SegmentationLoader` Class.
@@ -165,17 +166,19 @@ class LMDSelection(ProcessingStep):
         # else load them and proceed with selection
 
         # load segmentation from hdf5
-        self.path_seg_mask = self.project.__load_seg_to_memmap(segmentation_name, tmp_dir_abs_path = self._tmp_dir_path)
+        self.path_seg_mask = self.project.__load_seg_to_memmap(
+            segmentation_name, tmp_dir_abs_path=self._tmp_dir_path
+        )
         segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
-        
-        #create segmentation loader
+
+        # create segmentation loader
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
 
-        #get shape collections
+        # get shape collections
         shape_collection = sl(segmentation, self.cell_sets, self.calibration_marker)
 
         if self.debug:
@@ -186,5 +189,7 @@ class LMDSelection(ProcessingStep):
 
         self.log(f"Saved output at {self.savepath}")
 
-        #perform post processing cleanup
-        self._post_processing_cleanup(vars_to_delete=[shape_collection, sl, segmentation])
+        # perform post processing cleanup
+        self._post_processing_cleanup(
+            vars_to_delete=[shape_collection, sl, segmentation]
+        )
