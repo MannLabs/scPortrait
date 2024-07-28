@@ -2923,7 +2923,7 @@ class SpatialProject(Logable):
             raise ValueError("No extraction method defined")
 
         # ensure that a segmentation has been stored that can be extracted
-        self._check_sdata_status(print_status=True)
+        self._check_sdata_status()
 
         if not self.nuc_seg_status or not self.cyto_seg_status:
             raise ValueError(
@@ -2936,7 +2936,6 @@ class SpatialProject(Logable):
 
         self.extraction_f(partial=partial, n_cells=n_cells)
 
-
     def classify(
         self,
         n_cells=0,
@@ -2947,7 +2946,7 @@ class SpatialProject(Logable):
         if self.classification_f is None:
             raise ValueError("No classification method defined")
 
-        self._check_sdata_status(print_status=True)
+        self._check_sdata_status()
 
         if not self.nuc_seg_status or not self.cyto_seg_status:
             raise ValueError(
@@ -3002,3 +3001,4 @@ class SpatialProject(Logable):
         self.classification_f.data_type = data_type
 
         self.classification_f(cells_path, size=n_cells)
+    
