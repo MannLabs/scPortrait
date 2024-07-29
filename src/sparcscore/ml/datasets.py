@@ -189,11 +189,15 @@ class HDF5SingleCellDataset(Dataset):
         if self.select_channel is not None:
             cell_tensor = self.handle_list[data_info[1]][data_info[2], self.select_channel]
             t = torch.from_numpy(cell_tensor)
-            t = torch.unsqueeze(t, 0)
+            if t.ndim == 2:
+            # If t is 2D (Y, X), add a channel dimension
+                t = torch.unsqueeze(t, 0)
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
         else:
             cell_tensor = self.handle_list[data_info[1]][data_info[2]]
             t = torch.from_numpy(cell_tensor)
-    
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
+
         t = t.float() # convert to float tensor
         
         if self.transform:
@@ -307,14 +311,18 @@ class HDF5SingleCellDatasetRegression(Dataset):
             idx = idx.tolist() # convert tensor to list
         
         data_item = self.data_locator[idx] # get the data info for the current index, such as target, handle id, and row
-        
+
         if self.select_channel is not None: # select a specific channel
             cell_tensor = self.handle_list[data_item[1]][data_item[2], self.select_channel] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
-            t = torch.unsqueeze(t, 0) # add channel dimension to tensor
+            if t.ndim == 2:
+            # If t is 2D (Y, X), add a channel dimension
+                t = torch.unsqueeze(t, 0)
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
         else: 
             cell_tensor = self.handle_list[data_item[1]][data_item[2]] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
         
         if self.transform:
             t = self.transform(t) # apply transformation to the data
@@ -431,14 +439,18 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
             idx = idx.tolist() # convert tensor to list
         
         data_item = self.data_locator[idx] # get the data info for the current index, such as target, handle id, and row
-        
+
         if self.select_channel is not None: # select a specific channel
             cell_tensor = self.handle_list[data_item[1]][data_item[2], self.select_channel] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
-            t = torch.unsqueeze(t, 0) # add channel dimension to tensor
+            if t.ndim == 2:
+            # If t is 2D (Y, X), add a channel dimension
+                t = torch.unsqueeze(t, 0)
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
         else: 
             cell_tensor = self.handle_list[data_item[1]][data_item[2]] 
             t = torch.from_numpy(cell_tensor).float() # convert to float tensor
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor" #add check to ensure 3D tensor
         
         if self.transform:
             t = self.transform(t) # apply transformation to the data
