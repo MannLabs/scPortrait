@@ -37,7 +37,6 @@ from sparcscore.utils.spatialdata_helper import (
     calculate_centroids,
 )
 
-
 class SpatialProject(Logable):
     CLEAN_LOG = True
 
@@ -907,6 +906,11 @@ class SpatialProject(Logable):
         # cleanup variables and temp dir
         self._clear_cache(vars_to_delete=[temp_image_path, im, channels])
         self._clear_temp_dir()
+
+        #strange workaround that is required so that the sdata input image does not point to the dask array anymore but
+        #to the image which was written to disk
+        self.sdata = None
+        self._check_sdata_status()
 
     def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
         # setup overwrite
