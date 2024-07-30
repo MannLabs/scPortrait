@@ -1102,6 +1102,7 @@ class WGASegmentation(_ClassicalSegmentation):
         # save input image
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data.compute()
+
         self.maps["input_image"] = input_image
 
         # normalize input
@@ -1170,6 +1171,8 @@ class DAPISegmentation(_ClassicalSegmentation):
         self.maps = {}
 
         # save input image
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data.compute()
         self.maps["input_image"] = input_image.copy()
 
         # normalize input
