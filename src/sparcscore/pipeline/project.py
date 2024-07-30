@@ -693,7 +693,7 @@ class SpatialProject(Logable):
         if not self.input_image_status:
             raise ValueError("Input image not found in sdata object.")
 
-        shape = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image.shape
+        shape = self.input_image.shape
 
         # initialize empty memory mapped arrays to store the data
         path_input_image = tempmmap.create_empty_mmap(
