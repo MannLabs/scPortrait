@@ -286,7 +286,7 @@ class HDF5CellExtraction(ProcessingStep):
     def _get_centers(self):
         # calculate centers if they have not been calculated yet
         if self.DEFAULT_CENTERS_NAME not in self.project.sdata:
-            self.project._add_centers(self.main_segmenation_mask)
+            self.project._add_centers(self.main_segmenation_mask, overwrite = self.overwrite)
 
         centers = self.project.sdata[self.DEFAULT_CENTERS_NAME].values.compute()
 
@@ -895,12 +895,13 @@ class HDF5CellExtraction(ProcessingStep):
         time_arg_generation = stop_arg_generation - start_arg_generation
 
         # convert input images to memory mapped temp arrays for faster reading
+        self.log("Loading input images to memory mapped arrays...")
         start_data_transfer = timeit.default_timer()
 
         self.path_seg_masks = self.project._load_seg_to_memmap(
             seg_name=self.masks, tmp_dir_abs_path=self._tmp_dir_path
         )
-        self.path_image_data = self.project._input_image_to_memmap(
+        self.path_image_data = self.project._load_input_image_to_memmap(
             tmp_dir_abs_path=self._tmp_dir_path
         )
 
