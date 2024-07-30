@@ -213,17 +213,25 @@ class Segmentation(ProcessingStep):
             input_image = input_image.data
         return input_image
 
-    def _save_segmentation_sdata(self, labels, classes):
+    def _save_segmentation_sdata(self, labels, classes, masks = ["nuclei", "cytosol"]):
         if self.is_shard:
             self.save_segmentation(labels, classes)
         else:
             if self.project is not None:
-                self.project._write_segmentation_sdata(
-                    labels[0], self.project.nuc_seg_name, classes=classes
-                )
-                self.project._write_segmentation_sdata(
-                    labels[1], self.project.cyto_seg_name, classes=classes
-                )
+                
+                if "nuclei" in masks:
+                    ix = masks.index("nuclei")
+
+                    self.project._write_segmentation_sdata(
+                        labels[ix], self.project.nuc_seg_name, classes=classes, overwrite = self.overwrite
+                    )
+
+                if "cytosol" in masks:
+                    ix = masks.index("cytosol")
+                    self.project._write_segmentation_sdata(
+                        labels[ix], self.project.cyto_seg_name, classes=classes, overwrite = self.overwrite
+                    )
+            
             else:
                 ValueError(
                     "No project object found. Please provide a project object to save segmentation data to sdata object."
