@@ -657,11 +657,9 @@ class SpatialProject(Logable):
         for i, seg in enumerate(seg_objects):
             if Z is not None:
                 for z in range(Z):
-                    for y in range(Y):
-                        seg_masks[i, z, y, :] = seg.data[z, y, :].compute()
+                        seg_masks[i][z] = seg.data[z].compute()
             else:
-                for y in range(Y):
-                    seg_masks[i, y, :] = seg.data[y, :].compute()
+                    seg_masks[i] = seg.data.compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[seg_objects, seg_masks, seg])
@@ -709,18 +707,17 @@ class SpatialProject(Logable):
         Z = None
         if len(shape) == 3:
             C, Y, X = shape
+
         elif len(shape) == 4:
             Z, C, Y, X = shape
 
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
-                    for y in range(Y):
-                        input_image[z, c, y, :] = self.input_image[z, c, y, :].compute()
+                        input_image[z][c] = self.input_image[z][c].compute()
         else:
             for c in range(C):
-                for y in range(Y):
-                    input_image[c, y, :] = self.input_image[c, y, :].compute()
+                    input_image[c] = self.input_image[c].compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[input_image])
