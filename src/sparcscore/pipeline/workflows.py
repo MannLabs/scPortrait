@@ -1353,6 +1353,11 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
+        
+        #ensure we have a numpy array
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data.compute()
+        
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1447,6 +1452,11 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         self._check_for_mask_matching_filtering()
 
     def cellpose_segmentation(self, input_image):
+
+        #ensure we have a numpy array
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data.compute()
+
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1680,6 +1690,11 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
+        
+        #ensure we have a numpy array
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data.compute()
+
         self._check_gpu_status()
         self._clear_cache()
 
@@ -1742,7 +1757,6 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
         self.cellpose_segmentation(input_image)
 
         # get final classes list
