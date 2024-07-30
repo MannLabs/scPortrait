@@ -459,9 +459,12 @@ class _BaseSegmentation(Segmentation):
 
             if not self.is_shard:
                 if self.save_filter_results:
-                    #add results to sdata object
-                    self.project._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
-                    
+
+                    if len(mask.shape) == 2:
+                        #add results to sdata object
+                        self.project._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                    else:
+                        self.project._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
                     #then this does not need to be plotted as it can be visualized from there
                     plot_results = False
                 else:
@@ -1084,19 +1087,11 @@ class WGASegmentation(_ClassicalSegmentation):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-        # The required maps are the nucelus channel and a membrane marker channel like WGA
-        required_maps = [self.maps["input_image"][0], self.maps["input_image"][1]]
-
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        feature_maps = [element for element in self.maps["input_image"][2:]]
-
-        channels = np.stack(required_maps + feature_maps).astype(np.float64)
-
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
-        return channels, segmentation
+        return segmentation
 
     def process(self, input_image):
         self._get_processing_parameters()
@@ -1105,7 +1100,9 @@ class WGASegmentation(_ClassicalSegmentation):
         self.maps = {}
 
         # save input image
-        self.maps["input_image"] = input_image.copy()
+        if isinstance(input_image, xarray.DataArray):
+            input_image = input_image.data.compute()
+        self.maps["input_image"] = input_image
 
         # normalize input
         if self.normalization_input_image:
@@ -1126,18 +1123,24 @@ class WGASegmentation(_ClassicalSegmentation):
             input_image = self.maps["median_corrected"]
 
         if self.segment_nuclei:
-            self._nucleus_segmentation(input_image[0], debug=self.debug)
+            image = input_image[0]
+            self._nucleus_segmentation(image, debug=self.debug)
 
         if self.segment_cytosol:
-            self._cytosol_segmentation(self.maps["input_image"][1], debug=self.debug)
+            image = self.maps["input_image"][1]
+            if isinstance(image, xarray.DataArray):
+                image = image.data.compute()
+            self._cytosol_segmentation(image, debug=self.debug)
 
         if self.debug:
             self._visualize_final_masks()
 
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
-        channels, segmentation = self._finalize_segmentation_results()
+        segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(channels, segmentation, all_classes)
+        print("Channels shape: ", segmentation.shape)
+
+        results = self._save_segmentation_sdata(segmentation, all_classes, masks = ["nuclei", "cytosol"])
         return results
 
 
@@ -1153,19 +1156,12 @@ class DAPISegmentation(_ClassicalSegmentation):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-        # The required maps are only nucleus channel
-        required_maps = [self.maps["input_image"][0]]
-
-        # Feature maps are all further channel which contain phenotypes needed for the classification
-        feature_maps = [element for element in self.maps["input_image"][1:]]
-
-        channels = np.stack(required_maps + feature_maps).astype(np.float64)
 
         segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
+            [self.maps["nucleus_segmentation"]]
         ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
-        return (channels, segmentation)
+        return segmentation
 
     def process(self, input_image):
         self._get_processing_parameters()
@@ -1198,9 +1194,9 @@ class DAPISegmentation(_ClassicalSegmentation):
             self._nucleus_segmentation(input_image[0], debug=self.debug)
 
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
-        channels, segmentation = self._finalize_segmentation_results()
+        segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(channels, segmentation, all_classes)
+        results = self._save_segmentation_sdata(segmentation, all_classes, masks = ["nuclei"])
         return results
 
 
@@ -1347,7 +1343,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         )
 
         segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["nucleus_segmentation"]]
+            [self.maps["nucleus_segmentation"]]
         )
 
         return segmentation
@@ -1420,7 +1416,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = ["nuclei"])
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1585,7 +1581,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = ["nuclei", "cytosol"])
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1661,7 +1657,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         segmentation = self._finalize_segmentation_results()
 
-        self._save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = ["nuclei", "cytosol"])
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
 
@@ -1684,7 +1680,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         )
 
         segmentation = np.stack(
-            [self.maps["cytosol_segmentation"], self.maps["cytosol_segmentation"]]
+            [self.maps["cytosol_segmentation"]]
         )
 
         return segmentation
@@ -1763,7 +1759,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=["cytosol"])
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1802,7 +1798,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         )
 
         # combine masks into one stack
-        segmentation = np.stack([cyto_seg, cyto_seg]).astype(
+        segmentation = np.stack([cyto_seg]).astype(
             self.DEFAULT_SEGMENTATION_DTYPE
         )
         del cyto_seg
@@ -1871,7 +1867,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         segmentation = self._finalize_segmentation_results()
 
-        self._save_segmentation_sdata(segmentation, all_classes)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=["cytosol"])
 
         return None
 
