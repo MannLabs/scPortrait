@@ -211,25 +211,26 @@ class SpatialProject(Logable):
             )
 
     def _setup_classification_f(self, classification_f):
-        if classification_f.__name__ not in self.config:
-            raise ValueError(
-                f"Config for {classification_f.__name__} is missing from the config file"
+        if classification_f is not None:
+            if classification_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {classification_f.__name__} is missing from the config file"
+                )
+
+            classification_directory = os.path.join(
+                self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
             )
 
-        classification_directory = os.path.join(
-            self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
-        )
+            self.classification_directory = classification_directory
 
-        self.classification_directory = classification_directory
-
-        self.classification_f = classification_f(
-            self.config[classification_f.__name__],
-            self.classification_directory,
-            project_location=self.project_location,
-            debug=self.debug,
-            overwrite=self.overwrite,
-            project=self,
-        )
+            self.classification_f = classification_f(
+                self.config[classification_f.__name__],
+                self.classification_directory,
+                project_location=self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                project=self,
+            )
 
     def _setup_selection(self, selection_f):
         if self.selection_f is not None:
@@ -1097,14 +1098,15 @@ class SpatialProject(Logable):
         original_overwrite = self.segmentation_f.overwrite
         if overwrite is not None:
             self.segmentation_f.overwrite = overwrite
-
-        elif self.input_image is not None:
-            self.segmentation_f(self.input_image)
         
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
+        elif self.input_image is not None:
+            self.segmentation_f(self.input_image)
+        
+        self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
     def extract(self, partial=False, n_cells=None, overwrite: Union[bool, None] = None):
@@ -1114,7 +1116,7 @@ class SpatialProject(Logable):
         # ensure that a segmentation has been stored that can be extracted
         self._check_sdata_status()
 
-        if not self.nuc_seg_status or not self.cyto_seg_status:
+        if not self.nuc_seg_status or self.cyto_seg_status:
             raise ValueError(
                 "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
             )
@@ -1124,6 +1126,7 @@ class SpatialProject(Logable):
             self.extraction_f.overwrite_run_path = overwrite
 
         self.extraction_f(partial=partial, n_cells=n_cells)
+        self._check_sdata_status()
 
     def classify(
         self,
@@ -1191,6 +1194,8 @@ class SpatialProject(Logable):
 
         self.classification_f(cells_path, size=n_cells)
 
+        self._check_sdata_status()
+
     def select(
         self,
         segmentation_name: str,
@@ -1222,6 +1227,7 @@ class SpatialProject(Logable):
             calibration_markers=calibration_markers,
             name=name,
         )
+        self._check_sdata_status()
 
 
 # this class has not yet been set up to be used with spatialdata
