@@ -1099,6 +1099,10 @@ class SpatialProject(Logable):
 
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
+        
+        if self.nuc_seg_status or self.cyto_seg_status:
+            if not self.segmentation_f.overwrite:
+                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
