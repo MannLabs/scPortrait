@@ -95,6 +95,7 @@ class SpatialProject(Logable):
         self.segmentation_f = segmentation_f
         self.extraction_f = extraction_f
         self.classification_f = classification_f
+        self.selection_f = selection_f
 
         if self.CLEAN_LOG:
             self._clean_log_file()
@@ -232,25 +233,26 @@ class SpatialProject(Logable):
         )
 
     def _setup_selection(self, selection_f):
-        if selection_f.__name__ not in self.config:
-            raise ValueError(
-                f"Config for {selection_f.__name__} is missing from the config file"
+        if self.selection_f is not None:
+            if selection_f.__name__ not in self.config:
+                raise ValueError(
+                    f"Config for {selection_f.__name__} is missing from the config file"
+                )
+
+            selection_directory = os.path.join(
+                self.project_location, self.DEFAULT_SELECTION_DIR_NAME
             )
 
-        selection_directory = os.path.join(
-            self.project_location, self.DEFAULT_SELECTION_DIR_NAME
-        )
+            self.selection_directory = selection_directory
 
-        self.selection_directory = selection_directory
-
-        self.selection_f = selection_f(
-            self.config[selection_f.__name__],
-            self.selection_directory,
-            project_location=self.project_location,
-            debug=self.debug,
-            overwrite=self.overwrite,
-            project=self,
-        )
+            self.selection_f = selection_f(
+                self.config[selection_f.__name__],
+                self.selection_directory,
+                project_location=self.project_location,
+                debug=self.debug,
+                overwrite=self.overwrite,
+                project=self,
+            )
 
     def update_classification_f(self, classification_f) -> None:
         """Update the classification method chosen for the project without reinitializing the entire project.
