@@ -76,19 +76,13 @@ HDF5CellExtraction:
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 50000
 MLClusterClassifier:
-    channel_classification: 4
-    threads: 24 #
     batch_size: 900
-    dataloader_worker_number: 0 #needs to be 0 if using cpu
-    standard_scale: False
-    exp_transform: False
-    log_transform: False
-    network: "autophagy_classifier2.1"
-    classifier_architecture: "VGG2_old"
-    screen_label: "Autophagy_15h_classifier2.1"
-    epoch: "max"
-    encoders: ["forward"]
     inference_device: "cpu"
+    dataloader_worker_number: 10 #needs to be 0 if using cpu
+    network: "autophagy_classifier2.1"
+    label: "Autophagy_15h_classifier2_1"
+    encoders: ["forward"]
+    channel_classification: 4
 LMDSelection:
     threads: 20
     cache: "."

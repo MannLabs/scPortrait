@@ -52,11 +52,10 @@ HDF5CellExtraction:
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 50000
 CellFeaturizer:
-    channel_classification: 4
     batch_size: 900
     dataloader_worker_number: 0 #needs to be 0 if using cpu
     inference_device: "cpu"
-    screen_label: "Ch3_Featurization"
+    label: "CellFeaturizer"
 LMDSelection:
     processes: 20
     segmentation_channel: 0
