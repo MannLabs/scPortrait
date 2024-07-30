@@ -448,11 +448,30 @@ class SpatialProject(Logable):
 
         return centers
 
-    def _add_centers(self, segmentation_label: str) -> None:
+    def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
         centroids_object = self._get_centers(segmentation_label)
-        self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME)
+        self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
 
     #### Functions for adding elements to sdata object ########
+    def _force_delete_object(self, name:str, type:str):
+        """
+        Force delete an object from the sdata object and the corresponding directory.
+
+        Parameters
+        ----------
+        name : str
+            Name of the object to be deleted.
+        type : str
+            Type of the object to be deleted. Can be either "images", "labels", "points" or "tables".
+        """
+        if name in self.sdata:
+            del self.sdata[name]
+        
+        #define path 
+        path = os.path.join(self.sdata_path, type, name)
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
     def _write_image_sdata(
         self,
         image,
@@ -460,6 +479,7 @@ class SpatialProject(Logable):
         channel_names=None,
         scale_factors=[2, 4, 8],
         chunks=(1, 1000, 1000),
+        overwrite = False
     ):
         """
         Write the supplied image to the spatialdata object.
@@ -492,6 +512,9 @@ class SpatialProject(Logable):
             rgb=False,
         )
 
+        if overwrite:
+            self._force_delete_object(image_name, "images")
+
         self.sdata.images[image_name] = image
         self.sdata.write_element(image_name, overwrite=True)
 
@@ -501,13 +524,16 @@ class SpatialProject(Logable):
         self.input_image_status = True
 
     def _write_segmentation_object_sdata(
-        self, segmentation_object, segmentation_label: str, classes: set = None
+        self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
     ):
         # ensure that the segmentation object is converted to the sparcspy Labels2DModel
         if not hasattr(segmentation_object.attrs, "cell_ids"):
             segmentation_object = spLabels2DModel().convert(
                 segmentation_object, classes=classes
             )
+
+        if overwrite:
+            self._force_delete_object(segmentation_label, "labels")
 
         self.sdata.labels[segmentation_label] = segmentation_object
         self.sdata.write_element(segmentation_label, overwrite=True)
@@ -520,6 +546,7 @@ class SpatialProject(Logable):
         segmentation_label: str,
         classes: set = None,
         chunks=(50, 50),
+        overwrite = False
     ):
         transform_original = Identity()
         mask = spLabels2DModel.parse(
@@ -532,30 +559,22 @@ class SpatialProject(Logable):
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes)
+        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
 
     def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
+        
         if overwrite:
-            try:
-                if table_name in self.sdata.tables:
-                    del self.sdata[table_name]
-                self.sdata.tables[table_name] = table
-                self.sdata.write_element(table_name, overwrite=True)
-            except:
-                # perform the nuclear option that ensures its written to disk
-                if table_name in self.sdata.tables:
-                    del self.sdata[table_name]
-                shutil.rmtree(os.path.join(self.sdata_path, "tables", table_name))
+            self._force_delete_object(table_name, "tables")
 
-                self.sdata.tables[table_name] = table
-                self.sdata.write_element(table_name, overwrite=True)
-        else:
-            self.sdata.tables[table_name] = table
-            self.sdata.write_element(table_name, overwrite=False)
+        self.sdata.tables[table_name] = table
+        self.sdata.write_element(table_name, overwrite=False)
 
         self.log(f"Table {table_name} written to sdata object.")
 
-    def _write_points_object_sdata(self, points, points_name: str):
+    def _write_points_object_sdata(self, points, points_name: str, overwrite):
+        if overwrite:
+            self._force_delete_object(points_name, "points")
+
         self.sdata.points[points_name] = points
         self.sdata.write_element(points_name, overwrite=True)
 
