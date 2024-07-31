@@ -545,7 +545,7 @@ class SpatialProject(Logable):
         segmentation,
         segmentation_label: str,
         classes: set = None,
-        chunks=(50, 50),
+        chunks=(1000, 1000),
         overwrite = False
     ):
         transform_original = Identity()
