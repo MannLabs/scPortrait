@@ -1109,6 +1109,32 @@ class SpatialProject(Logable):
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
+    def complete_segmentation(self, overwrite: Union[bool, None] = None):
+        
+        # check to ensure a method has been assigned
+        if self.segmentation_f is None:
+            raise ValueError("No segmentation method defined")
+
+        self._check_sdata_status()
+        # ensure that an input image has been loaded
+        if not self.input_image_status:
+            raise ValueError("No input image loaded. Please load an input image first.")
+
+        # setup overwrite if specified in call
+        original_overwrite = self.segmentation_f.overwrite
+        if overwrite is not None:
+            self.segmentation_f.overwrite = overwrite
+        
+        if self.nuc_seg_status or self.cyto_seg_status:
+            if not self.segmentation_f.overwrite:
+                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
+
+        elif self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image)
+        
+        self._check_sdata_status()
+        self.segmentation_f.overwrite = original_overwrite  # reset to original value
+   
     def extract(self, partial=False, n_cells=None, overwrite: Union[bool, None] = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
