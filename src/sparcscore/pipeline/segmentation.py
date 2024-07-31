@@ -719,27 +719,17 @@ class ShardedSegmentation(Segmentation):
 
                 resulting_map = orig_input_manipulation + shifted_map_manipulation
 
-                plt.figure()
-                plt.imshow(resulting_map[0])
-                plt.title(
-                    f"Combined nucleus segmentation mask after\n resolving sharding for region {i}"
-                )
-                plt.colorbar()
-                plt.show()
-                plt.savefig(
-                    f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png"
-                )
-
-                plt.figure()
-                plt.imshow(resulting_map[1])
-                plt.colorbar()
-                plt.title(
-                    f"Combined cytosol segmentation mask after\n resolving sharding for region {i}"
-                )
-                plt.show()
-                plt.savefig(
-                    f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png"
-                )
+                for _mask_ix in range(self.project.n_masks):
+                    plt.figure()
+                    plt.imshow(resulting_map[_mask_ix])
+                    plt.title(
+                        f"Combined segmentation mask {self.project.masks[_mask_ix]} after\n resolving sharding for region {i}"
+                    )
+                    plt.colorbar()
+                    plt.show()
+                    plt.savefig(
+                        f"{self.directory}/combined_segmentation_mask_{self.project.masks[_mask_ix]}_{i}.png"
+                    )
 
             start_time_step3 = time.time()
             shifted_map = np.where(
@@ -840,7 +830,8 @@ class ShardedSegmentation(Segmentation):
             "finished saving segmentation results to sdata object for sharded segmentation."
         )
 
-        self.cleanup_shards(sharding_plan)
+        if not self.deep_debug:
+            self._cleanup_shards(sharding_plan)
 
     def _initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
