@@ -555,6 +555,7 @@ class ShardedSegmentation(Segmentation):
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
+                project = self.project
             )
 
             current_shard._initialize_as_shard(
@@ -592,11 +593,8 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolve sharding plan")
 
-        if self.config["input_channels"] == 1:
-            label_size = (1, self.image_size[0], self.image_size[1])
-        elif self.config["input_channels"] >= 2:
-            label_size = (2, self.image_size[0], self.image_size[1])
-
+        label_size = (self.n_masks, self.image_size[0], self.image_size[1])
+       
         # initialize an empty hdf5 file that will be filled with the results of the sharded segmentation
         # this is a workaround because as of yet labels can not be incrementally updated in spatialdata objects while being backed to disk
 
@@ -817,21 +815,12 @@ class ShardedSegmentation(Segmentation):
             self._check_filter_status()
 
             # save newly generated class list
-            self.save_classes(list(filtered_classes_combined))
+            self._save_classes(list(filtered_classes_combined))
 
         self.log("resolved sharding plan.")
 
         # save final segmentation to sdata
-        self.project._write_segmentation_sdata(
-            hdf_labels[0],
-            self.project.nuc_seg_name,
-            classes=list(filtered_classes_combined),
-        )
-        self.project._write_segmentation_sdata(
-            hdf_labels[1],
-            self.project.cyto_seg_name,
-            classes=list(filtered_classes_combined),
-        )
+        self._save_segmentation_sdata(hdf_labels, list(filtered_classes_combined), masks = self.project.masks)
 
         self.log(
             "finished saving segmentation results to sdata object for sharded segmentation."
