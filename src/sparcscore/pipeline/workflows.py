@@ -1083,6 +1083,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
 
 class WGASegmentation(_ClassicalSegmentation):
+    N_MASKS = 2
+    MASK_NAMES = ["nuclei", "cytosol"]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1157,6 +1160,10 @@ class ShardedWGASegmentation(ShardedSegmentation):
 
 
 class DAPISegmentation(_ClassicalSegmentation):
+
+    N_MASKS = 1
+    MASK_NAMES = ["nuclei"]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1340,6 +1347,9 @@ class _CellposeSegmentation(_BaseSegmentation):
         )
 
 class DAPISegmentationCellpose(_CellposeSegmentation):
+    N_MASKS = 1
+    MASK_NAMES = ["nuclei"]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1438,6 +1448,9 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
 
 
 class CytosolSegmentationCellpose(_CellposeSegmentation):
+    N_MASKS = 2
+    MASK_NAMES = ["nuclei", "cytosol"]
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1681,6 +1694,9 @@ class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
 
 
 class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
+    N_MASKS = 1
+    MASK_NAMES = ["cytosol"]
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

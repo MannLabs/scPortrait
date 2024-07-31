@@ -593,7 +593,14 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolve sharding plan")
 
-        label_size = (self.n_masks, self.image_size[0], self.image_size[1])
+        #get number of masks for the relevant segmentation method
+        if "n_masks" not in self.project.__dict__:
+            self.project.n_masks = self.method.N_MASKS
+        
+        if "masks" not in self.project.__dict__:
+            self.project.masks = self.method.MASK_NAMES
+
+        label_size = (self.project.n_masks, self.image_size[0], self.image_size[1])
        
         # initialize an empty hdf5 file that will be filled with the results of the sharded segmentation
         # this is a workaround because as of yet labels can not be incrementally updated in spatialdata objects while being backed to disk
