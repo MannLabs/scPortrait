@@ -600,6 +600,10 @@ class ShardedSegmentation(Segmentation):
         if "masks" not in self.project.__dict__:
             self.project.masks = self.method.MASK_NAMES
 
+        #ensure a temp directory is creates
+        if not hasattr(self, "_tmp_dir_path"):
+            self.create_temp_dir()
+
         label_size = (self.project.n_masks, self.image_size[0], self.image_size[1])
        
         # initialize an empty hdf5 file that will be filled with the results of the sharded segmentation
@@ -824,6 +828,9 @@ class ShardedSegmentation(Segmentation):
             # save newly generated class list
             self._save_classes(list(filtered_classes_combined))
 
+            #ensure cleanup
+            self.clear_temp_dir()
+        
         self.log("resolved sharding plan.")
 
         # save final segmentation to sdata
