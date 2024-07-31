@@ -97,10 +97,20 @@ def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> Tuple | Lis
     if isinstance(element, xarray.DataArray):
         if len(element.shape) == 2:
             y, x = element.chunksizes.values()
+            if len(y) > 1:
+                    y = y[0]
+            if len(x) > 1:
+                x = x[0]
             y, x = np.array([y, x]).flatten()
             chunksize = (y, x)
         elif len(element.shape) == 3:
             c, y, x = element.chunksizes.values()
+            if len(y) > 1:
+                y = y[0]
+            if len(x) > 1:
+                x = x[0]
+            if len(c) > 1:
+                c = c[0]
             c, y, x = np.array([c, y, x]).flatten()
             chunksize = (c, y, x)
         return chunksize
@@ -113,10 +123,21 @@ def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> Tuple | Lis
 
             if len(element[scale]["image"].shape) == 2:
                 y, x = element[scale].chunksizes.values()
+                if len(y) > 1:
+                    y = y[0]
+                if len(x) > 1:
+                    x = x[0]
                 y, x = np.array([y, x]).flatten()
                 chunksize = (y, x)
+            
             elif len(element[scale]["image"].shape) == 3:
                 c, y, x = element[scale].chunksizes.values()
+                if len(y) > 1:
+                    y = y[0]
+                if len(x) > 1:
+                    x = x[0]
+                if len(c) > 1:
+                    c = c[0]
                 c, y, x = np.array([c, y, x]).flatten()
                 chunksize = (c, y, x)
                 chunk_sizes.append(chunksize)
