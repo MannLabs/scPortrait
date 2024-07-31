@@ -121,7 +121,7 @@ class Segmentation(ProcessingStep):
         """
         Checks and updates the GPU status.
         """
-        self.check_gpu_status()
+        self._check_gpu_status()
 
         # compare with config configuration
         if "nGPUs" in self.config.keys():
@@ -161,7 +161,7 @@ class Segmentation(ProcessingStep):
         self.gpu_id_list = gpu_id_list
 
         self.log(
-            f"GPU Status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.n_processes_per_GPU} processes per device in parallel."
+            f"GPU Status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
         )
 
     def _check_filter_status(self):
@@ -212,10 +212,50 @@ class Segmentation(ProcessingStep):
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data
         return input_image
+    
+    def _save_segmentation(self, labels: np.array, classes: List) -> None:
+        """Helper function to save the results of a segmentation to file when generating a segmentation of a shard.
+
+        Args:
+            labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
+            classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
+
+        """
+        if self.deep_debug:
+            self.log("saving segmentation")
+
+        # size (C, H, W) is expected
+        # dims are expanded in case (H, W) is passed
+
+        labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
+
+        map_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
+        hf = h5py.File(map_path, "w")
+
+        # check if data container already exists and if so delete
+        if self.DEFAULT_MASK_NAME in hf.keys():
+            del hf[self.DEFAULT_MASK_NAME]
+            self.log(
+                "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
+            )
+
+        hf.create_dataset(
+            self.DEFAULT_MASK_NAME,
+            data=labels,
+            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+        )
+
+        hf.close()
+
+        # save classes
+        self._check_filter_status()
+        self._save_classes(classes)
+
+        self.log("=== finished segmentation of shard ===")
 
     def _save_segmentation_sdata(self, labels, classes, masks = ["nuclei", "cytosol"]):
         if self.is_shard:
-            self.save_segmentation(labels, classes)
+            self._save_segmentation(labels, classes)
         else:
             if self.project is not None:
                 
@@ -305,6 +345,96 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
+    def _initialize_as_shard(self, identifier, window, input_path, zarr_status=True):
+        """Initialize Segmentation Step with further parameters needed for federated segmentation.
+
+        Important:
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+
+        Args:
+            identifier (int): Unique index of the shard.
+            window (list(tuple)): Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
+            input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
+        """
+        self.identifier = identifier
+        self.window = window
+        self.input_path = input_path
+        self.save_zarr = zarr_status
+        self.create_temp_dir()
+        self.is_shard = True
+
+    def _call_as_shard(self):
+        """Wrapper function for calling a sharded segmentation.
+
+        Important:
+            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
+        """
+        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
+
+        input_image = self._load_input_image()
+
+        # select the part of the image that is relevant for this shard
+        input_image = input_image[
+            :2, self.window[0], self.window[1]
+        ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
+
+        self.input_image = input_image
+
+        # calculate shape of required datacontainer
+        c, _, _ = input_image.shape
+        x1 = self.window[0].start
+        x2 = self.window[0].stop
+        y1 = self.window[1].start
+        y2 = self.window[1].stop
+
+        x = x2 - x1
+        y = y2 - y1
+
+        # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
+        input_image = input_image.compute()
+
+        if sc_any(input_image):
+            try:
+                super().__call__(input_image)
+                self.clear_temp_dir()
+            except Exception:
+                self.log(traceback.format_exc())
+                self.clear_temp_dir()
+        else:
+            self.log(
+                f"Shard in position [{self.window[0]}, {self.window[1]}] only contained zeroes."
+            )
+            try:
+                super().__call_empty__(input_image)
+                self.clear_temp_dir()
+            except Exception:
+                self.log(traceback.format_exc())
+                self.clear_temp_dir()
+
+        self._clear_cache(vars_to_delete=["input_image"])
+
+        # write out window location
+        if self.deep_debug:
+            self.log(
+                f"Writing out window location to file at {self.directory}/window.csv"
+            )
+        with open(f"{self.directory}/window.csv", "w") as f:
+            f.write(f"{self.window}\n")
+
+        self.log(f"Segmentation of Shard with the slicing {self.window} finished")
+    
+    def _save_classes(self, classes: List) -> None:
+        """Helper function to save classes to a file when generating a segmentation of a shard."""
+        # define path where classes should be saved
+        filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
+
+        to_write = "\n".join([str(i) for i in list(classes)])
+
+        with open(filtered_path, "w") as myfile:
+            myfile.write(to_write)
+
+        self.log(f"Saved cell_id classes to file {filtered_path}.")
+
 
 class ShardedSegmentation(Segmentation):
     """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together."""
@@ -318,58 +448,6 @@ class ShardedSegmentation(Segmentation):
             raise AttributeError(
                 "No Segmentation method defined, please set attribute ``method``"
             )
-
-    def _save_classes(self, classes: List) -> None:
-        """Helper function to save classes to a file when generating a segmentation of a shard."""
-        # define path where classes should be saved
-        filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
-
-        to_write = "\n".join([str(i) for i in list(classes)])
-
-        with open(filtered_path, "w") as myfile:
-            myfile.write(to_write)
-
-        self.log(f"Saved cell_id classes to file {filtered_path}.")
-
-    def _save_segmentation(self, labels: np.array, classes: List) -> None:
-        """Helper function to save the results of a segmentation to file when generating a segmentation of a shard.
-
-        Args:
-            labels (np.array): Numpy array of shape ``(height, width)``. Labels are all data which are saved as integer values. These are mostly segmentation maps with integer values corresponding to the labels of cells.
-            classes (list(int)): List of all classes in the labels array, which have passed the filtering step. All classes contained in this list will be extracted.
-
-        """
-        if self.deep_debug:
-            self.log("saving segmentation")
-
-        # size (C, H, W) is expected
-        # dims are expanded in case (H, W) is passed
-
-        labels = np.expand_dims(labels, axis=0) if len(labels.shape) == 2 else labels
-
-        map_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
-        hf = h5py.File(map_path, "w")
-
-        # check if data container already exists and if so delete
-        if self.DEFAULT_MASK_NAME in hf.keys():
-            del hf[self.DEFAULT_MASK_NAME]
-            self.log(
-                "labels dataset already existed in hdf5, dataset was deleted and will be overwritten."
-            )
-
-        hf.create_dataset(
-            self.DEFAULT_MASK_NAME,
-            data=labels,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
-        )
-
-        hf.close()
-
-        # save classes
-        self._check_filter_status()
-        self._save_classes(classes)
-
-        self.log("=== finished segmentation of shard ===")
 
     def _calculate_sharding_plan(self, image_size) -> List:
         """Calculate the sharding plan for the given input image size."""
@@ -462,84 +540,6 @@ class ShardedSegmentation(Segmentation):
                 f.write(f"{shard}\n")
 
         return sharding_plan
-
-    def _initialize_as_shard(self, identifier, window, input_path, zarr_status=True):
-        """Initialize Segmentation Step with further parameters needed for federated segmentation.
-
-        Important:
-            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
-
-        Args:
-            identifier (int): Unique index of the shard.
-            window (list(tuple)): Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
-            input_path (str): Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
-        """
-        self.identifier = identifier
-        self.window = window
-        self.input_path = input_path
-        self.save_zarr = zarr_status
-        self.create_temp_dir()
-        self.is_shard = True
-
-    def _call_as_shard(self):
-        """Wrapper function for calling a sharded segmentation.
-
-        Important:
-            This function is intended for internal use by the :class:`ShardedSegmentation` helper class. In most cases it is not relevant to the creation of custom segmentation workflows.
-        """
-        self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
-
-        input_image = self._load_input_image()
-
-        # select the part of the image that is relevant for this shard
-        input_image = input_image[
-            :2, self.window[0], self.window[1]
-        ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
-
-        self.input_image = input_image
-
-        # calculate shape of required datacontainer
-        c, _, _ = input_image.shape
-        x1 = self.window[0].start
-        x2 = self.window[0].stop
-        y1 = self.window[1].start
-        y2 = self.window[1].stop
-
-        x = x2 - x1
-        y = y2 - y1
-
-        # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
-        input_image = input_image.compute()
-
-        if sc_any(input_image):
-            try:
-                super().__call__(input_image)
-                self.clear_temp_dir()
-            except Exception:
-                self.log(traceback.format_exc())
-                self.clear_temp_dir()
-        else:
-            self.log(
-                f"Shard in position [{self.window[0]}, {self.window[1]}] only contained zeroes."
-            )
-            try:
-                super().__call_empty__(input_image)
-                self.clear_temp_dir()
-            except Exception:
-                self.log(traceback.format_exc())
-                self.clear_temp_dir()
-
-        self._clear_cache(vars_to_delete=["input_image"])
-
-        # write out window location
-        if self.deep_debug:
-            self.log(
-                f"Writing out window location to file at {self.directory}/window.csv"
-            )
-        with open(f"{self.directory}/window.csv", "w") as f:
-            f.write(f"{self.window}\n")
-
-        self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
     def _initialize_shard_list(self, sharding_plan):
         _shard_list = []
