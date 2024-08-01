@@ -49,7 +49,7 @@ class spLabels2DModel(Labels2DModel):
         return(data)
     
     @singledispatchmethod
-    def convert(self, data: Union[DataTree, DataArray], classes: set = None) -> DataTree | DataArray:
+    def convert(self, data: Union[DataTree, DataArray], classes: set = None) -> Union[DataTree, DataArray]:
         """
         """
         raise ValueError(
