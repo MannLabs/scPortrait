@@ -16,7 +16,7 @@ from xarray_schema.components import (
     DimsSchema,
 )
 
-from typing import List, Tuple, Dict, Any, Set
+from typing import List, Tuple, Dict, Any, Set, Union
 
 Transform_s = AttrSchema(BaseTransformation, None)
 
@@ -49,7 +49,7 @@ class spLabels2DModel(Labels2DModel):
         return(data)
     
     @singledispatchmethod
-    def convert(self, data: DataTree | DataArray, classes: set = None) -> DataTree | DataArray:
+    def convert(self, data: Union[DataTree, DataArray], classes: set = None) -> DataTree | DataArray:
         """
         """
         raise ValueError(
