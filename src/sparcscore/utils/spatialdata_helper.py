@@ -8,7 +8,7 @@ import xarray
 
 from dask.array import unique as DaskUnique
 
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Set, Union
 
 import pandas as pd
 import numpy as np
