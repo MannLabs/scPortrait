@@ -79,7 +79,7 @@ def remap_region_annotation_table(table: TableModel,
     table = TableModel.parse(table, region_key="region", region=region_name, instance_key="cell_id")
     return(table)   
 
-def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> Tuple | List[Tuple]:
+def get_chunk_size(element: Union[datatree.DataTree, xarray.DataArray]) ->  Union[Tuple, List[Tuple]]:
 
     """Get the chunk size of the image data.
     
@@ -146,8 +146,8 @@ def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> Tuple | Lis
     else:
         raise ValueError(f"element must be a datatree.DataTree or xarray.DataArray  but found {type(element)} instead")
 
-def rechunk_image(element: datatree.DataTree | xarray.DataArray,
-                 chunk_size: Tuple) -> datatree.DataTree | xarray.DataArray:
+def rechunk_image(element: Union[datatree.DataTree, xarray.DataArray],
+                 chunk_size: Tuple) -> Union[datatree.DataTree, xarray.DataArray]:
     """ 
     Rechunk the image data to the desired chunksize. This is useful for ensuring that the data is chunked in a regular manner.
 
