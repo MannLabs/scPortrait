@@ -37,9 +37,6 @@ class HDF5CellExtraction(ProcessingStep):
         if self.CLEAN_LOG:
             self._clean_log_file()
 
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory)
-
         # setup base extraction workflow
         self._get_compression_type()
 
@@ -122,6 +119,11 @@ class HDF5CellExtraction(ProcessingStep):
         return self.extraction_data_directory
 
     def _setup_output(self, folder_name=None):
+        
+        #if extraction directory does not exist create it
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+        
         if folder_name is None:
             folder_name = self.DEFAULT_DATA_DIR
 
