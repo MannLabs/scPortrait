@@ -137,11 +137,11 @@ class SpatialProject(Logable):
             except yaml.YAMLError as exc:
                 print(exc)
 
-    def _get_config_file(self, config_path):
+    def _get_config_file(self, config_path: Union[str, None] = None):
         # load config file
         self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
 
-        if config_path == "":
+        if config_path is None:
             # Check if there is already a config file in the dataset folder in case no config file has been specified
 
             if os.path.isfile(self.config_path):
@@ -153,14 +153,21 @@ class SpatialProject(Logable):
 
         else:
             if not os.path.isfile(config_path):
+                
                 raise ValueError(
                     f"Your config path {config_path} is invalid. Please specify a valid config path."
                 )
 
             else:
+
                 print("Updating project config file.")
+                
                 if os.path.isfile(self.config_path):
                     os.remove(self.config_path)
+
+                #ensure that the project location exists
+                if not os.path.isdir(self.project_location):
+                    os.makedirs(self.project_location)
 
                 # The blueprint config file is copied to the dataset folder and renamed to the default name
                 shutil.copy(config_path, self.config_path)
