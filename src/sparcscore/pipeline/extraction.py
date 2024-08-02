@@ -753,7 +753,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         # ensure that the save_index_to_remove is deleted to clear up memory and prevent issues with subsequent calls
         if "save_index_to_remove" in self.__dict__:
-            del self.save_index_to_remove
+            self.save_index_to_remove = [] #reinitalize as empty
 
         self._clear_cache()
 
