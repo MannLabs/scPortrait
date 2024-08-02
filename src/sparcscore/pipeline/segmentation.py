@@ -97,7 +97,7 @@ class Segmentation(ProcessingStep):
 
         # additional parameters to configure level of debugging for developers
         self.deep_debug = False
-        self.save_filter_results = True
+        self.save_filter_results = False
 
     def _check_gpu_status(self):
         # check if cuda GPU is available
