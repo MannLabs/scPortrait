@@ -1142,7 +1142,7 @@ class SpatialProject(Logable):
         # ensure that a segmentation has been stored that can be extracted
         self._check_sdata_status()
 
-        if not self.nuc_seg_status or self.cyto_seg_status:
+        if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError(
                 "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
             )
