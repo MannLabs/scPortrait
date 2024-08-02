@@ -22,7 +22,7 @@ from scipy.ndimage import binary_fill_holes
 
 from sparcscore.processing.segmentation import numba_mask_centroid
 from sparcscore.processing.utils import flatten
-from sparcscore.processing.preprocessing import percentile_normalization, MinMax
+from sparcscore.processing.preprocessing import percentile_normalization
 from sparcscore.pipeline.base import ProcessingStep
 
 
@@ -111,58 +111,60 @@ class HDF5CellExtraction(ProcessingStep):
             self.remap = [int(el.strip()) for el in char_list]
 
     def _get_normalization(self):
-        if "normalization_range" in self.config:
-            self.normalization = self.config["normalization_range"]
-        else:
-            self.normalization = True
+        
+        #get normalization parameters
+        if "normalize_output" in self.config:
+            
+            normalize = self.config["normalize_output"]
+            
+            #check that is a valid value
+            assert normalize in [True, False, None, "None"], "Normalization must be one of the following values [True, False, None, 'None']"
+            
+            #convert to boolean
+            if normalize == "None":
+                normalize = False
+            if normalize is None:
+                normalize = False
 
+            self.normalization = normalize
+        else:
+            self.normalization = True #default value
+        
+        #setup normalization range
+        if "normalization_range" in self.config:
+            normalization_range = self.config["normalization_range"]
+
+            if normalization_range == "None":
+                normalization_range = None
+            
+            if normalization_range is not None:
+                assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
+            
+            self.normalization_range = normalization_range
+
+        else:
+            self.normalization_range = None
+        
+        #get functions for normalization
         if self.normalization:
 
+            if self.normalization_range is None:
+                def norm_function(img):
+                    return percentile_normalization(img)
+            else:
+                lower, upper = self.normalization_range
+
+                def norm_function(img, lower=lower, upper=upper):
+                    return percentile_normalization(img, lower, upper)
+
+        elif not self.normalization:
             def norm_function(img):
-                return percentile_normalization(img)
-
-            def MinMax_function(img):
-                return MinMax(img)
-
-        elif isinstance(self.normalization, tuple):
-            lower, upper = self.normalization
-
-            def norm_function(img, lower=lower, upper=upper):
-                return percentile_normalization(img, lower, upper)
-
-            def MinMax_function(img):
-                return MinMax(img)
-
-        elif self.normalization is None:
-
-            def norm_function(img):
-                return img
-
-            def MinMax_function(img):
                 img = (
-                    img / 65535
+                    img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
                 )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
                 return img
 
-        elif (
-            self.normalization == "None"
-        ):  # add additional check if if None is included as a string
-
-            def norm_function(img):
-                return img
-
-            def MinMax_function(img):
-                img = (
-                    img / 65535
-                )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
-                return img
-
-        else:
-            self.log("Incorrect type of normalization_range defined.")
-            sys.exit("Incorrect type of normalization_range defined.")
-        
-        self.norm_function = norm_function
-        self.MinMax_function = MinMax_function
+        self.norm_function = norm_function   
 
     def _get_output_path(self):
         return self.extraction_data_directory
@@ -432,7 +434,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
 
         #dynamically adjust the number of threads to ensure that we dont initiate more threads than we have arguments
-        self.threads = min(self.config["threads"], np.ceil(len(args)/self.batch_size))
+        self.threads = np.int64(min(self.config["threads"], np.ceil(len(args)/self.batch_size)))
         
         if self.threads != self.config["threads"]:
             self.log(f"Reducing number of threads to {self.threads} to match number of cell batches to process.")
@@ -626,8 +628,10 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             nucleus_id = cell_id
             cytosol_id = cell_id
-
-
+        
+        ids = [nucleus_id, cytosol_id]
+        n_masks = np.int64(min(2, self.n_image_channels))
+        
         with h5py.File(
             input_segmentation_path,
             "r",
@@ -655,79 +659,43 @@ class HDF5CellExtraction(ProcessingStep):
             if np.all(condition):
 
                 masks = []
+                image_data = []
 
-                # mask 0: nucleus mask
-                if image_index is None:
-                    nuclei_mask = hdf_labels[0, window_y, window_x]
-                else:
-                    nuclei_mask = hdf_labels[image_index, 0, window_y, window_x]
+                for mask_ix in range(n_masks):
 
-                if self.deep_debug:
-                    x, y = nuclei_mask.shape
-                    center_nuclei = nuclei_mask[
-                        slice(x // 2 - 3, x // 2 + 3), slice(y // 2 - 3, y // 2 + 3)
-                    ]
-                    print("center of nucleus array \n", center_nuclei, "\n")
-
-                nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0).astype(int)
-                nuclei_mask = gaussian(nuclei_mask, preserve_range=True, sigma=1)
-
-                masks.append(nuclei_mask)
-
-                if self.n_image_channels == 1:
-                    #then we must use the nucleus mask to mask the one channel
-                    
-                    image_data = []
-                    
-                    for i in range(self.n_image_channels):
-                        if image_index is None:
-                            # image_data = self.input_image[:, window_y, window_x].compute()
-                            channel = hdf_channels[i, window_y, window_x]
-                        else:
-                            # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                            channel = hdf_channels[image_index, :, window_y, window_x]
-
-                        channel = self.norm_function(channel)
-                        channel = channel * nuclei_mask
-                        channel = self.MinMax_function(channel)
-
-                        image_data.append(channel)
-                
-                else:
-                    # mask 1: cytosol mask
+                    # mask 0: nucleus mask
                     if image_index is None:
-                        cell_mask = hdf_labels[1, window_y, window_x]
+                        mask = hdf_labels[mask_ix, window_y, window_x]
                     else:
-                        cell_mask = hdf_labels[image_index, 1, window_y, window_x]
+                        mask = hdf_labels[image_index, mask_ix, window_y, window_x]
 
                     if self.deep_debug:
-                        x, y = nuclei_mask.shape
-                        center_cytosol = cell_mask[
-                            slice(x // 2 - 3, x // 2 + 3), slice(y // 2 - 3, y // 2 + 3)
-                        ]
-                        print("center of cytosol array \n", center_cytosol, "\n")
+                        if mask_ix == 0:
+                            x, y = mask.shape
+                            center_nuclei = mask[
+                                slice(x // 2 - 3, x // 2 + 3), slice(y // 2 - 3, y // 2 + 3)
+                            ]
+                            print("center of nucleus array \n", center_nuclei, "\n")
 
-                    cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
-                    cell_mask = binary_fill_holes(cell_mask)
-                    cell_mask = gaussian(cell_mask, preserve_range=True, sigma=1)
 
-                    masks.append(cell_mask)
+                    mask = np.where(mask == ids[mask_ix], 1, 0).astype(int)
+                    mask = binary_fill_holes(mask)
+                    mask = gaussian(mask, preserve_range=True, sigma=1)
 
-                    image_data = []
-                    
-                    for i in range(self.n_image_channels):
-                        if image_index is None:
-                            # image_data = self.input_image[:, window_y, window_x].compute()
-                            channel = hdf_channels[i, window_y, window_x]
-                        else:
-                            # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                            channel = hdf_channels[image_index, :, window_y, window_x]
+                    masks.append(mask)
+                 
+                for i in range(self.n_image_channels):
+                    if image_index is None:
+                        # image_data = self.input_image[:, window_y, window_x].compute()
+                        channel = hdf_channels[i, window_y, window_x]
+                    else:
+                        # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                        channel = hdf_channels[image_index, :, window_y, window_x]
 
-                        channel = self.norm_function(channel)
-                        channel = channel * cell_mask
-                        channel = self.MinMax_function(channel)
+                    channel = channel * masks[-1]
+                    channel = self.norm_function(channel)
 
-                        image_data.append(channel)
+                    image_data.append(channel)
                 
                 stack = np.stack(masks + image_data, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
 
