@@ -479,8 +479,19 @@ class HDF5CellExtraction(ProcessingStep):
             arg
         )  # label_info not used in base case but relevant for flexibility for other classes
 
+        # currently this defaults to the same id for both
+        # in theory sparcspy would be compatible with mapping nuclues ids to cytosol ids instead of updating the mask and then this code would need to change
+        # this is a placeholder for now where this code can be implemented in the future but so that the rest of the pipeline already works with this use case
         nucleus_id = cell_id
         cytosol_id = cell_id
+
+        ids = []
+        if self.extract_nucleus_mask:
+            nucleus_id = cell_id
+            ids.append(nucleus_id)
+        if self.extract_cytosol_mask:
+            cytosol_id = cell_id
+            ids.append(cytosol_id)
 
         # get region that should be extracted
         _px_center = px_center[index]
@@ -505,59 +516,34 @@ class HDF5CellExtraction(ProcessingStep):
 
         if extraction_status:
             masks = []
-            if self.extract_nucleus_mask:
+
+            #get the segmentation masks
+            for mask_ix in range(self.n_masks):
                 if image_index is None:
                     # nuclei_mask = self.sdata[self.nucleus_key].data[window_y, window_x].compute()
-                    nuclei_mask = self.seg_masks[0, window_y, window_x]
+                    mask = self.seg_masks[mask_ix, window_y, window_x]
                 else:
                     # nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
-                    nuclei_mask = self.seg_masks[image_index, 0, window_y, window_x]
+                    mask = self.seg_masks[image_index, mask_ix, window_y, window_x]
 
                 # modify nucleus mask to only contain the nucleus of interest and perform some morphological operations
-                nuclei_mask = np.where(nuclei_mask == nucleus_id, 1, 0)
-                nuclei_mask = gaussian(nuclei_mask, preserve_range=True, sigma=1)
+                mask = np.where(mask == ids[mask_ix], 1, 0)
+                mask = binary_fill_holes(mask)
+                mask = gaussian(mask, preserve_range=True, sigma=1)
 
-                if not self.extract_cytosol_mask:
-                    # then we must use the nucleus mask to mask all of the other image channels
-                    if image_index is None:
-                        # image_data = self.input_image[:, window_y, window_x].compute()
-                        image_data = self.image_data[:, window_y, window_x]
-                    else:
-                        # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                        image_data = self.image_data[image_index, :, window_y, window_x]
+                masks.append(mask) 
 
-                    image_data = self.norm_function(image_data)
-                    image_data = image_data * nuclei_mask
-                    image_data = self.MinMax_function(image_data)
+            #get the image data
+            if image_index is None:
+                # image_data = self.input_image[:, window_y, window_x].compute()
+                image_data = self.image_data[:, window_y, window_x]
+            else:
+                # image_data = self.input_image[image_index, :, window_y, window_x].compute()
+                image_data = self.image_data[image_index, :, window_y, window_x]
 
-                masks.append(nuclei_mask)
-
-            if self.extract_cytosol_mask:
-                if image_index is None:
-                    # cell_mask = self.sdata[self.cytosol_key].data[window_y, window_x].compute()
-                    cell_mask = self.seg_masks[1, window_y, window_x]
-                else:
-                    # cell_mask = self.sdata[self.cytosol_key].data[image_index, window_y, window_x].compute()
-                    cell_mask = self.seg_masks[image_index, 1, window_y, window_x]
-
-                # modify cell mask to only contain the cytosol of interest and perform some morphological operations
-                cell_mask = np.where(cell_mask == cytosol_id, 1, 0).astype(int)
-                cell_mask = binary_fill_holes(cell_mask)
-                cell_mask = gaussian(cell_mask, preserve_range=True, sigma=1)
-
-                masks.append(cell_mask)
-
-                # extract the relevant channels for the cell
-                if image_index is None:
-                    # image_data = self.input_image[:, window_y, window_x].compute()
-                    image_data = self.image_data[:, window_y, window_x]
-                else:
-                    # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                    nuclei_mask = self.seg_masks[0, window_y, window_x]
-
-                image_data = self.norm_function(image_data)
-                image_data = image_data * cell_mask
-                image_data = self.MinMax_function(image_data)
+            image_data = self.norm_function(image_data)
+            image_data = image_data * masks[-1] #always uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
+            image_data = self.MinMax_function(image_data)
 
             inputs = masks + [image_data[i] for i in range(image_data.shape[0])]
             stack = np.stack(inputs, axis=0).astype(
