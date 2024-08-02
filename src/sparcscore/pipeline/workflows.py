@@ -497,7 +497,10 @@ class _BaseSegmentation(Segmentation):
 
             fig, axs = plt.subplots(1, 1, figsize=(10, 10))
             axs.imshow(image_map, cmap="gray")
-            axs.imshow(mask, cmap=cmap, norm=norm)
+            if len(mask.shape) == 2:
+                axs.imshow(mask, cmap=cmap, norm=norm)
+            elif len(mask.shape) == 3:
+                axs.imshow(mask[0], cmap=cmap, norm=norm)
             axs.axis("off")
             axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
             fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")
