@@ -743,7 +743,7 @@ class HDF5CellExtraction(ProcessingStep):
                         channel = hdf_channels[i, window_y, window_x]
                     else:
                         # image_data = self.input_image[image_index, :, window_y, window_x].compute()
-                        channel = hdf_channels[image_index, :, window_y, window_x]
+                        channel = hdf_channels[image_index, i, window_y, window_x]
 
                     channel = channel * masks[-1]
                     channel = self.norm_function(channel)
@@ -1002,8 +1002,35 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+    
+    def _setup_extraction(self):
+        if self.partial_processing:
+            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_{self.n_cells}_{self.seed}"
+        else:
+            output_folder_name = self.DEFAULT_DATA_DIR
+        
+        self._setup_output(folder_name=output_folder_name)
 
-    def get_labelling(self):
+        self._parse_remapping()
+        self._get_segmentation_info()
+        self._get_input_image_info()
+
+        #setup number of output channels
+        self.n_output_channels = self.n_image_channels + self.n_masks
+
+        #get size of images to extract
+        self.extracted_image_size = self.config["image_size"]
+        self.width_extraction = self.extracted_image_size // 2 # half of the extracted image size (this is what needs to be added on either side of the center)
+
+        self._get_classes()
+        self.classes = self.classes_loaded
+
+        #initialize temporary mmap arrays for saving results
+        self._initialize_tempmmap_array(index_len= len(self.column_labels))
+
+        self._verbalise_extraction_info()
+    
+    def _get_labelling(self):
         with h5py.File(self.input_segmentation_path, "r") as hf:
             self.label_names = hf.get("label_names")[:]
             self.n_labels = len(self.label_names)
@@ -1045,7 +1072,10 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         return (arg_index, save_index, cell_id, image_index, label_info)
 
     def _transfer_tempmmap_to_hdf5(self):
-        global _tmp_single_cell_data, _tmp_single_cell_index
+
+        #reconnect to memory mapped temp arrays
+        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+        _tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
 
         self.log("Transferring results to final HDF5 data container.")
 
@@ -1108,22 +1138,18 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                 "Transferring simple cell_id index to ['single_cell_index'] container."
             )
             # need to save this index seperately since otherwise we get issues with the classificaiton of the extracted cells
-            cell_ids = _tmp_single_cell_index[keep_index, 1]
+            cell_ids = self._tmp_single_cell_index[keep_index, 1]
             index = np.array(list(zip(range(len(cell_ids)), cell_ids)))
             index = index.astype("uint64")
 
             hf.create_dataset("single_cell_index", data=index, dtype="uint64")
             del index
 
-        del _tmp_single_cell_data, _tmp_single_cell_index, keep_index
-        gc.collect()
-
     def _save_cell_info(self, save_index, cell_id, image_index, label_info, stack):
-        global _tmp_single_cell_data, _tmp_single_cell_index
         # label info is None so just ignore for the base case
 
         # save single cell images
-        _tmp_single_cell_data[save_index] = stack
+        self._tmp_single_cell_data[save_index] = stack
 
         # get label information
         with h5py.File(self.input_segmentation_path, "r") as hf:
@@ -1131,15 +1157,15 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             save_value = [str(save_index), str(cell_id)]
             save_value = np.array(flatten([save_value, labelling]))
 
-            _tmp_single_cell_index[save_index] = save_value
+            self._tmp_single_cell_index[save_index] = save_value
 
             # double check that its really the same values
-            if _tmp_single_cell_index[save_index][2] != label_info:
+            if self._tmp_single_cell_index[save_index][2] != label_info:
                 self.log("ISSUE INDEXES DO NOT MATCH.")
                 self.log(f"index: {save_index}")
                 self.log(f"image_index: {image_index}")
                 self.log(f"label_info: {label_info}")
-                self.log(f"index it should be: {_tmp_single_cell_index[save_index][2]}")
+                self.log(f"index it should be: {self._tmp_single_cell_index[save_index][2]}")
 
     def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
         """save the relevant information for cells that are too close to the image edges to extract
@@ -1153,22 +1179,20 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
             unique identifier of the cell which was unable to be extracted
         
         """
-        global _tmp_single_cell_index
-
         with h5py.File(self.input_segmentation_path, "r") as hf:
             labelling = hf.get("labels").asstr()[image_index][1:]
             save_value = [str(save_index), str(cell_id)]
             save_value = np.array(flatten([save_value, labelling]))
 
-        _tmp_single_cell_index[save_index] = save_value
+        self._tmp_single_cell_index[save_index] = save_value
 
         # double check that its really the same values
-        if _tmp_single_cell_index[save_index][2] != label_info:
+        if self._tmp_single_cell_index[save_index][2] != label_info:
             self.log("ISSUE INDEXES DO NOT MATCH.")
             self.log(f"index: {save_index}")
             self.log(f"image_index: {image_index}")
             self.log(f"label_info: {label_info}")
-            self.log(f"index it should be: {_tmp_single_cell_index[save_index][2]}")
+            self.log(f"index it should be: {self._tmp_single_cell_index[save_index][2]}")
 
     def process(self, input_segmentation_path, filtered_classes_path=None):
         """
@@ -1217,26 +1241,34 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                 hdf5_rdcc_w0: 1
                 hdf5_rdcc_nslots: 50000
         """
-        # is called with the path to the segmented image
+        total_time_start = timeit.default_timer()
+        
+        #run all of the extraction setup steps
+        start_setup = timeit.default_timer()
 
-        self.get_labelling()
-        self.get_channel_info()
-        self._setup_output()
-        self.parse_remapping()
-
-        complete_class_list = self.get_classes(filtered_classes_path)
-        arg_list = self._get_arg()
-        lookup_saveindex = self.generate_save_index_lookup(complete_class_list)
+        self.partial_processing = False
+        self.input_segmentation_path = input_segmentation_path
+        self.filtered_classes_path = filtered_classes_path
+        
+        self._get_labelling()
 
         # define column labels for the index
         self.column_labels = ["index", "cellid"] + list(self.label_names.astype("<U512"))[1:]
 
-        # setup cache
-        self._initialize_tempmmap_array(index_len=len(self.column_labels))
+        self._setup_extraction()
+        stop_setup = timeit.default_timer()
+        time_setup = stop_setup - start_setup
 
-        # start extraction
-        self.log("Starting extraction.")
-        self.verbalise_extraction_info()
+        #generate arg list
+        self._generate_save_index_lookup(self.classes)
+        arg_list = self._get_arg()
+
+        self.log(f"Starting single-cell image extraction of {self.num_classes} cells...")
+        self._get_normalization()
+        
+        #reconnect to memory mapped temp arrays
+        self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
+        self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
 
         with h5py.File(self.input_segmentation_path, "r") as hf:
             start = timeit.default_timer()
@@ -1309,7 +1341,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                             del fig, axs  # remove figure to free up memory
 
                         for centers_index, cell_id in enumerate(_cell_ids):
-                            save_index = lookup_saveindex.index.get_loc(cell_id)
+                            save_index = self.save_index_lookup.index.get_loc(cell_id)
                             x = self._extract_classes(
                                 input_segmentation_path,
                                 px_centers,
