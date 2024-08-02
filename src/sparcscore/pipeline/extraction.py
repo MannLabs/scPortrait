@@ -19,7 +19,7 @@ import datatree
 import xarray
 
 from sparcscore.processing.utils import flatten
-from sparcscore.processing.preprocessing import percentile_normalization, MinMax
+from sparcscore.processing.preprocessing import percentile_normalization
 from sparcscore.pipeline.base import ProcessingStep
 
 
@@ -62,58 +62,57 @@ class HDF5CellExtraction(ProcessingStep):
         return self.compression_type
 
     def _get_normalization(self):
-        if "normalization_range" in self.config:
-            self.normalization = self.config["normalization_range"]
+        if "normalize_output" in self.config:
+            
+            normalize = self.config["normalize_output"]
+            
+            #check that is a valid value
+            assert normalize in [True, False, None, "None"], "Normalization must be one of the following values [True, False, None, 'None']"
+            
+            #convert to boolean
+            if normalize == "None":
+                normalize = False
+            if normalize is None:
+                normalize = False
+
+            self.normalization = normalize
+
         else:
-            self.normalization = True
+            self.normalization = True #default value
+        
+        if "normalization_range" in self.config:
+            normalization_range = self.config["normalization_range"]
+
+            if normalization_range == "None":
+                normalization_range = None
+            
+            if normalization_range is not None:
+                assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
+            
+            self.normalization_range = normalization_range
+
+        else:
+            self.normalization_range = None
 
         if self.normalization:
 
+            if self.normalization_range is None:
+                def norm_function(img):
+                    return percentile_normalization(img)
+            else:
+                lower, upper = self.normalization_range
+
+                def norm_function(img, lower=lower, upper=upper):
+                    return percentile_normalization(img, lower, upper)
+
+        elif not self.normalization:
             def norm_function(img):
-                return percentile_normalization(img)
-
-            def MinMax_function(img):
-                return MinMax(img)
-
-        elif isinstance(self.normalization, tuple):
-            lower, upper = self.normalization
-
-            def norm_function(img, lower=lower, upper=upper):
-                return percentile_normalization(img, lower, upper)
-
-            def MinMax_function(img):
-                return MinMax(img)
-
-        elif self.normalization is None:
-
-            def norm_function(img):
-                return img
-
-            def MinMax_function(img):
                 img = (
-                    img / 65535
+                    img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
                 )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
                 return img
-
-        elif (
-            self.normalization == "None"
-        ):  # add additional check if if None is included as a string
-
-            def norm_function(img):
-                return img
-
-            def MinMax_function(img):
-                img = (
-                    img / 65535
-                )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
-                return img
-
-        else:
-            self.log("Incorrect type of normalization_range defined.")
-            sys.exit("Incorrect type of normalization_range defined.")
 
         self.norm_function = norm_function
-        self.MinMax_function = MinMax_function
 
     def _get_output_path(self):
         return self.extraction_data_directory
@@ -541,11 +540,15 @@ class HDF5CellExtraction(ProcessingStep):
                 # image_data = self.input_image[image_index, :, window_y, window_x].compute()
                 image_data = self.image_data[image_index, :, window_y, window_x]
 
-            image_data = self.norm_function(image_data)
             image_data = image_data * masks[-1] #always uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
-            image_data = self.MinMax_function(image_data)
+            
+            #this needs to be performed on a per channel basis!
+            images = []
+            for i in range(image_data.shape[0]):
+                ix = self.norm_function(image_data[i])
+                images.append(ix)
 
-            inputs = masks + [image_data[i] for i in range(image_data.shape[0])]
+            inputs = masks + images
             stack = np.stack(inputs, axis=0).astype(
                 self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE
             )
@@ -732,8 +735,6 @@ class HDF5CellExtraction(ProcessingStep):
         # remove normalization functions becuase other subsequent multiprocessing calls will fail
         if "norm_function" in self.__dict__:
             del self.norm_function
-        if "MinMax_function" in self.__dict__:
-            del self.MinMax_function
 
         # delete segmentation masks and input images from self if present
         if "seg_masks" in self.__dict__:
