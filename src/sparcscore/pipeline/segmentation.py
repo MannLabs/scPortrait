@@ -135,11 +135,15 @@ class Segmentation(ProcessingStep):
                 self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
 
                 if self.nGPUs >= 1 and nGPUs >= 1:
-                    self.nGPUs = nGPUs
-                    self.log(f"Will proeceed with the number of GPUs specified in config ({self.nGPUs}).")
-                
+                    if self.nGPUs > nGPUs:
+                        self.nGPUs = nGPUs
+                        self.log(
+                            f"Will proeceed with the number of GPUs specified in config ({self.nGPUs})."
+                        )
                 else:
-                    self.log(f"Will proceed with the number of available GPUs ({self.nGPUs}).")
+                    self.log(
+                        f"Will proceed with the number of available GPUs ({self.nGPUs})."
+                    )
 
         #set up threading
         if "threads" in self.config.keys():
