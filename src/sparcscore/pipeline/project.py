@@ -1173,7 +1173,7 @@ class SpatialProject(Logable):
 
         self._check_sdata_status()
 
-        if not self.nuc_seg_status or not self.cyto_seg_status:
+        if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError(
                 "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
             )
