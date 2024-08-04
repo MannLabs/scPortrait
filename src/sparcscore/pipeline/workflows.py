@@ -1323,7 +1323,7 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         # check if cuda GPU is available
         if torch.cuda.is_available():
-            if self.gpu_status == "multi_GPU":
+            if self.status == "multi_GPU":
                 self.use_GPU = f"cuda:{self.gpu_id}"
                 self.device = torch.device(self.use_GPU)
             else:
