@@ -1,6 +1,8 @@
 import os
 import sys
+import timeit
 import numpy as np
+import pandas as pd
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import h5py
@@ -125,22 +127,20 @@ class Segmentation(ProcessingStep):
 
         # compare with config configuration
         if "nGPUs" in self.config.keys():
-            if self.nGPUs != self.config["nGPUs"]:
-                nGPUs = self.config["nGPUs"]
+            nGPUs = self.config["nGPUs"]
+            if nGPUs == "max":
                 self.log(
-                    f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config."
+                    f"Segmentation will be performed with all {self.nGPUs} found GPUs."
                 )
-
+            elif self.nGPUs != nGPUs:
+                self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
                 if self.nGPUs >= 1 and nGPUs >= 1:
-                    if self.nGPUs > nGPUs:
-                        self.nGPUs = nGPUs
-                        self.log(
-                            f"Will proeceed with the number of GPUs specified in config ({self.nGPUs})."
-                        )
+                    self.nGPUs = min(self.nGPUs, nGPUs)
+                    self.log(f"Will proceed with the number of GPUs specified in config ({self.nGPUs}).")
                 else:
-                    self.log(
-                        f"Will proceed with the number of available GPUs ({self.nGPUs})."
-                    )
+                    self.log(f"Segmentation will be performed with all {self.nGPUs} found GPUs.")
+        else:
+            self.log(f"Segmentation will be performed wtih all {self.nGPUs} found GPUs.")
 
         # set up threading
         if "threads" in self.config.keys():
@@ -161,7 +161,7 @@ class Segmentation(ProcessingStep):
         self.gpu_id_list = gpu_id_list
 
         self.log(
-            f"GPU Status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
+            f"GPU status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
         )
 
     def _check_filter_status(self):
@@ -395,7 +395,7 @@ class Segmentation(ProcessingStep):
 
         if sc_any(input_image):
             try:
-                super().__call__(input_image)
+                self._execute_segmentation(input_image)
                 self.clear_temp_dir()
             except Exception:
                 self.log(traceback.format_exc())
@@ -434,6 +434,20 @@ class Segmentation(ProcessingStep):
             myfile.write(to_write)
 
         self.log(f"Saved cell_id classes to file {filtered_path}.")
+    
+    def _save_benchmarking_times(
+        self,
+    ):
+        pass
+        
+    
+    def process(self, input_image):
+        """Process the input image with the segmentation method."""
+        image_size = input_image.shape
+
+        # execute actual segmentation
+        self._execute_segmentation(input_image)
+
 
 
 class ShardedSegmentation(Segmentation):
@@ -876,8 +890,16 @@ class ShardedSegmentation(Segmentation):
 
         """
 
+        total_time_start = timeit.default_timer()
+
+        start_transform = timeit.default_timer()
+
         # get proper level of input image
         input_image = self._transform_input_image(input_image)
+
+        stop_transform = timeit.default_timer()
+        time_transform = stop_transform - start_transform
+
         self.image_size = input_image.shape[1:]
 
         if self.deep_debug:
@@ -891,6 +913,8 @@ class ShardedSegmentation(Segmentation):
             os.makedirs(self.shard_directory)
             self.log("Created new shard directory " + self.shard_directory)
 
+        start_sharding = timeit.default_timer()
+
         # get sharding plan
         sharding_plan = self._get_sharding_plan(overwrite=self.overwrite)
 
@@ -900,11 +924,31 @@ class ShardedSegmentation(Segmentation):
             f"sharding plan with {len(sharding_plan)} elements generated, sharding with {self.config['threads']} threads begins"
         )
 
+        stop_sharding = timeit.default_timer()
+        time_sharding = stop_sharding - start_sharding
+
+        start_segmentation = timeit.default_timer()
+
         # perform segmentation
         self._perform_segmentation(shard_list)
+
+        stop_segmentation = timeit.default_timer()
+        time_segmentation = stop_segmentation - start_segmentation
+
         self._clear_cache(vars_to_delete=[shard_list])
 
+        start_resolving = timeit.default_timer()
+
         self._resolve_sharding(sharding_plan)
+
+        stop_resolving = timeit.default_timer()
+        time_resolving = stop_resolving - start_resolving
+
+        total_time = timeit.default_timer() - total_time_start
+
+        self.log(f"Total time taken for sharded segmentation: {total_time} seconds")
+
+        #self._save_benchmarking_times()
 
         # make sure to cleanup temp directories
         self.log("=== finished sharded segmentation === ")

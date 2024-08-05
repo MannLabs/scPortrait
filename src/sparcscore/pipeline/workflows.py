@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import timeit
 from typing import Tuple, Union, List
 import multiprocessing
 
@@ -1768,7 +1769,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         # clear memory
         self._clear_cache(vars_to_delete=[masks_cytosol])
 
-    def process(self, input_image) -> None:
+    def _execute_segmentation(self, input_image) -> None:
         # ensure the correct level is selected for the input image
         self._transform_input_image(input_image)
 
