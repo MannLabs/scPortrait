@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-
+import timeit
 from typing import Tuple, Union, List
 import multiprocessing
 
@@ -1327,21 +1327,25 @@ class _CellposeSegmentation(_BaseSegmentation):
             if self.status == "multi_GPU":
                 self.use_GPU = f"cuda:{self.gpu_id}"
                 self.device = torch.device(self.use_GPU)
+                self.nGPUs = torch.cuda.device_count()
             else:
                 self.use_GPU = True
                 self.device = torch.device(
                     "cuda"
                 )  # dont need to specify id, saying cuda will default to the one thats avaialable
+                self.nGPUs = 1
 
         # check if MPS is available
         elif torch.backends.mps.is_available():
             self.use_GPU = True
             self.device = torch.device("mps")
+            self.nGPUs = 1
 
         # default to CPU
         else:
             self.use_GPU = False
             self.device = torch.device("cpu")
+            self.nGPUs = 0
 
         self.log(
             f"GPU Status for segmentation is {self.use_GPU} and will segment using the following device {self.device}."
@@ -1704,6 +1708,10 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         self.project.n_masks = 1
         self.project.mask_names = ["cytosol"]
 
+        self.total_time = 0
+        self.transform_time = 0
+        self.segmentation_time = 0 
+        
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=["cytosol"])
 
@@ -1770,8 +1778,13 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         self._clear_cache(vars_to_delete=[masks_cytosol])
 
     def _execute_segmentation(self, input_image) -> None:
-        # ensure the correct level is selected for the input image
+        total_time_start = timeit.default_timer()
+
+        # transform input image
+        start_transform = timeit.default_timer()
         self._transform_input_image(input_image)
+        stop_transform = timeit.default_timer()
+        self.transform_time = stop_transform - start_transform
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1788,7 +1801,11 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
+        # execute segmentation
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # get final classes list
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
@@ -1798,6 +1815,8 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
+
+        self.total_time = timeit.default_timer() - total_time_start
 
         return None
 
