@@ -1734,7 +1734,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data.compute()
 
-        self._check_gpu_status()
+        self._setup_processing()
         self._clear_cache()
 
         #####

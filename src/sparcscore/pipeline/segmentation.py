@@ -161,7 +161,7 @@ class Segmentation(ProcessingStep):
         self.gpu_id_list = gpu_id_list
 
         self.log(
-            f"GPU status for segmentation is {self.use_GPU} with {self.nGPUs} found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
+            f"GPU status for segmentation is {self.use_GPU} with {self.nGPUs} GPUs found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
         )
 
     def _check_filter_status(self):
@@ -441,9 +441,10 @@ class Segmentation(ProcessingStep):
         transform_time,
         segmentation_time,
         total_time,
-        shard_size = None,
+        max_shard_size = None,
         sharding_time = None,
         shard_resolving_time = None,
+        time_per_shard = None,
     ):
         benchmarking_path = os.path.join(self.directory, self.DEFAULT_BENCHMARKING_FILE)
 
@@ -451,13 +452,14 @@ class Segmentation(ProcessingStep):
             {
                 "Size of the image": [image_size],
                 "Number of GPUs used": [self.nGPUs],
-                "Number of processes per GPU": [self.processes_per_GPU if self.nGPUs > 1 else "N/A"], 
-                "Total number of processes": [self.n_processes if self.nGPUs > 1 else "N/A"],
-                "Shard shape": [shard_size if shard_size is not None else "N/A"],
+                "Number of processes per GPU": [self.processes_per_GPU], 
+                "Total number of processes": [self.n_processes],
+                "Shard max size": [max_shard_size if max_shard_size is not None else "N/A"],
                 "Time taken for transformation": [transform_time],
                 "Time taken for sharding": [sharding_time if sharding_time is not None else "N/A"],
                 "Time taken for segmentation": [segmentation_time],
                 "Time taken for shard resolving": [shard_resolving_time if shard_resolving_time is not None else "N/A"],
+                "Time taken per shard": [time_per_shard if time_per_shard is not None else "N/A"],
                 "Total time taken": [total_time],
             }
         )
@@ -467,7 +469,6 @@ class Segmentation(ProcessingStep):
         else:
             benchmarking.to_csv(benchmarking_path, index=False)
         
-    
     def process(self, input_image):
         """Process the input image with the segmentation method."""
         image_size = input_image.shape
@@ -989,9 +990,10 @@ class ShardedSegmentation(Segmentation):
                                       transform_time=transform_time,
                                       segmentation_time=segmentation_time,
                                       total_time=total_time,
-                                      shard_size=self.image_size, # is it really the shard size?
+                                      max_shard_size=self.config["shard_size"],
                                       sharding_time=sharding_time,
                                       shard_resolving_time=resolving_time,
+                                      time_per_shard=(total_time / len(sharding_plan))
                                       )
                                       
 
