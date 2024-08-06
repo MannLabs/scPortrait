@@ -101,6 +101,9 @@ def get_chunk_size(element: Union[datatree.DataTree, xarray.DataArray]) ->  Unio
                     y = y[0]
             if len(x) > 1:
                 x = x[0]
+            print(f"y: {y}, type: {type(y)}, shape: {np.shape(y)}")
+            print(f"x: {x}, type: {type(x)}, shape: {np.shape(x)}") 
+            y, x = int(y), int(x)
             y, x = np.array([y, x]).flatten()
             chunksize = (y, x)
         elif len(element.shape) == 3:
