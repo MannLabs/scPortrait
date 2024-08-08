@@ -378,18 +378,6 @@ class Segmentation(ProcessingStep):
             :2, self.window[0], self.window[1]
         ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
 
-        self.input_image = input_image
-
-        # calculate shape of required datacontainer
-        c, _, _ = input_image.shape
-        x1 = self.window[0].start
-        x2 = self.window[0].stop
-        y1 = self.window[1].start
-        y2 = self.window[1].stop
-
-        x = x2 - x1
-        y = y2 - y1
-
         # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         input_image = input_image.compute()
 
