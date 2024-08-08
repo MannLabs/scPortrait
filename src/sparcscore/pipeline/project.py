@@ -335,7 +335,7 @@ class SpatialProject(Logable):
 
     def _clear_temp_dir(self):
         if "_tmp_dir" in self.__dict__.keys():
-            shutil.rmtree(self._tmp_dir_path)
+            shutil.rmtree(self._tmp_dir_path, ignore_errors=True)
             self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
 
             del self._tmp_dir, self._tmp_dir_path
@@ -354,7 +354,7 @@ class SpatialProject(Logable):
                 self.log(
                     f"Output location {self.sdata_path} already exists. Overwriting."
                 )
-                shutil.rmtree(self.sdata_path)
+                shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
                 if len(os.listdir(self.sdata_path)) == 0:
@@ -477,7 +477,7 @@ class SpatialProject(Logable):
         #define path 
         path = os.path.join(self.sdata_path, type, name)
         if os.path.exists(path):
-            shutil.rmtree(path)
+            shutil.rmtree(path, ignore_errors=True)
 
     def _write_image_sdata(
         self,
