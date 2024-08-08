@@ -1,5 +1,6 @@
 #generated project folders in example datasets
 project/
+project_sharded/
 dev_project/
 development/
 development.ipynb
