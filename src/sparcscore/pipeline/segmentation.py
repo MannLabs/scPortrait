@@ -10,6 +10,7 @@ from multiprocessing import current_process
 import multiprocessing as mp
 import shutil
 import torch
+import timeit
 import time
 
 import traceback
@@ -79,9 +80,26 @@ class Segmentation(ProcessingStep):
         "#00bfa0",
     ]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, 
+                 config,
+                 directory,
+                 nuc_seg_name,
+                 cyto_seg_name,
+                 project_location,
+                 debug,
+                 overwrite,
+                 project,
+                 filehandler,
+                 **kwargs):
 
+        super().__init__(config,
+                         directory,
+                         project_location,
+                         debug=debug,
+                         overwrite=overwrite,
+                         project=project,
+                         filehandler = filehandler)
+        
         if self.CLEAN_LOG:
             self._clean_log_file()
 
@@ -100,6 +118,8 @@ class Segmentation(ProcessingStep):
         # additional parameters to configure level of debugging for developers
         self.deep_debug = False
         self.save_filter_results = False
+        self.nuc_seg_name = nuc_seg_name
+        self.cyto_seg_name = cyto_seg_name
 
     def _check_gpu_status(self):
         # check if cuda GPU is available
@@ -196,7 +216,7 @@ class Segmentation(ProcessingStep):
         Returns:
             daskArray: Input image as a daskArray
         """
-
+        start = timeit.default_timer()
         sdata = SpatialData.read(self.input_path)
 
         if isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
@@ -205,7 +225,8 @@ class Segmentation(ProcessingStep):
             input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
         else:
             raise ValueError("Input image could not be loaded from sdata object.")
-
+        
+        self.log(f"Time taken to load input image: {timeit.default_timer() - start}")
         return self._transform_input_image(input_image)
 
     def _transform_input_image(self, input_image):
@@ -256,25 +277,18 @@ class Segmentation(ProcessingStep):
     def _save_segmentation_sdata(self, labels, classes, masks = ["nuclei", "cytosol"]):
         if self.is_shard:
             self._save_segmentation(labels, classes)
-        else:
-            if self.project is not None:
-                
-                if "nuclei" in masks:
-                    ix = masks.index("nuclei")
+        else:     
+            if "nuclei" in masks:
+                ix = masks.index("nuclei")
 
-                    self.project._write_segmentation_sdata(
-                        labels[ix], self.project.nuc_seg_name, classes=classes, overwrite = self.overwrite
-                    )
+                self.filehandler._write_segmentation_sdata(
+                    labels[ix], self.nuc_seg_name, classes=classes, overwrite = self.overwrite
+                )
 
-                if "cytosol" in masks:
-                    ix = masks.index("cytosol")
-                    self.project._write_segmentation_sdata(
-                        labels[ix], self.project.cyto_seg_name, classes=classes, overwrite = self.overwrite
-                    )
-            
-            else:
-                ValueError(
-                    "No project object found. Please provide a project object to save segmentation data to sdata object."
+            if "cytosol" in masks:
+                ix = masks.index("cytosol")
+                self.filehandler._write_segmentation_sdata(
+                    labels[ix], self.cyto_seg_name, classes=classes, overwrite = self.overwrite
                 )
 
     def save_map(self, map_name):
@@ -377,18 +391,6 @@ class Segmentation(ProcessingStep):
         input_image = input_image[
             :2, self.window[0], self.window[1]
         ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
-
-        self.input_image = input_image
-
-        # calculate shape of required datacontainer
-        c, _, _ = input_image.shape
-        x1 = self.window[0].start
-        x2 = self.window[0].stop
-        y1 = self.window[1].start
-        y2 = self.window[1].stop
-
-        x = x2 - x1
-        y = y2 - y1
 
         # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
         input_image = input_image.compute()
@@ -591,7 +593,7 @@ class ShardedSegmentation(Segmentation):
     def _initialize_shard_list(self, sharding_plan):
         _shard_list = []
 
-        self.input_path = self.project._get_sdata_path()
+        self.input_path = self.filehandler.sdata_path
 
         for i, window in enumerate(sharding_plan):
             local_shard_directory = os.path.join(self.shard_directory, str(i))
@@ -599,10 +601,13 @@ class ShardedSegmentation(Segmentation):
             current_shard = self.method(
                 self.config,
                 directory=local_shard_directory,
+                nuc_seg_name = self.nuc_seg_name,
+                cyto_seg_name = self.cyto_seg_name, 
+                filehandler = self.filehandler,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                project = self.project
+                project = None,
             )
 
             current_shard._initialize_as_shard(
@@ -640,18 +645,11 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolve sharding plan")
 
-        #get number of masks for the relevant segmentation method
-        if "n_masks" not in self.project.__dict__:
-            self.project.n_masks = self.method.N_MASKS
-        
-        if "masks" not in self.project.__dict__:
-            self.project.masks = self.method.MASK_NAMES
-
         #ensure a temp directory is creates
         if not hasattr(self, "_tmp_dir_path"):
             self.create_temp_dir()
 
-        label_size = (self.project.n_masks, self.image_size[0], self.image_size[1])
+        label_size = (self.method.N_MASKS, self.image_size[0], self.image_size[1])
        
         # initialize an empty hdf5 file that will be filled with the results of the sharded segmentation
         # this is a workaround because as of yet labels can not be incrementally updated in spatialdata objects while being backed to disk
@@ -766,16 +764,16 @@ class ShardedSegmentation(Segmentation):
 
                 resulting_map = orig_input_manipulation + shifted_map_manipulation
 
-                for _mask_ix in range(self.project.n_masks):
+                for _mask_ix in range(self.method.N_MASK):
                     plt.figure()
                     plt.imshow(resulting_map[_mask_ix])
                     plt.title(
-                        f"Combined segmentation mask {self.project.masks[_mask_ix]} after\n resolving sharding for region {i}"
+                        f"Combined segmentation mask {self.method.MASK_NAMES[_mask_ix]} after\n resolving sharding for region {i}"
                     )
                     plt.colorbar()
                     plt.show()
                     plt.savefig(
-                        f"{self.directory}/combined_segmentation_mask_{self.project.masks[_mask_ix]}_{i}.png"
+                        f"{self.directory}/combined_segmentation_mask_{self.method.MASK_NAMES[_mask_ix]}_{i}.png"
                     )
 
             start_time_step3 = time.time()
@@ -871,7 +869,7 @@ class ShardedSegmentation(Segmentation):
         self.log("resolved sharding plan.")
 
         # save final segmentation to sdata
-        self._save_segmentation_sdata(hdf_labels, list(filtered_classes_combined), masks = self.project.masks)
+        self._save_segmentation_sdata(hdf_labels, list(filtered_classes_combined), masks = self.method.MASK_NAMES)
 
         self.log(
             "finished saving segmentation results to sdata object for sharded segmentation."
@@ -1008,16 +1006,16 @@ class ShardedSegmentation(Segmentation):
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
         # check status of sdata object
-        self.project._check_sdata_status()
+        self.filehandler._check_sdata_status()
 
-        if self.project.nuc_seg_status:
+        if self.filehandler.nuc_seg_status:
             self.log("Nucleus segmentation already exists in sdata object.")
-        if self.project.cyto_seg_status:
+        if self.filehandler.cyto_seg_status:
             self.log("Cytosol segmentation already exists in sdata object.")
 
         # check to make sure that the shard directory exisits, if not exit and return error
         if not os.path.isdir(self.shard_directory):
-            if not self.project.nuc_seg_status or not self.project.cyto_seg_status:
+            if not self.filehandler.nuc_seg_status or not self.filehandler.cyto_seg_status:
                 raise FileNotFoundError(
                     "No shard directory found. Please run project.shard_segmentation() to generate a sharding instead of project.complete_segmentation()."
                 )
@@ -1027,7 +1025,7 @@ class ShardedSegmentation(Segmentation):
                 )
         else:
             if not force_run:
-                if self.project.nuc_seg_status or self.project.cyto_seg_status:
+                if self.filehandler.nuc_seg_status or self.filehandler.cyto_seg_status:
                     raise ValueError(
                         "Completed segmentation found in addition to shard directory. If you want to force overwrite of these segmentations with the sharded segmentation results found in the shard directory please rerurn the project.complete_segmentation() method with the force_run flag set to True."
                     )

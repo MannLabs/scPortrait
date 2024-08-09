@@ -27,6 +27,7 @@ from napari_spatialdata import Interactive
 from sparcstools.base import daskmmap
 
 from sparcscore.pipeline.base import Logable
+from sparcscore.pipeline.io import sdata_filehandler
 from sparcscore.pipeline.spatialdata_classes import spLabels2DModel
 from sparcscore.utils.spatialdata_helper import (
     get_unique_cell_ids,
@@ -104,6 +105,17 @@ class SpatialProject(Logable):
             os.makedirs(self.project_location)
         else:
             warnings.warn("There is already a directory in the location path")
+        
+        # === setup sdata reader/writer ===
+        self.filehandler = sdata_filehandler(directory=self.directory, 
+                                             sdata_path=self.sdata_path, 
+                                             input_image_name = self.DEFAULT_INPUT_IMAGE_NAME,
+                                             nuc_seg_name = self.nuc_seg_name,
+                                             cyto_seg_name = self.cyto_seg_name,
+                                             centers_name = self.DEFAULT_CENTERS_NAME,
+                                             debug=self.debug)
+        self._read_sdata()
+        self._check_sdata_status()
 
         # === setup segmentation ===
         self._setup_segmentation_f(segmentation_f)
@@ -116,6 +128,7 @@ class SpatialProject(Logable):
 
         # ==== setup selection ===
         self._setup_selection(selection_f)
+
 
     ##### Setup Functions #####
 
@@ -174,6 +187,7 @@ class SpatialProject(Logable):
                 self._load_config_from_file(self.config_path)
 
     def _setup_segmentation_f(self, segmentation_f):
+
         if self.segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
                 raise ValueError(
@@ -189,10 +203,13 @@ class SpatialProject(Logable):
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
                 self.seg_directory,
+                nuc_seg_name = self.nuc_seg_name,
+                cyto_seg_name = self.cyto_seg_name, 
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
-                project=self,
+                project=None,
+                filehandler = self.filehandler
             )
 
     def _setup_extraction_f(self, extraction_f):
@@ -215,6 +232,7 @@ class SpatialProject(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
+                filehandler = self.filehandler
             )
 
     def _setup_classification_f(self, classification_f):
@@ -237,6 +255,7 @@ class SpatialProject(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
+                filehandler = self.filehandler
             )
 
     def _setup_selection(self, selection_f):
@@ -259,6 +278,7 @@ class SpatialProject(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
+                filehandler = self.filehandler
             )
 
     def update_classification_f(self, classification_f) -> None:
@@ -335,7 +355,7 @@ class SpatialProject(Logable):
 
     def _clear_temp_dir(self):
         if "_tmp_dir" in self.__dict__.keys():
-            shutil.rmtree(self._tmp_dir_path)
+            shutil.rmtree(self._tmp_dir_path, ignore_errors=True)
             self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
 
             del self._tmp_dir, self._tmp_dir_path
@@ -354,13 +374,14 @@ class SpatialProject(Logable):
                 self.log(
                     f"Output location {self.sdata_path} already exists. Overwriting."
                 )
-                shutil.rmtree(self.sdata_path)
+                shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
                 if len(os.listdir(self.sdata_path)) == 0:
                     self.log(
                         f"Output location {self.sdata_path} already exists but does not contain any data. Overwriting."
                     )
+                    shutil.rmtree(self.sdata_path, ignore_errors=True)
                 else:
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
@@ -385,15 +406,12 @@ class SpatialProject(Logable):
     def _check_sdata_status(self, print_status=False):
         if self.sdata is None:
             self._read_sdata()
-            if self.sdata is None:
-                Warning("No sdata object found.")
-            return None
         else:
-            # check status of project
-            self.input_image_status = self.DEFAULT_INPUT_IMAGE_NAME in self.sdata.images
-            self.nuc_seg_status = self.nuc_seg_name in self.sdata.labels
-            self.cyto_seg_status = self.cyto_seg_name in self.sdata.labels
-            self.centers_status = self.DEFAULT_CENTERS_NAME in self.sdata.points
+            self.filehandler._check_sdata_status()
+            self.input_image_status = self.filehandler.input_image_status
+            self.nuc_seg_status = self.filehandler.nuc_seg_status
+            self.cyto_seg_status = self.filehandler.cyto_seg_status
+            self.centers_status = self.filehandler.centers_status
 
             if self.input_image_status:
                 if isinstance(
@@ -411,33 +429,23 @@ class SpatialProject(Logable):
                 else:
                     self.input_image = None
 
-            if print_status:
-                self.log("Current Project Status:")
-                self.log("--------------------------------")
-                self.log(f"Input Image Status: {self.input_image_status}")
-                self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
-                self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
-                self.log(f"Centers Status: {self.centers_status}")
-                self.log("--------------------------------")
+        if print_status:
+            self.log("Current Project Status:")
+            self.log("--------------------------------")
+            self.log(f"Input Image Status: {self.input_image_status}")
+            self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
+            self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
+            self.log(f"Centers Status: {self.centers_status}")
+            self.log("--------------------------------")
 
-            return None
+        return None
 
     def _read_sdata(self):
-        if os.path.exists(self._get_sdata_path()):
-            self.sdata = SpatialData.read(self._get_sdata_path())
-
-            self._ensure_all_labels_habe_cell_ids()
-
-            # update all parameters to track status of project
-            self._check_sdata_status(print_status=True)
-
-        else:
-            self.sdata = SpatialData()
-            self.sdata.write(self._get_sdata_path(), overwrite=True)
+        self.sdata = self.filehandler.get_sdata()
+        self._check_sdata_status()
 
     def view_sdata(self):
-        if self.sdata is None:
-            self._read_sdata()
+        self.sdata = self.filehandler.get_sdata() # ensure its up to date
 
         # open interactive viewer in napari
         interactive = Interactive(self.sdata)
@@ -445,19 +453,19 @@ class SpatialProject(Logable):
 
     #### Functions for operations on sdata object #####
 
-    def _get_centers(self, segmentation_label: str) -> PointsModel:
-        if segmentation_label not in self.sdata.labels:
-            raise ValueError(
-                f"Segmentation {segmentation_label} not found in sdata object."
-            )
+    # def _get_centers(self, segmentation_label: str) -> PointsModel:
+    #     if segmentation_label not in self.sdata.labels:
+    #         raise ValueError(
+    #             f"Segmentation {segmentation_label} not found in sdata object."
+    #         )
 
-        centers = calculate_centroids(self.sdata.labels[segmentation_label])
+    #     centers = calculate_centroids(self.sdata.labels[segmentation_label])
 
-        return centers
+    #     return centers
 
-    def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
-        centroids_object = self._get_centers(segmentation_label)
-        self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
+    # def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
+    #     centroids_object = self._get_centers(segmentation_label)
+    #     self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
 
     #### Functions for adding elements to sdata object ########
     def _force_delete_object(self, name:str, type:str):
@@ -477,7 +485,7 @@ class SpatialProject(Logable):
         #define path 
         path = os.path.join(self.sdata_path, type, name)
         if os.path.exists(path):
-            shutil.rmtree(path)
+            shutil.rmtree(path, ignore_errors=True)
 
     def _write_image_sdata(
         self,
@@ -530,43 +538,43 @@ class SpatialProject(Logable):
         # track that input image has been loaded
         self.input_image_status = True
 
-    def _write_segmentation_object_sdata(
-        self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
-    ):
-        # ensure that the segmentation object is converted to the sparcspy Labels2DModel
-        if not hasattr(segmentation_object.attrs, "cell_ids"):
-            segmentation_object = spLabels2DModel().convert(
-                segmentation_object, classes=classes
-            )
+    # def _write_segmentation_object_sdata(
+    #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
+    # ):
+    #     # ensure that the segmentation object is converted to the sparcspy Labels2DModel
+    #     if not hasattr(segmentation_object.attrs, "cell_ids"):
+    #         segmentation_object = spLabels2DModel().convert(
+    #             segmentation_object, classes=classes
+    #         )
 
-        if overwrite:
-            self._force_delete_object(segmentation_label, "labels")
+    #     if overwrite:
+    #         self._force_delete_object(segmentation_label, "labels")
 
-        self.sdata.labels[segmentation_label] = segmentation_object
-        self.sdata.write_element(segmentation_label, overwrite=True)
+    #     self.sdata.labels[segmentation_label] = segmentation_object
+    #     self.sdata.write_element(segmentation_label, overwrite=True)
 
-        self.log(f"Segmentation {segmentation_label} written to sdata object.")
+    #     self.log(f"Segmentation {segmentation_label} written to sdata object.")
 
-    def _write_segmentation_sdata(
-        self,
-        segmentation,
-        segmentation_label: str,
-        classes: set = None,
-        chunks=(1000, 1000),
-        overwrite = False
-    ):
-        transform_original = Identity()
-        mask = spLabels2DModel.parse(
-            segmentation,
-            dims=["y", "x"],
-            transformations={"global": transform_original},
-            chunks=chunks,
-        )
+    # def _write_segmentation_sdata(
+    #     self,
+    #     segmentation,
+    #     segmentation_label: str,
+    #     classes: set = None,
+    #     chunks=(1000, 1000),
+    #     overwrite = False
+    # ):
+    #     transform_original = Identity()
+    #     mask = spLabels2DModel.parse(
+    #         segmentation,
+    #         dims=["y", "x"],
+    #         transformations={"global": transform_original},
+    #         chunks=chunks,
+    #     )
 
-        if not get_chunk_size(mask) == chunks:
-            mask.data = mask.data.rechunk(chunks)
+    #     if not get_chunk_size(mask) == chunks:
+    #         mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
+    #     self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
 
     def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
         
@@ -577,15 +585,6 @@ class SpatialProject(Logable):
         self.sdata.write_element(table_name, overwrite=False)
 
         self.log(f"Table {table_name} written to sdata object.")
-
-    def _write_points_object_sdata(self, points, points_name: str, overwrite):
-        if overwrite:
-            self._force_delete_object(points_name, "points")
-
-        self.sdata.points[points_name] = points
-        self.sdata.write_element(points_name, overwrite=True)
-
-        self.log(f"Points {points_name} written to sdata object.")
 
     #### Functions for getting elements from sdata object #####
 
@@ -908,7 +907,7 @@ class SpatialProject(Logable):
             chunks=self.DEFAULT_CHUNK_SIZE,
         )
 
-        self._check_sdata_status()
+        self.sdata = None
         self.overwrite = original_overwrite  # reset to original value
 
         # cleanup variables and temp dir
@@ -917,7 +916,6 @@ class SpatialProject(Logable):
 
         #strange workaround that is required so that the sdata input image does not point to the dask array anymore but
         #to the image which was written to disk
-        self.sdata = None
         self._check_sdata_status()
 
     def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
@@ -1000,7 +998,7 @@ class SpatialProject(Logable):
             mask = sdata_input.labels[nucleus_segmentation_name]
             mask = self._check_chunk_size(mask)  # ensure chunking is correct
 
-            self._write_segmentation_object_sdata(mask, self.nuc_seg_name)
+            self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
             self.log(
@@ -1012,7 +1010,7 @@ class SpatialProject(Logable):
             mask = sdata_input.labels[cytosol_segmentation_name]
             mask = self._check_chunk_size(mask)  # ensure chunking is correct
 
-            self._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
             self.cyto_seg_status = True
             self.log(
@@ -1115,6 +1113,7 @@ class SpatialProject(Logable):
         
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
+        self.sdata = self.filehandler.get_sdata() #update
 
     def complete_segmentation(self, overwrite: Union[bool, None] = None):
         

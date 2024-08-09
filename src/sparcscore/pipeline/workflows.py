@@ -463,9 +463,9 @@ class _BaseSegmentation(Segmentation):
 
                     if len(mask.shape) == 2:
                         #add results to sdata object
-                        self.project._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                        self.filehandler._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
                     else:
-                        self.project._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                        self.filehandler._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
                     #then this does not need to be plotted as it can be visualized from there
                     plot_results = False
                 else:
@@ -477,8 +477,6 @@ class _BaseSegmentation(Segmentation):
                 # get input image for visualization
                 if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
-                elif "project" in self.__dict__.keys():
-                    input_image = self.project.input_image
                 else:
                     input_image = None
 
@@ -579,8 +577,8 @@ class _BaseSegmentation(Segmentation):
             if not self.is_shard:
                 if self.save_filter_results:
                     #add filtering results to sdata object
-                    self.project._write_segmentation_sdata(mask_nuc[0], segmentation_label = "debugging_seg_match_mask_results_nucleus", classes = None)
-                    self.project._write_segmentation_sdata(mask_cyto[0], segmentation_label = "debugging_seg_match_mask_result_cytosol", classes = None)
+                    self.filehandler._write_segmentation_sdata(mask_nuc[0], segmentation_label = "debugging_seg_match_mask_results_nucleus", classes = None)
+                    self.filehandler._write_segmentation_sdata(mask_cyto[0], segmentation_label = "debugging_seg_match_mask_result_cytosol", classes = None)
 
                     #then no plotting needs to be performed as the results can be viewed in the sdata object
                     plot_results = False
@@ -592,9 +590,6 @@ class _BaseSegmentation(Segmentation):
             if plot_results: 
                 if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
-                elif "project" in self.__dict__.keys():
-                    if self.project is not None:
-                        input_image = self.project.input_image.data
                 else:
                     input_image = None
                 
@@ -1090,10 +1085,6 @@ class WGASegmentation(_ClassicalSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #save how many masks will be generated
-        self.project.n_masks = 2
-        self.project.mask_names = ["nuclei", "cytosol"]
-
     def _finalize_segmentation_results(self):
         segmentation = np.stack(
             [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
@@ -1149,7 +1140,7 @@ class WGASegmentation(_ClassicalSegmentation):
 
         print("Channels shape: ", segmentation.shape)
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.project.mask_names)
+        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
         return results
 
 
@@ -1167,10 +1158,6 @@ class DAPISegmentation(_ClassicalSegmentation):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        #save how many masks will be generated
-        self.project.n_masks = 1
-        self.project.mask_names = ["nuclei"]
 
     def _finalize_segmentation_results(self):
 
@@ -1215,7 +1202,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
         segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.project.mask_names)
+        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
         return results
 
 
@@ -1358,9 +1345,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.project.n_masks = 1
-        self.project.mask_names = ["nuclei"]
-
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=["nucleus"])
 
@@ -1445,7 +1429,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.project.mask_names)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1458,9 +1442,6 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.project.n_masks = 2
-        self.project.mask_names = ["nuclei", "cytosol"]
 
     def _finalize_segmentation_results(self):
         # ensure correct dtype of maps
@@ -1614,7 +1595,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.project.mask_names)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1690,7 +1671,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         segmentation = self._finalize_segmentation_results()
 
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.project.mask_names)
+        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
 
 
@@ -1705,13 +1686,6 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.project.n_masks = 1
-        self.project.mask_names = ["cytosol"]
-
-        self.total_time = 0
-        self.transform_time = 0
-        self.segmentation_time = 0 
-        
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=["cytosol"])
 
@@ -1811,7 +1785,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes, masks=self.project.mask_names)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
@@ -1858,8 +1832,8 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         del cyto_seg
 
         # rescale segmentation results to original size
-        x_trim = x - self.project.input_image.shape[1]
-        y_trim = y - self.project.input_image.shape[2]
+        x_trim = x - self.input_image_size[1]
+        y_trim = y - self.input_image_size[2]
 
         # if no padding was performed then we need to keep the same dimensions
         if x_trim > 0:
@@ -1877,9 +1851,9 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             f"Segmentation size after resize to original dimensions: {segmentation.shape}"
         )
 
-        if segmentation.shape[1] != self.project.input_image.shape[1]:
+        if segmentation.shape[1] != self.input_image_size[1]:
             sys.exit("Error. Segmentation mask and image have different shapes")
-        if segmentation.shape[2] != self.project.input_image.shape[2]:
+        if segmentation.shape[2] != self.input_image_size[2]:
             sys.exit("Error. Segmentation mask and image have different shapes")
 
         return segmentation
@@ -1893,6 +1867,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         #get the relevant channels for processing
         input_image = input_image[:2, :, :]
+        self.input_image_size = input_image.shape
 
         # setup downsampling
         self._get_downsampling_parameters()
@@ -1921,7 +1896,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         segmentation = self._finalize_segmentation_results()
 
-        self._save_segmentation_sdata(segmentation, all_classes, masks=self.project.mask_names)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
 
         return None
 
