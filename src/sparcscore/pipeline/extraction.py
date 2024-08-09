@@ -216,7 +216,10 @@ class HDF5CellExtraction(ProcessingStep):
         self._verbalise_extraction_info()
 
     def _get_segmentation_info(self):
-        segmentation_keys = list(self.project.sdata.labels.keys())
+
+        _sdata = self.filehandler._read_sdata()
+
+        segmentation_keys = list(_sdata.labels.keys())
 
         if "segmentation_key" in self.config.keys():
             self.segmentation_key = self.config["segmentation_key"]
@@ -258,8 +261,8 @@ class HDF5CellExtraction(ProcessingStep):
         if self.n_masks == 2:
             # perform sanity check that the masks have the same ids
             assert (
-                self.project.sdata[self.nucleus_key].attrs["cell_ids"]
-                == self.project.sdata[self.cytosol_key].attrs["cell_ids"]
+                _sdata[self.nucleus_key].attrs["cell_ids"]
+                == _sdata[self.cytosol_key].attrs["cell_ids"]
             ), "Nucleus and cytosol masks contain different cell ids. Cannot proceed with extraction."
 
             self.main_segmenation_mask = self.nucleus_key
@@ -285,17 +288,20 @@ class HDF5CellExtraction(ProcessingStep):
         self.input_image_height = len(self.project.input_image.y)
 
     def _get_centers(self):
-        # calculate centers if they have not been calculated yet
-        if self.DEFAULT_CENTERS_NAME not in self.project.sdata:
-            self.project._add_centers(self.main_segmenation_mask, overwrite = self.overwrite)
+        _sdata = self.filehandler._read_sdata()
 
-        centers = self.project.sdata[self.DEFAULT_CENTERS_NAME].values.compute()
+        # calculate centers if they have not been calculated yet
+        if self.DEFAULT_CENTERS_NAME not in _sdata:
+            self.filehandler._add_centers(self.main_segmenation_mask, overwrite = self.overwrite)
+            _sdata = self.filehandler._read_sdata() #reread to ensure we have updated version
+
+        centers = _sdata[self.DEFAULT_CENTERS_NAME].values.compute()
 
         # round to int so that we can use them as indices
         centers = np.round(centers).astype(int)
 
         self.centers = centers
-        self.centers_cell_ids = self.project.sdata[
+        self.centers_cell_ids = _sdata[
             self.DEFAULT_CENTERS_NAME
         ].index.values.compute()
 
@@ -307,7 +313,7 @@ class HDF5CellExtraction(ProcessingStep):
         # double check that the cell_ids contained in the seg masks match to those from centers
         assert (
             set(self.centers_cell_ids)
-            == set(self.project.sdata[self.main_segmenation_mask].attrs["cell_ids"])
+            == set(_sdata[self.main_segmenation_mask].attrs["cell_ids"])
         ), "Cell ids from centers do not match those from the segmentation mask. Cannot proceed with extraction."
 
     def _get_classes_to_extract(self):

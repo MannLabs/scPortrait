@@ -462,9 +462,9 @@ class _BaseSegmentation(Segmentation):
 
                     if len(mask.shape) == 2:
                         #add results to sdata object
-                        self.project._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                        self.filehandler._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
                     else:
-                        self.project._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                        self.filehandler._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
                     #then this does not need to be plotted as it can be visualized from there
                     plot_results = False
                 else:
@@ -476,8 +476,6 @@ class _BaseSegmentation(Segmentation):
                 # get input image for visualization
                 if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
-                elif "project" in self.__dict__.keys():
-                    input_image = self.project.input_image
                 else:
                     input_image = None
 
@@ -578,8 +576,8 @@ class _BaseSegmentation(Segmentation):
             if not self.is_shard:
                 if self.save_filter_results:
                     #add filtering results to sdata object
-                    self.project._write_segmentation_sdata(mask_nuc[0], segmentation_label = "debugging_seg_match_mask_results_nucleus", classes = None)
-                    self.project._write_segmentation_sdata(mask_cyto[0], segmentation_label = "debugging_seg_match_mask_result_cytosol", classes = None)
+                    self.filehandler._write_segmentation_sdata(mask_nuc[0], segmentation_label = "debugging_seg_match_mask_results_nucleus", classes = None)
+                    self.filehandler._write_segmentation_sdata(mask_cyto[0], segmentation_label = "debugging_seg_match_mask_result_cytosol", classes = None)
 
                     #then no plotting needs to be performed as the results can be viewed in the sdata object
                     plot_results = False
@@ -591,9 +589,6 @@ class _BaseSegmentation(Segmentation):
             if plot_results: 
                 if "input_image" in self.__dict__.keys():
                     input_image = self.input_image
-                elif "project" in self.__dict__.keys():
-                    if self.project is not None:
-                        input_image = self.project.input_image.data
                 else:
                     input_image = None
                 
@@ -1345,7 +1340,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=["nucleus"])
 
@@ -1843,7 +1837,6 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         if segmentation.shape[1] != self.input_image_size[1]:
             sys.exit("Error. Segmentation mask and image have different shapes")
-        
         if segmentation.shape[2] != self.input_image_size[2]:
             sys.exit("Error. Segmentation mask and image have different shapes")
 

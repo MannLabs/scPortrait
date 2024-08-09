@@ -165,6 +165,7 @@ class ProcessingStep(Logable):
         debug=False,
         overwrite=False,
         project=None,
+        filehandler = None
     ):
         super().__init__(directory=directory)
 
@@ -175,6 +176,7 @@ class ProcessingStep(Logable):
         self.overwrite = overwrite
 
         self.project = project
+        self.filehandler = filehandler
 
         self.get_context()
 
