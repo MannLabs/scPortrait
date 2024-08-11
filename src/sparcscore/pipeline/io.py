@@ -15,7 +15,9 @@ from sparcscore.utils.spatialdata_helper import (
     calculate_centroids,
 )
 from sparcscore.pipeline.base import Logable
-
+from alphabase.io import tempmmap
+import datatree
+import xarray
 class sdata_filehandler(Logable):
     def __init__(self, 
                  directory, 
@@ -79,12 +81,31 @@ class sdata_filehandler(Logable):
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=True)
 
-    def _check_sdata_status(self):
+    def _check_sdata_status(self, return_sdata = False):
         _sdata = self._read_sdata()
+        
         self.input_image_status = self.input_image_name in _sdata.images
         self.nuc_seg_status = self.nuc_seg_name in _sdata.labels
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
         self.centers_status = self.centers_name in _sdata.points
+
+        if return_sdata:
+            return(_sdata)
+
+    def _get_input_image(self, sdata):
+        if self.input_image_status:
+            if isinstance(
+                sdata.images[self.input_image_name], datatree.DataTree
+            ):
+                input_image = sdata.images[self.input_image_name]["scale0"].image
+            elif isinstance(
+                sdata.images[self.input_image_name], xarray.DataArray
+            ):
+                input_image = sdata.images[self.input_image_name].image
+        else:
+            raise ValueError("Input image not found in sdata object.")
+        
+        return(input_image)
 
     ### Write new objects to sdata ###
     
@@ -158,3 +179,61 @@ class sdata_filehandler(Logable):
         _sdata = self._read_sdata()
         centroids_object = self._get_centers(_sdata, segmentation_label)
         self._write_points_object_sdata(centroids_object, self.centers_name, overwrite = overwrite)
+
+    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str):
+        """
+        Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
+        Loading happens in a chunked manner to avoid memory issues.
+
+        The function will return the path to the memory mapped array.
+
+        Parameters
+        ----------
+        tmp_dir_abs_path : str
+            Absolute path to the directory where the memory mapped arrays should be stored.
+
+        Returns
+        -------
+        str
+            Path to the memory mapped array. Can be reconneted to using the `mmap_array_from_path`
+            function from the alphabase.io.tempmmap module.
+        """
+        # ensure all elements are loaded
+        _sdata = self._check_sdata_status(return_sdata = True)
+
+        if not self.input_image_status:
+            raise ValueError("Input image not found in sdata object.")
+
+        input_image = self._get_input_image(_sdata)
+        shape = input_image.shape
+
+        # initialize empty memory mapped arrays to store the data
+        path_input_image = tempmmap.create_empty_mmap(
+            shape=shape,
+            dtype=input_image.dtype,
+            tmp_dir_abs_path=tmp_dir_abs_path,
+        )
+
+        # create the empty mmap array
+        input_image_mmap = tempmmap.mmap_array_from_path(path_input_image)
+
+        # load the data into the mmap array in chunks
+        Z = None
+        if len(shape) == 3:
+            C, Y, X = shape
+
+        elif len(shape) == 4:
+            Z, C, Y, X = shape
+
+        if Z is not None:
+            for z in range(Z):
+                for c in range(C):
+                        input_image_mmap[z][c] = input_image[z][c].compute()
+        else:
+            for c in range(C):
+                    input_image_mmap[c] = input_image[c].compute()
+
+        # cleanup the cache
+        del input_image_mmap, input_image   
+
+        return path_input_image
