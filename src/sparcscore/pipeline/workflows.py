@@ -413,6 +413,7 @@ class _BaseSegmentation(Segmentation):
         mask_name: str,
         log: bool = True,
         debug: bool = False,
+        input_image: np.array = None,
         ) -> np.array:
         """
         Remove elements from mask based on a size filter.
@@ -423,9 +424,6 @@ class _BaseSegmentation(Segmentation):
             mask to be filtered
         """
         start_time = time.time()
-
-        if self.debug:
-            unfiltered_mask = mask.copy()
 
         if thresholds is not None:
             self.log(
@@ -474,29 +472,29 @@ class _BaseSegmentation(Segmentation):
             
             if plot_results:
                 # get input image for visualization
-                if "input_image" in self.__dict__.keys():
-                    input_image = self.input_image
-                else:
-                    input_image = None
-
-                if mask_name == "nucleus":
-                    image_map = input_image[0]
-                elif mask_name == "cytosol":
-                    image_map = input_image[1]
-                else:
-                    image_map = None
+                if input_image is not None:
+                    if "input_image" in self.__dict__.keys():
+                        input_image = self.input_image
                 
-                cmap, norm = _custom_cmap()
+                if input_image is not None:
+                    if mask_name == "nucleus":
+                        image_map = input_image[0]
+                    elif mask_name == "cytosol":
+                        image_map = input_image[1]
+                    else:
+                        image_map = None
+                    
+                    cmap, norm = _custom_cmap()
 
-                fig, axs = plt.subplots(1, 1, figsize=(10, 10))
-                axs.imshow(image_map, cmap="gray")
-                axs.imshow(mask[0], cmap=cmap, norm=norm)
-                axs.axis("off")
-                axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
-                fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")
-                fig.savefig(fig_path)
+                    fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+                    axs.imshow(image_map, cmap="gray")
+                    axs.imshow(mask[0], cmap=cmap, norm=norm)
+                    axs.axis("off")
+                    axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
+                    fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")
+                    fig.savefig(fig_path)
 
-                self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
+                    self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
 
             # clearup memory
             self._clear_cache(
@@ -541,6 +539,7 @@ class _BaseSegmentation(Segmentation):
         cytosol_mask: np.array,
         filtering_threshold: float,
         debug: bool = False,
+        input_image: np.array = None,
         ) -> Tuple[np.array, np.array]:
         """
         Match the nuclei and cytosol masks to ensure that the same cells are present in both masks.
@@ -587,36 +586,35 @@ class _BaseSegmentation(Segmentation):
                 plot_results = True
 
             if plot_results: 
-                if "input_image" in self.__dict__.keys():
-                    input_image = self.input_image
-                else:
-                    input_image = None
-                
+                if input_image is not None:
+                    if "input_image" in self.__dict__.keys():
+                        input_image = self.input_image
 
-                #convert input image from uint16 to uint8
-                input_image = (input_image / 256).astype(np.uint8)
+                if input_image is not None:
+                    #convert input image from uint16 to uint8
+                    input_image = (input_image / 256).astype(np.uint8)
 
-                cmap, norm = _custom_cmap()
+                    cmap, norm = _custom_cmap()
 
-                fig, axs = plt.subplots(1, 2, figsize=(20, 10))
+                    fig, axs = plt.subplots(1, 2, figsize=(20, 10))
 
-                axs[0].imshow(input_image[0], cmap="gray")
-                axs[0].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-                axs[0].imshow(mask_cyto[0], cmap=cmap, norm = norm)
-                axs[0].axis("off")
-                axs[0].set_title("results overlayed nucleus channel")
+                    axs[0].imshow(input_image[0], cmap="gray")
+                    axs[0].imshow(mask_nuc[0], cmap=cmap, norm = norm)
+                    axs[0].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+                    axs[0].axis("off")
+                    axs[0].set_title("results overlayed nucleus channel")
 
-                axs[1].imshow(input_image[1], cmap="gray")
-                axs[1].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-                axs[1].imshow(mask_cyto[0], cmap=cmap, norm = norm)
-                axs[1].axis("off")
-                axs[1].set_title("results overlayed cytosol channel")
-                
-                fig.tight_layout()
-                fig_path = os.path.join(self.directory, "Results_mask_matching.png")
-                fig.savefig(fig_path)
+                    axs[1].imshow(input_image[1], cmap="gray")
+                    axs[1].imshow(mask_nuc[0], cmap=cmap, norm = norm)
+                    axs[1].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+                    axs[1].axis("off")
+                    axs[1].set_title("results overlayed cytosol channel")
+                    
+                    fig.tight_layout()
+                    fig_path = os.path.join(self.directory, "Results_mask_matching.png")
+                    fig.savefig(fig_path)
 
-                self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
+                    self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
 
             
             # clearup memory
@@ -892,6 +890,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 self.nucleus_confidence_interval,
                 "nucleus",
                 debug=self.debug,
+                input_image = input_image if self.debug else None,
             )
 
         if self.contact_filter_nuclei:
@@ -1045,6 +1044,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 self.cytosol_confidence_interval,
                 "cytosol",
                 debug=self.debug,
+                input_image = input_image if self.debug else None,
             )
 
         if self.contact_filter_cytosol:
@@ -1389,6 +1389,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
                 confidence_interval=self.nucleus_confidence_interval,
                 mask_name="nucleus",
                 log=True,
+                input_image = input_image if self.debug else None,
             )
 
         # save segementation to maps for access from other subfunctions
@@ -1463,7 +1464,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         #ensure we have a numpy array
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data.compute()
-
+        
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1516,6 +1517,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 mask_name="nucleus",
                 log=True,
                 debug=self.debug,
+                input_image = input_image if self.debug else None,
             )
 
             masks_cytosol = self._perform_size_filtering(
@@ -1525,6 +1527,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
+                input_image = input_image if self.debug else None,
             )
 
         ######################
@@ -1536,6 +1539,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             masks_nucleus, masks_cytosol = self._perform_mask_matching_filtering(
                 nucleus_mask=masks_nucleus,
                 cytosol_mask=masks_cytosol,
+                input_image = input_image if self.debug else None,
                 filtering_threshold=self.mask_matching_filtering_threshold,
                 debug=self.debug,
             )
@@ -1737,6 +1741,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
+                input_image = input_image if self.debug else None,
             )
 
         self.maps["cytosol_segmentation"] = masks_cytosol.reshape(

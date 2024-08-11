@@ -180,7 +180,7 @@ class sdata_filehandler(Logable):
         centroids_object = self._get_centers(_sdata, segmentation_label)
         self._write_points_object_sdata(centroids_object, self.centers_name, overwrite = overwrite)
 
-    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str):
+    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str, image = None):
         """
         Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
         Loading happens in a chunked manner to avoid memory issues.
@@ -199,18 +199,19 @@ class sdata_filehandler(Logable):
             function from the alphabase.io.tempmmap module.
         """
         # ensure all elements are loaded
-        _sdata = self._check_sdata_status(return_sdata = True)
+        if image is None:
+            _sdata = self._check_sdata_status(return_sdata = True)
 
-        if not self.input_image_status:
-            raise ValueError("Input image not found in sdata object.")
+            if not self.input_image_status:
+                raise ValueError("Input image not found in sdata object.")
 
-        input_image = self._get_input_image(_sdata)
-        shape = input_image.shape
+            image = self._get_input_image(_sdata)
+        shape = image.shape
 
         # initialize empty memory mapped arrays to store the data
         path_input_image = tempmmap.create_empty_mmap(
             shape=shape,
-            dtype=input_image.dtype,
+            dtype=image.dtype,
             tmp_dir_abs_path=tmp_dir_abs_path,
         )
 
@@ -228,12 +229,12 @@ class sdata_filehandler(Logable):
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
-                        input_image_mmap[z][c] = input_image[z][c].compute()
+                        input_image_mmap[z][c] = image[z][c].compute()
         else:
             for c in range(C):
-                    input_image_mmap[c] = input_image[c].compute()
+                    input_image_mmap[c] = image[c].compute()
 
         # cleanup the cache
-        del input_image_mmap, input_image   
+        del input_image_mmap, image   
 
         return path_input_image

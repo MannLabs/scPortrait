@@ -115,7 +115,7 @@ class Segmentation(ProcessingStep):
         self.is_shard = False
 
         # additional parameters to configure level of debugging for developers
-        self.deep_debug = True
+        self.deep_debug = False
         self.save_filter_results = False
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
@@ -381,18 +381,14 @@ class Segmentation(ProcessingStep):
 
         input_image = self._load_input_image()
 
-        print("input image loaded")
         # select the part of the image that is relevant for this shard
         input_image = input_image[:2, self.window[0], self.window[1]]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
-
-        print("selected the correct number of channels")
+        self.input_image = input_image #track for potential plotting of intermediate results
 
         if self.deep_debug:
             self.log(
-                f"Input image of dtype {type(input_image)} with dimensions {input_image} passed to sharded segmentation method."
+                f"Input image of dtype {type(input_image)} with dimensions {input_image.shape} passed to sharded segmentation method."
             )
-        else:
-            print("NOT DEEP DEBUG")
 
         if sc_any(input_image):
             try:
@@ -613,6 +609,10 @@ class ShardedSegmentation(Segmentation):
             tmp_dir_abs_path=self._tmp_dir_path,
         )
 
+        #clear temp directory used for sharding
+        shutil.rmtree(self._tmp_image_path)
+        self.log("Cleared temporary directory containing input image used for sharding.")
+
         hdf_labels = tempmmap.mmap_array_from_path(hdf_labels_path)
 
         class_id_shift = 0
@@ -717,7 +717,7 @@ class ShardedSegmentation(Segmentation):
 
                 resulting_map = orig_input_manipulation + shifted_map_manipulation
 
-                for _mask_ix in range(self.method.N_MASK):
+                for _mask_ix in range(self.method.N_MASKS):
                     plt.figure()
                     plt.imshow(resulting_map[_mask_ix])
                     plt.title(
@@ -876,8 +876,12 @@ class ShardedSegmentation(Segmentation):
 
         # get proper level of input image
         input_image = self._transform_input_image(input_image)
-        self.input_image_path = self.filehandler._load_input_image_to_memmap(tmp_dir_abs_path=self._tmp_dir_path)
+        self.input_image_path = self.filehandler._load_input_image_to_memmap(image = input_image, tmp_dir_abs_path=self._tmp_dir_path)
+        self._clear_cache(vars_to_delete=[input_image])
         
+        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+        self.log("Mapped input image to memory-mapped array.")
+
         self.image_size = input_image.shape[1:]
 
         if self.deep_debug:
@@ -954,6 +958,12 @@ class ShardedSegmentation(Segmentation):
 
         # get input image size
         input_image = self._transform_input_image(input_image)
+        self.input_image_path = self.filehandler._load_input_image_to_memmap(image = input_image, tmp_dir_abs_path=self._tmp_dir_path)
+        self._clear_cache(vars_to_delete=[input_image])
+        
+        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+        self.log("Mapped input image to memory-mapped array.")
+
         self.image_size = input_image.shape[1:]
 
         # load sharding plan
