@@ -610,7 +610,7 @@ class ShardedSegmentation(Segmentation):
         )
 
         #clear temp directory used for sharding
-        shutil.rmtree(self._tmp_image_path)
+        os.remove(self.input_image_path)
         self.log("Cleared temporary directory containing input image used for sharding.")
 
         hdf_labels = tempmmap.mmap_array_from_path(hdf_labels_path)
