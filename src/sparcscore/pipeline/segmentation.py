@@ -923,6 +923,9 @@ class ShardedSegmentation(Segmentation):
 
         self.shard_directory = os.path.join(self.directory, self.DEFAULT_TILES_FOLDER)
 
+        if "_tmp_dir_path" not in self.__dict__.keys():
+            self.create_temp_dir()
+            
         # check status of sdata object
         self.filehandler._check_sdata_status()
 
