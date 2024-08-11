@@ -205,6 +205,7 @@ class SpatialProject(Logable):
                 self.seg_directory,
                 nuc_seg_name = self.nuc_seg_name,
                 cyto_seg_name = self.cyto_seg_name, 
+                _tmp_image_path = None,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,

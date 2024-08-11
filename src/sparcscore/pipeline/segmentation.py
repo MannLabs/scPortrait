@@ -85,6 +85,7 @@ class Segmentation(ProcessingStep):
                  directory,
                  nuc_seg_name,
                  cyto_seg_name,
+                 _tmp_image_path,
                  project_location,
                  debug,
                  overwrite,
@@ -120,6 +121,7 @@ class Segmentation(ProcessingStep):
         self.save_filter_results = False
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
+        self._tmp_image_path = _tmp_image_path
 
     def _check_gpu_status(self):
         # check if cuda GPU is available
@@ -181,7 +183,8 @@ class Segmentation(ProcessingStep):
         self.gpu_id_list = gpu_id_list
 
         self.log(
-            f"GPU status for segmentation is {self.use_GPU} with {self.nGPUs} GPUs found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
+          
+            f"GPU Status for segmentation is {self.use_GPU} with {self.nGPUs} GPUs found. Segmentation will be performed on the device {self.device} with {self.processes_per_GPU} processes per device in parallel."
         )
 
     def _check_filter_status(self):
@@ -217,17 +220,9 @@ class Segmentation(ProcessingStep):
             daskArray: Input image as a daskArray
         """
         start = timeit.default_timer()
-        sdata = SpatialData.read(self.input_path)
-
-        if isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
-            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-        elif isinstance(sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-            input_image = sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-        else:
-            raise ValueError("Input image could not be loaded from sdata object.")
-        
+        input_image = tempmmap.mmap_array_from_path(self._tmp_image_path)
         self.log(f"Time taken to load input image: {timeit.default_timer() - start}")
-        return self._transform_input_image(input_image)
+        return input_image
 
     def _transform_input_image(self, input_image):
         if isinstance(input_image, xarray.DataArray):
@@ -388,12 +383,13 @@ class Segmentation(ProcessingStep):
         input_image = self._load_input_image()
 
         # select the part of the image that is relevant for this shard
-        input_image = input_image[
-            :2, self.window[0], self.window[1]
-        ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
+        input_image = input_image[:2, self.window[0], self.window[1]]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
+        self.input_image = input_image #track for potential plotting of intermediate results
 
-        # perform check to see if any input pixels are not 0, if so perform segmentation, else return array of zeros.
-        input_image = input_image.compute()
+        if self.deep_debug:
+            self.log(
+                f"Input image of dtype {type(input_image)} with dimensions {input_image.shape} passed to sharded segmentation method."
+            )
 
         if sc_any(input_image):
             try:
@@ -601,6 +597,7 @@ class ShardedSegmentation(Segmentation):
             current_shard = self.method(
                 self.config,
                 directory=local_shard_directory,
+                _tmp_image_path = self.input_image_path,
                 nuc_seg_name = self.nuc_seg_name,
                 cyto_seg_name = self.cyto_seg_name, 
                 filehandler = self.filehandler,
@@ -659,6 +656,10 @@ class ShardedSegmentation(Segmentation):
             dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             tmp_dir_abs_path=self._tmp_dir_path,
         )
+
+        #clear temp directory used for sharding
+        os.remove(self.input_image_path)
+        self.log("Cleared temporary directory containing input image used for sharding.")
 
         hdf_labels = tempmmap.mmap_array_from_path(hdf_labels_path)
 
@@ -764,7 +765,7 @@ class ShardedSegmentation(Segmentation):
 
                 resulting_map = orig_input_manipulation + shifted_map_manipulation
 
-                for _mask_ix in range(self.method.N_MASK):
+                for _mask_ix in range(self.method.N_MASKS):
                     plt.figure()
                     plt.imshow(resulting_map[_mask_ix])
                     plt.title(
@@ -928,8 +929,11 @@ class ShardedSegmentation(Segmentation):
         # get proper level of input image
         input_image = self._transform_input_image(input_image)
 
-        stop_transform = timeit.default_timer()
-        transform_time = stop_transform - start_transform
+        self.input_image_path = self.filehandler._load_input_image_to_memmap(image = input_image, tmp_dir_abs_path=self._tmp_dir_path)
+        self._clear_cache(vars_to_delete=[input_image])
+        
+        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+        self.log("Mapped input image to memory-mapped array.")
 
         self.image_size = input_image.shape[1:]
 
@@ -1040,6 +1044,12 @@ class ShardedSegmentation(Segmentation):
 
         # get input image size
         input_image = self._transform_input_image(input_image)
+        self.input_image_path = self.filehandler._load_input_image_to_memmap(image = input_image, tmp_dir_abs_path=self._tmp_dir_path)
+        self._clear_cache(vars_to_delete=[input_image])
+        
+        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+        self.log("Mapped input image to memory-mapped array.")
+
         self.image_size = input_image.shape[1:]
 
         # load sharding plan

@@ -84,6 +84,20 @@ ShardedCytosolSegmentationCellpose:
     match_masks: True
     filtering_threshold_mask_matching: 0.95
     filter_masks_size: False
+Sharded_CytosolOnly_Cellpose_Segmentation:
+    input_channels: 2
+    output_masks: 1
+    shard_size: 4000000 # maxmimum number of pixel per tile
+    overlap_px: 300
+    nGPUs: 1
+    chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
+    threads: 3 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+    cache: "."
+    cytosol_segmentation:
+        model: "cyto2"
+    chunk_size: 50
+    match_masks: False
+    filter_masks_size: False
 HDF5CellExtraction:
     compression: True
     threads: 80 # threads used in multithreading
