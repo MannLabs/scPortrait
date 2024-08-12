@@ -97,25 +97,26 @@ def get_chunk_size(element: Union[datatree.DataTree, xarray.DataArray]) ->  Unio
     if isinstance(element, xarray.DataArray):
         if len(element.shape) == 2:
             y, x = element.chunksizes.values()
-            if len(y) > 1:
+            if len(y) > 1 or isinstance(y, tuple):
                     y = y[0]
-            if len(x) > 1:
+            if len(x) > 1 or isinstance(x, tuple):
                 x = x[0]
             y, x = np.array([y, x]).flatten()
             chunksize = (y, x)
+
         elif len(element.shape) == 3:
             c, y, x = element.chunksizes.values()
-            if len(y) > 1:
+            if len(y) > 1 or isinstance(y, tuple):
                 y = y[0]
-            if len(x) > 1:
+            if len(x) > 1 or isinstance(x, tuple):
                 x = x[0]
-            if len(c) > 1:
+            if len(c) > 1 or isinstance(c, tuple):
                 c = c[0]
             c, y, x = np.array([c, y, x]).flatten()
             chunksize = (c, y, x)
         return chunksize
     
-    elif  isinstance(element, datatree.DataTree):
+    elif isinstance(element, datatree.DataTree):
         scales = list(element.keys())
         chunk_sizes = []
         
