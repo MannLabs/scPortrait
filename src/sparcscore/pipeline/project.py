@@ -408,7 +408,7 @@ class SpatialProject(Logable):
         if self.sdata is None:
             self._read_sdata()
         else:
-            self.filehandler._check_sdata_status()
+            self.sdata = self.filehandler._check_sdata_status(return_sdata=True)
             self.input_image_status = self.filehandler.input_image_status
             self.nuc_seg_status = self.filehandler.nuc_seg_status
             self.cyto_seg_status = self.filehandler.cyto_seg_status

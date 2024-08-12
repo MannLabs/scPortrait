@@ -29,7 +29,7 @@ class HDF5CellExtraction(ProcessingStep):
     results to an HDF5 file.
     """
 
-    CLEAN_LOG = True
+    CLEAN_LOG = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -327,6 +327,7 @@ class HDF5CellExtraction(ProcessingStep):
             chosen_ids = np.random.choice(
                 list(range(len(self.centers_cell_ids))), self.n_cells, replace=False
             )
+            print(self.centers_cell_ids)
             self.classes = self.centers_cell_ids[chosen_ids]
             self.px_centers = self.centers[chosen_ids]
         else:
@@ -807,6 +808,7 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             # create new file
             benchmarking.to_csv(benchmarking_path, index=False)
+        self.log("Benchmarking times saved to file.")
 
     def process(self, partial=False, n_cells=None, seed=42):
         """
