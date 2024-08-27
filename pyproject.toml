@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [project]
-name = "SPARCSspatial"
+name = "sparcscore"
 version = "1.0.0"
 description = "Computational framework to generate single cell datasets from raw microscopy images."
 readme = "README.md"
