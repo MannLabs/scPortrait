@@ -5,7 +5,7 @@ requires = ["hatchling"]
 [project]
 name = "scPortrait"
 version = "1.0.0"
-description = "Computational framework to generate single cell representations from raw microscopy images."
+description = "Computational framework to generate single cell datasets from raw microscopy images."
 readme = "README.md"
 requires-python = ">=3.10, !=3.12.*"
 license = {file = "LICENSE"}
@@ -14,8 +14,8 @@ dynamic = ["dependencies", "optional-dependencies"]
 authors = [
   {name = "Sophia Maedler"},
   {name = "Niklas Schmacke"},
-  {name = "Georg Wallmann"},
   {name = "Altana Namsaraeva"},
+  {name = "Georg Wallmann"},
 ]
 maintainers = [
   {name = "Sophia Maedler", email = "maedler@biochem.mpg.de"},
