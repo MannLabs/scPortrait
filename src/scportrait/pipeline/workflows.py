@@ -17,10 +17,10 @@ from skimage.morphology import binary_erosion, disk, dilation, erosion
 import torch
 from cellpose import models
 
-from sparcscore.utils.vis import _custom_cmap
-from sparcscore.processing.preprocessing import percentile_normalization, downsample_img
-from sparcscore.processing.filtering import SizeFilter, MatchNucleusCytosolIds
-from sparcscore.processing.segmentation import (
+from scportrait.utils.vis import _custom_cmap
+from scportrait.processing.preprocessing import percentile_normalization, downsample_img
+from scportrait.processing.filtering import SizeFilter, MatchNucleusCytosolIds
+from scportrait.processing.segmentation import (
     segment_local_threshold,
     segment_global_threshold,
     numba_mask_centroid,
@@ -28,7 +28,7 @@ from sparcscore.processing.segmentation import (
     global_otsu,
     remove_edge_labels,
 )
-from sparcscore.pipeline.segmentation import (
+from scportrait.pipeline.segmentation import (
     Segmentation,
     ShardedSegmentation,
 )

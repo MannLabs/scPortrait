@@ -2,7 +2,7 @@ from spatialdata.models import TableModel, PointsModel
 from spatialdata import SpatialData, get_centroids
 from spatialdata._core.operations.transform import transform
 from spatialdata.transformations.operations import get_transformation
-from sparcscore.processing.segmentation import numba_mask_centroid
+from scportrait.processing.segmentation import numba_mask_centroid
 import datatree
 import xarray
 

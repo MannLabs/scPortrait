@@ -16,9 +16,9 @@ import torch
 import pytorch_lightning as pl
 from torchvision import transforms
 
-from sparcscore.ml.datasets import HDF5SingleCellDataset
-from sparcscore.ml.plmodels import MultilabelSupervisedModel
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.ml.datasets import HDF5SingleCellDataset
+from scportrait.ml.plmodels import MultilabelSupervisedModel
+from scportrait.pipeline.base import ProcessingStep
 
 
 class _ClassificationBase(ProcessingStep):
@@ -315,18 +315,18 @@ class _ClassificationBase(ProcessingStep):
         """
 
         if model_name == "autophagy_classifier1.0":
-            from sparcscore.ml.pretrained_models import autophagy_classifier1_0
+            from scportrait.ml.pretrained_models import autophagy_classifier1_0
 
             model = autophagy_classifier1_0(device=self.config["inference_device"])
             self.expected_imagesize = (128, 128)
         elif model_name == "autophagy_classifier2.0":
-            from sparcscore.ml.pretrained_models import autophagy_classifier2_0
+            from scportrait.ml.pretrained_models import autophagy_classifier2_0
 
             model = autophagy_classifier2_0(device=self.config["inference_device"])
             # self.expected_imagesize = (128, 128)
 
         elif model_name == "autophagy_classifier2.1":
-            from sparcscore.ml.pretrained_models import autophagy_classifier2_1
+            from scportrait.ml.pretrained_models import autophagy_classifier2_1
 
             model = autophagy_classifier2_1(device=self.config["inference_device"])
             self.expected_imagesize = (128, 128)

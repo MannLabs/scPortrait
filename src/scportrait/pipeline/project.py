@@ -26,10 +26,10 @@ from napari_spatialdata import Interactive
 
 from sparcstools.base import daskmmap
 
-from sparcscore.pipeline.base import Logable
-from sparcscore.pipeline.io import sdata_filehandler
-from sparcscore.pipeline.spatialdata_classes import spLabels2DModel
-from sparcscore.utils.spatialdata_helper import (
+from scportrait.pipeline.base import Logable
+from scportrait.pipeline.io import sdata_filehandler
+from scportrait.pipeline.spatialdata_classes import spLabels2DModel
+from scportrait.utils.spatialdata_helper import (
     get_unique_cell_ids,
     generate_region_annotation_lookuptable,
     remap_region_annotation_table,
