@@ -16,8 +16,8 @@ import time
 import traceback
 from PIL import Image
 
-from sparcscore.processing.segmentation import shift_labels, sc_any, _return_edge_labels
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.processing.segmentation import shift_labels, sc_any, _return_edge_labels
+from scportrait.pipeline.base import ProcessingStep
 
 from alphabase.io import tempmmap
 from dask.array.core import Array as daskArray

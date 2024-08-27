@@ -5,7 +5,7 @@ import numpy as np
 from lmd.lib import SegmentationLoader
 from alphabase.io import tempmmap
 
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.pipeline.base import ProcessingStep
 
 
 class LMDSelection(ProcessingStep):

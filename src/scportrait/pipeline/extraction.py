@@ -18,9 +18,9 @@ from spatialdata import SpatialData
 import datatree
 import xarray
 
-from sparcscore.processing.utils import flatten
-from sparcscore.processing.preprocessing import percentile_normalization
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.processing.utils import flatten
+from scportrait.processing.preprocessing import percentile_normalization
+from scportrait.pipeline.base import ProcessingStep
 
 
 class HDF5CellExtraction(ProcessingStep):

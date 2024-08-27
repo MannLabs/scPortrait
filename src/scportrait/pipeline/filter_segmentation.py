@@ -11,8 +11,8 @@ import traceback
 
 from multiprocessing import Pool
 
-from sparcscore.processing.segmentation import sc_any
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.processing.segmentation import sc_any
+from scportrait.pipeline.base import ProcessingStep
 
 from alphabase.io import tempmmap
 

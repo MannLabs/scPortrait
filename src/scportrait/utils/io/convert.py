@@ -18,8 +18,8 @@ import psutil
 from alphabase.io import tempmmap
 from sparcstools.base import daskmmap
 
-from sparcscore.processing.segmentation import numba_mask_centroid
-from sparcscore.pipeline.base import Logable
+from scportrait.processing.segmentation import numba_mask_centroid
+from scportrait.pipeline.base import Logable
 
 DEFAULT_IMAGE_DTYPE = np.uint16
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
