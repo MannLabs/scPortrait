@@ -1,13 +1,13 @@
-from sparcscore.pipeline.segmentation import (
+from scportrait.pipeline.segmentation import (
     Segmentation,
     ShardedSegmentation,
     TimecourseSegmentation,
     MultithreadedSegmentation,
 )
-from sparcscore.processing.preprocessing import percentile_normalization, downsample_img
-from sparcscore.processing.filtering import SizeFilter, MatchNucleusCytosolIds
-from sparcscore.processing.utils import visualize_class
-from sparcscore.processing.segmentation import (
+from scportrait.processing.preprocessing import percentile_normalization, downsample_img
+from scportrait.processing.filtering import SizeFilter, MatchNucleusCytosolIds
+from scportrait.processing.utils import visualize_class
+from scportrait.processing.segmentation import (
     segment_local_threshold,
     segment_global_threshold,
     numba_mask_centroid,
@@ -50,7 +50,7 @@ from cellpose import models
 
 #for visualization 
 
-from sparcscore.utils.vis import _custom_cmap
+from scportrait.utils.vis import _custom_cmap
 
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):

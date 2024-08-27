@@ -1,4 +1,4 @@
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.pipeline.base import ProcessingStep
 import os
 import numpy as np
 import h5py

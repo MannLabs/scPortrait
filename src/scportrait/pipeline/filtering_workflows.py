@@ -1,11 +1,11 @@
-from sparcscore.pipeline.filter_segmentation import (
+from scportrait.pipeline.filter_segmentation import (
     SegmentationFilter,
     TiledSegmentationFilter,
 )
 
 import numpy as np
 
-from sparcscore.processing.filtering import MatchNucleusCytosolIds
+from scportrait.processing.filtering import MatchNucleusCytosolIds
 
 
 class BaseFiltering(SegmentationFilter):
