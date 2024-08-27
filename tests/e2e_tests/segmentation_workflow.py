@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import h5py
 import numpy as np
 
-from sparcscore.pipeline.project import Project
-from sparcscore.pipeline.workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
-from sparcscore.pipeline.extraction import HDF5CellExtraction
-from sparcscore.pipeline.classification import CellFeaturizer
+from scportrait.pipeline.project import Project
+from scportrait.pipeline.workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
+from scportrait.pipeline.extraction import HDF5CellExtraction
+from scportrait.pipeline.classification import CellFeaturizer
 
-from sparcscore.processing.segmentation import numba_mask_centroid
+from scportrait.processing.segmentation import numba_mask_centroid
 
 if __name__ == '__main__':
 
