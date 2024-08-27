@@ -8,5 +8,5 @@ utils
 vis
 ########
 
-.. automodule:: sparcscore.utils.vis
+.. automodule:: scportrait.utils.vis
     :members:

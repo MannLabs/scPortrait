@@ -39,12 +39,12 @@ SPARCSpy currently implements two different segmentation classes for each of the
 1. Segmentation
 +++++++++++++++
 
-The :func:`Segmentation <sparcscore.pipeline.segmentation.Segmentation>` class is optimized for processing input images of the format CXY within the context of a base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>`. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.
+The :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>` class is optimized for processing input images of the format CXY within the context of a base SPARCSpy :func:`Project <scportrait.pipeline.project.Project>`. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.
 
 2. ShardedSegmentation
 ++++++++++++++++++++++
 
-The :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class is an extension of the :func:`Segmentation <sparcscore.pipeline.segmentation.Segmentation>` class which is optimized for processing large input images in the format CXY in a parallelized fashion. When loading the input image, the :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class splits the provided image into smaller tiles, called shards, which can then be processed individually in a parallelized fashion. After segmentation of the individual shards is completed, the :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class merges the individual tiles back together to generate a final segmentation mask which extends over the complete input image.
+The :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class is an extension of the :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>` class which is optimized for processing large input images in the format CXY in a parallelized fashion. When loading the input image, the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class splits the provided image into smaller tiles, called shards, which can then be processed individually in a parallelized fashion. After segmentation of the individual shards is completed, the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class merges the individual tiles back together to generate a final segmentation mask which extends over the complete input image.
 
 Using a shardings approach has two main advantages:
 
@@ -53,9 +53,9 @@ Using a shardings approach has two main advantages:
 
 To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (``shard_size``). SPARCSpy then dynamically calculates a so-called `sharding plan` which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (``overlap_px``) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented. 
 
-The :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class then segments each of the calculated shards individually using the designated number of parallel processes (``threads``). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.
+The :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class then segments each of the calculated shards individually using the designated number of parallel processes (``threads``). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.
 
-After segmentation of each individual shard is completed, the :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the ``cell ids`` are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted. 
+After segmentation of each individual shard is completed, the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the ``cell ids`` are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted. 
 
 Configuration parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -74,12 +74,12 @@ The following parameters for a sharded segmentation need to be specified in the 
 3. TimecourseSegmentation
 +++++++++++++++++++++++++
 
-The :func:`TimecourseSegmentation <sparcscore.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a SPARCSpy :func:`Timecourse Project <sparcscore.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
+The :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a SPARCSpy :func:`Timecourse Project <scportrait.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
 
 4. MultithreadedSegmentation
 ++++++++++++++++++++++++++++
 
-The :func:`MultithreadedSegmentation <sparcscore.pipeline.segmentation.MultithreadedSegmentation>` class is an extension of the :func:`TimecourseSegmentation <sparcscore.pipeline.segmentation.TimecourseSegmentation>` class and segments input images in the format NCYX in a parallelized fashion. The parallelization is achieved by splitting the input images along the N axis and processing each imagestack individually. The number of parallel processes can be specified by the user via the configuration file (``threads``).
+The :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class is an extension of the :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class and segments input images in the format NCYX in a parallelized fashion. The parallelization is achieved by splitting the input images along the N axis and processing each imagestack individually. The number of parallel processes can be specified by the user via the configuration file (``threads``).
 
 Configuration parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,7 +110,7 @@ WGA segmentation
 
 This segmentation workflow aims to segment mononucleated cells, i.e. cells that contain exactly one nucleus. Based on a nuclear stain and a cellmembrane stain, it first uses a thresholding approach to identify nuclei which are assumed to be the center of each cell. Then in a second step, the center of the identified nuclei are used as a starting point to generate a potential map using the cytosolic stain. This potential map is then used to segment the cytosol using a watershed approach. At the end of the workflow the user obtains both a nuclear and a cytosolic segmentation mask where each cytosol is matched to exactly one nucleus as kann be identified by the matching ``cell id``. 
 
-This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>` class or the :func:`MultithreadedSegmentation <sparcscore.pipeline.segmentation.MultithreadedSegmentation>` class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.
+This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class or the :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.
 
 ..  code-block:: yaml
     :caption: Example configuration for  WGASegmentation
