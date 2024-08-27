@@ -1,0 +1,36 @@
+#### Required Packages #####
+
+# General dependencies
+numpy
+pandas
+tabulate
+colorama
+matplotlib
+tqdm
+h5py
+pyyaml
+pillow
+zarr
+ome-zarr
+alphabase
+aicspylibczi
+shapely
+rasterio
+imagesize
+xarray
+
+
+# Packages better installed via conda due to dependencies
+cellpose
+scikit-fmm
+
+# Packages to be installed via conda
+# (Ensure these are installed in your conda environment beforehand)
+numba
+torch
+pytorch-lightning
+torchvision
+opencv-python
+scikit-image
+scipy
+mahotas
