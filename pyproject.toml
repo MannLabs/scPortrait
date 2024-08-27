@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparcscore"
+version = "1.0.0"
+description = "Computational framework to generate single cell datasets from raw microscopy images."
+readme = "README.md"
+requires-python = ">=3.10, !=3.12.*"
+license = {file = "LICENSE"}
+keywords = ["single-cell", "image analysis", "spatial omics", "deep learning", "image representation"]
+dynamic = ["dependencies", "optional-dependencies"]
+authors = [
+  {name = "Sophia Maedler"},
+  {name = "Niklas Schmacke"},
+  {name = "Altana Namsaraeva"},
+  {name = "Georg Wallmann"},
+]
+maintainers = [
+  {name = "Sophia Maedler", email = "maedler@biochem.mpg.de"},
+]
+
+classifiers = [
+ "License :: OSI Approved :: Apache Software License",
+ "Development Status :: 4 - Beta",
+ "Programming Language :: Python",
+ "Intended Audience :: Science/Research",
+ "Natural Language :: English",
+ "Operating System :: MacOS :: MacOS X",
+ "Operating System :: POSIX :: Linux",
+ "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = {file = ["requirements_dev.txt"]}
+
+[project.urls]
+Homepage = "https://github.com/MannLabs/SPARCSspatial"
+Documentation = "https://mannlabs.github.io/SPARCSspatial/html/index.html"
+Source = "https://github.com/MannLabs/SPARCSspatial"
