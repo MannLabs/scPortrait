@@ -16,9 +16,9 @@ import h5py
 from tqdm.auto import tqdm
 from time import time
 
-from sparcscore.pipeline.base import Logable
-from sparcscore.processing.preprocessing import percentile_normalization, EDF, maximum_intensity_projection
-from sparcscore.pipeline.utils import _read_napari_csv, _generate_mask_polygon
+from scportrait.pipeline.base import Logable
+from scportrait.processing.preprocessing import percentile_normalization, EDF, maximum_intensity_projection
+from scportrait.pipeline.utils import _read_napari_csv, _generate_mask_polygon
 
 import zarr
 from ome_zarr.io import parse_url

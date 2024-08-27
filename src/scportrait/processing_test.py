@@ -7,7 +7,7 @@ import os
 # Unit tests for ../proccessing/segmentation.py
 #######################################################
 
-from sparcscore.processing.segmentation import (
+from scportrait.processing.segmentation import (
     global_otsu,
     _segment_threshold,
     segment_global_threshold,
@@ -80,7 +80,7 @@ def test_segment_local_threshold():
     assert labels.max() > 0
 
 
-from sparcscore.processing.segmentation import _return_edge_labels, shift_labels
+from scportrait.processing.segmentation import _return_edge_labels, shift_labels
 
 
 def test_return_edge_labels():
@@ -139,7 +139,7 @@ def test_shift_labels():
     )
 
 
-from sparcscore.processing.segmentation import _remove_classes, remove_classes
+from scportrait.processing.segmentation import _remove_classes, remove_classes
 
 
 def test_remove_classes():
@@ -172,7 +172,7 @@ def test_remove_classes():
     assert np.array_equal(result_custom_background, expected_output_custom_background)
 
 
-from sparcscore.processing.segmentation import contact_filter_lambda, contact_filter
+from scportrait.processing.segmentation import contact_filter_lambda, contact_filter
 
 
 def test_contact_filter_lambda():
@@ -189,7 +189,7 @@ def test_contact_filter():
     assert np.all(result == expected_result)
 
 
-from sparcscore.processing.segmentation import _class_size, size_filter
+from scportrait.processing.segmentation import _class_size, size_filter
 
 
 def test_size_filter():
@@ -212,7 +212,7 @@ def test_class_size():
     assert np.isnan(length[0])
 
 
-from sparcscore.processing.segmentation import _numba_subtract, numba_mask_centroid
+from scportrait.processing.segmentation import _numba_subtract, numba_mask_centroid
 
 
 def test_numba_subtract():
@@ -239,7 +239,7 @@ def test_numba_mask_centroid():
 # Unit tests for ../proccessing/preprocessing.py
 #######################################################
 
-from sparcscore.processing.preprocessing import (
+from scportrait.processing.preprocessing import (
     _percentile_norm,
     percentile_normalization,
     rolling_window_mean,
@@ -291,7 +291,7 @@ def test_MinMax():
 # Unit tests for ../proccessing/utils.py
 #######################################################
 
-from sparcscore.processing.utils import (
+from scportrait.processing.utils import (
     plot_image,
     visualize_class,
     download_testimage,
@@ -341,7 +341,7 @@ def test_plot_image(tmpdir):
 #######################################################
 
 import tempfile
-from sparcscore.pipeline.base import Logable, ProcessingStep
+from scportrait.pipeline.base import Logable, ProcessingStep
 
 
 def test_logable_init():

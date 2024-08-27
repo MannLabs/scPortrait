@@ -6,10 +6,10 @@ import numpy as np
 import torch
 from torch.masked import masked_tensor
 
-from sparcscore.ml.datasets import HDF5SingleCellDataset
-from sparcscore.ml.transforms import ChannelSelector
-from sparcscore.ml.plmodels import MultilabelSupervisedModel
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.ml.datasets import HDF5SingleCellDataset
+from scportrait.ml.transforms import ChannelSelector
+from scportrait.ml.plmodels import MultilabelSupervisedModel
+from scportrait.pipeline.base import ProcessingStep
 
 from torchvision import transforms
 
@@ -245,15 +245,15 @@ class MLClusterClassifier(ProcessingStep):
             "autophagy_classifier2.1",
         ]:
             if network_dir == "autophagy_classifier1.0":
-                from sparcscore.ml.pretrained_models import autophagy_classifier1_0
+                from scportrait.ml.pretrained_models import autophagy_classifier1_0
 
                 model = autophagy_classifier1_0(device=self.config["inference_device"])
             elif network_dir == "autophagy_classifier2.0":
-                from sparcscore.ml.pretrained_models import autophagy_classifier2_0
+                from scportrait.ml.pretrained_models import autophagy_classifier2_0
 
                 model = autophagy_classifier2_0(device=self.config["inference_device"])
             elif network_dir == "autophagy_classifier2.1":
-                from sparcscore.ml.pretrained_models import autophagy_classifier2_1
+                from scportrait.ml.pretrained_models import autophagy_classifier2_1
 
                 model = autophagy_classifier2_1(device=self.config["inference_device"])
             else:

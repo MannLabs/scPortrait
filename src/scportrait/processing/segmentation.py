@@ -15,7 +15,7 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.morphology import binary_erosion, disk
 import skfmm
 
-from sparcscore.processing.utils import plot_image
+from scportrait.processing.utils import plot_image
 
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
 

@@ -18,10 +18,10 @@ from alphabase.io.tempmmap import create_empty_mmap, mmap_array_from_path
 from skimage.filters import gaussian
 from scipy.ndimage import binary_fill_holes
 
-from sparcscore.processing.segmentation import numba_mask_centroid
-from sparcscore.processing.utils import flatten
-from sparcscore.processing.preprocessing import percentile_normalization
-from sparcscore.pipeline.base import ProcessingStep
+from scportrait.processing.segmentation import numba_mask_centroid
+from scportrait.processing.utils import flatten
+from scportrait.processing.preprocessing import percentile_normalization
+from scportrait.pipeline.base import ProcessingStep
 
 
 # to perform garbage collection

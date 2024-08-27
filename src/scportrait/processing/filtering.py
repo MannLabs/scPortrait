@@ -7,11 +7,11 @@ import os
 from skimage.morphology import disk, dilation, erosion
 from collections import defaultdict
 
-from sparcscore.pipeline.base import Logable
-from sparcscore.processing.preprocessing import downsample_img_pxs
+from scportrait.pipeline.base import Logable
+from scportrait.processing.preprocessing import downsample_img_pxs
 
 #for visualization purposes
-from sparcscore.utils.vis import _custom_cmap
+from scportrait.utils.vis import _custom_cmap
 
 class BaseFilter(Logable):
     def __init__(self, *args, **kwargs):
