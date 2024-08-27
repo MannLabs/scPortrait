@@ -17,24 +17,24 @@ SPARCSpy provides several different ``Project`` classes which are designed to ha
 1. Project
 ++++++++++
 
-The base :func:`Project <sparcscore.pipeline.project.Project>` class is for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.
+The base :func:`Project <scportrait.pipeline.project.Project>` class is for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.
 
 Associated methods classes
 **************************
 
-1. segmentation methods: :func:`Segmentation <sparcscore.pipeline.segmentation.Segmentation>`, :func:`ShardedSegmentation <sparcscore.pipeline.segmentation.ShardedSegmentation>`  
-2. extraction methods: :func:`HDF5CellExtraction <sparcscore.pipeline.extraction.HDF5CellExtraction>`
+1. segmentation methods: :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>`, :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>`  
+2. extraction methods: :func:`HDF5CellExtraction <scportrait.pipeline.extraction.HDF5CellExtraction>`
 
 2. TimecourseProject
 +++++++++++++++++++++
 
-The :func:`TimecourseProject <sparcscore.pipeline.project.TimecourseProject>` class is for datasets with multiple input images, for example those generated via live-cell imaging.
+The :func:`TimecourseProject <scportrait.pipeline.project.TimecourseProject>` class is for datasets with multiple input images, for example those generated via live-cell imaging.
 
 Associated methods classes
 **************************
 
-1. segmentation methods: :func:`TimecourseSegmentation <sparcscore.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <sparcscore.pipeline.segmentation.MultithreadedTimecourseSegmentation>`   
-2. extraction methods: :func:`TimecourseHDF5CellExtraction <sparcscore.pipeline.extraction.TimecourseHDF5CellExtraction>`  
+1. segmentation methods: :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <scportrait.pipeline.segmentation.MultithreadedTimecourseSegmentation>`   
+2. extraction methods: :func:`TimecourseHDF5CellExtraction <scportrait.pipeline.extraction.TimecourseHDF5CellExtraction>`  
 
 Initializing a SPARCSpy Project
 -------------------------------
@@ -44,9 +44,9 @@ Each SPARCSpy project is mapped to a directory on the file system. The path to t
 .. code:: python
     :caption: Example code showing how to initializing a SPARCSpy Project
 
-    from sparcscore.pipeline.project import Project
-    from sparcscore.pipeline.segmentation import WGASegmentation
-    from sparcscore.pipeline.extraction import HDF5CellExtraction
+    from scportrait.pipeline.project import Project
+    from scportrait.pipeline.segmentation import WGASegmentation
+    from scportrait.pipeline.extraction import HDF5CellExtraction
 
     project = Project('/path/to/project/dir',
                       config_path = '/path/to/config/file',

@@ -15,7 +15,7 @@ Logable
 
 Base Class which generates framework for logging. 
 
-.. autoclass:: sparcscore.pipeline.base.Logable
+.. autoclass:: scportrait.pipeline.base.Logable
     :members:
 
 ProcessingStep
@@ -23,7 +23,7 @@ ProcessingStep
 
 Starting point for all processing steps. Reads a config file that contains the parameters used to set up a processing method and generates the folder structure necessary for saving the generated outputs. 
 
-.. autoclass:: sparcscore.pipeline.base.ProcessingStep
+.. autoclass:: scportrait.pipeline.base.ProcessingStep
     :members:
     :show-inheritance:
 
@@ -34,14 +34,14 @@ Within SPARCSpy, all operations are centered around the concept of a ``Project``
 
 Project 
 =========
-.. autoclass:: sparcscore.pipeline.project.Project
+.. autoclass:: scportrait.pipeline.project.Project
     :members:
     :show-inheritance:
 
 
 TimecourseProject 
 =================
-.. autoclass:: sparcscore.pipeline.project.TimecourseProject
+.. autoclass:: scportrait.pipeline.project.TimecourseProject
     :members:
     :show-inheritance:
 
@@ -51,32 +51,32 @@ segmentation
 
 Segmentation
 ==============
-.. autoclass:: sparcscore.pipeline.segmentation.Segmentation
+.. autoclass:: scportrait.pipeline.segmentation.Segmentation
     :members:
     :show-inheritance:
 
 ShardedSegmentation
 =====================
-.. autoclass:: sparcscore.pipeline.segmentation.ShardedSegmentation
+.. autoclass:: scportrait.pipeline.segmentation.ShardedSegmentation
     :members:
     :show-inheritance:
 
 TimecourseSegmentation
 ======================
-.. autoclass:: sparcscore.pipeline.segmentation.TimecourseSegmentation
+.. autoclass:: scportrait.pipeline.segmentation.TimecourseSegmentation
     :members:
     :show-inheritance:
 
 MultithreadedTimecourseSegmentation
 ===================================
-.. autoclass:: sparcscore.pipeline.segmentation.MultithreadedSegmentation
+.. autoclass:: scportrait.pipeline.segmentation.MultithreadedSegmentation
     :members:
     :show-inheritance:
 
 
 workflows
 ##########
-.. automodule:: sparcscore.pipeline.workflows
+.. automodule:: scportrait.pipeline.workflows
     :members:
 
 extraction
@@ -84,13 +84,13 @@ extraction
 
 HDF5CellExtraction
 ===================
-.. autoclass:: sparcscore.pipeline.extraction.HDF5CellExtraction
+.. autoclass:: scportrait.pipeline.extraction.HDF5CellExtraction
     :members:
     :show-inheritance:
 
 TimecourseHDF5CellExtraction
 ============================
-.. autoclass:: sparcscore.pipeline.extraction.TimecourseHDF5CellExtraction
+.. autoclass:: scportrait.pipeline.extraction.TimecourseHDF5CellExtraction
     :members:
     :show-inheritance:
 
@@ -100,14 +100,14 @@ classification
 
 MLClusterClassifier
 ===================
-.. autoclass:: sparcscore.pipeline.classification.MLClusterClassifier
+.. autoclass:: scportrait.pipeline.classification.MLClusterClassifier
     :members:
 
     .. automethod:: __call__
 
 CellFeaturizer
 ==============
-.. autoclass:: sparcscore.pipeline.classification.CellFeaturizer
+.. autoclass:: scportrait.pipeline.classification.CellFeaturizer
     :members:
 
     .. automethod:: __call__
@@ -117,7 +117,7 @@ selection
 
 LMDSelection
 ==============
-.. autoclass:: sparcscore.pipeline.selection.LMDSelection
+.. autoclass:: scportrait.pipeline.selection.LMDSelection
     :members:
     :show-inheritance:
 
