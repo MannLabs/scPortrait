@@ -5,11 +5,11 @@ requires = ["hatchling"]
 [project]
 name = "scPortrait"
 version = "1.0.0"
-description = "Scalable toolkit to analyse single-cell image datasets."
+description = "Computational framework to generate single cell representations from raw microscopy images."
 readme = "README.md"
 requires-python = ">=3.10, !=3.12.*"
 license = {file = "LICENSE"}
-keywords = ["single-cell", "image analysis", "spatial omics"] # to change
+keywords = ["deep learning", "image representation"]
 dynamic = ["dependencies", "optional-dependencies"]
 authors = [
   {name = "Sophia Maedler"},
@@ -35,9 +35,10 @@ classifiers = [
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
-# [tool.setuptools.optional-dependencies] if needed later
+[tool.setuptools.optional-dependencies]
+dev = {file = ["requirements_dev.txt"]}
 
 [project.urls]
 Homepage = "https://github.com/MannLabs/SPARCSspatial"
-Documentation = "https://mannlabs.github.io/SPARCSpy/html/index.html"
+Documentation = "https://mannlabs.github.io/SPARCSspatial/html/index.html"
 Source = "https://github.com/MannLabs/SPARCSspatial"
