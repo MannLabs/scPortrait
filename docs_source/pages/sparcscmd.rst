@@ -1,5 +1,5 @@
 Command Line Tools
-=====================
+==================
 
 scPortrait comes equipped with several command line tools for easy handling of scPortrait datasets. 
 
