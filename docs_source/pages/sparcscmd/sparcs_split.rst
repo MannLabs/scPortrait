@@ -8,7 +8,7 @@ sparcs-split
    :prog: sparcs-split
    
 
-Manipulate existing SPARCSpy single cell hdf5 datasets.
+Manipulate existing scPortrait single cell hdf5 datasets.
 sparcs-split can be used for splitting, shuffleing and compression / decompression.
 
 Examples

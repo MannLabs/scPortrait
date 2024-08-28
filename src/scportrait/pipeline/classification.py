@@ -199,7 +199,7 @@ class MLClusterClassifier(ProcessingStep):
                 # Path to PyTorch checkpoint that should be used for inference
                 network: "path/to/model/"
 
-                # Classifier architecture implemented in SPARCSpy
+                # Classifier architecture implemented in scPortrait
                 # Choose one of VGG1, VGG2, VGG1_old, VGG2_old
                 classifier_architecture: "VGG2_old"
 

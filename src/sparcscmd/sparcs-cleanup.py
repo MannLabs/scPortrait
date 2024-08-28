@@ -9,11 +9,11 @@ from collections.abc import Iterable
 
 def generate_parser():
     # Instantiate the parser
-    parser = argparse.ArgumentParser(description='Scan directory for SPARCSpy projects.')
+    parser = argparse.ArgumentParser(description='Scan directory for scPortrait projects.')
     
     # Required positional argument
     parser.add_argument('search_directory', type=str,nargs='?',
-                        help='directory containing SPARCSpy projects')
+                        help='directory containing scPortrait projects')
     
     parser.add_argument("-t","--threads", type=int, default=8, help="number of threads")
     

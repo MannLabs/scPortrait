@@ -8,7 +8,7 @@ pipeline
 base
 #######
 
-A collection of base classes from which other classes in the SPARCSpy environment can inherit that manage base functionalities like logging or directory creation.
+A collection of base classes from which other classes in the scPortrait environment can inherit that manage base functionalities like logging or directory creation.
 
 Logable
 ==============
@@ -30,7 +30,7 @@ Starting point for all processing steps. Reads a config file that contains the p
 project
 #######
 
-Within SPARCSpy, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the SPARCSpy processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific SPARCSpy run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see :ref:`here <projects>` for more information.
+Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see :ref:`here <projects>` for more information.
 
 Project 
 =========

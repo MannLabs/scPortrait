@@ -1,5 +1,5 @@
 """
-Collection of functions to load pretrained models to use in the SPARCSpy environment.
+Collection of functions to load pretrained models to use in the scPortrait environment.
 """
 
 from scportrait.ml.plmodels import MultilabelSupervisedModel
@@ -46,7 +46,7 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = 
 
 def _get_data_dir():
     """
-    Helper Function to get path to data that was packaged with SPARCSpy
+    Helper Function to get path to data that was packaged with scPortrait
 
     Returns
     -------
@@ -59,7 +59,7 @@ def _get_data_dir():
 
 def autophagy_classifier1_0(device = "cuda"):
     """
-    Load binary autophagy classification model published as Model 1.0 in original SPARCSpy publication.
+    Load binary autophagy classification model published as Model 1.0 in original scPortrait publication.
     """
 
     data_dir = _get_data_dir()
@@ -72,7 +72,7 @@ def autophagy_classifier1_0(device = "cuda"):
 
 def autophagy_classifier2_0(device = "cuda"):
     """
-    Load binary autophagy classification model published as Model 2.0 in original SPARCSpy publication.
+    Load binary autophagy classification model published as Model 2.0 in original scPortrait publication.
     """
 
     data_dir = _get_data_dir()
@@ -85,7 +85,7 @@ def autophagy_classifier2_0(device = "cuda"):
 
 def autophagy_classifier2_1(device = "cuda"):
     """
-    Load binary autophagy classification model published as Model 2.1 in original SPARCSpy publication.
+    Load binary autophagy classification model published as Model 2.1 in original scPortrait publication.
     """
 
     data_dir = _get_data_dir()
