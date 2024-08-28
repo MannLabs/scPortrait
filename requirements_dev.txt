@@ -34,6 +34,6 @@ lxml_html_clean
 #packages for building the documentation
 sphinx
 sphinx-argparse
-sphinx-rtd-theme
+sphinx-rtd-theme==2.0.0
 nbsphinx
 renku-sphinx-theme
