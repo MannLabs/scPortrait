@@ -70,7 +70,7 @@ def download(
         temp_file_name = f"{download_to_path}.part"
 
         with open(temp_file_name, "wb") as file, tqdm(
-                    total=total, unit="B", unit_scale=True, desc="Downloading"
+                    total=total, unit="B", unit_scale=True, desc="Downloading..."
                 ) as progress_bar:
                     for data in response.iter_content(block_size):
                         file.write(data)
@@ -79,12 +79,8 @@ def download(
         Path(temp_file_name).replace(download_to_path)
 
         if archive_format:
-            output_path = output_path or tempfile.gettempdir()
             shutil.unpack_archive(download_to_path, output_path, format=archive_format)
-            download_to_path.unlink()
-            list_of_paths = [path for path in Path(output_path).resolve().glob("*/") if not path.name.startswith(".")]
-            latest_path = max(list_of_paths, key=lambda path: path.stat().st_ctime)
-            shutil.move(latest_path, latest_path.parent / remove_archive_extension(output_file_name))  # type: ignore
+            os.remove(download_to_path)
 
     Path(lock_path).unlink()
 
