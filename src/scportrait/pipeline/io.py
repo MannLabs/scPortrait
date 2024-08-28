@@ -114,7 +114,7 @@ class sdata_filehandler(Logable):
     ):
         _sdata = self._read_sdata()
 
-        # ensure that the segmentation object is converted to the sparcspy Labels2DModel
+        # ensure that the segmentation object is converted to the scPortrait Labels2DModel
         if not hasattr(segmentation_object.attrs, "cell_ids"):
             segmentation_object = spLabels2DModel().convert(
                 segmentation_object, classes=classes

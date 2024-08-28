@@ -542,7 +542,7 @@ class SpatialProject(Logable):
     # def _write_segmentation_object_sdata(
     #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
     # ):
-    #     # ensure that the segmentation object is converted to the sparcspy Labels2DModel
+    #     # ensure that the segmentation object is converted to the scPortrait Labels2DModel
     #     if not hasattr(segmentation_object.attrs, "cell_ids"):
     #         segmentation_object = spLabels2DModel().convert(
     #             segmentation_object, classes=classes
@@ -1018,7 +1018,7 @@ class SpatialProject(Logable):
                 "Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
             )
 
-        # ensure that the provided nucleus and cytosol segmentations fullfill the SPARCSpy requirements
+        # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
         assert (
@@ -1266,9 +1266,9 @@ class SpatialProject(Logable):
 # this class has not yet been set up to be used with spatialdata
 # class TimecourseProject(SpatialProject):
 #     """
-#     TimecourseProject class used to create a SPARCSpy project for datasets that have multiple fields of view that should be processed and analysed together.
-#     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>`,
-#     it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>` class,
+#     TimecourseProject class used to create a scPortrait project for datasets that have multiple fields of view that should be processed and analysed together.
+#     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>`,
+#     it manages all of the scPortrait processing steps. Because the input data has a different dimensionality than the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>` class,
 #     it requires the use of specialized processing classes that are able to handle this additional dimensionality.
 
 #     Parameters

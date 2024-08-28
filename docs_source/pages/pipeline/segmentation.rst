@@ -3,7 +3,7 @@
 Segmentation
 ============
 
-Segmentation is an essential step in the SPARCSpy workflow. The goal of segmentation is to generate a mask which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``. In SPARCSpy we distinguish two different types of segmentation masks: nuclear and cytosolic. Nuclear masks <...> Cytosolic masks <...>.
+Segmentation is an essential step in the scPortrait workflow. The goal of segmentation is to generate a mask which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``. In scPortrait we distinguish two different types of segmentation masks: nuclear and cytosolic. Nuclear masks <...> Cytosolic masks <...>.
 
 .. |pic1| image:: ../images/input_image.png
    :width: 100%
@@ -20,7 +20,7 @@ Segmentation is an essential step in the SPARCSpy workflow. The goal of segmenta
 | |pic1|                | |pic2|                | |pic3|                |
 +-----------------------+-----------------------+-----------------------+
 
-To ensure overall flexibility, SPARCSpy seperates the segmentation code framework (i.e. loading input data, calling a segmentation method or saving results) from the actual segmentation algorithm (i.e. how the segmentation mask is calculated for a given input).
+To ensure overall flexibility, scPortrait seperates the segmentation code framework (i.e. loading input data, calling a segmentation method or saving results) from the actual segmentation algorithm (i.e. how the segmentation mask is calculated for a given input).
 
 The segmentation code framework is implemented through so called segmentation classes. Each class is optimized for a given input data format and level of parallelization. The segmentation algorithms themselves are implemented by so called segmentation workflows. Each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation). 
 
@@ -29,7 +29,7 @@ Using class inheritance each segmentation workflow inherits from a segmentation 
 Segmentation classes
 --------------------
 
-SPARCSpy currently implements two different segmentation classes for each of the input data formats: a serialized segmentation class and a parallelized segmentation class. The serialized segmentation class is ideal for segmenting small input images on only one process. The parallelized segmentation classes can also process larger input images over multiple CPU cores.
+scPortrait currently implements two different segmentation classes for each of the input data formats: a serialized segmentation class and a parallelized segmentation class. The serialized segmentation class is ideal for segmenting small input images on only one process. The parallelized segmentation classes can also process larger input images over multiple CPU cores.
 
 .. image:: ../images/segmentation_classes.png
    :width: 100%
@@ -39,7 +39,7 @@ SPARCSpy currently implements two different segmentation classes for each of the
 1. Segmentation
 +++++++++++++++
 
-The :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>` class is optimized for processing input images of the format CXY within the context of a base SPARCSpy :func:`Project <scportrait.pipeline.project.Project>`. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.
+The :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>` class is optimized for processing input images of the format CXY within the context of a base scPortrait :func:`Project <scportrait.pipeline.project.Project>`. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.
 
 2. ShardedSegmentation
 ++++++++++++++++++++++
@@ -51,7 +51,7 @@ Using a shardings approach has two main advantages:
     1. the possibility to segment images larger than the available memory the segmentation of images
     2. the parallelized segmentation of shards over mutiple threads to better utilize the available hardware
 
-To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (``shard_size``). SPARCSpy then dynamically calculates a so-called `sharding plan` which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (``overlap_px``) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented. 
+To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (``shard_size``). scPortrait then dynamically calculates a so-called `sharding plan` which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (``overlap_px``) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented. 
 
 The :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class then segments each of the calculated shards individually using the designated number of parallel processes (``threads``). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.
 
@@ -74,7 +74,7 @@ The following parameters for a sharded segmentation need to be specified in the 
 3. TimecourseSegmentation
 +++++++++++++++++++++++++
 
-The :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a SPARCSpy :func:`Timecourse Project <scportrait.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
+The :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a scPortrait :func:`Timecourse Project <scportrait.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
 
 4. MultithreadedSegmentation
 ++++++++++++++++++++++++++++
@@ -94,7 +94,7 @@ The following parameters for a multithreaded segmentation need to be specified i
     
 Segmentation Workflows
 ----------------------
-Within SPARCSpy a segmentation workflow refers to a specific segmentation algorithm that can be called by one of the segmentation classes described above. Currently the following segmentation workflows are available for each of the different segmentation classes. They are explained in more detail below:
+Within scPortrait a segmentation workflow refers to a specific segmentation algorithm that can be called by one of the segmentation classes described above. Currently the following segmentation workflows are available for each of the different segmentation classes. They are explained in more detail below:
 
 - :ref:`WGA_segmentation`
 - :ref:`DAPI_segmentation`
@@ -209,7 +209,7 @@ Cytosol Cellpose segmentation
 
 This segmentation workflow is built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_ . Cellpose is a deep neural network with a U-net style architecture that was trained on large datasets of microscopy images of cells. It provides very accurate out of the box segmentation models for both nuclei and cytosols but also allows you to fine-tune models using your own data. 
 
-The SPARCSpy implementation of the cellpose segmenation algorithm allows you to perform both a nuclear and cytosolic segmentation and align the ``cellids`` between the two resulting masks. This means that the nucleus and the cytosol belonging to the same cell have the same ``cellids``. Furthermore, it performs some filtering steps to remove the masks from multi-nucleated cells or those with only a nuclear or cytosolic mask. This ensures that only cells which show a normal physiology are retained for further analysis.
+The scPortrait implementation of the cellpose segmenation algorithm allows you to perform both a nuclear and cytosolic segmentation and align the ``cellids`` between the two resulting masks. This means that the nucleus and the cytosol belonging to the same cell have the same ``cellids``. Furthermore, it performs some filtering steps to remove the masks from multi-nucleated cells or those with only a nuclear or cytosolic mask. This ensures that only cells which show a normal physiology are retained for further analysis.
 
 While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance. 
 

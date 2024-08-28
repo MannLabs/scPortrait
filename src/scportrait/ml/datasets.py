@@ -9,9 +9,9 @@ from torch.utils.data import Dataset
 
 class HDF5SingleCellDataset(Dataset):
     """
-    Class for handling SPARCSpy single cell datasets stored in HDF5 files.
+    Class for handling scPortrait single cell datasets stored in HDF5 files.
 
-    This class provides a convenient interface for SPARCSpy formatted hdf5 files containing single cell datasets. It supports loading data
+    This class provides a convenient interface for scPortrait formatted hdf5 files containing single cell datasets. It supports loading data
     from multiple hdf5 files within specified directories, applying transformations on the data, and returning
     the required information, such as label or id, along with the single cell data.
 
@@ -277,7 +277,7 @@ class HDF5SingleCellDataset(Dataset):
 
 class HDF5SingleCellDatasetRegression(Dataset):
     """
-    Class for handling SPARCSpy single cell datasets stored in HDF5 files where the label should be read from the dataset itself.
+    Class for handling scPortrait single cell datasets stored in HDF5 files where the label should be read from the dataset itself.
     """
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
@@ -433,7 +433,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
 
 class HDF5SingleCellDatasetRegressionSubset(Dataset):
     """
-    Class for handling SPARCSpy single cell datasets stored in HDF5 files for regression tasks.
+    Class for handling scPortrait single cell datasets stored in HDF5 files for regression tasks.
     Supports selecting a subset of the data based on given indices.
     """
 

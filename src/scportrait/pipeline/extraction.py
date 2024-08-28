@@ -25,7 +25,7 @@ from scportrait.pipeline.base import ProcessingStep
 
 class HDF5CellExtraction(ProcessingStep):
     """
-    A class to extracts single cell images from a segmented SPARCSpy project and save the
+    A class to extracts single cell images from a segmented scPortrait project and save the
     results to an HDF5 file.
     """
 
@@ -486,7 +486,7 @@ class HDF5CellExtraction(ProcessingStep):
         )  # label_info not used in base case but relevant for flexibility for other classes
 
         # currently this defaults to the same id for both
-        # in theory sparcspy would be compatible with mapping nuclues ids to cytosol ids instead of updating the mask and then this code would need to change
+        # in theory scPortrait would be compatible with mapping nuclues ids to cytosol ids instead of updating the mask and then this code would need to change
         # this is a placeholder for now where this code can be implemented in the future but so that the rest of the pipeline already works with this use case
         nucleus_id = cell_id
         cytosol_id = cell_id
@@ -812,7 +812,7 @@ class HDF5CellExtraction(ProcessingStep):
 
     def process(self, partial=False, n_cells=None, seed=42):
         """
-        Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
+        Extracts single cell images from a segmented scPortrait project and saves the results to an HDF5 file.
 
         Parameters
         ----------
@@ -990,7 +990,7 @@ class HDF5CellExtraction(ProcessingStep):
 # This class has not yet been adapted to the spatial data structure and will not work as is.
 # class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 #     """
-#     A class to extracts single cell images from a segmented SPARCSpy Timecourse project and save the
+#     A class to extracts single cell images from a segmented scPortrait Timecourse project and save the
 #     results to an HDF5 file.
 
 #     Functionality is the same as the HDF5CellExtraction except that the class is able to deal with an additional dimension(t)

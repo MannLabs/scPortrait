@@ -18,7 +18,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
     Parameters
     ----------
     type : str, optional, default = "VGG2"
-        Network architecture to used in model. Architectures are defined in sparcspy.ml.models
+        Network architecture to used in model. Architectures are defined in scPortrait.ml.models
         Valid options: "VGG1", "VGG2", "VGG1_old", "VGG2_old".
     kwargs : dict
         Additional parameters passed to the model.
@@ -286,7 +286,7 @@ class RegressionModel(pl.LightningModule):
 
         return {'loss': loss, 'predictions': output, 'targets': target}
 
-# implemented models for future use currently not applied to SPARCSpy
+# implemented models for future use currently not applied to scPortrait
 
 class GeneralModel(pl.LightningModule):
 

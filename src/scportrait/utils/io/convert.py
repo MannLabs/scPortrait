@@ -204,7 +204,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         ----------
         scale_factors : list
             List of scale factors for the image. Default is []. This will only load the segmention masks at full resolution into the sdata object.
-            In the future this behaviour may be changed but at the moment SPARCSpy is not designed to handle multiple resolutions for segmentation masks.
+            In the future this behaviour may be changed but at the moment scPortrait is not designed to handle multiple resolutions for segmentation masks.
         """
 
         if self.segmentation_status is None:

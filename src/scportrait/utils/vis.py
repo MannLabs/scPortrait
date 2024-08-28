@@ -36,8 +36,8 @@ def plot_segmentation_mask(
 
     Parameters
     ----------
-    project : sparcspy.pipeline.project.Project
-        instance of a sparcspy project.
+    project : scPortrait.pipeline.project.Project
+        instance of a scPortrait project.
     mask_channel : int, optional
         The index of the channel to use for the segmentation mask (default: 0).
     image_channel : int, optional
