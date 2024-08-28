@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A walk through the scPortrait Ecosystem &mdash; scPortrait  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="scPortrait Workflow" href="../pipeline.html" />
+    <link rel="prev" title="scPortrait workflow" href="../quickstart/computational_workflow.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            scPortrait
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">scPortrait Ecosystem</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">scPortrait Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">scPortrait Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#project">1. Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#timecourseproject">2. TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#initializing-a-scportrait-project">Initializing a scPortrait Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#loading-images-into-a-scportrait-project">Loading Images into a scPortrait project</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/segmentation.html">Segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#id2">1. Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#shardedsegmentation">2. ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#timecoursesegmentation">3. TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#multithreadedsegmentation">4. MultithreadedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#wga-segmentation">WGA segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-segmentation">DAPI segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#cytosol-cellpose-segmentation">Cytosol Cellpose segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-cellpose-segmentation">DAPI Cellpose segmentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/extraction.html">Extraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#extraction-classes">Extraction classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../example_notebooks.html#basic-scportrait-project">Basic scPortrait Project</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#timecourse-scportrait-project">Timecourse scPortrait Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html">Example Notebook Running scPortrait on datasets with multiple images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Some-Helper-Functions-for-visualization-of-results">Some Helper Functions for visualization of results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Initialize-a-Project">Initialize a Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Input-Data-Format">Input Data Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Example-Load-data-using-the-from-files-function">Example Load data using the from files function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Segmentation">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Example_Notebook_TimeCourse_Project.html#Single-Cell-Extraction">Single-Cell Extraction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sparcscmd.html">Command Line Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_split.html">sparcs-split</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_split.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_stat.html">sparcs-stat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_stat.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html">sparcs-cleanup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#named-arguments">Named Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sparcscmd/sparcs_cleanup.html#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.utils.plot_image"><code class="docutils literal notranslate"><span class="pre">plot_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.utils.visualize_class"><code class="docutils literal notranslate"><span class="pre">visualize_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.utils.download_testimage"><code class="docutils literal notranslate"><span class="pre">download_testimage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.utils.flatten"><code class="docutils literal notranslate"><span class="pre">flatten()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.preprocessing">preprocessing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.percentile_normalization"><code class="docutils literal notranslate"><span class="pre">percentile_normalization()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.downsample_img"><code class="docutils literal notranslate"><span class="pre">downsample_img()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.downsample_img_pxs"><code class="docutils literal notranslate"><span class="pre">downsample_img_pxs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.rolling_window_mean"><code class="docutils literal notranslate"><span class="pre">rolling_window_mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.origins_from_distance"><code class="docutils literal notranslate"><span class="pre">origins_from_distance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.MinMax"><code class="docutils literal notranslate"><span class="pre">MinMax()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.EDF"><code class="docutils literal notranslate"><span class="pre">EDF()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.preprocessing.maximum_intensity_projection"><code class="docutils literal notranslate"><span class="pre">maximum_intensity_projection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.global_otsu"><code class="docutils literal notranslate"><span class="pre">global_otsu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.segment_global_threshold"><code class="docutils literal notranslate"><span class="pre">segment_global_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.segment_local_threshold"><code class="docutils literal notranslate"><span class="pre">segment_local_threshold()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.remove_edge_labels"><code class="docutils literal notranslate"><span class="pre">remove_edge_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.shift_labels"><code class="docutils literal notranslate"><span class="pre">shift_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.remove_classes"><code class="docutils literal notranslate"><span class="pre">remove_classes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.contact_filter_lambda"><code class="docutils literal notranslate"><span class="pre">contact_filter_lambda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.contact_filter"><code class="docutils literal notranslate"><span class="pre">contact_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.size_filter"><code class="docutils literal notranslate"><span class="pre">size_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.numba_mask_centroid"><code class="docutils literal notranslate"><span class="pre">numba_mask_centroid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.sc_any"><code class="docutils literal notranslate"><span class="pre">sc_any()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.segmentation.sc_all"><code class="docutils literal notranslate"><span class="pre">sc_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.filtering">filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.filtering.BaseFilter"><code class="docutils literal notranslate"><span class="pre">BaseFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.filtering.SizeFilter"><code class="docutils literal notranslate"><span class="pre">SizeFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/processing.html#scportrait.processing.filtering.MatchNucleusCytosolIds"><code class="docutils literal notranslate"><span class="pre">MatchNucleusCytosolIds</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#base">base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#logable">Logable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#processingstep">ProcessingStep</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#project">project</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id1">Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecourseproject">TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id4">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursesegmentation">TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#multithreadedtimecoursesegmentation">MultithreadedTimecourseSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-scportrait.pipeline.workflows">workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Multithreaded_WGA_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_WGA_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Multithreaded_Cytosol_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.workflows.Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation"><code class="docutils literal notranslate"><span class="pre">Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#timecoursehdf5cellextraction">TimecourseHDF5CellExtraction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#classification">classification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#cellfeaturizer">CellFeaturizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#selection">selection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#lmdselection">LMDSelection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/ml.html">ml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.ml.datasets">datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.datasets.HDF5SingleCellDatasetRegression"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegression</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.datasets.HDF5SingleCellDatasetRegressionSubset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegressionSubset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.ml.metrics">metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.ml.pretrained_models">pretrained_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.ml.transforms">transforms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.ml.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.ml.utils.split_dataset_fractions"><code class="docutils literal notranslate"><span class="pre">split_dataset_fractions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/utils.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/utils.html#module-scportrait.utils.vis">vis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/utils.html#scportrait.utils.vis.plot_segmentation_mask"><code class="docutils literal notranslate"><span class="pre">plot_segmentation_mask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">scPortrait</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../quickstart.html">Quickstart</a></li>
+      <li class="breadcrumb-item active">A walk through the scPortrait Ecosystem</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/notebooks/example_scPortrait_project.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="A-walk-through-the-scPortrait-Ecosystem">
+<h1>A walk through the scPortrait Ecosystem<a class="headerlink" href="#A-walk-through-the-scPortrait-Ecosystem" title="Link to this heading"></a></h1>
+<p>This notebook will introduce you to the scPortrait ecosystem and give you a complete working example of how to use scPortrait. It will walk you through the following steps of the scPortrait workflow: 1. <strong>segmentation</strong>: Generates masks for the segmentation of input images into individual cells 2. <strong>extraction</strong>: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel. 3. <strong>classification</strong>:
+The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods. Here we utilize the pretrained binary classifier from the original <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">SPARCS manuscript</a> that identifies individual cells defective in a biological process called “autophagy”. 4. <strong>selection</strong>: Cutting
+instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an <code class="docutils literal notranslate"><span class="pre">.xml</span></code> file which can be loaded on a leica LMD microscope for automated cell excision.</p>
+<p>The data used in this notebook was previously stitched using the stitching workflow in <a class="reference external" href="https://github.com/MannLabs/SPARCStools">SPARCStools</a>. Please see the notebook <a class="reference external" href="https://mannlabs.github.io/SPARCStools/html/pages/notebooks/example_stitching_notebook.html">here</a>.</p>
+<section id="Import-Required-Libraries">
+<h2>Import Required Libraries<a class="headerlink" href="#Import-Required-Libraries" title="Link to this heading"></a></h2>
+<p>First we need to import all of the python functions we require to run the pipeline.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">SpatialProject</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.classification</span> <span class="kn">import</span> <span class="n">MLClusterClassifier</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.selection</span> <span class="kn">import</span> <span class="n">LMDSelection</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Generate-the-Project-Structure">
+<h2>Generate the Project Structure<a class="headerlink" href="#Generate-the-Project-Structure" title="Link to this heading"></a></h2>
+<p>Executing this code will generate a new scPortrait project in the designated location. Each scPortrait project has the following general structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.
+├── classification
+│   └── classifier_name
+│       └── processing.log
+├── config.yml
+├── extraction
+├── segmentation
+└── processing.log
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;../../../example_data/example_1/project&quot;</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_1/config_example1.yml&quot;</span><span class="p">,</span>
+                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
+                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+                  <span class="n">classification_f</span><span class="o">=</span><span class="n">MLClusterClassifier</span><span class="p">,</span>
+                  <span class="n">selection_f</span><span class="o">=</span><span class="n">LMDSelection</span>
+                  <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Updating project config file.
+[30/07/2024 23:41:03] Loading config from /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/config.yml
+[30/07/2024 23:41:03] No cache directory specified in config using current working directory /Users/sophia/Documents/GitHub/SPARCSspatial/docs_source/pages/notebooks.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:108: UserWarning: There is already a directory in the location path
+  warnings.warn(&#34;There is already a directory in the location path&#34;)
+</pre></div></div>
+</div>
+</section>
+<section id="Load-Imaging-Data">
+<h2>Load Imaging Data<a class="headerlink" href="#Load-Imaging-Data" title="Link to this heading"></a></h2>
+<p>Once we have generated our project structure we next need to load our imaging data. There are several different ways to do this.</p>
+<ol class="arabic simple">
+<li><p>you can load the images directly from file by specifying a list of filepaths</p></li>
+<li><p>you can load the images from numpy arrays that are already loaded into memory</p></li>
+</ol>
+<p>Here it is important that you load the channels in the following order: Nucleus, Cellmembrane, others</p>
+<p>In this particular example we are utilizing images from U2OS cells which are stained with Hoechst 33342 to visualize nuclei and express Lck-mNeon to visualize the cellular membrane and LC3B-mcherry, a fluroescently tagged protein relevant for visualizing the biological process of autophagy. The cells have not been stimulated to induce autophagy and should be autophagy defective.</p>
+<section id="Method-1:-loading-images-from-file">
+<h3>Method 1: loading images from file<a class="headerlink" href="#Method-1:-loading-images-from-file" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+
+<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:07:32] saved input_image: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/input_image.ome.zarr
+</pre></div></div>
+</div>
+</section>
+<section id="Method-2:-loading-images-from-numpy-array">
+<h3>Method 2: loading images from numpy array<a class="headerlink" href="#Method-2:-loading-images-from-numpy-array" title="Link to this heading"></a></h3>
+<p>To simulate the case where the images you want to load are already loaded as a numpy array, we first convert the images to a numpy array and then pass this array to the project instead of only providing the image paths.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
+
+<span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+
+<span class="n">image_arrays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">images</span><span class="p">])</span>
+
+<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_array</span><span class="p">(</span><span class="n">image_arrays</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:07:32] Overwrite is set to True. Existing input image was deleted.
+[02/08/2024 16:07:32] saved input_image: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/input_image.ome.zarr
+</pre></div></div>
+</div>
+</section>
+<section id="Looking-at-the-loaded-images">
+<h3>Looking at the loaded images<a class="headerlink" href="#Looking-at-the-loaded-images" title="Link to this heading"></a></h3>
+<p>The loaded images are accesible via the input_image parameter of the project and are saved as numpy arrays with the following structure (c, x, y)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[[   0,    0,    0, ..., 2393, 2404,    0],
+        [   0, 1494, 1253, ..., 2349, 2209,    0],
+        [   0, 1343, 1449, ..., 2593, 2386,    0],
+        ...,
+        [   0, 4092, 4057, ...,  230,  217,    0],
+        [   0, 4620, 4303, ...,  254,  219,    0],
+        [   0,    0,    0, ...,    0,    0,    0]],
+
+       [[   0,    0,    0, ...,  872,  659,    0],
+        [   0,  310,  456, ...,  595,  273,    0],
+        [   0,  471,  312, ...,  636,  441,    0],
+        ...,
+        [   0,  995,  903, ..., 1089, 1293,    0],
+        [   0,  989,  853, ..., 1369, 1586,    0],
+        [   0,    0,    0, ...,    0,    0,    0]],
+
+       [[   0,    0,    0, ...,  783, 1122,    0],
+        [   0,    1,    2, ...,  882,  959,    0],
+        [   0,   44,   65, ...,  856,  806,    0],
+        ...,
+        [   0,  129,   92, ...,  634,  312,    0],
+        [   0,  444,  232, ...,  469,  265,    0],
+        [   0,    0,    0, ...,    0,    0,    0]]], dtype=uint16)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize input images as example</span>
+<span class="c1"># it is not recommended to execute this block with large input images as it will compute for some time</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">));</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;nuclear stain: Hoechst 33342&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;cellmembrane stain: Lck-mNeon&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Stain of interest 1: mcherry tagged LC3B&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_13_0.png" src="../../_images/pages_notebooks_example_scPortrait_project_13_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Generating-a-Segmentation">
+<h2>Generating a Segmentation<a class="headerlink" href="#Generating-a-Segmentation" title="Link to this heading"></a></h2>
+<p>scPortrait has different segmentation workflows between which you can choose. If none of them fit your needs you can also easily write your own.</p>
+<p>Here we will demonstrate the CPU based classical segmentation method that was also utilized in the manuscript.</p>
+<p>We define the segmentation method to be used when we initialize the project. In this case we used the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method. The <code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code> works very similarily but allows you to process several image chunks in parallel for more efficient computation on large input images.</p>
+<p>By specifying <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">=</span> <span class="pre">True</span></code> we can see intermediate output results from the segmentation.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method relies on parameters specified in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> we loaded when initializing our project.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>WGASegmentation:
+input_channels: 3
+cache: &quot;.&quot;
+chunk_size: 50 # chunk size for chunked HDF5 storage
+lower_quantile_normalization:   0.001
+upper_quantile_normalization:   0.999
+median_filter_size:   4 # Size in pixels
+nucleus_segmentation:
+    lower_quantile_normalization:   0.01 # quantile normalization of dapi channel before local tresholding Strong normalization (0.05,0.95) can help with nuclear speckles.
+    upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding.Strong normalization (0.05,0.95) can help with nuclear speckles.
+    median_block: 41 # Size of pixel disk used for median, should be uneven
+    median_step: 4
+    threshold: 0.2 # threshold above local median for nuclear segmentation
+    min_distance: 8 # minimum distance between two nucleis in pixel
+    peak_footprint: 7 #
+    speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
+    dilation: 0 # final dilation of pixel mask
+    min_size: 200 # minimum nucleus area in pixel
+    max_size: 1000 # maximum nucleus area in pixel
+    contact_filter: 0.5 # minimum nucleus contact with background
+cytosol_segmentation:
+    threshold: 0.05 # treshold above which cytosol is detected
+    lower_quantile_normalization: 0.01
+    upper_quantile_normalization: 0.99
+    erosion: 2 # erosion and dilation are used for speckle removal and shrinking / dilation
+    dilation: 7 # for no change in size choose erosion = dilation, for larger cells increase the mask erosion
+    min_clip: 0
+    max_clip: 0.2
+    min_size: 200
+    max_size: 6000
+chunk_size: 50
+filter_masks_size: True
+</pre></div>
+</div>
+<p>By passing the parameter <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">=</span> <span class="pre">True</span></code> we tell scPortrait to also generate intermediate outputs which we can look at to see the different segmentation steps. It is only recommended to do this for debugging or visualization purposes as it will utilize more memory and be slower.</p>
+<p>For the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method the intermediate outputs that are displayed are the following:</p>
+<ol class="arabic simple">
+<li><p>percentile normalized input images for each of the three channels (3 images)</p></li>
+<li><p>median normalized input images (this slightl smooths the images for a better segmentation result) (3 images)</p></li>
+<li><p>histogram showing the intensity distribution for nuclear and cytosolic channel (2 plots)</p></li>
+<li><p>generated mask after applying nuclear thresholding</p></li>
+<li><p>nuclear thresholding mask with calculated centers for each detected nucleus</p></li>
+<li><p>fast marching map with nuclei centers indicated in red</p></li>
+<li><p>segmented individual nuclei (2 different visualizations)</p></li>
+<li><p>starting nucleus mask for filtering</p></li>
+<li><p>histrogram showing size distribution of segmented nuclei</p></li>
+<li><p>segmentation mask with too small nuclei shown in red</p></li>
+<li><p>segmentation mask with too large nuclei shown in red</p></li>
+<li><p>WGA thresholding mask</p></li>
+<li><p>WGA potential map</p></li>
+<li><p>WGA fast marching results</p></li>
+<li><p>Watershed results with nuclear centers shown in red</p></li>
+<li><p>WGA mask</p></li>
+<li><p>Cytosol size distribution</p></li>
+<li><p>cytosol mask with too small cells shown in red</p></li>
+<li><p>cytosol mask with too large cells shown in red</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">(</span><span class="n">debug</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:07:33] Initialized temporary directory at /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./WGASegmentation_p6rbrwr3 for WGASegmentation
+[02/08/2024 16:07:33] Normalization of the input image will be performed.
+[02/08/2024 16:07:33] Normalizing each channel to the same range
+[02/08/2024 16:07:34] Performing median filtering on input image
+[02/08/2024 16:07:54] Percentile normalization of nucleus input image to range 0.01, 0.99
+[02/08/2024 16:07:54] Normalizing each channel to the same range
+[02/08/2024 16:07:54] Using local thresholding with a threshold of 0.2 to calculate nucleus mask.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_2.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_3.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_4.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_5.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_6.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_6.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:08:13] Performing filtering of nucleus with specified thresholds [200, 1000] from config file.
+[02/08/2024 16:08:13] Removed 47 nuclei as they fell outside of the threshold range [200, 1000].
+[02/08/2024 16:08:14] Total time to perform nucleus size filtering: 0.5132207870483398 seconds
+[02/08/2024 16:08:15] Filtered out 7 nuclei due to contact filtering.
+[02/08/2024 16:08:15] Normalizing each channel to the same range
+[02/08/2024 16:08:17] Cytosol Potential Mask generated.
+[02/08/2024 16:08:20] Performing filtering of cytosol with specified thresholds [200, 6000] from config file.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_8.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_8.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_9.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_9.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_10.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_10.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_11.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_11.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:08:21] Removed 79 nuclei as they fell outside of the threshold range [200, 6000].
+[02/08/2024 16:08:21] Total time to perform cytosol size filtering: 1.7117409706115723 seconds
+[02/08/2024 16:08:24] Filtering status for this segmentation is set to True.
+[02/08/2024 16:08:24] Filtering has been performed during segmentation. Nucleus and Cytosol IDs match. No additional steps are required.
+[02/08/2024 16:08:24] Saved cell_id classes to file /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/segmentation/classes.csv.
+[02/08/2024 16:08:24] === finished segmentation ===
+[02/08/2024 16:08:24] save_zarr attribute not found
+[02/08/2024 16:08:24] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./WGASegmentation_p6rbrwr3&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_13.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_13.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_14.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_14.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_15_15.png" src="../../_images/pages_notebooks_example_scPortrait_project_15_15.png" />
+</div>
+</div>
+<section id="Looking-at-Segmentation-Results">
+<h3>Looking at Segmentation Results<a class="headerlink" href="#Looking-at-Segmentation-Results" title="Link to this heading"></a></h3>
+<p>The Segmentation Results are written to a hdf5 file called <code class="docutils literal notranslate"><span class="pre">segmentation.h5</span></code> located in the segmentation directory of our scPortrait project.</p>
+<p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">channels</span></code> and <code class="docutils literal notranslate"><span class="pre">labels</span></code>. Channels contains the input images and <code class="docutils literal notranslate"><span class="pre">labels</span></code> the generated segmentation masks.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
+
+<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;KeysViewHDF5 [&#39;channels&#39;, &#39;labels&#39;]&gt;
+</pre></div></div>
+</div>
+<p>If we look at the <code class="docutils literal notranslate"><span class="pre">labels</span></code> dataset we can see that it contains a numpy array containing two segmentation masks: the nuclear segmentation and the cytosol segmentation generated by our chosen segmentation method.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="n">segmentation</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">segmentation</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Nuclear Segmentation Mask&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Cytosol Segmentation Mask&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 dataset &#34;labels&#34;: shape (2, 3040, 3038), type &#34;&lt;u8&#34;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_19_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_19_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_19_2.png" src="../../_images/pages_notebooks_example_scPortrait_project_19_2.png" />
+</div>
+</div>
+<p>Each segmentation mask is an array where each pixel is assigned either to background (<code class="docutils literal notranslate"><span class="pre">0</span></code>) or to a specific cell (<code class="docutils literal notranslate"><span class="pre">cellid:</span> <span class="pre">whole</span> <span class="pre">number</span></code>).</p>
+<p>If we zoom in on the corner of the segmentation mask of a nucleus the numpy array would look like this:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="n">segmentation</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">])</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[396 396 396 396 396 396   0   0   0   0]
+ [396 396 396 396 396 396 396 396   0   0]
+ [396 396 396 396 396 396 396 396 396   0]
+ [396 396 396 396 396 396 396 396 396   0]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396 396]
+ [396 396 396 396 396 396 396 396 396   0]
+ [396 396 396 396 396 396 396 396 396   0]
+ [396 396 396 396 396 396 396 396   0   0]
+ [396 396 396 396 396 396   0   0   0   0]
+ [396 396 396 396   0   0   0   0   0   0]
+ [396 396   0   0   0   0   0   0   0   0]
+ [396   0   0   0   0   0   0   0   0   0]
+ [  0   0   0   0   0   0   0   0   0   0]
+ [  0   0   0   0   0   0   0   0   0   0]]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_21_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_21_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Extracting-single-cell-images">
+<h2>Extracting single-cell images<a class="headerlink" href="#Extracting-single-cell-images" title="Link to this heading"></a></h2>
+<p>Once we have generated a segmentation mask, the next step is to extract single-cell images of segmented cells in the dataset.</p>
+<p>Like during the segmentation there are several extraction methods to choose from. For regular scPortrait projects we need the <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> method. This will extract single-cell images for all cells segmentated in the dataset and write them to a hdf5 file.</p>
+<p>The parameters with which <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> will run are again specified in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>HDF5CellExtraction:
+    compression: True
+    threads: 80 # threads used in multithreading
+    image_size: 128 # image size in pixel
+    cache: &quot;.&quot;
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
+    hdf5_rdcc_w0: 1
+    hdf5_rdcc_nslots: 50000
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:08:26] Initialized temporary directory at /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./HDF5CellExtraction_m95z3y8z for HDF5CellExtraction
+[02/08/2024 16:08:26] Created new data directory /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/data
+[02/08/2024 16:08:26] Setup output folder at /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/data
+[02/08/2024 16:08:26] Using segmentation &lt;HDF5 dataset &#34;labels&#34;: shape (2, 3040, 3038), type &#34;&lt;u8&#34;&gt;
+[02/08/2024 16:08:26] Using channel information &lt;HDF5 dataset &#34;channels&#34;: shape (3, 3040, 3038), type &#34;&lt;f8&#34;&gt;
+[02/08/2024 16:08:26] Loaded 324 cellIds to extract.
+[02/08/2024 16:08:26] After removing duplicates 324 cells remain.
+[02/08/2024 16:08:26] Started cell coordinate calculation
+[02/08/2024 16:08:28] Finished cell coordinate calculation
+[02/08/2024 16:08:28] Cell coordinates saved to file /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/center.pickle and cell Ids saved to file /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/_cell_ids.pickle.
+[02/08/2024 16:08:28] Extraction Details:
+[02/08/2024 16:08:28] --------------------------------
+[02/08/2024 16:08:28] Number of input image channels: 3
+[02/08/2024 16:08:28] Number of segmentation masks used during extraction: 2
+[02/08/2024 16:08:28] Number of generated output images per cell: 5
+[02/08/2024 16:08:28] Number of unique cells to extract: 324
+[02/08/2024 16:08:28] Extracted Image Dimensions: 128 x 128
+[02/08/2024 16:08:28] Starting single-cell image extraction of 324 cells...
+[02/08/2024 16:08:28] Using batch size of 5 for multiprocessing.
+[02/08/2024 16:08:28] Reducing number of threads to 65 to match number of cell batches to process.
+[02/08/2024 16:08:28] Running in multiprocessing mode with 65 threads.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "79ec2df6c01a45608b79b0cf094cbe3d", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+multiprocessing done.
+[02/08/2024 16:08:29] Finished extraction in 0.83 seconds (390.72 cells / second)
+[02/08/2024 16:08:29] Transferring results to final HDF5 data container.
+[02/08/2024 16:08:29] number of cells too close to image edges to extract: 14
+[02/08/2024 16:08:29] A total of 14 cells were too close to the image border to be extracted. Their cell_ids were saved to file /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/segmentation/removed_classes_too_close_to_edges.csv.
+[02/08/2024 16:08:29] Transferring extracted single cells to .hdf5
+[02/08/2024 16:08:29] single-cell index created.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/extraction.py:676: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  fig.show()
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:08:29] single-cell data created
+[02/08/2024 16:08:29] single-cell index labelled created.
+[02/08/2024 16:08:29] channel information created.
+[02/08/2024 16:08:29] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./HDF5CellExtraction_m95z3y8z&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_5.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_6.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_6.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_7.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_7.png" />
+</div>
+</div>
+<section id="Look-at-extracted-single-cell-images">
+<h3>Look at extracted single-cell images<a class="headerlink" href="#Look-at-extracted-single-cell-images" title="Link to this heading"></a></h3>
+<p>The extracted single-cell images are written to a h5py file <code class="docutils literal notranslate"><span class="pre">single_cells.h5</span></code> located under <code class="docutils literal notranslate"><span class="pre">extraction\data</span></code> within the project folder.</p>
+<p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> and <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code>. <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> contains the extracted single cell images while <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> contains the cell id of the extracted cell at that location.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
+
+<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;KeysViewHDF5 [&#39;channel_information&#39;, &#39;single_cell_data&#39;, &#39;single_cell_index&#39;, &#39;single_cell_index_labelled&#39;]&gt;
+</pre></div></div>
+</div>
+<p>So if we want to look at the nth cell in the dataset we can first check which cellid was assigned to this cell by looking at the nth entry in the <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> dataset and then get the extracted single-cell images from the <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> dataset.</p>
+<p>The extracted single-cell images represent the following information in this order:</p>
+<ol><ol class="arabic simple">
+<li><p>nucleus mask 2. cytosol mask 3. nucleus channel 4. cytosol channel 5. other channels</p></li>
+</ol>
+</ol><p>Here we will demonstrate with the 10th cell in the dataset.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_index&quot;</span><span class="p">)</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cell id: &quot;</span><span class="p">,</span> <span class="n">index</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+
+    <span class="n">image</span> <span class="o">=</span> <span class="n">images</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_img</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+        <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+cell id:  [10 43]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_27_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_27_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Classification-of-extracted-single-cells">
+<h2>Classification of extracted single-cells<a class="headerlink" href="#Classification-of-extracted-single-cells" title="Link to this heading"></a></h2>
+<p>Next we can apply a pretained model to classify our cells within the scPortrait project.</p>
+<p>Within the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> we specify which model should be used for inference and we can give it a name.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MLClusterClassifier:
+    channel_classification: 4
+    threads: 24 #
+    batch_size: 900
+    dataloader_worker: 0 #needs to be 0 if using cpu
+    standard_scale: False
+    exp_transform: False
+    log_transform: False
+    network: &quot;autophagy_classifier2.1&quot;
+    classifier_architecture: &quot;VGG2_old&quot;
+    screen_label: &quot;Autophagy_15h_classifier2.1&quot;
+    epoch: &quot;max&quot;
+    encoders: [&quot;forward&quot;]
+    inference_device: &quot;cpu&quot;
+</pre></div>
+</div>
+<p>Here e.g. we are using a pretrained model included within the scPortrait library <code class="docutils literal notranslate"><span class="pre">autophagy_classifier2.1</span></code> and are naming the results from this model <code class="docutils literal notranslate"><span class="pre">Autophagy_15h_classifier2.1</span></code>.</p>
+<p>Model overview:</p>
+<p><img alt="autophagy classification with example cells" class="no-scaled-link" src="../../_images/classifying_autophagy.png" style="width: 800px;" /></p>
+<p>The inference results will be written to a new folder generated under <code class="docutils literal notranslate"><span class="pre">classification</span></code> with this name.</p>
+<p>If we want to use a model we trained ourselves that is not yet included within the scPortrait library we can simply replace the network name in the config with the path to the checkpoint file generated by pytorch.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">accessory</span> <span class="o">=</span> <span class="p">([],</span> <span class="p">[],</span> <span class="p">[])</span>
+<span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">accessory</span> <span class="o">=</span> <span class="n">accessory</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[02/08/2024 16:08:30] Started classification
+[02/08/2024 16:08:30] starting with run 0
+[02/08/2024 16:08:30] channel_classification: 4
+[02/08/2024 16:08:30] threads: 24
+[02/08/2024 16:08:30] batch_size: 900
+[02/08/2024 16:08:30] dataloader_worker_number: 0
+[02/08/2024 16:08:30] standard_scale: False
+[02/08/2024 16:08:30] exp_transform: False
+[02/08/2024 16:08:30] log_transform: False
+[02/08/2024 16:08:30] network: autophagy_classifier2.1
+[02/08/2024 16:08:30] classifier_architecture: VGG2_old
+[02/08/2024 16:08:30] screen_label: Autophagy_15h_classifier2.1
+[02/08/2024 16:08:30] epoch: max
+[02/08/2024 16:08:30] encoders: [&#39;forward&#39;]
+[02/08/2024 16:08:30] inference_device: cpu
+[02/08/2024 16:08:30] 0 different accessory datasets specified
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.2.2. To apply the upgrade to your files permanently, run `python -m pytorch_lightning.utilities.upgrade_checkpoint ../../../src/pretrained_models/autophagy/autophagy2.1/VGG2_autophagy_classifier2.1.cpkt`
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[30/07/2024 23:30:39] Current Project Status:
+[30/07/2024 23:30:39] --------------------------------
+[30/07/2024 23:30:39] Input Image Status: True
+[30/07/2024 23:30:39] Nucleus Segmentation Status: True
+[30/07/2024 23:30:39] Cytosol Segmentation Status: True
+[30/07/2024 23:30:39] Centers Status: True
+[30/07/2024 23:30:39] --------------------------------
+Using extraction directory: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/data/single_cells.h5
+[30/07/2024 23:30:39] Initialized temporary directory at /Users/sophia/Documents/GitHub/SPARCSspatial/docs_source/pages/notebooks/MLClusterClassifier_nw1c65u5 for MLClusterClassifier
+[30/07/2024 23:30:39] Started MLClusterClassifier classification.
+[30/07/2024 23:30:39] Created new directory for classification results: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1
+[30/07/2024 23:30:39] CPU specified in config file but MPS available on system. Consider changing the device for the next run.
+[30/07/2024 23:30:39] Model class defined as &lt;class &#39;scportrait.ml.plmodels.MultilabelSupervisedModel&#39;&gt;
+[30/07/2024 23:30:39] Model assigned to classification function.
+[30/07/2024 23:30:39] Reading data from path: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/extraction/data/single_cells.h5
+[30/07/2024 23:30:39] Expected image size is set to [128, 128]. Resizing images to this size.
+[30/07/2024 23:30:39] Dataloader generated with a batchsize of 900 and 10 workers. Dataloader contains 1 entries.
+[30/07/2024 23:30:39] Starting inference for model encoder forward
+[30/07/2024 23:30:39] Started processing of 1 batches.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+/Users/sophia/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py:222: UserWarning: Cannot set number of intraop threads after parallel work has started or after set_num_threads call when using native parallel backend (Triggered internally at /Users/runner/work/_temp/anaconda/conda-bld/pytorch_1711403226260/work/aten/src/ATen/ParallelNative.cpp:228.)
+  torch.set_num_threads(1)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[30/07/2024 23:30:42] finished processing.
+[30/07/2024 23:30:42] Results saved to file: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv
+[30/07/2024 23:30:42] Table MLClusterClassifier_Autophagy_15h_classifier2_1_forward_nucleus written to sdata object.
+[30/07/2024 23:30:42] Table MLClusterClassifier_Autophagy_15h_classifier2_1_forward_cytosol written to sdata object.
+[30/07/2024 23:30:42] Results saved to file: /Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv
+[30/07/2024 23:30:42] GPU memory before performing cleanup: None
+[30/07/2024 23:30:42] GPU memory after performing cleanup: None
+[30/07/2024 23:30:42] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/Users/sophia/Documents/GitHub/SPARCSspatial/docs_source/pages/notebooks/MLClusterClassifier_nw1c65u5&#39;&gt;
+</pre></div></div>
+</div>
+<section id="looking-at-the-generated-results">
+<h3>looking at the generated results<a class="headerlink" href="#looking-at-the-generated-results" title="Link to this heading"></a></h3>
+<p>The results are written to a csv file which we can load with pandas.</p>
+<p>scPortrait writes the softmax results directly to csv as <code class="docutils literal notranslate"><span class="pre">ln()</span></code> for better precision. To transform these numbers back to the range between 0 and 1 we first need to apply the <code class="docutils literal notranslate"><span class="pre">np.exp</span></code> function.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/classification/0_Autophagy_15h_classifier2.1/dimension_reduction_forward.csv&quot;</span><span class="p">,</span> <span class="n">index_col</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">results</span><span class="o">.</span><span class="n">result_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_0</span><span class="p">)</span>
+<span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">)</span>
+
+<span class="n">results</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>result_0</th>
+      <th>result_1</th>
+      <th>label</th>
+      <th>cell_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.829113</td>
+      <td>0.170887</td>
+      <td>0</td>
+      <td>136</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.986687</td>
+      <td>0.013313</td>
+      <td>0</td>
+      <td>115</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.000033</td>
+      <td>0.999967</td>
+      <td>0</td>
+      <td>428</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.162813</td>
+      <td>0.837187</td>
+      <td>0</td>
+      <td>220</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.999583</td>
+      <td>0.000417</td>
+      <td>0</td>
+      <td>86</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>305</th>
+      <td>0.998023</td>
+      <td>0.001977</td>
+      <td>0</td>
+      <td>344</td>
+    </tr>
+    <tr>
+      <th>306</th>
+      <td>0.017385</td>
+      <td>0.982615</td>
+      <td>0</td>
+      <td>12</td>
+    </tr>
+    <tr>
+      <th>307</th>
+      <td>0.000003</td>
+      <td>0.999997</td>
+      <td>0</td>
+      <td>443</td>
+    </tr>
+    <tr>
+      <th>308</th>
+      <td>0.086634</td>
+      <td>0.913366</td>
+      <td>0</td>
+      <td>144</td>
+    </tr>
+    <tr>
+      <th>309</th>
+      <td>0.000051</td>
+      <td>0.999949</td>
+      <td>0</td>
+      <td>451</td>
+    </tr>
+  </tbody>
+</table>
+<p>310 rows × 4 columns</p>
+</div></div>
+</div>
+<p>Depending on the model we used what <code class="docutils literal notranslate"><span class="pre">result_0</span></code> and <code class="docutils literal notranslate"><span class="pre">result_1</span></code> represent will vary. Here we used a binary classification model were class 1 was cells deficient in autophagy. So <code class="docutils literal notranslate"><span class="pre">result_1</span></code> indicates the probability score that a cell has the label “autophagy off”. <code class="docutils literal notranslate"><span class="pre">results_0</span></code> is simply <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">result_1</span></code></p>
+<p>If we look at the distribution in our dataset we can see that almost all cells are classified as “autophagy defective”. Since the input images were from unstimulated wt cells this matches to our expectation.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="mi">100</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Prob(Unstim)&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Classification Score&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_33_0.png" src="../../_images/pages_notebooks_example_scPortrait_project_33_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Exporting-Cutting-contours-for-excision-on-the-LMD7">
+<h2>Exporting Cutting contours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7" title="Link to this heading"></a></h2>
+<p>scPortrait directly interfaces with our other open-source python library <a class="reference external" href="https://github.com/MannLabs/py-lmd">py-lmd</a> to easily select and export cells for excision on a Leica LMD microscope.</p>
+<p>Of note: this will require that the cells have been plates on a LMD compatible surface (like a PPS slide). scPortrait can of course also simply be used for data analysis procedures, then ignore this last step.</p>
+<p>First we will select the cells we wish to excise based on their classification score. Here we have chosen a threadhold &gt;= 0.99999 for bin1 and a threshold &lt;= 0.9 for bin2.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cell_ids_bin1</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&gt;=</span> <span class="mf">0.99999</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">cell_ids_bin2</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&lt;=</span> <span class="mf">0.9</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of cells to excise:&quot;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+number of cells to excise: 176
+</pre></div></div>
+</div>
+<p>The cells can then be allocated into different wells.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;A1&quot;</span><span class="p">},</span>
+                   <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin2&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;B1&quot;</span><span class="p">},</span>
+                   <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>In addition to defining which cells we want to excise, we also need to pass the location of the calibration crosses so that we can transfer the image coordinate system into a cutting coordinate system. You can read up on this <a class="reference external" href="https://mannlabs.github.io/py-lmd/html/pages/segmentation_loader.html#different-coordinate-systems">here</a>.</p>
+<p>To obtain the coordinates of your reference points simply open your stitched image in e.g. FIJI and navigate to the location of your reference points. Then write out the coordinates for each point.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">marker_0</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">marker_1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">marker_2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+
+<span class="n">calibration_marker</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">marker_0</span><span class="p">,</span> <span class="n">marker_1</span><span class="p">,</span> <span class="n">marker_2</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>As with the previous methods, additional parameters can be passed to the selection function via the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file which adapts the behaviour of how cutting shapes are generated. You can read up more on this <a class="reference external" href="https://mannlabs.github.io/py-lmd/html/pages/segmentation_loader.html#overview-of-configuration">here</a>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>LMDSelection:
+    processes: 20
+
+    # defines the channel used for generating cutting masks
+    # segmentation.hdf5 =&gt; labels =&gt; segmentation_channel
+    # When using WGA segmentation:
+    #    0 corresponds to nuclear masks
+    #    1 corresponds to cytosolic masks.
+    segmentation_channel: 0
+
+    # dilation of the cutting mask in pixel
+    shape_dilation: 16
+
+    # number of datapoints which are averaged for smoothing
+    # the number of datapoints over an distance of n pixel is 2*n
+    smoothing_filter_size: 25
+
+    # fold reduction of datapoints for compression
+    poly_compression_factor: 30
+
+    # can be &quot;none&quot;, &quot;greedy&quot;, or &quot;hilbert&quot;
+    path_optimization: &quot;hilbert&quot;
+
+    # number of nearest neighbours for optimized greedy search
+    greedy_k: 15
+
+    # hilbert curve order
+    hilbert_p: 7
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cells_to_select</span><span class="p">,</span> <span class="n">calibration_marker</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[12], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">project</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">select</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">cells_to_select</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">calibration_marker</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:1216</span>, in <span class="ansi-cyan-fg">SpatialProject.select</span><span class="ansi-blue-fg">(self, segmentation_name, cell_sets, calibration_markers, name)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1210</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>nuc_seg_status <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>cyto_seg_status:
+<span class="ansi-green-intense-fg ansi-bold">   1211</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-intense-fg ansi-bold">   1212</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">No nucleus or cytosol segmentation loaded. Please load a segmentation first.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">   1213</span>     )
+<span class="ansi-green-intense-fg ansi-bold">   1215</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> (
+<span class="ansi-green-fg">-&gt; 1216</span>     <span class="ansi-yellow-bg">segmentation_name</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">in</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">sdata</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">labels</span>
+<span class="ansi-green-intense-fg ansi-bold">   1217</span> ), <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Segmentation </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>segmentation_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> not found in sdata object.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">   1219</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>selection_f(
+<span class="ansi-green-intense-fg ansi-bold">   1220</span>     segmentation_name<span style="color: rgb(98,98,98)">=</span>segmentation_name,
+<span class="ansi-green-intense-fg ansi-bold">   1221</span>     cell_sets<span style="color: rgb(98,98,98)">=</span>cell_sets,
+<span class="ansi-green-intense-fg ansi-bold">   1222</span>     calibration_markers<span style="color: rgb(98,98,98)">=</span>calibration_markers,
+<span class="ansi-green-intense-fg ansi-bold">   1223</span>     name<span style="color: rgb(98,98,98)">=</span>name,
+<span class="ansi-green-intense-fg ansi-bold">   1224</span> )
+
+File <span class="ansi-green-fg">~/mambaforge/envs/SPARCSspatial-dev/lib/python3.10/collections/__init__.py:1119</span>, in <span class="ansi-cyan-fg">UserDict.__contains__</span><span class="ansi-blue-fg">(self, key)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1118</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__contains__</span>(<span style="color: rgb(0,135,0)">self</span>, key):
+<span class="ansi-green-fg">-&gt; 1119</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">key</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">in</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data</span>
+
+<span class="ansi-red-fg">TypeError</span>: unhashable type: &#39;list&#39;
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../quickstart/computational_workflow.html" class="btn btn-neutral float-left" title="scPortrait workflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../pipeline.html" class="btn btn-neutral float-right" title="scPortrait Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024 Sophia Mädler and Niklas Schmacke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
