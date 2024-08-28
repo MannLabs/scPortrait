@@ -1,5 +1,5 @@
 Example Notebooks
-=====================
+=================
 
 Basic scPortrait Project
 ------------------------
@@ -11,15 +11,6 @@ This notebook demonstrates the basic functionality of scPortrait. It shows you h
 
    notebooks/example_scPortrait_project.ipynb
 
-Timecourse scPortrait Project
------------------------------
-
-This notebook demonstrates how to use scPortrait to analyze a timecourse experiment. It shows you how to initialize a scPortrait project, load input images, segment, extract and classify the provided data and how to generate cutting instructions for excision on a leica LMD7 microscope.
-
-.. toctree::
-   :maxdepth: 2
-
-   notebooks/Example_Notebook_TimeCourse_Project.ipynb
 
 Segmentation Workflows
 ----------------------

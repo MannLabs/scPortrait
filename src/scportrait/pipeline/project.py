@@ -38,7 +38,7 @@ from scportrait.utils.spatialdata_helper import (
     calculate_centroids,
 )
 
-class SpatialProject(Logable):
+class Project(Logable):
     CLEAN_LOG = True
 
     DEFAULT_CONFIG_NAME = "config.yml"
@@ -1264,7 +1264,7 @@ class SpatialProject(Logable):
 
 
 # this class has not yet been set up to be used with spatialdata
-# class TimecourseProject(SpatialProject):
+# class TimecourseProject(Project):
 #     """
 #     TimecourseProject class used to create a scPortrait project for datasets that have multiple fields of view that should be processed and analysed together.
 #     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>`,

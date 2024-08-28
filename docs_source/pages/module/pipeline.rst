@@ -39,12 +39,6 @@ Project
     :show-inheritance:
 
 
-TimecourseProject 
-=================
-.. autoclass:: scportrait.pipeline.project.TimecourseProject
-    :members:
-    :show-inheritance:
-
 
 segmentation
 #############
@@ -61,19 +55,6 @@ ShardedSegmentation
     :members:
     :show-inheritance:
 
-TimecourseSegmentation
-======================
-.. autoclass:: scportrait.pipeline.segmentation.TimecourseSegmentation
-    :members:
-    :show-inheritance:
-
-MultithreadedTimecourseSegmentation
-===================================
-.. autoclass:: scportrait.pipeline.segmentation.MultithreadedSegmentation
-    :members:
-    :show-inheritance:
-
-
 workflows
 ##########
 .. automodule:: scportrait.pipeline.workflows
@@ -85,12 +66,6 @@ extraction
 HDF5CellExtraction
 ===================
 .. autoclass:: scportrait.pipeline.extraction.HDF5CellExtraction
-    :members:
-    :show-inheritance:
-
-TimecourseHDF5CellExtraction
-============================
-.. autoclass:: scportrait.pipeline.extraction.TimecourseHDF5CellExtraction
     :members:
     :show-inheritance:
 
