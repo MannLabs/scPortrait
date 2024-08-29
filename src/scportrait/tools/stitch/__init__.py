@@ -1,0 +1,1 @@
+from scportrait.tools.stitch._stitch import Stitcher, ParallelStitcher
