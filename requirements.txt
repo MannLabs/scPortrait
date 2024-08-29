@@ -30,3 +30,4 @@ spatialdata
 napari-spatialdata
 pyqt5
 lxml_html_clean
+ashlar @ git+https://github.com/labsyspharm/ashlar.git@refs/pull/215/head
