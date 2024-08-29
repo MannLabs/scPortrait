@@ -5,11 +5,11 @@ import h5py
 import numpy as np
 
 from scportrait.pipeline.project import Project
-from scportrait.pipeline.workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
+from scportrait.pipeline.segmentation_workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
 from scportrait.pipeline.extraction import HDF5CellExtraction
 from scportrait.pipeline.classification import CellFeaturizer
 
-from scportrait.processing.segmentation import numba_mask_centroid
+from scportrait.pipeline._utils.segmentation import numba_mask_centroid
 
 if __name__ == '__main__':
 

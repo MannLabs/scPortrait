@@ -24,12 +24,12 @@ from spatialdata.transformations.transformations import Identity
 from spatialdata.models import PointsModel, Image2DModel
 from napari_spatialdata import Interactive
 
-from sparcstools.base import daskmmap
+from scportrait.io import daskmmap
 
-from scportrait.pipeline.base import Logable
-from scportrait.pipeline.io import sdata_filehandler
-from scportrait.pipeline.spatialdata_classes import spLabels2DModel
-from scportrait.utils.spatialdata_helper import (
+from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.sdata_io import sdata_filehandler
+from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
+from scportrait.pipeline._utils.spatialdata_helper import (
     get_unique_cell_ids,
     generate_region_annotation_lookuptable,
     remap_region_annotation_table,
@@ -38,7 +38,7 @@ from scportrait.utils.spatialdata_helper import (
     calculate_centroids,
 )
 
-class SpatialProject(Logable):
+class Project(Logable):
     CLEAN_LOG = True
 
     DEFAULT_CONFIG_NAME = "config.yml"
@@ -542,7 +542,7 @@ class SpatialProject(Logable):
     # def _write_segmentation_object_sdata(
     #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
     # ):
-    #     # ensure that the segmentation object is converted to the sparcspy Labels2DModel
+    #     # ensure that the segmentation object is converted to the scPortrait Labels2DModel
     #     if not hasattr(segmentation_object.attrs, "cell_ids"):
     #         segmentation_object = spLabels2DModel().convert(
     #             segmentation_object, classes=classes
@@ -1018,7 +1018,7 @@ class SpatialProject(Logable):
                 "Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
             )
 
-        # ensure that the provided nucleus and cytosol segmentations fullfill the SPARCSpy requirements
+        # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
         assert (
@@ -1231,9 +1231,9 @@ class SpatialProject(Logable):
 
     def select(
         self,
-        segmentation_name: str,
         cell_sets: List[Dict],
-        calibration_markers: Union[np.array, None] = None,
+        calibration_marker: Union[np.array, None] = None,
+        segmentation_name: str = "seg_all_nucleus",
         name: Union[str, None] = None,
     ):
         """
@@ -1257,18 +1257,18 @@ class SpatialProject(Logable):
         self.selection_f(
             segmentation_name=segmentation_name,
             cell_sets=cell_sets,
-            calibration_markers=calibration_markers,
+            calibration_marker=calibration_marker,
             name=name,
         )
         self._check_sdata_status()
 
 
 # this class has not yet been set up to be used with spatialdata
-# class TimecourseProject(SpatialProject):
+# class TimecourseProject(Project):
 #     """
-#     TimecourseProject class used to create a SPARCSpy project for datasets that have multiple fields of view that should be processed and analysed together.
-#     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>`,
-#     it manages all of the SPARCSpy processing steps. Because the input data has a different dimensionality than the base SPARCSpy :func:`Project <sparcscore.pipeline.project.Project>` class,
+#     TimecourseProject class used to create a scPortrait project for datasets that have multiple fields of view that should be processed and analysed together.
+#     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>`,
+#     it manages all of the scPortrait processing steps. Because the input data has a different dimensionality than the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>` class,
 #     it requires the use of specialized processing classes that are able to handle this additional dimensionality.
 
 #     Parameters

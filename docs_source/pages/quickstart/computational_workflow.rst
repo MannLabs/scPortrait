@@ -1,15 +1,15 @@
 .. _computational_workflow:
 
 *******************
-SPARCSpy workflow
+scPortrait workflow
 *******************
 
-.. image:: ../images/sparcspy_workflow_steps.png
+.. image:: ../images/scPortrait_workflow_steps.png
    :width: 100%
    :align: center
-   :alt: SPARCSpy workflow steps: Segmentation, Extraction, Classification, Selection 
+   :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection 
 
-The SPARCSpy workflow consists of up to 4 steps:
+The scPortrait workflow consists of up to 4 steps:
 
   1. :ref:`Segmentation <quickstart_segmentation>`: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
   
@@ -26,7 +26,7 @@ The results and logs from each processing step are saved into seperate subfolder
 Segmentation
 ============
 
-The cell segmentation process in SPARCSpy is split into two parts: **nuclear segmentation**, which identifies nuclei in the input image, and **cytoplasmic segmentation**, which identifies cytosols. Depending on the dataset and/or application it is possible that only one of the two segmentation types is required. In this case, the segmentation process can be configured to only perform a nuclear or a cytoplasmic segmentation.
+The cell segmentation process in scPortrait is split into two parts: **nuclear segmentation**, which identifies nuclei in the input image, and **cytoplasmic segmentation**, which identifies cytosols. Depending on the dataset and/or application it is possible that only one of the two segmentation types is required. In this case, the segmentation process can be configured to only perform a nuclear or a cytoplasmic segmentation.
 
 .. |pic1| image:: ../images/input_image.png
    :width: 100%
@@ -59,21 +59,21 @@ If we zoomed in on the corner of the segmentation mask of a nucleus, the segment
 | |pic4|                | |pic5|                |
 +-----------------------+-----------------------+
 
-In this example the depicted cell has the ``cell id`` 205. The ``cell id`` s assigned during the segmentation process are permanent: They are preserved throughout a SPARCSpy run. This allows you to trace individual cells back through to the original input image at any step.
+In this example the depicted cell has the ``cell id`` 205. The ``cell id`` s assigned during the segmentation process are permanent: They are preserved throughout a scPortrait run. This allows you to trace individual cells back through to the original input image at any step.
 
 .. _quickstart_extraction:
 
 Extraction
 ==========
 
-The SPARCSpy framework is built around the idea of generating standardized single-cell image datasets. A SPARCSpy single cell image dataset consists of a collection of images for each cell, containing both the segmentation masks and imaging channels of that particular cell. Aggregated across all cells in a SPARCSpy dataset, these image collections are saved as ``HDF5``, a container file format that enables the retrieval of individual cells without loading the entire dataset. These ``HDF5`` datasets are created during the extraction step.
+The scPortrait framework is built around the idea of generating standardized single-cell image datasets. A scPortrait single cell image dataset consists of a collection of images for each cell, containing both the segmentation masks and imaging channels of that particular cell. Aggregated across all cells in a scPortrait dataset, these image collections are saved as ``HDF5``, a container file format that enables the retrieval of individual cells without loading the entire dataset. These ``HDF5`` datasets are created during the extraction step.
 
 .. image:: ../images/single_cell_dataset.png
    :width: 100%
    :align: center
-   :alt: SPARCSpy single cell image dataset example
+   :alt: scPortrait single cell image dataset example
 
-To crop out image regions corresponding to individual cells, the extraction step takes the segmentation masks generated during the segmentation step and applies them to the original image. By using the segmentation masks to extract only those pixels that are annotated to belong to a given cell, SPARCSpy achieves exact clipping of individual cells from their background, eliminating noise from neighbouring cells. This makes SPARCSpy ideally suited to processing data from experiments in which single cell resolution is required, for example in pooled genetic screening.
+To crop out image regions corresponding to individual cells, the extraction step takes the segmentation masks generated during the segmentation step and applies them to the original image. By using the segmentation masks to extract only those pixels that are annotated to belong to a given cell, scPortrait achieves exact clipping of individual cells from their background, eliminating noise from neighbouring cells. This makes scPortrait ideally suited to processing data from experiments in which single cell resolution is required, for example in pooled genetic screening.
 During the extraction process, all single cell images are also centered on their respective nuclei.
 
 The size in px of the output images can be set in the ``config.yml`` file and typically depends on the resolution of the input images as well as the physical size of the imaged cells. In our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we extracted single cell images of U2OS cells from original images captured at 20X magnification at a size of 128 x 128px. Extraction is only performed on cells that were fully imaged, i.e. their masks do not intersect with the image borders.

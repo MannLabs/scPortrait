@@ -5,8 +5,7 @@ import numpy as np
 from lmd.lib import SegmentationLoader
 from alphabase.io import tempmmap
 
-from scportrait.pipeline.base import ProcessingStep
-
+from scportrait.pipeline._base import ProcessingStep
 
 class LMDSelection(ProcessingStep):
     """
@@ -166,10 +165,12 @@ class LMDSelection(ProcessingStep):
         # else load them and proceed with selection
 
         # load segmentation from hdf5
-        self.path_seg_mask = self.project.__load_seg_to_memmap(
-            segmentation_name, tmp_dir_abs_path=self._tmp_dir_path
+        self.path_seg_mask = self.filehandler._load_seg_to_memmap(
+            [segmentation_name], tmp_dir_abs_path=self._tmp_dir_path
         )
+
         segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
+        print(segmentation)
 
         # create segmentation loader
         sl = SegmentationLoader(

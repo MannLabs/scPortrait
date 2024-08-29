@@ -1,25 +1,16 @@
 Example Notebooks
-=====================
+=================
 
-Basic SPARCSpy Project
-----------------------
+Basic scPortrait Project
+------------------------
 
-This notebook demonstrates the basic functionality of SPARCSpy. It shows you how to initialize a SPARCSpy project, load input images, segment, extract and classify the provided data and how to generate cutting instructions for excision on a leica LMD7 microscope.
-
-.. toctree::
-   :maxdepth: 2
-
-   notebooks/example_sparcspy_project.ipynb
-
-Timecourse SPARCSpy Project
----------------------------
-
-This notebook demonstrates how to use SPARCSpy to analyze a timecourse experiment. It shows you how to initialize a SPARCSpy project, load input images, segment, extract and classify the provided data and how to generate cutting instructions for excision on a leica LMD7 microscope.
+This notebook demonstrates the basic functionality of scPortrait. It shows you how to initialize a scPortrait project, load input images, segment, extract and classify the provided data and how to generate cutting instructions for excision on a leica LMD7 microscope.
 
 .. toctree::
    :maxdepth: 2
 
-   notebooks/Example_Notebook_TimeCourse_Project.ipynb
+   notebooks/example_scPortrait_project.ipynb
+
 
 Segmentation Workflows
 ----------------------

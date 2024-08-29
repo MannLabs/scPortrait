@@ -12,13 +12,13 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath("../src/sparcscore"))
+sys.path.insert(0, os.path.abspath("../src/scportrait"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SPARCSpy'
-copyright = '2023 Sophia Mädler, Georg Wallmann and Niklas Schmacke'
-author = 'Sophia Mädler, Georg Wallmann and Niklas Schmacke'
+project = 'scPortrait'
+copyright = '2024 Sophia Mädler and Niklas Schmacke'
+author = 'Sophia Mädler and Niklas Schmacke'
 
 # -- General configuration ---------------------------------------------------
 

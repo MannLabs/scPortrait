@@ -1,15 +1,9 @@
-#### Required Packages #####
-
-# General dependencies
-numpy
+numpy<2.0.0
 pandas
-tabulate
-colorama
 matplotlib
 tqdm
 h5py
 pyyaml
-pillow
 zarr
 ome-zarr
 alphabase
@@ -18,19 +12,25 @@ shapely
 rasterio
 imagesize
 xarray
-
-
-# Packages better installed via conda due to dependencies
-cellpose
+xarray-datatree
+opencv-python
+scikit-image>=0.22.0
 scikit-fmm
-
-# Packages to be installed via conda
-# (Ensure these are installed in your conda environment beforehand)
+cellpose
 numba
 torch
 pytorch-lightning
 torchvision
-opencv-python
-scikit-image
 scipy
 mahotas
+spatialdata
+napari-spatialdata
+pyqt5
+lxml_html_clean
+
+#packages for building the documentation
+sphinx
+sphinx-argparse
+sphinx-rtd-theme==2.0.0
+nbsphinx
+renku-sphinx-theme

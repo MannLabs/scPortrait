@@ -1,36 +1,38 @@
-#### Required Packages #####
-
-# General dependencies
-numpy
-pandas
-tabulate
-colorama
-matplotlib
 tqdm
+numpy<2.0.0
+pandas
+numba
+matplotlib
+seaborn
 h5py
-pyyaml
-pillow
+yattag
+alphabase
+
 zarr
 ome-zarr
-alphabase
+tifffile
 aicspylibczi
+
+mahotas
 shapely
 rasterio
 imagesize
+imagecodecs
 xarray
-
-
-# Packages better installed via conda due to dependencies
-cellpose
+xarray-datatree
+opencv-python
+scikit-image>=0.22.0
 scikit-fmm
+scipy
+cellpose
 
-# Packages to be installed via conda
-# (Ensure these are installed in your conda environment beforehand)
-numba
 torch
 pytorch-lightning
 torchvision
-opencv-python
-scikit-image
-scipy
-mahotas
+
+spatialdata
+napari-spatialdata
+pyqt5
+lxml_html_clean
+ashlar @ git+https://github.com/labsyspharm/ashlar.git@refs/pull/215/head#egg=ashlar
+networkx

@@ -4,20 +4,20 @@ processing
 
 utils
 ######
-.. automodule:: sparcscore.processing.utils
+.. automodule:: scportrait.processing.utils
     :members:
 
-preprocessing
-#############
-.. automodule:: sparcscore.processing.preprocessing
+image_processing
+################
+.. automodule:: scportrait.processing.image_processing
     :members:
 
 segmentation
 ############
-.. automodule:: sparcscore.processing.segmentation
+.. automodule:: scportrait.processing.segmentation
     :members:
 
 filtering
 #########
-.. automodule:: sparcscore.processing.filtering
+.. automodule:: scportrait.processing.filtering
     :members:
