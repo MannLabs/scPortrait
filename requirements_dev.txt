@@ -1,12 +1,9 @@
 numpy<2.0.0
 pandas
-tabulate
-colorama
 matplotlib
 tqdm
 h5py
 pyyaml
-pillow
 zarr
 ome-zarr
 alphabase

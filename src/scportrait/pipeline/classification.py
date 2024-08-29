@@ -16,9 +16,9 @@ import torch
 import pytorch_lightning as pl
 from torchvision import transforms
 
-from scportrait.ml.datasets import HDF5SingleCellDataset
-from scportrait.ml.plmodels import MultilabelSupervisedModel
-from scportrait.pipeline.base import ProcessingStep
+from scportrait.tools.ml.datasets import HDF5SingleCellDataset
+from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
+from scportrait.pipeline._base import ProcessingStep
 
 
 class _ClassificationBase(ProcessingStep):
@@ -315,18 +315,18 @@ class _ClassificationBase(ProcessingStep):
         """
 
         if model_name == "autophagy_classifier1.0":
-            from scportrait.ml.pretrained_models import autophagy_classifier1_0
+            from scportrait.tools.ml.pretrained_models import autophagy_classifier1_0
 
             model = autophagy_classifier1_0(device=self.config["inference_device"])
             self.expected_imagesize = (128, 128)
         elif model_name == "autophagy_classifier2.0":
-            from scportrait.ml.pretrained_models import autophagy_classifier2_0
+            from scportrait.tools.ml.pretrained_models import autophagy_classifier2_0
 
             model = autophagy_classifier2_0(device=self.config["inference_device"])
             # self.expected_imagesize = (128, 128)
 
         elif model_name == "autophagy_classifier2.1":
-            from scportrait.ml.pretrained_models import autophagy_classifier2_1
+            from scportrait.tools.ml.pretrained_models import autophagy_classifier2_1
 
             model = autophagy_classifier2_1(device=self.config["inference_device"])
             self.expected_imagesize = (128, 128)
