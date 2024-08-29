@@ -13,7 +13,7 @@ from scportrait.processing.preprocessing import downsample_img_pxs
 #for visualization purposes
 from scportrait.utils.vis import _custom_cmap
 
-class BaseFilter(Logable):
+class _BaseFilter(Logable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -53,7 +53,7 @@ class BaseFilter(Logable):
         return mask
 
 
-class SizeFilter(BaseFilter):
+class SizeFilter(_BaseFilter):
     """
     Filter class for removing objects from a mask based on their size.
 
@@ -570,7 +570,7 @@ class SizeFilter(BaseFilter):
         return self.get_updated_mask(input_mask, self.ids_to_remove)
 
 
-class MatchNucleusCytosolIds(BaseFilter):
+class MatchNucleusCytosolIds(_BaseFilter):
     """
     Filter class for matching nucleusIDs to their matching cytosol IDs and removing all classes from the given
     segmentation masks that do not fullfill the filtering criteria.
