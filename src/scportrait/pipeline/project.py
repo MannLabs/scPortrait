@@ -24,12 +24,12 @@ from spatialdata.transformations.transformations import Identity
 from spatialdata.models import PointsModel, Image2DModel
 from napari_spatialdata import Interactive
 
-from sparcstools.base import daskmmap
+from scportrait.io import daskmmap
 
-from scportrait.pipeline.base import Logable
-from scportrait.pipeline.io import sdata_filehandler
-from scportrait.pipeline.spatialdata_classes import spLabels2DModel
-from scportrait.utils.spatialdata_helper import (
+from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.sdata_io import sdata_filehandler
+from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
+from scportrait.pipeline._utils.spatialdata_helper import (
     get_unique_cell_ids,
     generate_region_annotation_lookuptable,
     remap_region_annotation_table,
@@ -1231,9 +1231,9 @@ class Project(Logable):
 
     def select(
         self,
-        segmentation_name: str,
         cell_sets: List[Dict],
-        calibration_markers: Union[np.array, None] = None,
+        calibration_marker: Union[np.array, None] = None,
+        segmentation_name: str = "seg_all_nucleus",
         name: Union[str, None] = None,
     ):
         """
@@ -1257,7 +1257,7 @@ class Project(Logable):
         self.selection_f(
             segmentation_name=segmentation_name,
             cell_sets=cell_sets,
-            calibration_markers=calibration_markers,
+            calibration_marker=calibration_marker,
             name=name,
         )
         self._check_sdata_status()

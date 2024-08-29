@@ -8,27 +8,27 @@ ml
 datasets
 ########
 
-.. automodule:: scportrait.ml.datasets
+.. automodule:: scportrait.tools.ml.datasets
     :members:
 
 metrics
 ########
 
-.. automodule:: scportrait.ml.metrics
+.. automodule:: scportrait.tools.ml.metrics
     :members:
 
 models
 ########
 
-.. autoclass:: scportrait.ml.models.VGGBase
+.. autoclass:: scportrait.tools.ml.models.VGGBase
     :members:
     :show-inheritance: False
 
-.. autoclass:: scportrait.ml.models.VGG1
+.. autoclass:: scportrait.tools.ml.models.VGG1
     :members:
     :show-inheritance:
 
-.. autoclass:: scportrait.ml.models.VGG2
+.. autoclass:: scportrait.tools.ml.models.VGG2
     :members:
     :show-inheritance:
 
@@ -36,24 +36,24 @@ models
 plmodels
 ########
 
-.. autoclass:: scportrait.ml.plmodels.MultilabelSupervisedModel
+.. autoclass:: scportrait.tools.ml.plmodels.MultilabelSupervisedModel
     :members:
     :show-inheritance: False
 
 pretrained_models
 #################
 
-.. automodule:: scportrait.ml.pretrained_models
+.. automodule:: scportrait.tools.ml.pretrained_models
     :members:
 
 transforms
 ###########
 
-.. automodule:: scportrait.ml.transforms
+.. automodule:: scportrait.tools.ml.transforms
     :members:
 
 utils
 ###########
 
-.. automodule:: scportrait.ml.utils
+.. automodule:: scportrait.tools.ml.utils
     :members:

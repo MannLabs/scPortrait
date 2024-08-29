@@ -7,9 +7,9 @@ utils
 .. automodule:: scportrait.processing.utils
     :members:
 
-preprocessing
-#############
-.. automodule:: scportrait.processing.preprocessing
+image_processing
+################
+.. automodule:: scportrait.processing.image_processing
     :members:
 
 segmentation
