@@ -1,11 +1,44 @@
 from numba import jit
 import numpy as np
 
+from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage.feature import peak_local_max
 from scipy.ndimage import distance_transform_edt
 from mahotas import sobel
 import xarray as xr
+
+def rescale_image(image, rescale_range, outrange = (0, 1), dtype = "uint16", cutoff_threshold = None, return_float = False):
+    #convert to float for better percentile calculation
+    img = image.astype("float")
+
+    #define factor to rescale image to uints
+    if dtype == "uint16":
+        factor = 65535
+    elif dtype == "uint8":
+        factor = 255
+    
+    #get cutoff values
+    cutoff1, cutoff2 = rescale_range
+
+    #if cutoff_threshold is given, set all values above the threshold to 1 but do not consider them for percentile calculation
+    if cutoff_threshold is not None:
+        if img.max() > cutoff_threshold:
+            _img = img.copy()
+            values = _img[_img < (cutoff_threshold/factor)]
+    else:
+        values = img 
+    
+    #calculate percentiles
+    p1 = np.percentile(values, cutoff1)
+    p99 = np.percentile(values, cutoff2)
+    del values
+
+    if return_float:
+        return(rescale_intensity(img, (p1, p99), outrange))
+    else:
+        return((rescale_intensity(img, (p1, p99), outrange) * factor).astype(dtype))
+
 
 def _normalize_image(im, lower_value, upper_value):
     """

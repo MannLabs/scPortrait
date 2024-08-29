@@ -8,7 +8,7 @@ from skimage.morphology import disk, dilation, erosion
 from collections import defaultdict
 
 from scportrait.pipeline.base import Logable
-from scportrait.processing.preprocessing import downsample_img_pxs
+from scportrait.processing.image_processing import downsample_img_pxs
 
 #for visualization purposes
 from scportrait.utils.vis import _custom_cmap
