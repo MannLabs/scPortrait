@@ -138,6 +138,49 @@ def downsample_img_pxs(img, N=2):
     downsampled = img[:,0:-1:N,0:-1:N] 
     return(downsampled)  
 
+def downsample_img_padding(img, N=2):
+        """
+        Downsample image by a factor of N. Before downsampling this function will pad the image to ensure its compatible with the selected kernel size.
+
+        Parameters
+        ----------
+        img
+            image to be downsampled
+
+        Returns
+        -------
+        downsampled image
+
+        """
+
+        # check if N fits perfectly into image shape if not calculate how much we need to pad
+        if len(img.shape) == 3:
+            _, x, y = img.shape
+        elif len(img.shape) == 2:
+            x, y = img.shape
+
+        if x % N == 0:
+            pad_x = (0, 0)
+        else:
+            pad_x = (0, N - x % N)
+
+        if y % N == 0:
+            pad_y = (0, 0)
+        else:
+            pad_y = (0, N - y % N)
+
+        print(f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {N}.")
+
+        # perform image padding to ensure that image is compatible with downsample kernel size
+        img = np.pad(img, ((0, 0), pad_x, pad_y))
+
+        print(f"Downsampling image by a factor of {N}x{N}")
+
+        # actually perform downsampling
+        img = downsample_img(img, N=N)
+
+        return img
+
 @jit(nopython=True, parallel = True) # Set "nopython" mode for best performance, equivalent to @njit
 def rolling_window_mean(array, size, scaling = False):
     """
