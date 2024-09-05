@@ -21,7 +21,6 @@ def test_global_otsu():
     threshold = global_otsu(image)
     assert isinstance(threshold, float), "The result is not a float"
 
-
 def test_segment_threshold():
     image = data.coins()
     threshold = 100
@@ -141,7 +140,6 @@ def test_shift_labels():
 
 from scportrait.pipeline._utils.segmentation import _remove_classes, remove_classes
 
-
 def test_remove_classes():
     label_in = np.array([[1, 2, 1], [1, 0, 2], [0, 2, 3]])
     to_remove = [1, 3]
@@ -246,7 +244,6 @@ from scportrait.processing.images._image_processing import (
     MinMax,
 )
 
-
 def test_percentile_norm():
     img = np.random.rand(4, 4)
     norm_img = _percentile_norm(img, 0.1, 0.9)
@@ -286,32 +283,17 @@ def test_MinMax():
     assert np.min(normalized_array) == 0
     assert np.max(normalized_array) == 1
 
-
 #######################################################
 # Unit tests for ../proccessing/utils.py
 #######################################################
 
-from scportrait.processing.utils import (
-    plot_image,
-    visualize_class,
-    download_testimage,
-    flatten,
-)
-
+from scportrait.pipeline._utils.helper import flatten
+from scportrait.plotting.vis import plot_image, visualize_class
 
 def test_flatten():
     nested_list = [[1, 2, 3], [4, 5], [6, 7, 8, 9]]
     expected_output = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert flatten(nested_list) == expected_output
-
-
-def test_download_testimage(tmpdir):
-    folder = tmpdir.mkdir("test_images")
-    downloaded_images = download_testimage(folder)
-    assert len(downloaded_images) == 2
-    for img_path in downloaded_images:
-        assert os.path.isfile(img_path)
-
 
 def test_visualize_class():
     class_ids = [1, 2]
@@ -322,7 +304,6 @@ def test_visualize_class():
         visualize_class(class_ids, seg_map, background)
     except Exception as e:
         pytest.fail(f"visualize_class raised exception: {str(e)}")
-
 
 def test_plot_image(tmpdir):
     array = np.random.rand(10, 10)
@@ -342,7 +323,6 @@ def test_plot_image(tmpdir):
 
 import tempfile
 from scportrait.pipeline._base import Logable, ProcessingStep
-
 
 def test_logable_init():
     with tempfile.TemporaryDirectory() as temp_dir:
