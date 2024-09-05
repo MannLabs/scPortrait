@@ -86,7 +86,6 @@ class Stitcher:
         cache : str, optional
             Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
         """
-
         self.input_dir = input_dir
         self.slidename = slidename
         self.outdir = outdir
