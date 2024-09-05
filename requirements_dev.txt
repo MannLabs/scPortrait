@@ -34,7 +34,7 @@ spatialdata
 napari-spatialdata
 pyqt5
 lxml_html_clean
-ashlar @ git+https://github.com/labsyspharm/ashlar.git@refs/pull/215/head#egg=ashlar
+ashlar @ git+https://github.com/labsyspharm/ashlar.git@master
 networkx
 py-lmd @ git+https://github.com/MannLabs/py-lmd.git@refs/pull/11/head#egg=py-lmd
 
@@ -44,6 +44,5 @@ sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
 renku-sphinx-theme
-
 #for testing
 pytest 
