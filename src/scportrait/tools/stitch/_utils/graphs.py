@@ -1,5 +1,10 @@
-from graph_tool import Graph
-from graph_tool.topology import shortest_distance
+try:
+    from graph_tool import Graph
+    from graph_tool.topology import shortest_distance
+except ImportError:
+    Graph = None
+    shortest_distance = None
+
 from networkx import Graph as nxGraph
 
 #calcultion of centers is equivalent to method in networkx: https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.distance_measures.center.html
@@ -19,9 +24,11 @@ def get_center_nodes(g):
     centers : int
         index of the center node of the graph.
     """
-
-    nodes = g.get_vertices()
+    if shortest_distance is None:
+        raise ImportError("graph-tool is required for this function")
     
+    nodes = g.get_vertices()
+        
     if len(nodes) > 2:
         
         distances = shortest_distance(g)
@@ -34,7 +41,6 @@ def get_center_nodes(g):
     #if only one node or two nodes are present in the graph the one with the lower index is returned    
     else:
         return(nodes[0]) 
-
 
 def nx2gt(nxG):
     """

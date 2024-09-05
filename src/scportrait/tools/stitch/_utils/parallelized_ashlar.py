@@ -6,17 +6,22 @@ import sys
 import numpy as np
 import copy as copy
 
-#added requirements for parallelization
-from networkx import Graph as nxGraph
-
 # Import your utils module here
 import sklearn.linear_model
 
-from graph_tool.topology import shortest_path, label_components
-from graph_tool import Graph as gtGraph
-from graph_tool import GraphView
-from graph_tool.generation import remove_parallel_edges
-from graph_tool.search import bfs_iterator
+#import graph algorithms
+try:
+    from graph_tool.topology import shortest_path, label_components
+    from graph_tool import Graph as gtGraph
+    from graph_tool import GraphView
+    from graph_tool.generation import remove_parallel_edges
+    from graph_tool.search import bfs_iterator
+    flavor = "graph-tool"
+except ImportError:
+    flavor = "networkx"
+
+from networkx import Graph as nxGraph
+import networkx as nx
 
 from ashlar.reg import EdgeAligner, warn_data, Mosaic
 from ashlar import utils as utils  
@@ -37,6 +42,15 @@ class ParallelEdgeAligner(EdgeAligner):
         randomize=randomize, filter_sigma=filter_sigma, do_make_thumbnail=do_make_thumbnail, verbose=verbose)
 
         self.n_threads = n_threads
+
+        #set flavor to graph-tool if available
+        try:
+            from graph_tool import Graph as gtGraph
+            self.flavor = "graph-tool"
+        except ImportError:
+            Warning("graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance.")
+            print("graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance.")
+            self.flavor = "networkx"
 
     def compute_threshold(self):
         # Compute error threshold for rejecting aligments. We generate a
@@ -153,7 +167,7 @@ class ParallelEdgeAligner(EdgeAligner):
 
         self.cached_errors = self._cache.copy() # save as a backup
 
-    def build_spanning_tree(self):
+    def _build_spanning_tree_gt(self):
         g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from(
@@ -187,8 +201,39 @@ class ParallelEdgeAligner(EdgeAligner):
 
         self.spanning_tree = spanning_tree
         self.centers_spanning_tree = centers
+    
+    def _build_spanning_tree_nxg(self):
+
+        g = nx.Graph()
+        g.add_nodes_from(self.neighbors_graph)
+        g.add_weighted_edges_from(
+            (t1, t2, error)
+            for (t1, t2), (_, error) in self._cache.items()
+            if np.isfinite(error)
+        )
+        spanning_tree = nx.Graph()
+        spanning_tree.add_nodes_from(g)
+
+        centers = []
         
-    def calculate_positions(self):
+        for c in nx.connected_components(g):
+            cc = g.subgraph(c)
+            center = nx.center(cc)[0]
+            centers.append(center)
+            paths = nx.single_source_dijkstra_path(cc, center).values()
+            for path in paths:
+                nx.add_path(spanning_tree, path)
+        
+        self.spanning_tree = spanning_tree
+        self.centers_spanning_tree = centers
+        
+    def build_spanning_tree(self):
+        if self.flavor == "graph-tool":
+            self._build_spanning_tree_gt()
+        if self.flavor == "networkx":
+            self._build_spanning_tree_nxg()
+    
+    def _calculate_positions_gt(self):
         shifts = {}
         _components = []
 
@@ -222,7 +267,33 @@ class ParallelEdgeAligner(EdgeAligner):
         else:
             # TODO: fill in shifts and positions with 0x2 arrays
             raise NotImplementedError("No images")   
-        
+
+    def _calculate_positions_nxg(self):
+        shifts = {}
+        for c in nx.connected_components(self.spanning_tree):
+            cc = self.spanning_tree.subgraph(c)
+            center = nx.center(cc)[0]
+            shifts[center] = np.array([0, 0])
+            for edge in nx.traversal.bfs_edges(cc, center):
+                source, dest = edge
+                if source not in shifts:
+                    source, dest = dest, source
+                shift = self.register_pair(source, dest)[0]
+                shifts[dest] = shifts[source] + shift
+        if shifts:
+            self.shifts = np.array([s for _, s in sorted(shifts.items())])
+            self.positions = self.metadata.positions + self.shifts
+            self.components_spanning_tree = nx.connected_components(self.spanning_tree)
+        else:
+            # TODO: fill in shifts and positions with 0x2 arrays
+            raise NotImplementedError("No images")
+    
+    def calculate_positions(self):
+        if self.flavor == "graph-tool":
+            self._calculate_positions_gt()
+        if self.flavor == "networkx":
+            self._calculate_positions_nxg()
+   
     def fit_model(self):
         components = self.components_spanning_tree
         components = sorted(

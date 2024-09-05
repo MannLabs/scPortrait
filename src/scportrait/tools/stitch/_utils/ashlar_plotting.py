@@ -3,7 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx #required for plotting results
 from scportrait.tools.stitch._utils.graphs import gt2nx
-from graph_tool import Graph as gtGraph
+
+#try to import the graph_tool backend
+try:
+    from graph_tool import Graph as gtGraph
+except ImportError:
+    gtGraph = None
+
+nx.graph.Graph
 
 def draw_mosaic_image(ax, aligner, img, **kwargs):
     if img is None:
@@ -68,10 +75,15 @@ def plot_edge_quality(
         draw_mosaic_image(ax, aligner, img, **im_kwargs)
         
         #convert spanning tree to nx graph
-        if type(aligner.spanning_tree) == gtGraph:
-            spanning_tree = gt2nx(aligner.spanning_tree)
-        else:
+        if isinstance(aligner.spanning_tree, nx.graph.Graph):
             spanning_tree = aligner.spanning_tree
+        elif gtGraph is not None:
+            if isinstance(aligner.spanning_tree, gtGraph):
+                spanning_tree = gt2nx(aligner.spanning_tree)
+            else:
+                raise ValueError("spanning_tree must be a networkx or graph-tool graph")
+        else:
+            raise ImportError("graph-tool is required for this type of graph.")
 
         # Spanning tree with nodes at original tile positions.
         nx.draw(

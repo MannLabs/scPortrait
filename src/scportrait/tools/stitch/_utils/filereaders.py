@@ -1,3 +1,4 @@
+import os
 from ashlar import filepattern
 from skimage.filters import gaussian
 from skimage.util import invert
@@ -13,7 +14,12 @@ class FilePatternReaderRescale(FilePatternReader):
     """
 
     def __init__(self, path, pattern, overlap, pixel_size=1, do_rescale=False, WGAchannel = None, no_rescale_channel = "Alexa488", rescale_range = (1, 99)):
-        super().__init__(path, pattern, overlap, pixel_size=pixel_size)
+        try:
+            super().__init__(path, pattern, overlap, pixel_size=pixel_size)
+        except:
+            print(f"Error: Could not read images with the given pattern {pattern}. Please check the path {path} and pattern.")
+            print(f"At the provided location the following files could be found:{os.listdir(path)} ")
+
         self.do_rescale = do_rescale
         self.WGAchannel = WGAchannel
         self.no_rescale_channel = no_rescale_channel
