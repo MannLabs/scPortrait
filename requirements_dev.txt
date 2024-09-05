@@ -1,32 +1,42 @@
+tqdm
 numpy<2.0.0
 pandas
+numba
 matplotlib
-tqdm
+seaborn
 h5py
-pyyaml
+yattag
+alphabase
+
 zarr
 ome-zarr
-alphabase
+tifffile
 aicspylibczi
+
+mahotas
 shapely
 rasterio
 imagesize
+imagecodecs
 xarray
 xarray-datatree
 opencv-python
 scikit-image>=0.22.0
 scikit-fmm
+scipy
 cellpose
-numba
+
 torch
 pytorch-lightning
 torchvision
-scipy
-mahotas
+
 spatialdata
 napari-spatialdata
 pyqt5
 lxml_html_clean
+ashlar @ git+https://github.com/labsyspharm/ashlar.git@refs/pull/215/head#egg=ashlar
+networkx
+py-lmd @ git+https://github.com/MannLabs/py-lmd.git@refs/pull/11/head#egg=py-lmd
 
 #packages for building the documentation
 sphinx
