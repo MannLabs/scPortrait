@@ -13,7 +13,7 @@ The current documentation can be found under https://mannlabs.github.io/SPARCSsp
 
 ## Installation from Github
 
-scPortrait has been tested with **Python 3.8 and 3.9**. We recommended installing the library within a conda environment. 
+scPortrait has been tested with **Python 3.10**. We recommended installing the library within a conda environment. 
 
 To install the scPortrait library clone the Github repository and use pip to install the library in your current environment.
 Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available.
@@ -26,7 +26,7 @@ cd scPortrait
 
 conda create -n "scPortrait"
 conda activate scPortrait
-conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba mahotas -c conda-forge
+conda install python=3.10 graph-tool openjdk -c conda-forge
 ```
 
 In case you wish to utilize the ML capabilities of scPortrait (either for segmentation or classification) please follow the instructions [here](https://pytorch.org/get-started/locally/) to install pytorch correctly for your operating system. Once this has been installed you can verify that pytorch is installed correctly by executing the following python code:
