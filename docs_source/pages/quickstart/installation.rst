@@ -21,7 +21,7 @@ We recommend installing the dependencies with mamba or conda before installing s
    conda activate scPortrait
    conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba -c conda-forge
 
-In case you wish to utilize the ML capabilities of scPortrait (either for segmentation or classification) please follow the instructions `here <https://pytorch.org/get-started/locally/>`_ to install pytorch correctly for your operating system. After you can verify your installation by executing the following python code:
+In case you wish to utilize the ML capabilities of scPortrait (either for segmentation or classification) please follow the instructions `here <https://pytorch.org/get-started/locally/>`__ to install pytorch correctly for your operating system. After you can verify your installation by executing the following python code:
 
 .. code:: python
 
@@ -56,7 +56,7 @@ Currently scPortrait depends on a developer version of alphabase so please insta
 
    pip install git+https://github.com/MannLabs/alphabase
 
-scPortrait also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`_.
+scPortrait also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`__.
 Once these steps are completed you can proceed to install the scPortrait package.
 
 Clone the `Github repository <https://github.com/MannLabs/SPARCSspatial>`_ and use pip to install the library in your current environment. Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available:
