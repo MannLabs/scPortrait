@@ -4,9 +4,9 @@
 Installation
 *******************
 
-SPARCSpy has been tested with **Python 3.8, 3.9 and 3.10**. We recommended installing the library within a separate conda environment. 
+scPortrait has been tested with **Python 3.8, 3.9 and 3.10**. We recommended installing the library within a separate conda environment. 
 
-We recommend installing the dependencies with mamba or conda before installing SPARCSpy.
+We recommend installing the dependencies with mamba or conda before installing scPortrait.
 
 .. note:: **Using Mamba instead of Conda**
    
@@ -15,13 +15,13 @@ We recommend installing the dependencies with mamba or conda before installing S
 .. code::
 
    git clone https://github.com/MannLabs/SPARCSspatial
-   cd SPARCSpy
+   cd scPortrait
 
-   conda create -n "SPARCSpy"
-   conda activate SPARCSpy
+   conda create -n "scPortrait"
+   conda activate scPortrait
    conda install python=3.9 scipy 'scikit-image>=0.19' scikit-fmm cellpose opencv numba -c conda-forge
 
-In case you wish to utilize the ML capabilities of SPARCSpy (either for segmentation or classification) please follow the instructions `here <https://pytorch.org/get-started/locally/>`_ to install pytorch correctly for your operating system. After you can verify your installation by executing the following python code:
+In case you wish to utilize the ML capabilities of scPortrait (either for segmentation or classification) please follow the instructions `here <https://pytorch.org/get-started/locally/>`__ to install pytorch correctly for your operating system. After you can verify your installation by executing the following python code:
 
 .. code:: python
 
@@ -50,14 +50,14 @@ Once you have installed `pytorch` according to the instructions you still need t
    
    We have encountered issues with installed pytorch dependencies when they are not installed from the ``pytorch`` channel but from ``conda-forge``. We highly recommend only installing pytorch and its dependencies from the ``pytorch`` channel. You can check your installation by importing ``import pytorch_lightning`` in Python. If this import fails please double check what channel your packages are installed from and reinstall them from the ``pytorch`` channel if necessary.
 
-Currently SPARCSpy depends on a developer version of alphabase so please install the package from source by doing the following:
+Currently scPortrait depends on a developer version of alphabase so please install the package from source by doing the following:
 
 .. code::
 
    pip install git+https://github.com/MannLabs/alphabase
 
-SPARCSpy also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`_.
-Once these steps are completed you can proceed to install the SPARCSpy package.
+scPortrait also depends on the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library. Before proceeding please install the py-lmd libray into the same conda environment following the installation instructions `here <https://mannlabs.github.io/py-lmd/html/pages/quickstart.html#installation-from-github>`__.
+Once these steps are completed you can proceed to install the scPortrait package.
 
 Clone the `Github repository <https://github.com/MannLabs/SPARCSspatial>`_ and use pip to install the library in your current environment. Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available:
 

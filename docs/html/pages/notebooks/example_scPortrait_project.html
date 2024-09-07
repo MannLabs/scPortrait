@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A walk through the scPortrait Ecosystem &mdash; scPortrait  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="scPortrait Workflow" href="../pipeline.html" />
+    <link rel="prev" title="scPortrait workflow" href="../quickstart/computational_workflow.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            scPortrait
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">scPortrait Ecosystem</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">scPortrait Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/project.html">scPortrait Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#project-classes">Project classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#project">1. Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/project.html#timecourseproject">2. TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#initializing-a-scportrait-project">Initializing a scPortrait Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/project.html#loading-images-into-a-scportrait-project">Loading Images into a scPortrait project</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/segmentation.html">Segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#id2">1. Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#shardedsegmentation">2. ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#timecoursesegmentation">3. TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#multithreadedsegmentation">4. MultithreadedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#wga-segmentation">WGA segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-segmentation">DAPI segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#cytosol-cellpose-segmentation">Cytosol Cellpose segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#dapi-cellpose-segmentation">DAPI Cellpose segmentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/extraction.html">Extraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#extraction-classes">Extraction classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../example_notebooks.html#basic-scportrait-project">Basic scPortrait Project</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.masks">masks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#base">base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#logable">Logable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#processingstep">ProcessingStep</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#project">project</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id1">Project</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#classification">classification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#cellfeaturizer">CellFeaturizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#selection">selection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#lmdselection">LMDSelection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module/ml.html">ml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.datasets">datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegression</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegressionSubset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.metrics">metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.transforms">transforms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.utils">utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.utils.split_dataset_fractions"><code class="docutils literal notranslate"><span class="pre">split_dataset_fractions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">scPortrait</a>
+      </nav>
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../quickstart.html">Quickstart</a></li>
+      <li class="breadcrumb-item active">A walk through the scPortrait Ecosystem</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/notebooks/example_scPortrait_project.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="A-walk-through-the-scPortrait-Ecosystem">
+<h1>A walk through the scPortrait Ecosystem<a class="headerlink" href="#A-walk-through-the-scPortrait-Ecosystem" title="Link to this heading"></a></h1>
+<p>This notebook will introduce you to the scPortrait ecosystem and give you a complete working example of how to use scPortrait. It will walk you through the following steps of the scPortrait workflow: 1. <strong>segmentation</strong>: Generates masks for the segmentation of input images into individual cells 2. <strong>extraction</strong>: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel. 3. <strong>classification</strong>:
+The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods. Here we utilize the pretrained binary classifier from the original <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">SPARCS manuscript</a> that identifies individual cells defective in a biological process called “autophagy”. 4. <strong>selection</strong>: Cutting
+instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an <code class="docutils literal notranslate"><span class="pre">.xml</span></code> file which can be loaded on a leica LMD microscope for automated cell excision.</p>
+<p>The data used in this notebook was previously stitched using the stitching workflow in <a class="reference external" href="https://github.com/MannLabs/SPARCStools">SPARCStools</a>. Please see the notebook <a class="reference external" href="https://mannlabs.github.io/SPARCStools/html/pages/notebooks/example_stitching_notebook.html">here</a>.</p>
+<section id="Import-Required-Libraries">
+<h2>Import Required Libraries<a class="headerlink" href="#Import-Required-Libraries" title="Link to this heading"></a></h2>
+<p>First we need to import all of the python functions we require to run the pipeline.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.classification</span> <span class="kn">import</span> <span class="n">MLClusterClassifier</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.selection</span> <span class="kn">import</span> <span class="n">LMDSelection</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></div></div>
+</div>
+</section>
+<section id="Generate-the-Project-Structure">
+<h2>Generate the Project Structure<a class="headerlink" href="#Generate-the-Project-Structure" title="Link to this heading"></a></h2>
+<p>Executing this code will generate a new scPortrait project in the designated location. Each scPortrait project has the following general structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.
+├── classification
+│   └── classifier_name
+│       └── processing.log
+├── config.yml
+├── extraction
+├── segmentation
+└── processing.log
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;../../../example_data/example_1/project&quot;</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_1/config_example1.yml&quot;</span><span class="p">,</span>
+                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
+                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+                  <span class="n">classification_f</span><span class="o">=</span><span class="n">MLClusterClassifier</span><span class="p">,</span>
+                  <span class="n">selection_f</span><span class="o">=</span><span class="n">LMDSelection</span>
+                  <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Updating project config file.
+[29/08/2024 17:32:37] Loading config from /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/config.yml
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/Documents/GitHub/scPortrait/src/scportrait/pipeline/project.py:107: UserWarning: There is already a directory in the location path
+  warnings.warn(&#34;There is already a directory in the location path&#34;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:32:37] No cache directory specified in config using current working directory /Users/sophia/Documents/GitHub/scPortrait/docs_source/pages/notebooks.
+</pre></div></div>
+</div>
+</section>
+<section id="Load-Imaging-Data">
+<h2>Load Imaging Data<a class="headerlink" href="#Load-Imaging-Data" title="Link to this heading"></a></h2>
+<p>Once we have generated our project structure we next need to load our imaging data. There are several different ways to do this.</p>
+<ol class="arabic simple">
+<li><p>you can load the images directly from file by specifying a list of filepaths</p></li>
+<li><p>you can load the images from numpy arrays that are already loaded into memory</p></li>
+</ol>
+<p>Here it is important that you load the channels in the following order: Nucleus, Cellmembrane, others</p>
+<p>In this particular example we are utilizing images from U2OS cells which are stained with Hoechst 33342 to visualize nuclei and express Lck-mNeon to visualize the cellular membrane and LC3B-mcherry, a fluroescently tagged protein relevant for visualizing the biological process of autophagy. The cells have not been stimulated to induce autophagy and should be autophagy defective.</p>
+<section id="Method-1:-loading-images-from-file">
+<h3>Method 1: loading images from file<a class="headerlink" href="#Method-1:-loading-images-from-file" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+
+<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:06:27] Output location /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/sparcs.sdata already exists. Overwriting.
+<span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/</span><span class="ansi-magenta-intense-fg">sparcs.sdata</span>
+[29/08/2024 17:06:27] Initialized temporary directory at /Users/sophia/Documents/GitHub/scPortrait/docs_source/pages/notebooks/Project_cmvcluf7 for Project
+[29/08/2024 17:06:27] Image input_image written to sdata object.
+[29/08/2024 17:06:27] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/Users/sophia/Documents/GitHub/scPortrait/docs_source/pages/notebooks/Project_cmvcluf7&#39;&gt;
+</pre></div></div>
+</div>
+</section>
+<section id="Method-2:-loading-images-from-numpy-array">
+<h3>Method 2: loading images from numpy array<a class="headerlink" href="#Method-2:-loading-images-from-numpy-array" title="Link to this heading"></a></h3>
+<p>To simulate the case where the images you want to load are already loaded as a numpy array, we first convert the images to a numpy array and then pass this array to the project instead of only providing the image paths.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
+
+<span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+
+<span class="n">image_arrays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">images</span><span class="p">])</span>
+
+<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_array</span><span class="p">(</span><span class="n">image_arrays</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:06:27] Output location /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/sparcs.sdata already exists. Overwriting.
+<span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/</span><span class="ansi-magenta-intense-fg">sparcs.sdata</span>
+[29/08/2024 17:06:27] Image input_image written to sdata object.
+</pre></div></div>
+</div>
+</section>
+<section id="Looking-at-the-loaded-images">
+<h3>Looking at the loaded images<a class="headerlink" href="#Looking-at-the-loaded-images" title="Link to this heading"></a></h3>
+<p>The loaded images are accesible via the input_image parameter of the project. They are saved into the underlying spatialdata object.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme=dark],
+html[data-theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: none;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: '►';
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: '▼';
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: '(';
+}
+
+.xr-dim-list:after {
+  content: ')';
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ',';
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.DataArray &#x27;image&#x27; (c: 3, y: 3040, x: 3038)&gt; Size: 55MB
+dask.array&lt;from-zarr, shape=(3, 3040, 3038), dtype=uint16, chunksize=(1, 1000, 1000), chunktype=numpy.ndarray&gt;
+Coordinates:
+  * c        (c) &lt;U9 108B &#x27;channel_0&#x27; &#x27;channel_1&#x27; &#x27;channel_2&#x27;
+  * y        (y) float64 24kB 0.5 1.5 2.5 3.5 ... 3.038e+03 3.038e+03 3.04e+03
+  * x        (x) float64 24kB 0.5 1.5 2.5 3.5 ... 3.036e+03 3.036e+03 3.038e+03
+Attributes:
+    transform:  {&#x27;global&#x27;: Identity }</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.DataArray</div><div class='xr-array-name'>'image'</div><ul class='xr-dim-list'><li><span class='xr-has-index'>c</span>: 3</li><li><span class='xr-has-index'>y</span>: 3040</li><li><span class='xr-has-index'>x</span>: 3038</li></ul></div><ul class='xr-sections'><li class='xr-section-item'><div class='xr-array-wrap'><input id='section-1d580b81-c352-42a9-8483-24b108d86722' class='xr-array-in' type='checkbox' checked><label for='section-1d580b81-c352-42a9-8483-24b108d86722' title='Show/hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-array-preview xr-preview'><span>dask.array&lt;chunksize=(1, 1000, 1000), meta=np.ndarray&gt;</span></div><div class='xr-array-data'><table>
+    <tr>
+        <td>
+            <table style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <td> </td>
+                        <th> Array </th>
+                        <th> Chunk </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <th> Bytes </th>
+                        <td> 52.85 MiB </td>
+                        <td> 1.91 MiB </td>
+                    </tr>
+
+                    <tr>
+                        <th> Shape </th>
+                        <td> (3, 3040, 3038) </td>
+                        <td> (1, 1000, 1000) </td>
+                    </tr>
+                    <tr>
+                        <th> Dask graph </th>
+                        <td colspan="2"> 48 chunks in 2 graph layers </td>
+                    </tr>
+                    <tr>
+                        <th> Data type </th>
+                        <td colspan="2"> uint16 numpy.ndarray </td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+        <svg width="194" height="184" style="stroke:rgb(0,0,0);stroke-width:1" >
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="10" y1="39" x2="24" y2="54" />
+  <line x1="10" y1="78" x2="24" y2="93" />
+  <line x1="10" y1="118" x2="24" y2="133" />
+  <line x1="10" y1="120" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="10" y2="120" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="14" y2="124" />
+  <line x1="19" y1="9" x2="19" y2="129" />
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 24.9485979497544,14.948597949754403 24.9485979497544,134.9485979497544 10.0,120.0" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="129" y2="0" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="134" y2="4" />
+  <line x1="19" y1="9" x2="139" y2="9" />
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="49" y1="0" x2="64" y2="14" />
+  <line x1="88" y1="0" x2="103" y2="14" />
+  <line x1="128" y1="0" x2="143" y2="14" />
+  <line x1="129" y1="0" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 129.92105263157893,0.0 144.86965058133333,14.948597949754403 24.9485979497544,14.948597949754403" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+  <line x1="24" y1="54" x2="144" y2="54" />
+  <line x1="24" y1="93" x2="144" y2="93" />
+  <line x1="24" y1="133" x2="144" y2="133" />
+  <line x1="24" y1="134" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+  <line x1="64" y1="14" x2="64" y2="134" />
+  <line x1="103" y1="14" x2="103" y2="134" />
+  <line x1="143" y1="14" x2="143" y2="134" />
+  <line x1="144" y1="14" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="24.9485979497544,14.948597949754403 144.86965058133333,14.948597949754403 144.86965058133333,134.9485979497544 24.9485979497544,134.9485979497544" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Text -->
+  <text x="84.909124" y="154.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" >3038</text>
+  <text x="164.869651" y="74.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,164.869651,74.948598)">3040</text>
+  <text x="7.474299" y="147.474299" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,7.474299,147.474299)">3</text>
+</svg>
+        </td>
+    </tr>
+</table></div></div></li><li class='xr-section-item'><input id='section-4a2aa24e-822d-46e8-abd9-da5a8c6b6338' class='xr-section-summary-in' type='checkbox'  checked><label for='section-4a2aa24e-822d-46e8-abd9-da5a8c6b6338' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>c</span></div><div class='xr-var-dims'>(c)</div><div class='xr-var-dtype'>&lt;U9</div><div class='xr-var-preview xr-preview'>&#x27;channel_0&#x27; &#x27;channel_1&#x27; &#x27;channel_2&#x27;</div><input id='attrs-7dfaf811-65ca-42d3-b5e9-493c55e52da1' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-7dfaf811-65ca-42d3-b5e9-493c55e52da1' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5a978838-a30f-40ff-8c8a-b5f52f82a587' class='xr-var-data-in' type='checkbox'><label for='data-5a978838-a30f-40ff-8c8a-b5f52f82a587' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;channel_0&#x27;, &#x27;channel_1&#x27;, &#x27;channel_2&#x27;], dtype=&#x27;&lt;U9&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>y</span></div><div class='xr-var-dims'>(y)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.5 1.5 2.5 ... 3.038e+03 3.04e+03</div><input id='attrs-76934704-0b8f-4239-8757-746df5718b2d' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-76934704-0b8f-4239-8757-746df5718b2d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-836e83f8-2221-4c8b-9c81-b97eb1373f56' class='xr-var-data-in' type='checkbox'><label for='data-836e83f8-2221-4c8b-9c81-b97eb1373f56' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([5.0000e-01, 1.5000e+00, 2.5000e+00, ..., 3.0375e+03, 3.0385e+03,
+       3.0395e+03])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>x</span></div><div class='xr-var-dims'>(x)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.5 1.5 2.5 ... 3.036e+03 3.038e+03</div><input id='attrs-b0ef10e5-3b96-4dc3-b84a-186540be5cda' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b0ef10e5-3b96-4dc3-b84a-186540be5cda' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-33e0aaa4-8ab3-4986-939d-f160f0e14a7a' class='xr-var-data-in' type='checkbox'><label for='data-33e0aaa4-8ab3-4986-939d-f160f0e14a7a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([5.0000e-01, 1.5000e+00, 2.5000e+00, ..., 3.0355e+03, 3.0365e+03,
+       3.0375e+03])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-05760b14-586b-4861-a440-731e3fdfdad4' class='xr-section-summary-in' type='checkbox'  ><label for='section-05760b14-586b-4861-a440-731e3fdfdad4' class='xr-section-summary' >Indexes: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>c</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-facdd23e-67d4-48f1-9b4f-99ccf2158c52' class='xr-index-data-in' type='checkbox'/><label for='index-facdd23e-67d4-48f1-9b4f-99ccf2158c52' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;channel_0&#x27;, &#x27;channel_1&#x27;, &#x27;channel_2&#x27;], dtype=&#x27;object&#x27;, name=&#x27;c&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>y</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-c247e6ad-1407-455f-9b0e-417045579802' class='xr-index-data-in' type='checkbox'/><label for='index-c247e6ad-1407-455f-9b0e-417045579802' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   0.5,    1.5,    2.5,    3.5,    4.5,    5.5,    6.5,    7.5,    8.5,
+          9.5,
+       ...
+       3030.5, 3031.5, 3032.5, 3033.5, 3034.5, 3035.5, 3036.5, 3037.5, 3038.5,
+       3039.5],
+      dtype=&#x27;float64&#x27;, name=&#x27;y&#x27;, length=3040))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>x</div></div><div class='xr-index-preview'>PandasIndex</div><div></div><input id='index-761d414f-cd34-4a4a-9411-f9ea1195b6ab' class='xr-index-data-in' type='checkbox'/><label for='index-761d414f-cd34-4a4a-9411-f9ea1195b6ab' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   0.5,    1.5,    2.5,    3.5,    4.5,    5.5,    6.5,    7.5,    8.5,
+          9.5,
+       ...
+       3028.5, 3029.5, 3030.5, 3031.5, 3032.5, 3033.5, 3034.5, 3035.5, 3036.5,
+       3037.5],
+      dtype=&#x27;float64&#x27;, name=&#x27;x&#x27;, length=3038))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-1e116c70-85d3-490b-9424-887e8e470fd6' class='xr-section-summary-in' type='checkbox'  checked><label for='section-1e116c70-85d3-490b-9424-887e8e470fd6' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>transform :</span></dt><dd>{&#x27;global&#x27;: Identity }</dd></dl></div></li></ul></div></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize input images as example</span>
+<span class="c1"># it is not recommended to execute this block with large input images as it will compute for some time</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">));</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;nuclear stain: Hoechst 33342&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;cellmembrane stain: Lck-mNeon&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Stain of interest 1: mcherry tagged LC3B&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_13_0.png" src="../../_images/pages_notebooks_example_scPortrait_project_13_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alternatively you can also visualize the input images as well as all other objects saved in spatialdata object</span>
+
+<span class="n">project</span><span class="o">.</span><span class="n">view_sdata</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Generating-a-Segmentation">
+<h2>Generating a Segmentation<a class="headerlink" href="#Generating-a-Segmentation" title="Link to this heading"></a></h2>
+<p>scPortrait has different segmentation workflows between which you can choose. If none of them fit your needs you can also easily write your own.</p>
+<p>Here we will demonstrate the CPU based classical segmentation method that was also utilized in the manuscript.</p>
+<p>We define the segmentation method to be used when we initialize the project. In this case we used the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method. The <code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code> works very similarily but allows you to process several image chunks in parallel for more efficient computation on large input images.</p>
+<p>By specifying <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">=</span> <span class="pre">True</span></code> we can see intermediate output results from the segmentation.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method relies on parameters specified in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> we loaded when initializing our project.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>WGASegmentation:
+input_channels: 3
+cache: &quot;.&quot;
+chunk_size: 50 # chunk size for chunked HDF5 storage
+lower_quantile_normalization:   0.001
+upper_quantile_normalization:   0.999
+median_filter_size:   4 # Size in pixels
+nucleus_segmentation:
+    lower_quantile_normalization:   0.01 # quantile normalization of dapi channel before local tresholding Strong normalization (0.05,0.95) can help with nuclear speckles.
+    upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding.Strong normalization (0.05,0.95) can help with nuclear speckles.
+    median_block: 41 # Size of pixel disk used for median, should be uneven
+    median_step: 4
+    threshold: 0.2 # threshold above local median for nuclear segmentation
+    min_distance: 8 # minimum distance between two nucleis in pixel
+    peak_footprint: 7 #
+    speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
+    dilation: 0 # final dilation of pixel mask
+    min_size: 200 # minimum nucleus area in pixel
+    max_size: 1000 # maximum nucleus area in pixel
+    contact_filter: 0.5 # minimum nucleus contact with background
+cytosol_segmentation:
+    threshold: 0.05 # treshold above which cytosol is detected
+    lower_quantile_normalization: 0.01
+    upper_quantile_normalization: 0.99
+    erosion: 2 # erosion and dilation are used for speckle removal and shrinking / dilation
+    dilation: 7 # for no change in size choose erosion = dilation, for larger cells increase the mask erosion
+    min_clip: 0
+    max_clip: 0.2
+    min_size: 200
+    max_size: 6000
+chunk_size: 50
+filter_masks_size: True
+</pre></div>
+</div>
+<p>By passing the parameter <code class="docutils literal notranslate"><span class="pre">debug</span> <span class="pre">=</span> <span class="pre">True</span></code> we tell scPortrait to also generate intermediate outputs which we can look at to see the different segmentation steps. It is only recommended to do this for debugging or visualization purposes as it will utilize more memory and be slower.</p>
+<p>For the <code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code> method the intermediate outputs that are displayed are the following:</p>
+<ol class="arabic simple">
+<li><p>percentile normalized input images for each of the three channels (3 images)</p></li>
+<li><p>median normalized input images (this slightl smooths the images for a better segmentation result) (3 images)</p></li>
+<li><p>histogram showing the intensity distribution for nuclear and cytosolic channel (2 plots)</p></li>
+<li><p>generated mask after applying nuclear thresholding</p></li>
+<li><p>nuclear thresholding mask with calculated centers for each detected nucleus</p></li>
+<li><p>fast marching map with nuclei centers indicated in red</p></li>
+<li><p>segmented individual nuclei (2 different visualizations)</p></li>
+<li><p>starting nucleus mask for filtering</p></li>
+<li><p>histrogram showing size distribution of segmented nuclei</p></li>
+<li><p>segmentation mask with too small nuclei shown in red</p></li>
+<li><p>segmentation mask with too large nuclei shown in red</p></li>
+<li><p>WGA thresholding mask</p></li>
+<li><p>WGA potential map</p></li>
+<li><p>WGA fast marching results</p></li>
+<li><p>Watershed results with nuclear centers shown in red</p></li>
+<li><p>WGA mask</p></li>
+<li><p>Cytosol size distribution</p></li>
+<li><p>cytosol mask with too small cells shown in red</p></li>
+<li><p>cytosol mask with too large cells shown in red</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:06:29] Initialized temporary directory at /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./WGASegmentation_g587xew4 for WGASegmentation
+[29/08/2024 17:06:29] Normalization of the input image will be performed.
+[29/08/2024 17:06:29] Normalizing each channel to the same range
+[29/08/2024 17:06:30] Performing median filtering on input image
+[29/08/2024 17:06:44] Percentile normalization of nucleus input image to range 0.01, 0.99
+[29/08/2024 17:06:44] Normalizing each channel to the same range
+[29/08/2024 17:06:44] Using local thresholding with a threshold of 0.2 to calculate nucleus mask.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_2.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_3.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_4.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_5.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_6.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_6.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:07:00] Performing filtering of nucleus with specified thresholds [200, 1000] from config file.
+[29/08/2024 17:07:00] Removed 47 nuclei as they fell outside of the threshold range [200, 1000].
+[29/08/2024 17:07:01] Total time to perform nucleus size filtering: 0.630159854888916 seconds
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:07:02] Filtered out 6 nuclei due to contact filtering.
+[29/08/2024 17:07:02] Normalizing each channel to the same range
+[29/08/2024 17:07:04] Cytosol Potential Mask generated.
+[29/08/2024 17:07:06] Performing filtering of cytosol with specified thresholds [200, 6000] from config file.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_10.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_10.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_11.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_11.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_12.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_12.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_13.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_13.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:07:07] Removed 78 nuclei as they fell outside of the threshold range [200, 6000].
+[29/08/2024 17:07:08] Total time to perform cytosol size filtering: 1.7064549922943115 seconds
+Channels shape:  (2, 3040, 3038)
+[29/08/2024 17:07:09] Segmentation seg_all_nucleus written to sdata object.
+True False
+[29/08/2024 17:07:09] Segmentation seg_all_cytosol written to sdata object.
+True True
+[29/08/2024 17:07:09] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./WGASegmentation_g587xew4&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_15.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_15.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_16.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_16.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_16_17.png" src="../../_images/pages_notebooks_example_scPortrait_project_16_17.png" />
+</div>
+</div>
+<section id="Looking-at-Segmentation-Results">
+<h3>Looking at Segmentation Results<a class="headerlink" href="#Looking-at-Segmentation-Results" title="Link to this heading"></a></h3>
+<p>The Segmentation Results are written to a hdf5 file called <code class="docutils literal notranslate"><span class="pre">segmentation.h5</span></code> located in the segmentation directory of our scPortrait project.</p>
+<p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">channels</span></code> and <code class="docutils literal notranslate"><span class="pre">labels</span></code>. Channels contains the input images and <code class="docutils literal notranslate"><span class="pre">labels</span></code> the generated segmentation masks.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_cytosol&quot;</span><span class="p">])</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.image.AxesImage at 0xb4fb18a00&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_18_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_18_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_18_2.png" src="../../_images/pages_notebooks_example_scPortrait_project_18_2.png" />
+</div>
+</div>
+<p>If we look at the <code class="docutils literal notranslate"><span class="pre">labels</span></code> dataset we can see that it contains a numpy array containing two segmentation masks: the nuclear segmentation and the cytosol segmentation generated by our chosen segmentation method.</p>
+<p>Each segmentation mask is an array where each pixel is assigned either to background (<code class="docutils literal notranslate"><span class="pre">0</span></code>) or to a specific cell (<code class="docutils literal notranslate"><span class="pre">cellid:</span> <span class="pre">whole</span> <span class="pre">number</span></code>).</p>
+<p>If we zoom in on the corner of the segmentation mask of a nucleus the numpy array would look like this:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">][</span><span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">][</span><span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">compute</span><span class="p">())</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[395 395 395 395 395 395   0   0   0   0]
+ [395 395 395 395 395 395 395 395   0   0]
+ [395 395 395 395 395 395 395 395 395   0]
+ [395 395 395 395 395 395 395 395 395   0]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395 395]
+ [395 395 395 395 395 395 395 395 395   0]
+ [395 395 395 395 395 395 395 395 395   0]
+ [395 395 395 395 395 395 395 395   0   0]
+ [395 395 395 395 395 395   0   0   0   0]
+ [395 395 395 395   0   0   0   0   0   0]
+ [395 395   0   0   0   0   0   0   0   0]
+ [395   0   0   0   0   0   0   0   0   0]
+ [  0   0   0   0   0   0   0   0   0   0]
+ [  0   0   0   0   0   0   0   0   0   0]]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_21_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_21_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Extracting-single-cell-images">
+<h2>Extracting single-cell images<a class="headerlink" href="#Extracting-single-cell-images" title="Link to this heading"></a></h2>
+<p>Once we have generated a segmentation mask, the next step is to extract single-cell images of segmented cells in the dataset.</p>
+<p>Like during the segmentation there are several extraction methods to choose from. For regular scPortrait projects we need the <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> method. This will extract single-cell images for all cells segmentated in the dataset and write them to a hdf5 file.</p>
+<p>The parameters with which <code class="docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code> will run are again specified in the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>HDF5CellExtraction:
+    compression: True
+    threads: 80 # threads used in multithreading
+    image_size: 128 # image size in pixel
+    cache: &quot;.&quot;
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
+    hdf5_rdcc_w0: 1
+    hdf5_rdcc_nslots: 50000
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:07:12] Initialized temporary directory at /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./HDF5CellExtraction_tb09ij62 for HDF5CellExtraction
+[29/08/2024 17:07:12] Created new directory for extraction results: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/extraction/data
+[29/08/2024 17:07:12] Setup output folder at /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/extraction/data
+[29/08/2024 17:07:12] Found 2 segmentation masks for the given key in the sdata object. Will be extracting single-cell images based on these masks: [&#39;seg_all_nucleus&#39;, &#39;seg_all_cytosol&#39;]
+[29/08/2024 17:07:12] Using seg_all_nucleus as the main segmentation mask to determine cell centers.
+[29/08/2024 17:07:12] Points centers_cells written to sdata object.
+[29/08/2024 17:07:12] Extraction Details:
+[29/08/2024 17:07:12] --------------------------------
+[29/08/2024 17:07:12] Number of input image channels: 3
+[29/08/2024 17:07:12] Number of segmentation masks used during extraction: 2
+[29/08/2024 17:07:12] Number of generated output images per cell: 5
+[29/08/2024 17:07:12] Number of unique cells to extract: 328
+[29/08/2024 17:07:12] Extracted Image Dimensions: 128 x 128
+[29/08/2024 17:07:12] Starting single-cell image extraction of 328 cells...
+[29/08/2024 17:07:12] Loading input images to memory mapped arrays...
+[29/08/2024 17:07:13] Finished transferring data to memory mapped arrays. Time taken: 0.39 seconds.
+[29/08/2024 17:07:13] Using batch size of 100 for multiprocessing.
+[29/08/2024 17:07:13] Reducing number of threads to 4 to match number of cell batches to process.
+[29/08/2024 17:07:13] Running in multiprocessing mode with 4 threads.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Processing cell batches: 100%|██████████| 4/4 [00:01&lt;00:00,  3.28it/s]
+/Users/sophia/Documents/GitHub/scPortrait/src/scportrait/pipeline/extraction.py:673: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  fig.show()
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+multiprocessing done.
+[29/08/2024 17:07:14] Finished extraction in 1.38 seconds (237.58 cells / second)
+[29/08/2024 17:07:14] Transferring results to final HDF5 data container.
+[29/08/2024 17:07:14] number of cells too close to image edges to extract: 14
+[29/08/2024 17:07:14] A total of 14 cells were too close to the image border to be extracted. Their cell_ids were saved to file /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/segmentation/removed_classes.csv.
+[29/08/2024 17:07:14] Transferring extracted single cells to .hdf5
+[29/08/2024 17:07:14] single-cell index created.
+[29/08/2024 17:07:14] single-cell data created
+[29/08/2024 17:07:14] single-cell index labelled created.
+[29/08/2024 17:07:14] channel information created.
+[29/08/2024 17:07:15] Benchmarking times saved to file.
+[29/08/2024 17:07:15] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./HDF5CellExtraction_tb09ij62&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_3.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_4.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_4.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_23_5.png" src="../../_images/pages_notebooks_example_scPortrait_project_23_5.png" />
+</div>
+</div>
+<section id="Look-at-extracted-single-cell-images">
+<h3>Look at extracted single-cell images<a class="headerlink" href="#Look-at-extracted-single-cell-images" title="Link to this heading"></a></h3>
+<p>The extracted single-cell images are written to a h5py file <code class="docutils literal notranslate"><span class="pre">single_cells.h5</span></code> located under <code class="docutils literal notranslate"><span class="pre">extraction\data</span></code> within the project folder.</p>
+<p>The file contains two datasets: <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> and <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code>. <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> contains the extracted single cell images while <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> contains the cell id of the extracted cell at that location.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;KeysViewHDF5 [&#39;channel_information&#39;, &#39;single_cell_data&#39;, &#39;single_cell_index&#39;, &#39;single_cell_index_labelled&#39;]&gt;
+</pre></div></div>
+</div>
+<p>So if we want to look at the nth cell in the dataset we can first check which cellid was assigned to this cell by looking at the nth entry in the <code class="docutils literal notranslate"><span class="pre">single_cell_index</span></code> dataset and then get the extracted single-cell images from the <code class="docutils literal notranslate"><span class="pre">single_cell_data</span></code> dataset.</p>
+<p>The extracted single-cell images represent the following information in this order:</p>
+<ol><ol class="arabic simple">
+<li><p>nucleus mask 2. cytosol mask 3. nucleus channel 4. cytosol channel 5. other channels</p></li>
+</ol>
+</ol><p>Here we will demonstrate with the 10th cell in the dataset.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_index&quot;</span><span class="p">)</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cell id: &quot;</span><span class="p">,</span> <span class="n">index</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+
+    <span class="n">image</span> <span class="o">=</span> <span class="n">images</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_img</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+        <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+cell id:  [10 43]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_27_1.png" src="../../_images/pages_notebooks_example_scPortrait_project_27_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Classification-of-extracted-single-cells">
+<h2>Classification of extracted single-cells<a class="headerlink" href="#Classification-of-extracted-single-cells" title="Link to this heading"></a></h2>
+<p>Next we can apply a pretained model to classify our cells within the scPortrait project.</p>
+<p>Within the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> we specify which model should be used for inference and we can give it a name.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MLClusterClassifier:
+    channel_classification: 4
+    threads: 24 #
+    batch_size: 900
+    dataloader_worker: 0 #needs to be 0 if using cpu
+    standard_scale: False
+    exp_transform: False
+    log_transform: False
+    network: &quot;autophagy_classifier2.1&quot;
+    classifier_architecture: &quot;VGG2_old&quot;
+    screen_label: &quot;Autophagy_15h_classifier2.1&quot;
+    epoch: &quot;max&quot;
+    encoders: [&quot;forward&quot;]
+    inference_device: &quot;cpu&quot;
+</pre></div>
+</div>
+<p>Here e.g. we are using a pretrained model included within the scPortrait library <code class="docutils literal notranslate"><span class="pre">autophagy_classifier2.1</span></code> and are naming the results from this model <code class="docutils literal notranslate"><span class="pre">Autophagy_15h_classifier2.1</span></code>.</p>
+<p>Model overview:</p>
+<p><img alt="autophagy classification with example cells" class="no-scaled-link" src="../../_images/classifying_autophagy.png" style="width: 800px;" /></p>
+<p>The inference results will be written to a new folder generated under <code class="docutils literal notranslate"><span class="pre">classification</span></code> with this name.</p>
+<p>If we want to use a model we trained ourselves that is not yet included within the scPortrait library we can simply replace the network name in the config with the path to the checkpoint file generated by pytorch.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">classify</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.4.0. To apply the upgrade to your files permanently, run `python -m pytorch_lightning.utilities.upgrade_checkpoint ../../../src/scportrait/pretrained_models/autophagy/autophagy2.1/VGG2_autophagy_classifier2.1.cpkt`
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Using extraction directory: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/extraction/data/single_cells.h5
+[29/08/2024 17:09:02] Initialized temporary directory at /Users/sophia/Documents/GitHub/scPortrait/docs_source/pages/notebooks/MLClusterClassifier_qp45yj1_ for MLClusterClassifier
+[29/08/2024 17:09:02] Started MLClusterClassifier classification.
+[29/08/2024 17:09:02] Created new directory for classification results: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1
+[29/08/2024 17:09:02] CPU specified in config file but MPS available on system. Consider changing the device for the next run.
+[29/08/2024 17:09:02] Model class already defined as &lt;class &#39;scportrait.tools.ml.plmodels.MultilabelSupervisedModel&#39;&gt; will not overwrite. If this behaviour was unintended please set the model class to none by executing &#39;project.classification_f.model_class = None&#39;
+[29/08/2024 17:09:02] Model assigned to classification function.
+[29/08/2024 17:09:02] Reading data from path: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/extraction/data/single_cells.h5
+[29/08/2024 17:09:02] Expected image size is set to [128, 128]. Resizing images to this size.
+[29/08/2024 17:09:02] Dataloader generated with a batchsize of 900 and 10 workers. Dataloader contains 1 entries.
+[29/08/2024 17:09:02] Starting inference for model encoder forward
+[29/08/2024 17:09:02] Started processing of 1 batches.
+[29/08/2024 17:09:04] finished processing.
+[29/08/2024 17:09:04] Results saved to file: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv
+[29/08/2024 17:09:04] Table MLClusterClassifier_Autophagy_15h_classifier2_1_forward_nucleus written to sdata object.
+[29/08/2024 17:09:05] Table MLClusterClassifier_Autophagy_15h_classifier2_1_forward_cytosol written to sdata object.
+[29/08/2024 17:09:05] Results saved to file: /Users/sophia/Documents/GitHub/scPortrait/example_data/example_1/project/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv
+[29/08/2024 17:09:05] GPU memory before performing cleanup: None
+[29/08/2024 17:09:05] GPU memory after performing cleanup: None
+[29/08/2024 17:09:05] Cleaned up temporary directory at &lt;TemporaryDirectory &#39;/Users/sophia/Documents/GitHub/scPortrait/docs_source/pages/notebooks/MLClusterClassifier_qp45yj1_&#39;&gt;
+</pre></div></div>
+</div>
+<section id="looking-at-the-generated-results">
+<h3>looking at the generated results<a class="headerlink" href="#looking-at-the-generated-results" title="Link to this heading"></a></h3>
+<p>The results are written to a csv file which we can load with pandas.</p>
+<p>scPortrait writes the softmax results directly to csv as <code class="docutils literal notranslate"><span class="pre">ln()</span></code> for better precision. To transform these numbers back to the range between 0 and 1 we first need to apply the <code class="docutils literal notranslate"><span class="pre">np.exp</span></code> function.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv&quot;</span><span class="p">,</span> <span class="n">index_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">results</span><span class="o">.</span><span class="n">result_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_0</span><span class="p">)</span>
+<span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">)</span>
+
+<span class="n">results</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>result_0</th>
+      <th>result_1</th>
+      <th>label</th>
+      <th>cell_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.017384</td>
+      <td>0.982615</td>
+      <td>0</td>
+      <td>12</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.000517</td>
+      <td>0.999483</td>
+      <td>0</td>
+      <td>13</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.806387</td>
+      <td>0.193613</td>
+      <td>0</td>
+      <td>15</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.146037</td>
+      <td>0.853963</td>
+      <td>0</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.896932</td>
+      <td>0.103068</td>
+      <td>0</td>
+      <td>33</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>309</th>
+      <td>0.023494</td>
+      <td>0.976506</td>
+      <td>0</td>
+      <td>491</td>
+    </tr>
+    <tr>
+      <th>310</th>
+      <td>0.000234</td>
+      <td>0.999766</td>
+      <td>0</td>
+      <td>493</td>
+    </tr>
+    <tr>
+      <th>311</th>
+      <td>0.000014</td>
+      <td>0.999986</td>
+      <td>0</td>
+      <td>494</td>
+    </tr>
+    <tr>
+      <th>312</th>
+      <td>0.988722</td>
+      <td>0.011278</td>
+      <td>0</td>
+      <td>495</td>
+    </tr>
+    <tr>
+      <th>313</th>
+      <td>0.679858</td>
+      <td>0.320142</td>
+      <td>0</td>
+      <td>496</td>
+    </tr>
+  </tbody>
+</table>
+<p>314 rows × 4 columns</p>
+</div></div>
+</div>
+<p>Depending on the model we used what <code class="docutils literal notranslate"><span class="pre">result_0</span></code> and <code class="docutils literal notranslate"><span class="pre">result_1</span></code> represent will vary. Here we used a binary classification model were class 1 was cells deficient in autophagy. So <code class="docutils literal notranslate"><span class="pre">result_1</span></code> indicates the probability score that a cell has the label “autophagy off”. <code class="docutils literal notranslate"><span class="pre">results_0</span></code> is simply <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">result_1</span></code></p>
+<p>If we look at the distribution in our dataset we can see that almost all cells are classified as “autophagy defective”. Since the input images were from unstimulated wt cells this matches to our expectation.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="mi">100</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Prob(Unstim)&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Classification Score&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/pages_notebooks_example_scPortrait_project_33_0.png" src="../../_images/pages_notebooks_example_scPortrait_project_33_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Exporting-Cutting-contours-for-excision-on-the-LMD7">
+<h2>Exporting Cutting contours for excision on the LMD7<a class="headerlink" href="#Exporting-Cutting-contours-for-excision-on-the-LMD7" title="Link to this heading"></a></h2>
+<p>scPortrait directly interfaces with our other open-source python library <a class="reference external" href="https://github.com/MannLabs/py-lmd">py-lmd</a> to easily select and export cells for excision on a Leica LMD microscope.</p>
+<p>Of note: this will require that the cells have been plates on a LMD compatible surface (like a PPS slide). scPortrait can of course also simply be used for data analysis procedures, then ignore this last step.</p>
+<p>First we will select the cells we wish to excise based on their classification score. Here we have chosen a threadhold &gt;= 0.99999 for bin1 and a threshold &lt;= 0.9 for bin2.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cell_ids_bin1</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&gt;=</span> <span class="mf">0.99999</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">cell_ids_bin2</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&lt;=</span> <span class="mf">0.9</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of cells to excise:&quot;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+number of cells to excise: 177
+</pre></div></div>
+</div>
+<p>The cells can then be allocated into different wells.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;A1&quot;</span><span class="p">},</span>
+                   <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin2&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;B1&quot;</span><span class="p">},</span>
+                   <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>In addition to defining which cells we want to excise, we also need to pass the location of the calibration crosses so that we can transfer the image coordinate system into a cutting coordinate system. You can read up on this <a class="reference external" href="https://mannlabs.github.io/py-lmd/html/pages/segmentation_loader.html#different-coordinate-systems">here</a>.</p>
+<p>To obtain the coordinates of your reference points simply open your stitched image in e.g. FIJI and navigate to the location of your reference points. Then write out the coordinates for each point.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">marker_0</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">marker_1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">marker_2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+
+<span class="n">calibration_marker</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">marker_0</span><span class="p">,</span> <span class="n">marker_1</span><span class="p">,</span> <span class="n">marker_2</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>As with the previous methods, additional parameters can be passed to the selection function via the <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> file which adapts the behaviour of how cutting shapes are generated. You can read up more on this <a class="reference external" href="https://mannlabs.github.io/py-lmd/html/pages/segmentation_loader.html#overview-of-configuration">here</a>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>LMDSelection:
+    processes: 20
+
+    # defines the channel used for generating cutting masks
+    # segmentation.hdf5 =&gt; labels =&gt; segmentation_channel
+    # When using WGA segmentation:
+    #    0 corresponds to nuclear masks
+    #    1 corresponds to cytosolic masks.
+    segmentation_channel: 0
+
+    # dilation of the cutting mask in pixel
+    shape_dilation: 16
+
+    # number of datapoints which are averaged for smoothing
+    # the number of datapoints over an distance of n pixel is 2*n
+    smoothing_filter_size: 25
+
+    # fold reduction of datapoints for compression
+    poly_compression_factor: 30
+
+    # can be &quot;none&quot;, &quot;greedy&quot;, or &quot;hilbert&quot;
+    path_optimization: &quot;hilbert&quot;
+
+    # number of nearest neighbours for optimized greedy search
+    greedy_k: 15
+
+    # hilbert curve order
+    hilbert_p: 7
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cells_to_select</span><span class="p">,</span> <span class="n">calibration_marker</span><span class="p">,</span> <span class="n">segmentation_name</span> <span class="o">=</span> <span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[29/08/2024 17:30:51] Initialized temporary directory at /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/./LMDSelection_gtaw3bji for LMDSelection
+[29/08/2024 17:30:51] Selection process started.
+No configuration for shape_erosion found, parameter will be set to 0
+No configuration for binary_smoothing found, parameter will be set to 3
+No configuration for convolution_smoothing found, parameter will be set to 15
+No configuration for xml_decimal_transform found, parameter will be set to 100
+No configuration for distance_heuristic found, parameter will be set to 300
+No configuration for processes found, parameter will be set to 10
+No configuration for join_intersecting found, parameter will be set to True
+sanity check for cell set 0
+cell set 0 passed sanity check
+sanity check for cell set 1
+cell set 1 passed sanity check
+Calculating coordinate locations of all cells.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[8], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">project</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">select</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">cells_to_select</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">calibration_marker</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">segmentation_name</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">seg_all_nucleus</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/Documents/GitHub/scPortrait/src/scportrait/pipeline/project.py:1257</span>, in <span class="ansi-cyan-fg">Project.select</span><span class="ansi-blue-fg">(self, cell_sets, calibration_marker, segmentation_name, name)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1249</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-intense-fg ansi-bold">   1250</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">No nucleus or cytosol segmentation loaded. Please load a segmentation first.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">   1251</span>     )
+<span class="ansi-green-intense-fg ansi-bold">   1253</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> (
+<span class="ansi-green-intense-fg ansi-bold">   1254</span>     segmentation_name <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>sdata<span style="color: rgb(98,98,98)">.</span>labels
+<span class="ansi-green-intense-fg ansi-bold">   1255</span> ), <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Segmentation </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>segmentation_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> not found in sdata object.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-fg">-&gt; 1257</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">selection_f</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">   1258</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">segmentation_name</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">segmentation_name</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1259</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">cell_sets</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">cell_sets</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1260</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">calibration_marker</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">calibration_marker</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1261</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">name</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">name</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1262</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1263</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_check_sdata_status()
+
+File <span class="ansi-green-fg">~/Documents/GitHub/scPortrait/src/scportrait/pipeline/_base.py:219</span>, in <span class="ansi-cyan-fg">ProcessingStep.__call__</span><span class="ansi-blue-fg">(self, debug, overwrite, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    217</span> process <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">getattr</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">process</span><span style="color: rgb(175,0,0)">&#34;</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>)
+<span class="ansi-green-intense-fg ansi-bold">    218</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">callable</span>(process):
+<span class="ansi-green-fg">--&gt; 219</span>     x <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">process</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    220</span>     <span style="color: rgb(95,135,135)"># clear temp directory after processing is completed</span>
+<span class="ansi-green-intense-fg ansi-bold">    221</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>deep_debug:
+
+File <span class="ansi-green-fg">~/Documents/GitHub/scPortrait/src/scportrait/pipeline/selection.py:181</span>, in <span class="ansi-cyan-fg">LMDSelection.process</span><span class="ansi-blue-fg">(self, segmentation_name, cell_sets, calibration_marker, name)</span>
+<span class="ansi-green-intense-fg ansi-bold">    174</span> sl <span style="color: rgb(98,98,98)">=</span> SegmentationLoader(
+<span class="ansi-green-intense-fg ansi-bold">    175</span>     config<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>config,
+<span class="ansi-green-intense-fg ansi-bold">    176</span>     verbose<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>debug,
+<span class="ansi-green-intense-fg ansi-bold">    177</span>     processes<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>config[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">processes_cell_sets</span><span style="color: rgb(175,0,0)">&#34;</span>],
+<span class="ansi-green-intense-fg ansi-bold">    178</span> )
+<span class="ansi-green-intense-fg ansi-bold">    180</span> <span style="color: rgb(95,135,135)"># get shape collections</span>
+<span class="ansi-green-fg">--&gt; 181</span> shape_collection <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">sl</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">segmentation</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">cell_sets</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">calibration_marker</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    183</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>debug:
+<span class="ansi-green-intense-fg ansi-bold">    184</span>     shape_collection<span style="color: rgb(98,98,98)">.</span>plot(calibration<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+
+File <span class="ansi-green-fg">~/Documents/GitHub/py-lmd/src/lmd/lib.py:641</span>, in <span class="ansi-cyan-fg">SegmentationLoader.__call__</span><span class="ansi-blue-fg">(self, input_segmentation, cell_sets, calibration_points, coords_lookup)</span>
+<span class="ansi-green-intense-fg ansi-bold">    639</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> coords_lookup <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">    640</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>log(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Calculating coordinate locations of all cells.</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-fg">--&gt; 641</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>coords_lookup <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">_create_coord_index</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">input_segmentation</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    642</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    643</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>log(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Loading coordinates from external source</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:442</span>, in <span class="ansi-cyan-fg">_DispatcherBase._compile_for_args</span><span class="ansi-blue-fg">(self, *args, **kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    440</span>             e<span style="color: rgb(98,98,98)">.</span>patch_message(<span style="color: rgb(175,0,0)">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,0)">\n</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(98,98,98)">.</span>join((<span style="color: rgb(0,135,0)">str</span>(e)<span style="color: rgb(98,98,98)">.</span>rstrip(), help_msg)))
+<span class="ansi-green-intense-fg ansi-bold">    441</span>     <span style="color: rgb(95,135,135)"># ignore the FULL_TRACEBACKS config, this needs reporting!</span>
+<span class="ansi-green-fg">--&gt; 442</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> e
+<span class="ansi-green-intense-fg ansi-bold">    443</span> <span class="ansi-bold" style="color: rgb(0,135,0)">finally</span>:
+<span class="ansi-green-intense-fg ansi-bold">    444</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_types_active_call <span style="color: rgb(98,98,98)">=</span> []
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:375</span>, in <span class="ansi-cyan-fg">_DispatcherBase._compile_for_args</span><span class="ansi-blue-fg">(self, *args, **kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    373</span> return_val <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">    374</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 375</span>     return_val <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">compile</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">tuple</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">argtypes</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    376</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> errors<span style="color: rgb(98,98,98)">.</span>ForceLiteralArg <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    377</span>     <span style="color: rgb(95,135,135)"># Received request for compiler re-entry with the list of arguments</span>
+<span class="ansi-green-intense-fg ansi-bold">    378</span>     <span style="color: rgb(95,135,135)"># indicated by e.requested_args.</span>
+<span class="ansi-green-intense-fg ansi-bold">    379</span>     <span style="color: rgb(95,135,135)"># First, check if any of these args are already Literal-ized</span>
+<span class="ansi-green-intense-fg ansi-bold">    380</span>     already_lit_pos <span style="color: rgb(98,98,98)">=</span> [i <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> i <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> e<span style="color: rgb(98,98,98)">.</span>requested_args
+<span class="ansi-green-intense-fg ansi-bold">    381</span>                        <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(args[i], types<span style="color: rgb(98,98,98)">.</span>Literal)]
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:905</span>, in <span class="ansi-cyan-fg">Dispatcher.compile</span><span class="ansi-blue-fg">(self, sig)</span>
+<span class="ansi-green-intense-fg ansi-bold">    903</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> ev<span style="color: rgb(98,98,98)">.</span>trigger_event(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">numba:compile</span><span style="color: rgb(175,0,0)">&#34;</span>, data<span style="color: rgb(98,98,98)">=</span>ev_details):
+<span class="ansi-green-intense-fg ansi-bold">    904</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 905</span>         cres <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compiler</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">compile</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    906</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> errors<span style="color: rgb(98,98,98)">.</span>ForceLiteralArg <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    907</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">folded</span>(args, kws):
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:80</span>, in <span class="ansi-cyan-fg">_FunctionCompiler.compile</span><span class="ansi-blue-fg">(self, args, return_type)</span>
+<span class="ansi-green-intense-fg ansi-bold">     79</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">compile</span>(<span style="color: rgb(0,135,0)">self</span>, args, return_type):
+<span class="ansi-green-fg">---&gt; 80</span>     status, retval <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compile_cached</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     81</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> status:
+<span class="ansi-green-intense-fg ansi-bold">     82</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> retval
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:94</span>, in <span class="ansi-cyan-fg">_FunctionCompiler._compile_cached</span><span class="ansi-blue-fg">(self, args, return_type)</span>
+<span class="ansi-green-intense-fg ansi-bold">     91</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">pass</span>
+<span class="ansi-green-intense-fg ansi-bold">     93</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">---&gt; 94</span>     retval <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compile_core</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     95</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> errors<span style="color: rgb(98,98,98)">.</span>TypingError <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">     96</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_failed_cache[key] <span style="color: rgb(98,98,98)">=</span> e
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/dispatcher.py:107</span>, in <span class="ansi-cyan-fg">_FunctionCompiler._compile_core</span><span class="ansi-blue-fg">(self, args, return_type)</span>
+<span class="ansi-green-intense-fg ansi-bold">    104</span> flags <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_customize_flags(flags)
+<span class="ansi-green-intense-fg ansi-bold">    106</span> impl <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_get_implementation(args, {})
+<span class="ansi-green-fg">--&gt; 107</span> cres <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">compiler</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">compile_extra</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">targetdescr</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">typing_context</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    108</span> <span class="ansi-yellow-bg">                              </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">targetdescr</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">target_context</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    109</span> <span class="ansi-yellow-bg">                              </span><span class="ansi-yellow-bg">impl</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span> <span class="ansi-yellow-bg">                              </span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    111</span> <span class="ansi-yellow-bg">                              </span><span class="ansi-yellow-bg">flags</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">flags</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">locals</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">locals</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    112</span> <span class="ansi-yellow-bg">                              </span><span class="ansi-yellow-bg">pipeline_class</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">pipeline_class</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    113</span> <span style="color: rgb(95,135,135)"># Check typing error if object mode is used</span>
+<span class="ansi-green-intense-fg ansi-bold">    114</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> cres<span style="color: rgb(98,98,98)">.</span>typing_error <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> flags<span style="color: rgb(98,98,98)">.</span>enable_pyobject:
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler.py:744</span>, in <span class="ansi-cyan-fg">compile_extra</span><span class="ansi-blue-fg">(typingctx, targetctx, func, args, return_type, flags, locals, library, pipeline_class)</span>
+<span class="ansi-green-intense-fg ansi-bold">    720</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Compiler entry point</span>
+<span class="ansi-green-intense-fg ansi-bold">    721</span>
+<span class="ansi-green-intense-fg ansi-bold">    722</span> <span style="color: rgb(175,0,0)">Parameter</span>
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    740</span> <span style="color: rgb(175,0,0)">    compiler pipeline</span>
+<span class="ansi-green-intense-fg ansi-bold">    741</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    742</span> pipeline <span style="color: rgb(98,98,98)">=</span> pipeline_class(typingctx, targetctx, library,
+<span class="ansi-green-intense-fg ansi-bold">    743</span>                           args, return_type, flags, <span style="color: rgb(0,135,0)">locals</span>)
+<span class="ansi-green-fg">--&gt; 744</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">pipeline</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">compile_extra</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler.py:438</span>, in <span class="ansi-cyan-fg">CompilerBase.compile_extra</span><span class="ansi-blue-fg">(self, func)</span>
+<span class="ansi-green-intense-fg ansi-bold">    436</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state<span style="color: rgb(98,98,98)">.</span>lifted <span style="color: rgb(98,98,98)">=</span> ()
+<span class="ansi-green-intense-fg ansi-bold">    437</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state<span style="color: rgb(98,98,98)">.</span>lifted_from <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-fg">--&gt; 438</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compile_bytecode</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler.py:506</span>, in <span class="ansi-cyan-fg">CompilerBase._compile_bytecode</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    502</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    503</span> <span style="color: rgb(175,0,0)">Populate and run pipeline for bytecode input</span>
+<span class="ansi-green-intense-fg ansi-bold">    504</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    505</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state<span style="color: rgb(98,98,98)">.</span>func_ir <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-fg">--&gt; 506</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_compile_core</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler.py:481</span>, in <span class="ansi-cyan-fg">CompilerBase._compile_core</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    478</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    479</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (utils<span style="color: rgb(98,98,98)">.</span>use_new_style_errors() <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span>
+<span class="ansi-green-intense-fg ansi-bold">    480</span>             <span style="color: rgb(0,135,0)">isinstance</span>(e, errors<span style="color: rgb(98,98,98)">.</span>NumbaError)):
+<span class="ansi-green-fg">--&gt; 481</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> e
+<span class="ansi-green-intense-fg ansi-bold">    483</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state<span style="color: rgb(98,98,98)">.</span>status<span style="color: rgb(98,98,98)">.</span>fail_reason <span style="color: rgb(98,98,98)">=</span> e
+<span class="ansi-green-intense-fg ansi-bold">    484</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> is_final_pipeline:
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler.py:472</span>, in <span class="ansi-cyan-fg">CompilerBase._compile_core</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    470</span> res <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">    471</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 472</span>     <span class="ansi-yellow-bg">pm</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">run</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    473</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>state<span style="color: rgb(98,98,98)">.</span>cr <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-intense-fg ansi-bold">    474</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">break</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler_machinery.py:364</span>, in <span class="ansi-cyan-fg">PassManager.run</span><span class="ansi-blue-fg">(self, state)</span>
+<span class="ansi-green-intense-fg ansi-bold">    361</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    362</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (utils<span style="color: rgb(98,98,98)">.</span>use_new_style_errors() <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span>
+<span class="ansi-green-intense-fg ansi-bold">    363</span>             <span style="color: rgb(0,135,0)">isinstance</span>(e, errors<span style="color: rgb(98,98,98)">.</span>NumbaError)):
+<span class="ansi-green-fg">--&gt; 364</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> e
+<span class="ansi-green-intense-fg ansi-bold">    365</span>     msg <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Failed in </span><span class="ansi-bold" style="color: rgb(175,95,135)">%s</span><span style="color: rgb(175,0,0)"> mode pipeline (step: </span><span class="ansi-bold" style="color: rgb(175,95,135)">%s</span><span style="color: rgb(175,0,0)">)</span><span style="color: rgb(175,0,0)">&#34;</span> <span style="color: rgb(98,98,98)">%</span> \
+<span class="ansi-green-intense-fg ansi-bold">    366</span>         (<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>pipeline_name, pass_desc)
+<span class="ansi-green-intense-fg ansi-bold">    367</span>     patched_exception <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_patch_error(msg, e)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler_machinery.py:356</span>, in <span class="ansi-cyan-fg">PassManager.run</span><span class="ansi-blue-fg">(self, state)</span>
+<span class="ansi-green-intense-fg ansi-bold">    354</span> pass_inst <span style="color: rgb(98,98,98)">=</span> _pass_registry<span style="color: rgb(98,98,98)">.</span>get(pss)<span style="color: rgb(98,98,98)">.</span>pass_inst
+<span class="ansi-green-intense-fg ansi-bold">    355</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(pass_inst, CompilerPass):
+<span class="ansi-green-fg">--&gt; 356</span>     <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_runPass</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">idx</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">pass_inst</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    357</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    358</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">BaseException</span>(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Legacy pass in use</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler_lock.py:35</span>, in <span class="ansi-cyan-fg">_CompilerLock.__call__.&lt;locals&gt;._acquire_compile_lock</span><span class="ansi-blue-fg">(*args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     32</span> <span style="color: rgb(175,0,255)">@functools</span><span style="color: rgb(98,98,98)">.</span>wraps(func)
+<span class="ansi-green-intense-fg ansi-bold">     33</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">_acquire_compile_lock</span>(<span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs):
+<span class="ansi-green-intense-fg ansi-bold">     34</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span style="color: rgb(0,135,0)">self</span>:
+<span class="ansi-green-fg">---&gt; 35</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler_machinery.py:311</span>, in <span class="ansi-cyan-fg">PassManager._runPass</span><span class="ansi-blue-fg">(self, index, pss, internal_state)</span>
+<span class="ansi-green-intense-fg ansi-bold">    309</span>     mutated <span style="color: rgb(98,98,98)">|</span><span style="color: rgb(98,98,98)">=</span> check(pss<span style="color: rgb(98,98,98)">.</span>run_initialization, internal_state)
+<span class="ansi-green-intense-fg ansi-bold">    310</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> SimpleTimer() <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> pass_time:
+<span class="ansi-green-fg">--&gt; 311</span>     mutated <span style="color: rgb(98,98,98)">|</span><span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">check</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">pss</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">run_pass</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">internal_state</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    312</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> SimpleTimer() <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> finalize_time:
+<span class="ansi-green-intense-fg ansi-bold">    313</span>     mutated <span style="color: rgb(98,98,98)">|</span><span style="color: rgb(98,98,98)">=</span> check(pss<span style="color: rgb(98,98,98)">.</span>run_finalizer, internal_state)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/compiler_machinery.py:273</span>, in <span class="ansi-cyan-fg">PassManager._runPass.&lt;locals&gt;.check</span><span class="ansi-blue-fg">(func, compiler_state)</span>
+<span class="ansi-green-intense-fg ansi-bold">    272</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">check</span>(func, compiler_state):
+<span class="ansi-green-fg">--&gt; 273</span>     mangled <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">compiler_state</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    274</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> mangled <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> (<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>):
+<span class="ansi-green-intense-fg ansi-bold">    275</span>         msg <span style="color: rgb(98,98,98)">=</span> (<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">CompilerPass implementations should return True/False. </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    276</span>                <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">CompilerPass with name </span><span style="color: rgb(175,0,0)">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,135)">%s</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)"> did not.</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typed_passes.py:112</span>, in <span class="ansi-cyan-fg">BaseTypeInference.run_pass</span><span class="ansi-blue-fg">(self, state)</span>
+<span class="ansi-green-intense-fg ansi-bold">    106</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    107</span> <span style="color: rgb(175,0,0)">Type inference and legalization</span>
+<span class="ansi-green-intense-fg ansi-bold">    108</span> <span style="color: rgb(175,0,0)">&#34;&#34;&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    109</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> fallback_context(state, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">Function </span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">%s</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)"> failed type inference</span><span style="color: rgb(175,0,0)">&#39;</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span>                       <span style="color: rgb(98,98,98)">%</span> (state<span style="color: rgb(98,98,98)">.</span>func_id<span style="color: rgb(98,98,98)">.</span>func_name,)):
+<span class="ansi-green-intense-fg ansi-bold">    111</span>     <span style="color: rgb(95,135,135)"># Type inference</span>
+<span class="ansi-green-fg">--&gt; 112</span>     typemap, return_type, calltypes, errs <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">type_inference_stage</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    113</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">typingctx</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    114</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">targetctx</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    115</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">func_ir</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    116</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    117</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">return_type</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    118</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">state</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">locals</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    119</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">raise_errors</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_raise_errors</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    120</span>     state<span style="color: rgb(98,98,98)">.</span>typemap <span style="color: rgb(98,98,98)">=</span> typemap
+<span class="ansi-green-intense-fg ansi-bold">    121</span>     <span style="color: rgb(95,135,135)"># save errors in case of partial typing</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typed_passes.py:93</span>, in <span class="ansi-cyan-fg">type_inference_stage</span><span class="ansi-blue-fg">(typingctx, targetctx, interp, args, return_type, locals, raise_errors)</span>
+<span class="ansi-green-intense-fg ansi-bold">     91</span>     infer<span style="color: rgb(98,98,98)">.</span>build_constraint()
+<span class="ansi-green-intense-fg ansi-bold">     92</span>     <span style="color: rgb(95,135,135)"># return errors in case of partial typing</span>
+<span class="ansi-green-fg">---&gt; 93</span>     errs <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">infer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">propagate</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">raise_errors</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">raise_errors</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     94</span>     typemap, restype, calltypes <span style="color: rgb(98,98,98)">=</span> infer<span style="color: rgb(98,98,98)">.</span>unify(raise_errors<span style="color: rgb(98,98,98)">=</span>raise_errors)
+<span class="ansi-green-intense-fg ansi-bold">     96</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> _TypingResults(typemap, restype, calltypes, errs)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:1083</span>, in <span class="ansi-cyan-fg">TypeInferer.propagate</span><span class="ansi-blue-fg">(self, raise_errors)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1080</span> oldtoken <span style="color: rgb(98,98,98)">=</span> newtoken
+<span class="ansi-green-intense-fg ansi-bold">   1081</span> <span style="color: rgb(95,135,135)"># Errors can appear when the type set is incomplete; only</span>
+<span class="ansi-green-intense-fg ansi-bold">   1082</span> <span style="color: rgb(95,135,135)"># raise them when there is no progress anymore.</span>
+<span class="ansi-green-fg">-&gt; 1083</span> errors <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">constraints</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">propagate</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1084</span> newtoken <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>get_state_token()
+<span class="ansi-green-intense-fg ansi-bold">   1085</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>debug<span style="color: rgb(98,98,98)">.</span>propagate_finished()
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:182</span>, in <span class="ansi-cyan-fg">ConstraintNetwork.propagate</span><span class="ansi-blue-fg">(self, typeinfer)</span>
+<span class="ansi-green-intense-fg ansi-bold">    180</span>     errors<span style="color: rgb(98,98,98)">.</span>append(utils<span style="color: rgb(98,98,98)">.</span>chain_exception(new_exc, e))
+<span class="ansi-green-intense-fg ansi-bold">    181</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> utils<span style="color: rgb(98,98,98)">.</span>use_new_style_errors():
+<span class="ansi-green-fg">--&gt; 182</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> e
+<span class="ansi-green-intense-fg ansi-bold">    183</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    184</span>     msg <span style="color: rgb(98,98,98)">=</span> (<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Unknown CAPTURED_ERRORS style: </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    185</span>            <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config<span style="color: rgb(98,98,98)">.</span>CAPTURED_ERRORS<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">.</span><span style="color: rgb(175,0,0)">&#34;</span>)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:160</span>, in <span class="ansi-cyan-fg">ConstraintNetwork.propagate</span><span class="ansi-blue-fg">(self, typeinfer)</span>
+<span class="ansi-green-intense-fg ansi-bold">    157</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> typeinfer<span style="color: rgb(98,98,98)">.</span>warnings<span style="color: rgb(98,98,98)">.</span>catch_warnings(filename<span style="color: rgb(98,98,98)">=</span>loc<span style="color: rgb(98,98,98)">.</span>filename,
+<span class="ansi-green-intense-fg ansi-bold">    158</span>                                        lineno<span style="color: rgb(98,98,98)">=</span>loc<span style="color: rgb(98,98,98)">.</span>line):
+<span class="ansi-green-intense-fg ansi-bold">    159</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 160</span>         <span class="ansi-yellow-bg">constraint</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">typeinfer</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    161</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> ForceLiteralArg <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    162</span>         errors<span style="color: rgb(98,98,98)">.</span>append(e)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:709</span>, in <span class="ansi-cyan-fg">IntrinsicCallConstraint.__call__</span><span class="ansi-blue-fg">(self, typeinfer)</span>
+<span class="ansi-green-intense-fg ansi-bold">    707</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> fnty <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> utils<span style="color: rgb(98,98,98)">.</span>OPERATORS_TO_BUILTINS:
+<span class="ansi-green-intense-fg ansi-bold">    708</span>     fnty <span style="color: rgb(98,98,98)">=</span> typeinfer<span style="color: rgb(98,98,98)">.</span>resolve_value_type(<span class="ansi-bold" style="color: rgb(0,135,0)">None</span>, fnty)
+<span class="ansi-green-fg">--&gt; 709</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">resolve</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">typeinfer</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">typeinfer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">typevars</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">fnty</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">fnty</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:606</span>, in <span class="ansi-cyan-fg">CallConstraint.resolve</span><span class="ansi-blue-fg">(self, typeinfer, typevars, fnty)</span>
+<span class="ansi-green-intense-fg ansi-bold">    604</span>     fnty <span style="color: rgb(98,98,98)">=</span> fnty<span style="color: rgb(98,98,98)">.</span>instance_type
+<span class="ansi-green-intense-fg ansi-bold">    605</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 606</span>     sig <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">typeinfer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">resolve_call</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">fnty</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">pos_args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kw_args</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    607</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> ForceLiteralArg <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    608</span>     <span style="color: rgb(95,135,135)"># Adjust for bound methods</span>
+<span class="ansi-green-intense-fg ansi-bold">    609</span>     folding_args <span style="color: rgb(98,98,98)">=</span> ((fnty<span style="color: rgb(98,98,98)">.</span>this,) <span style="color: rgb(98,98,98)">+</span> <span style="color: rgb(0,135,0)">tuple</span>(<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>args)
+<span class="ansi-green-intense-fg ansi-bold">    610</span>                     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(fnty, types<span style="color: rgb(98,98,98)">.</span>BoundFunction)
+<span class="ansi-green-intense-fg ansi-bold">    611</span>                     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>args)
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typeinfer.py:1577</span>, in <span class="ansi-cyan-fg">TypeInferer.resolve_call</span><span class="ansi-blue-fg">(self, fnty, pos_args, kw_args)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1574</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> sig
+<span class="ansi-green-intense-fg ansi-bold">   1575</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">   1576</span>     <span style="color: rgb(95,135,135)"># Normal non-recursive call</span>
+<span class="ansi-green-fg">-&gt; 1577</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">context</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">resolve_function_type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">fnty</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">pos_args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kw_args</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typing/context.py:196</span>, in <span class="ansi-cyan-fg">BaseContext.resolve_function_type</span><span class="ansi-blue-fg">(self, func, args, kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    194</span> <span style="color: rgb(95,135,135)"># Prefer user definition first</span>
+<span class="ansi-green-intense-fg ansi-bold">    195</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 196</span>     res <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_resolve_user_function_type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kws</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    197</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> errors<span style="color: rgb(98,98,98)">.</span>TypingError <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    198</span>     <span style="color: rgb(95,135,135)"># Capture any typing error</span>
+<span class="ansi-green-intense-fg ansi-bold">    199</span>     last_exception <span style="color: rgb(98,98,98)">=</span> e
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typing/context.py:248</span>, in <span class="ansi-cyan-fg">BaseContext._resolve_user_function_type</span><span class="ansi-blue-fg">(self, func, args, kws, literals)</span>
+<span class="ansi-green-intense-fg ansi-bold">    244</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>resolve_function_type(func_type, args, kws)
+<span class="ansi-green-intense-fg ansi-bold">    246</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(func, types<span style="color: rgb(98,98,98)">.</span>Callable):
+<span class="ansi-green-intense-fg ansi-bold">    247</span>     <span style="color: rgb(95,135,135)"># XXX fold this into the __call__ attribute logic?</span>
+<span class="ansi-green-fg">--&gt; 248</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">func</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get_call_type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kws</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/types/functions.py:312</span>, in <span class="ansi-cyan-fg">BaseFunction.get_call_type</span><span class="ansi-blue-fg">(self, context, args, kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    309</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    310</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (utils<span style="color: rgb(98,98,98)">.</span>use_new_style_errors() <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span>
+<span class="ansi-green-intense-fg ansi-bold">    311</span>             <span style="color: rgb(0,135,0)">isinstance</span>(e, errors<span style="color: rgb(98,98,98)">.</span>NumbaError)):
+<span class="ansi-green-fg">--&gt; 312</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> e
+<span class="ansi-green-intense-fg ansi-bold">    313</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    314</span>         sig <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/types/functions.py:308</span>, in <span class="ansi-cyan-fg">BaseFunction.get_call_type</span><span class="ansi-blue-fg">(self, context, args, kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    305</span>         nolitargs <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">tuple</span>([_unlit_non_poison(a) <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> a <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> args])
+<span class="ansi-green-intense-fg ansi-bold">    306</span>         nolitkws <span style="color: rgb(98,98,98)">=</span> {k: _unlit_non_poison(v)
+<span class="ansi-green-intense-fg ansi-bold">    307</span>                     <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> k, v <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> kws<span style="color: rgb(98,98,98)">.</span>items()}
+<span class="ansi-green-fg">--&gt; 308</span>         sig <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">temp</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">apply</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">nolitargs</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">nolitkws</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    309</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-intense-fg ansi-bold">    310</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (utils<span style="color: rgb(98,98,98)">.</span>use_new_style_errors() <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span>
+<span class="ansi-green-intense-fg ansi-bold">    311</span>             <span style="color: rgb(0,135,0)">isinstance</span>(e, errors<span style="color: rgb(98,98,98)">.</span>NumbaError)):
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typing/templates.py:350</span>, in <span class="ansi-cyan-fg">AbstractTemplate.apply</span><span class="ansi-blue-fg">(self, args, kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    348</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">apply</span>(<span style="color: rgb(0,135,0)">self</span>, args, kws):
+<span class="ansi-green-intense-fg ansi-bold">    349</span>     generic <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">getattr</span>(<span style="color: rgb(0,135,0)">self</span>, <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">generic</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-fg">--&gt; 350</span>     sig <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">generic</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kws</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    351</span>     <span style="color: rgb(95,135,135)"># Enforce that *generic()* must return None or Signature</span>
+<span class="ansi-green-intense-fg ansi-bold">    352</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> sig <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+
+File <span class="ansi-green-fg">~/mambaforge/envs/scPortrait_new/lib/python3.10/site-packages/numba/core/typing/npydecl.py:249</span>, in <span class="ansi-cyan-fg">NumpyRulesInplaceArrayOperator.generic</span><span class="ansi-blue-fg">(self, args, kws)</span>
+<span class="ansi-green-intense-fg ansi-bold">    247</span> sig <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">super</span>(NumpyRulesInplaceArrayOperator, <span style="color: rgb(0,135,0)">self</span>)<span style="color: rgb(98,98,98)">.</span>generic(args, kws)
+<span class="ansi-green-intense-fg ansi-bold">    248</span> <span style="color: rgb(95,135,135)"># Strip off the fake explicit output</span>
+<span class="ansi-green-fg">--&gt; 249</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> <span style="color: rgb(0,135,0)">len</span>(<span class="ansi-yellow-bg">sig</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">args</span>) <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">3</span>
+<span class="ansi-green-intense-fg ansi-bold">    250</span> real_sig <span style="color: rgb(98,98,98)">=</span> signature(sig<span style="color: rgb(98,98,98)">.</span>return_type, <span style="color: rgb(98,98,98)">*</span>sig<span style="color: rgb(98,98,98)">.</span>args[:<span style="color: rgb(98,98,98)">2</span>])
+<span class="ansi-green-intense-fg ansi-bold">    251</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> real_sig
+
+<span class="ansi-red-fg">AttributeError</span>: &#39;NoneType&#39; object has no attribute &#39;args&#39;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;scportrait.pipeline.selection.LMDSelection at 0xadffbef50&gt;
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../quickstart/computational_workflow.html" class="btn btn-neutral float-left" title="scPortrait workflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../pipeline.html" class="btn btn-neutral float-right" title="scPortrait Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024 Sophia Mädler and Niklas Schmacke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

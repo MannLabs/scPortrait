@@ -3,7 +3,7 @@
 Config Files 
 ============
 
-The configuration file is a ``.yml`` file which specifies all of the parameters for each of the methods chosen in a specific SPARCSpy Project run. 
+The configuration file is a ``.yml`` file which specifies all of the parameters for each of the methods chosen in a specific scPortrait Project run. 
 
 .. code:: yaml
     :caption: Example Configuration File
