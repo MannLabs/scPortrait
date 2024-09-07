@@ -39,6 +39,6 @@ dependencies = {file = ["requirements.txt"]}
 dev = {file = ["requirements_dev.txt"]}
 
 [project.urls]
-Homepage = "https://github.com/MannLabs/SPARCSspatial"
-Documentation = "https://mannlabs.github.io/SPARCSspatial/html/index.html"
-Source = "https://github.com/MannLabs/SPARCSspatial"
+Homepage = "https://github.com/MannLabs/scPortrait"
+Documentation = "https://mannlabs.github.io/scPortrait/html/index.html"
+Source = "https://github.com/MannLabs/scPortrait"
