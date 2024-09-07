@@ -50,5 +50,4 @@ Documentation
    :includehidden:
    :caption: Module API
 
-   pages/sparcscmd
    pages/module
