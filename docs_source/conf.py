@@ -38,7 +38,7 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 #autodoc_mock_imports = []
-autodoc_mock_imports = ["sklearn", 'numpy', 'matplotlib','lxml','skimage', 'svgelements',"torch", "h5py", "skfmm", "scipy", "numba", "torchvision", "torch", "pytorch_lightning", "torchmetrics", "pandas", "zarr", "ome_zarr", "cv2", "cellpose", "mahotas"]
+autodoc_mock_imports = []
 
 # -- Options for HTML output -------------------------------------------------
 
