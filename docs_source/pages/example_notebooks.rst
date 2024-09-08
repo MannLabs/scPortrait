@@ -21,3 +21,9 @@ This notebook walks you through the currently implemented segmentation workflows
    :maxdepth: 2
 
    notebooks/example_notebook_segmentation_workflows.ipynb
+
+Additional Notebooks
+--------------------
+
+Within scPortrait we provide a variety of different example datasets with an example processing notebooks. These notebooks are designed to give you a quick overview of the functionality of scPortrait and to help you get started with your own data.
+You can find all of the example datasets and there notebooks here. 

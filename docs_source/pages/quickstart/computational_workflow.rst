@@ -9,17 +9,27 @@ scPortrait workflow
    :align: center
    :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection 
 
-The scPortrait workflow consists of up to 4 steps:
+The scPortrait workflow consists of up to 5 steps:
 
-  1. :ref:`Segmentation <quickstart_segmentation>`: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
-  
-  2. :ref:`Extraction <quickstart_extraction>`: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
-  
-  3. :ref:`Classification <quickstart_classification>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
-  
-  4. :ref:`Selection <quickstart_selection>`: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
+  1. :ref:`Stitching <quickstart_stitching>`: Stitching of input images to create a single whole-slide image. This step is optional and depends on the type of data that is to be processed.
 
-The results and logs from each processing step are saved into seperate subfolders in the main project directory. For each processing step, different methods can be chosen and their parameters specified via the ``config.yml`` file.
+  2. :ref:`Segmentation <quickstart_segmentation>`: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
+  
+  3. :ref:`Extraction <quickstart_extraction>`: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
+  
+  4. :ref:`Featurization <quickstart_featurization>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
+  
+  5. :ref:`Selection <quickstart_selection>`: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
+
+The results from each processing step are saved to file and logs generated in seperate subfolders in the main project directory. For each processing step, different methods can be chosen and their parameters specified via the ``config.yml`` file.
+
+.. _quickstart_stitching:
+
+Stitching
+=========
+
+During stitching, individual fields-of-view are registered and combined into a single whole-slide image. Using parallel processing and out-of-memory computation scPortrait can efficiently align and assemble large 
+datasets that exceed the memory capacities of a single machine. The stitching process is optional and can be skipped if the input images are already in the form of a single whole-slide image or individual images need to be processed.
 
 .. _quickstart_segmentation:
 
@@ -78,12 +88,12 @@ During the extraction process, all single cell images are also centered on their
 
 The size in px of the output images can be set in the ``config.yml`` file and typically depends on the resolution of the input images as well as the physical size of the imaged cells. In our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we extracted single cell images of U2OS cells from original images captured at 20X magnification at a size of 128 x 128px. Extraction is only performed on cells that were fully imaged, i.e. their masks do not intersect with the image borders.
 
-.. _quickstart_classification:
+.. _quickstart_featurization:
 
-Classification
+Featurization
 ==============
 
-During classification, the extracted single cell images are passed to a phenotype analysis method that either calculates a set of features for each cell or directly assigns a class label to each cell. This analysis method will need to be adapted to each use case. For example, in our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we describe a deep learning-based binary image classifier that identifies individual cells defective in a biological process called "autophagy". Multiple classification runs can be performed on the same dataset so that different classification approaches can be used in parallel.
+During featurization, the extracted single cell images are passed to a phenotype analysis method that either calculates a set of features for each cell or directly assigns a class label to each cell. This analysis method will need to be adapted to each use case. For example, in our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we describe a deep learning-based binary image classifier that identifies individual cells defective in a biological process called "autophagy". Multiple classification runs can be performed on the same dataset so that different classification approaches can be used in parallel.
 
 .. _quickstart_selection:
 
