@@ -24,7 +24,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="ml" href="ml.html" />
+    <link rel="next" title="parsing" href="tools/parsing.html" />
     <link rel="prev" title="processing" href="io.html" /> 
 </head>
 
@@ -52,9 +52,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#stitching">Stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#featurization">Featurization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
@@ -96,6 +97,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/stitching.html">stitching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/segmentation.html">Segmentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../pipeline/segmentation.html#id2">1. Segmentation</a></li>
@@ -118,7 +121,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline/featurization.html">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../pipeline/selection.html">Selection</a></li>
 </ul>
 </li>
@@ -146,8 +149,14 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul class="current">
@@ -205,10 +214,19 @@
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#parsing">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#stitching">stitching</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ml">ml</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="ml.html">ml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html">ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#models">models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
 </li>
 </ul>
@@ -248,96 +266,93 @@
              
   <section id="tools">
 <h1>tools<a class="headerlink" href="#tools" title="Link to this heading"></a></h1>
-<section id="parsing">
-<h2>parsing<a class="headerlink" href="#parsing" title="Link to this heading"></a></h2>
-</section>
-<section id="stitching">
-<h2>stitching<a class="headerlink" href="#stitching" title="Link to this heading"></a></h2>
-</section>
-<section id="ml">
-<h2>ml<a class="headerlink" href="#ml" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="ml.html">ml</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.datasets">datasets</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_labels"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.dir_labels</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_list"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.dir_list</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.index_list"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.index_list</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.transform"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.transform</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.max_level"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.max_level</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_id"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.return_id</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_fake_id"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.return_fake_id</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.select_channel"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.select_channel</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.add_hdf_to_index"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.add_hdf_to_index()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.scan_directory"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.scan_directory()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.stats"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.stats()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.len"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.len()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.getitem"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.getitem()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id0"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.stats()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegression</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegressionSubset</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/ml.html">ml</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_labels"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.dir_labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_list"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.dir_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.index_list"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.index_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.transform"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.transform</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.max_level"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.max_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_id"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.return_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_fake_id"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.return_fake_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.select_channel"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.select_channel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.add_hdf_to_index"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.add_hdf_to_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.scan_directory"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.scan_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.stats"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.len"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.len()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.getitem"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.getitem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id0"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset.stats()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.metrics">metrics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegression</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegressionSubset</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#models">models</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGGBase.make_layers"><code class="docutils literal notranslate"><span class="pre">VGGBase.make_layers()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGGBase.make_layers_MLP"><code class="docutils literal notranslate"><span class="pre">VGGBase.make_layers_MLP()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGGBase.forward"><code class="docutils literal notranslate"><span class="pre">VGGBase.forward()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#models">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGGBase.make_layers"><code class="docutils literal notranslate"><span class="pre">VGGBase.make_layers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGGBase.make_layers_MLP"><code class="docutils literal notranslate"><span class="pre">VGGBase.make_layers_MLP()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGGBase.forward"><code class="docutils literal notranslate"><span class="pre">VGGBase.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#plmodels">plmodels</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.network"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.network</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.train_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.train_metrics</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.val_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.val_metrics</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_metrics</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.forward"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.configure_optimizers()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.on_train_epoch_end()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.on_validation_epoch_end()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.confusion_plot"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.confusion_plot()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.training_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.training_step()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.validation_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.validation_step()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_step()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_epoch_end()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id1"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id2"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.configure_optimizers()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id3"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.training_step()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id4"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.validation_step()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#id5"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#plmodels">plmodels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.network"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.network</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.train_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.train_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.val_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.val_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_metrics"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.forward"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.configure_optimizers"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.configure_optimizers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.on_train_epoch_end()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.on_validation_epoch_end()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.confusion_plot"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.confusion_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.training_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.training_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.validation_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.validation_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_step"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_epoch_end"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_epoch_end()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id1"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id2"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.configure_optimizers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id3"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.training_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id4"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.validation_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#id5"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel.test_step()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.transforms">transforms</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.utils">utils</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="ml.html#scportrait.tools.ml.utils.split_dataset_fractions"><code class="docutils literal notranslate"><span class="pre">split_dataset_fractions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.utils">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/ml.html#scportrait.tools.ml.utils.split_dataset_fractions"><code class="docutils literal notranslate"><span class="pre">split_dataset_fractions()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -345,14 +360,13 @@
 </ul>
 </div>
 </section>
-</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="io.html" class="btn btn-neutral float-left" title="processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="ml.html" class="btn btn-neutral float-right" title="ml" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tools/parsing.html" class="btn btn-neutral float-right" title="parsing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

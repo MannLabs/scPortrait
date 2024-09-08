@@ -49,9 +49,10 @@
 <li class="toctree-l1"><a class="reference internal" href="pages/quickstart.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/quickstart/installation.html">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#stitching">Stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#featurization">Featurization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
@@ -93,6 +94,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/stitching.html">stitching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/segmentation.html">Segmentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="pages/pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#id2">1. Segmentation</a></li>
@@ -115,7 +118,7 @@
 <li class="toctree-l3"><a class="reference internal" href="pages/pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/featurization.html">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/selection.html">Selection</a></li>
 </ul>
 </li>
@@ -143,8 +146,14 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/stitching/stitching.html">stitching</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
@@ -202,10 +211,19 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#parsing">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#stitching">stitching</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#ml">ml</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/ml.html">ml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/ml.html">ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#models">models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
 </li>
 </ul>
@@ -281,15 +299,15 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.add_hdf_to_index">add_hdf_to_index() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.add_hdf_to_index">add_hdf_to_index() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0">autophagy_classifier1_0() (in module scportrait.tools.ml.pretrained_models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0">autophagy_classifier1_0() (in module scportrait.tools.ml.pretrained_models)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0">autophagy_classifier2_0() (in module scportrait.tools.ml.pretrained_models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0">autophagy_classifier2_0() (in module scportrait.tools.ml.pretrained_models)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1">autophagy_classifier2_1() (in module scportrait.tools.ml.pretrained_models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1">autophagy_classifier2_1() (in module scportrait.tools.ml.pretrained_models)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -299,19 +317,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.classification.CellFeaturizer">CellFeaturizer (class in scportrait.pipeline.classification)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.transforms.ChannelReducer">ChannelReducer (class in scportrait.tools.ml.transforms)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.ChannelReducer">ChannelReducer (class in scportrait.tools.ml.transforms)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.transforms.ChannelSelector">ChannelSelector (class in scportrait.tools.ml.transforms)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.ChannelSelector">ChannelSelector (class in scportrait.tools.ml.transforms)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced">combine_datasets_balanced() (in module scportrait.tools.ml.utils)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced">combine_datasets_balanced() (in module scportrait.tools.ml.utils)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation.complete_segmentation">complete_segmentation() (scportrait.pipeline.segmentation.ShardedSegmentation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#id2">configure_optimizers() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">[1]</a>
+      <li><a href="pages/module/tools/ml.html#id2">configure_optimizers() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">[1]</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.confusion_plot">confusion_plot() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.confusion_plot">confusion_plot() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose">CytosolOnly_Segmentation_Downsampling_Cellpose (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
@@ -345,9 +363,9 @@
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.project.Project.DEFAULT_SINGLE_CELL_IMAGE_DTYPE">DEFAULT_SINGLE_CELL_IMAGE_DTYPE (scportrait.pipeline.project.Project attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_labels">dir_labels (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_labels">dir_labels (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_list">dir_list (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.dir_list">dir_list (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -355,10 +373,10 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGGBase.forward">forward() (scportrait.tools.ml.models.VGGBase method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGGBase.forward">forward() (scportrait.tools.ml.models.VGGBase method)</a>
 
       <ul>
-        <li><a href="pages/module/ml.html#id1">(scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.forward">[1]</a>
+        <li><a href="pages/module/tools/ml.html#id1">(scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.forward">[1]</a>
 </li>
       </ul></li>
   </ul></td>
@@ -367,13 +385,13 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.transforms.GaussianBlur">GaussianBlur (class in scportrait.tools.ml.transforms)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.GaussianBlur">GaussianBlur (class in scportrait.tools.ml.transforms)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.transforms.GaussianNoise">GaussianNoise (class in scportrait.tools.ml.transforms)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.GaussianNoise">GaussianNoise (class in scportrait.tools.ml.transforms)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.getitem">getitem() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.getitem">getitem() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -383,13 +401,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.extraction.HDF5CellExtraction">HDF5CellExtraction (class in scportrait.pipeline.extraction)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset">HDF5SingleCellDataset (class in scportrait.tools.ml.datasets)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset">HDF5SingleCellDataset (class in scportrait.tools.ml.datasets)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression">HDF5SingleCellDatasetRegression (class in scportrait.tools.ml.datasets)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression">HDF5SingleCellDatasetRegression (class in scportrait.tools.ml.datasets)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset">HDF5SingleCellDatasetRegressionSubset (class in scportrait.tools.ml.datasets)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset">HDF5SingleCellDatasetRegressionSubset (class in scportrait.tools.ml.datasets)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -401,7 +419,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.index_list">index_list (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.index_list">index_list (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.input_path">input_path (scportrait.pipeline.segmentation.Segmentation attribute)</a>
 </li>
@@ -411,7 +429,7 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.len">len() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.len">len() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.selection.LMDSelection">LMDSelection (class in scportrait.pipeline.selection)</a>
 </li>
@@ -427,13 +445,13 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGGBase.make_layers">make_layers() (scportrait.tools.ml.models.VGGBase method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGGBase.make_layers">make_layers() (scportrait.tools.ml.models.VGGBase method)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGGBase.make_layers_MLP">make_layers_MLP() (scportrait.tools.ml.models.VGGBase method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGGBase.make_layers_MLP">make_layers_MLP() (scportrait.tools.ml.models.VGGBase method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.maps">maps (scportrait.pipeline.segmentation.Segmentation attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.max_level">max_level (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.max_level">max_level (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation.method">method (scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation attribute)</a>
 
@@ -451,10 +469,10 @@
         <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation.method">(scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.classification.MLClusterClassifier">MLClusterClassifier (class in scportrait.pipeline.classification)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -465,18 +483,24 @@
 </li>
         <li><a href="pages/module/io.html#module-scportrait.processing.masks">scportrait.processing.masks</a>, <a href="pages/module/processing.html#module-scportrait.processing.masks">[1]</a>
 </li>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.datasets">scportrait.tools.ml.datasets</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.datasets">scportrait.tools.ml.datasets</a>
 </li>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.metrics">scportrait.tools.ml.metrics</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.metrics">scportrait.tools.ml.metrics</a>
 </li>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.pretrained_models">scportrait.tools.ml.pretrained_models</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">scportrait.tools.ml.pretrained_models</a>
 </li>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.transforms">scportrait.tools.ml.transforms</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.transforms">scportrait.tools.ml.transforms</a>
 </li>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.utils">scportrait.tools.ml.utils</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.utils">scportrait.tools.ml.utils</a>
+</li>
+        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse.PhenixParser">scportrait.tools.parse.PhenixParser</a>
+</li>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.ParallelStitcher">scportrait.tools.stitch.ParallelStitcher</a>
+</li>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.Stitcher">scportrait.tools.stitch.Stitcher</a>
 </li>
       </ul></li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel">MultilabelSupervisedModel (class in scportrait.tools.ml.plmodels)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel">MultilabelSupervisedModel (class in scportrait.tools.ml.plmodels)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -484,7 +508,7 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.network">network (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.network">network (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -492,11 +516,11 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end">on_train_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_train_epoch_end">on_train_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end">on_validation_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.on_validation_epoch_end">on_validation_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -504,7 +528,7 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.metrics.precision">precision() (in module scportrait.tools.ml.metrics)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.metrics.precision">precision() (in module scportrait.tools.ml.metrics)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.PRINT_MAPS_ON_DEBUG">PRINT_MAPS_ON_DEBUG (scportrait.pipeline.segmentation.Segmentation attribute)</a>
 </li>
@@ -544,15 +568,15 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.transforms.RandomRotation">RandomRotation (class in scportrait.tools.ml.transforms)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.RandomRotation">RandomRotation (class in scportrait.tools.ml.transforms)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.metrics.recall">recall() (in module scportrait.tools.ml.metrics)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.metrics.recall">recall() (in module scportrait.tools.ml.metrics)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_fake_id">return_fake_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_fake_id">return_fake_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_id">return_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_id">return_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -562,7 +586,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.save_map">save_map() (scportrait.pipeline.segmentation.Segmentation method)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.scan_directory">scan_directory() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.scan_directory">scan_directory() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 </li>
       <li>
     scportrait.pipeline.segmentation.workflows
@@ -589,44 +613,65 @@
     scportrait.tools.ml.datasets
 
       <ul>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.datasets">module</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.datasets">module</a>
 </li>
       </ul></li>
       <li>
     scportrait.tools.ml.metrics
 
       <ul>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.metrics">module</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.metrics">module</a>
 </li>
       </ul></li>
       <li>
     scportrait.tools.ml.pretrained_models
 
       <ul>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.pretrained_models">module</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">module</a>
 </li>
       </ul></li>
       <li>
     scportrait.tools.ml.transforms
 
       <ul>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.transforms">module</a>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.transforms">module</a>
+</li>
+      </ul></li>
+      <li>
+    scportrait.tools.ml.utils
+
+      <ul>
+        <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.utils">module</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
-    scportrait.tools.ml.utils
+    scportrait.tools.parse.PhenixParser
 
       <ul>
-        <li><a href="pages/module/ml.html#module-scportrait.tools.ml.utils">module</a>
+        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse.PhenixParser">module</a>
+</li>
+      </ul></li>
+      <li>
+    scportrait.tools.stitch.ParallelStitcher
+
+      <ul>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.ParallelStitcher">module</a>
+</li>
+      </ul></li>
+      <li>
+    scportrait.tools.stitch.Stitcher
+
+      <ul>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.Stitcher">module</a>
 </li>
       </ul></li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation">Segmentation (class in scportrait.pipeline.segmentation)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.project.Project.select">select() (scportrait.pipeline.project.Project method)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.select_channel">select_channel (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.select_channel">select_channel (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation">Sharded_CytosolOnly_Cellpose_Segmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
@@ -644,9 +689,9 @@
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation">ShardedWGASegmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.utils.split_dataset_fractions">split_dataset_fractions() (in module scportrait.tools.ml.utils)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.utils.split_dataset_fractions">split_dataset_fractions() (in module scportrait.tools.ml.utils)</a>
 </li>
-      <li><a href="pages/module/ml.html#id0">stats() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.stats">[1]</a>
+      <li><a href="pages/module/tools/ml.html#id0">stats() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.stats">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -654,19 +699,19 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_epoch_end">test_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_epoch_end">test_epoch_end() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_metrics">test_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_metrics">test_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id5">test_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_step">[1]</a>
+      <li><a href="pages/module/tools/ml.html#id5">test_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.test_step">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.train_metrics">train_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.train_metrics">train_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id3">training_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.training_step">[1]</a>
+      <li><a href="pages/module/tools/ml.html#id3">training_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.training_step">[1]</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.transform">transform (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.transform">transform (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -682,17 +727,17 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.val_metrics">val_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.val_metrics">val_metrics (scportrait.tools.ml.plmodels.MultilabelSupervisedModel attribute)</a>
 </li>
-      <li><a href="pages/module/ml.html#id4">validation_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.validation_step">[1]</a>
+      <li><a href="pages/module/tools/ml.html#id4">validation_step() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.validation_step">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGG1">VGG1 (class in scportrait.tools.ml.models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGG1">VGG1 (class in scportrait.tools.ml.models)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGG2">VGG2 (class in scportrait.tools.ml.models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGG2">VGG2 (class in scportrait.tools.ml.models)</a>
 </li>
-      <li><a href="pages/module/ml.html#scportrait.tools.ml.models.VGGBase">VGGBase (class in scportrait.tools.ml.models)</a>
+      <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.models.VGGBase">VGGBase (class in scportrait.tools.ml.models)</a>
 </li>
   </ul></td>
 </tr></table>

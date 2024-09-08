@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Extraction" href="extraction.html" />
-    <link rel="prev" title="Config Files" href="config.html" /> 
+    <link rel="prev" title="stitching" href="stitching.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -52,9 +52,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#stitching">Stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#featurization">Featurization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
@@ -96,6 +97,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stitching.html">stitching</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Segmentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#segmentation-classes">Segmentation classes</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id2">1. Segmentation</a></li>
@@ -118,7 +121,7 @@
 <li class="toctree-l3"><a class="reference internal" href="extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="featurization.html">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="selection.html">Selection</a></li>
 </ul>
 </li>
@@ -146,23 +149,19 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../module.html">Module Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.masks">masks</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="../module/pipeline.html">pipeline</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#base">base</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#logable">Logable</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#processingstep">ProcessingStep</a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#project">project</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#id1">Project</a></li>
 </ul>
@@ -172,7 +171,23 @@
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#workflows">workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 </ul>
@@ -188,45 +203,30 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../module/ml.html">ml</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.datasets">datasets</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDataset</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegression"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegression</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDatasetRegressionSubset"><code class="docutils literal notranslate"><span class="pre">HDF5SingleCellDatasetRegressionSubset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.metrics">metrics</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.metrics.precision"><code class="docutils literal notranslate"><span class="pre">precision()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.metrics.recall"><code class="docutils literal notranslate"><span class="pre">recall()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/io.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/io.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/io.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#models">models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGGBase"><code class="docutils literal notranslate"><span class="pre">VGGBase</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGG1"><code class="docutils literal notranslate"><span class="pre">VGG1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.models.VGG2"><code class="docutils literal notranslate"><span class="pre">VGG2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/tools.html">tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#parameters">Parameters:</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#plmodels">plmodels</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel"><code class="docutils literal notranslate"><span class="pre">MultilabelSupervisedModel</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier1_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier1_0()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_0"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_0()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier2_1"><code class="docutils literal notranslate"><span class="pre">autophagy_classifier2_1()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.transforms">transforms</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.RandomRotation"><code class="docutils literal notranslate"><span class="pre">RandomRotation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.GaussianNoise"><code class="docutils literal notranslate"><span class="pre">GaussianNoise</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.GaussianBlur"><code class="docutils literal notranslate"><span class="pre">GaussianBlur</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.ChannelReducer"><code class="docutils literal notranslate"><span class="pre">ChannelReducer</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.transforms.ChannelSelector"><code class="docutils literal notranslate"><span class="pre">ChannelSelector</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../module/ml.html#module-scportrait.tools.ml.utils">utils</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced"><code class="docutils literal notranslate"><span class="pre">combine_datasets_balanced()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/ml.html#scportrait.tools.ml.utils.split_dataset_fractions"><code class="docutils literal notranslate"><span class="pre">split_dataset_fractions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/ml.html">ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#models">models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
 </li>
 </ul>
@@ -288,11 +288,11 @@
 <a class="reference internal image-reference" href="../../_images/segmentation_classes.png"><img alt="Segmentation classes overview" class="align-center" src="../../_images/segmentation_classes.png" style="width: 100%;" /></a>
 <section id="id2">
 <h3>1. Segmentation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
-<p>The <code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code> class is optimized for processing input images of the format CXY within the context of a base scPortrait <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.project.Project" title="scportrait.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a>. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.</p>
+<p>The <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.Segmentation" title="scportrait.pipeline.segmentation.Segmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code></a> class is optimized for processing input images of the format CXY within the context of a base scPortrait <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.project.Project" title="scportrait.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a>. It loads the input image into memory and then segments the image using the provided segmentation workflow. The resulting segmentation mask is then saved to disk.</p>
 </section>
 <section id="shardedsegmentation">
 <h3>2. ShardedSegmentation<a class="headerlink" href="#shardedsegmentation" title="Link to this heading"></a></h3>
-<p>The <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class is an extension of the <code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code> class which is optimized for processing large input images in the format CXY in a parallelized fashion. When loading the input image, the <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class splits the provided image into smaller tiles, called shards, which can then be processed individually in a parallelized fashion. After segmentation of the individual shards is completed, the <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class merges the individual tiles back together to generate a final segmentation mask which extends over the complete input image.</p>
+<p>The <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class is an extension of the <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.Segmentation" title="scportrait.pipeline.segmentation.Segmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code></a> class which is optimized for processing large input images in the format CXY in a parallelized fashion. When loading the input image, the <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class splits the provided image into smaller tiles, called shards, which can then be processed individually in a parallelized fashion. After segmentation of the individual shards is completed, the <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class merges the individual tiles back together to generate a final segmentation mask which extends over the complete input image.</p>
 <p>Using a shardings approach has two main advantages:</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -301,8 +301,8 @@
 </ol>
 </div></blockquote>
 <p>To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (<code class="docutils literal notranslate"><span class="pre">shard_size</span></code>). scPortrait then dynamically calculates a so-called <cite>sharding plan</cite> which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (<code class="docutils literal notranslate"><span class="pre">overlap_px</span></code>) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented.</p>
-<p>The <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class then segments each of the calculated shards individually using the designated number of parallel processes (<code class="docutils literal notranslate"><span class="pre">threads</span></code>). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.</p>
-<p>After segmentation of each individual shard is completed, the <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the <code class="docutils literal notranslate"><span class="pre">cell</span> <span class="pre">ids</span></code> are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted.</p>
+<p>The <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class then segments each of the calculated shards individually using the designated number of parallel processes (<code class="docutils literal notranslate"><span class="pre">threads</span></code>). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.</p>
+<p>After segmentation of each individual shard is completed, the <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the <code class="docutils literal notranslate"><span class="pre">cell</span> <span class="pre">ids</span></code> are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted.</p>
 <section id="configuration-parameters">
 <h4>Configuration parameters<a class="headerlink" href="#configuration-parameters" title="Link to this heading"></a></h4>
 <p>The following parameters for a sharded segmentation need to be specified in the configuration file:</p>
@@ -346,7 +346,7 @@
 <section id="wga-segmentation">
 <span id="id4"></span><h3>WGA segmentation<a class="headerlink" href="#wga-segmentation" title="Link to this heading"></a></h3>
 <p>This segmentation workflow aims to segment mononucleated cells, i.e. cells that contain exactly one nucleus. Based on a nuclear stain and a cellmembrane stain, it first uses a thresholding approach to identify nuclei which are assumed to be the center of each cell. Then in a second step, the center of the identified nuclei are used as a starting point to generate a potential map using the cytosolic stain. This potential map is then used to segment the cytosol using a watershed approach. At the end of the workflow the user obtains both a nuclear and a cytosolic segmentation mask where each cytosol is matched to exactly one nucleus as kann be identified by the matching <code class="docutils literal notranslate"><span class="pre">cell</span> <span class="pre">id</span></code>.</p>
-<p>This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code> class or the <code class="xref py py-func docutils literal notranslate"><span class="pre">MultithreadedSegmentation</span></code> class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.</p>
+<p>This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> class or the <code class="xref py py-func docutils literal notranslate"><span class="pre">MultithreadedSegmentation</span></code> class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.</p>
 <div class="literal-block-wrapper docutils container" id="id9">
 <div class="code-block-caption"><span class="caption-text">Example configuration for  WGASegmentation</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">WGASegmentation</span><span class="p">:</span>
@@ -489,7 +489,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="config.html" class="btn btn-neutral float-left" title="Config Files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="stitching.html" class="btn btn-neutral float-left" title="stitching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="extraction.html" class="btn btn-neutral float-right" title="Extraction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

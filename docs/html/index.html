@@ -53,9 +53,10 @@
 <li class="toctree-l1"><a class="reference internal" href="pages/quickstart.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/quickstart/installation.html">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#stitching">Stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#extraction">Extraction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#classification">Classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#featurization">Featurization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/quickstart/computational_workflow.html#selection">Selection</a></li>
 </ul>
 </li>
@@ -97,6 +98,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/stitching.html">stitching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/segmentation.html">Segmentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="pages/pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pages/pipeline/segmentation.html#id2">1. Segmentation</a></li>
@@ -119,7 +122,7 @@
 <li class="toctree-l3"><a class="reference internal" href="pages/pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/featurization.html">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/selection.html">Selection</a></li>
 </ul>
 </li>
@@ -147,8 +150,14 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/stitching/stitching.html">stitching</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
@@ -206,10 +215,19 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#parsing">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#stitching">stitching</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools.html#ml">ml</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/ml.html">ml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/ml.html">ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#models">models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
 </li>
 </ul>
@@ -253,15 +271,15 @@
 </section>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>Check out the installation instructions <a class="reference internal" href="pages/quickstart/installation.html#installation"><span class="std std-ref">here</span></a>. You can validate your installation by running one of the example notebooks <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks">here</a>.</p>
+<p>Check out the installation instructions <a class="reference internal" href="pages/quickstart/installation.html#installation"><span class="std std-ref">here</span></a>. You can validate your installation by running one of the example notebooks <a class="reference external" href="https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks">here</a>.</p>
 </section>
 <section id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
-<p>You can check out our <a class="reference internal" href="pages/quickstart.html#quickstart"><span class="std std-ref">quickstart</span></a> guide to get started with scPortrait. For more detailed information on the package, we have written an in depth <a class="reference internal" href="pages/pipeline.html#pipeline"><span class="std std-ref">computational workflow</span></a> guide. In the github repository you can also find some <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks">tutorial notebooks</a> as well as <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/example_data">small example datasets</a> to get started with. If you encounter issues feel free to <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/issues">open up a git issue</a>.</p>
+<p>You can check out our <a class="reference internal" href="pages/quickstart.html#quickstart"><span class="std std-ref">quickstart</span></a> guide to get started with scPortrait. For more detailed information on the package, we have written an in depth <a class="reference internal" href="pages/pipeline.html#pipeline"><span class="std std-ref">computational workflow</span></a> guide. In the github repository you can also find some <a class="reference external" href="https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks">tutorial notebooks</a> as well as <a class="reference external" href="https://github.com/MannLabs/SPARCSspatial/tree/main/example_data">small example datasets</a> to get started with. If you encounter issues feel free to <a class="reference external" href="https://github.com/MannLabs/scPortrait/issues">open up a git issue</a>.</p>
 </section>
 <section id="citing-our-work">
 <h1>Citing our Work<a class="headerlink" href="#citing-our-work" title="Link to this heading"></a></h1>
-<p>scPortrait was developed by Sophia Mädler, Georg Wallmann and Niklas Schmacke in the labs of <a class="reference external" href="https://www.biochem.mpg.de/de/mann">Matthias Mann</a> and <a class="reference external" href="https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html">Veit Hornung</a> in 2023. scPortrait is actively developed with support from the labs of Matthias Mann, Veit Hornung and <a class="reference external" href="https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab">Fabian Theis</a>.</p>
+<p>scPortrait was developed by Sophia Mädler and Niklas Schmacke in the labs of <a class="reference external" href="https://www.biochem.mpg.de/de/mann">Matthias Mann</a>, <a class="reference external" href="https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html">Veit Hornung</a> and <a class="reference external" href="https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab">Fabian Theis</a> in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.</p>
 <p>If you use our code please cite the <a class="reference external" href="https://doi.org/10.1101/2023.06.01.542416">following manuscript</a>:</p>
 <p>SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
 Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
@@ -285,17 +303,27 @@ bioRxiv 2023.06.01.542416; doi: <a class="reference external" href="https://doi.
 <li class="toctree-l1"><a class="reference internal" href="pages/pipeline.html">scPortrait Workflow</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/project.html">scPortrait Projects</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/stitching.html">stitching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/segmentation.html">Segmentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/extraction.html">Extraction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/classification.html">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/pipeline/featurization.html">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/pipeline/selection.html">Selection</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="pages/example_notebooks.html">Example Notebooks</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#basic-scportrait-project">Basic scPortrait Project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#segmentation-workflows">Segmentation Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
 </ul>
 </li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/tools/stitching/stitching.html">stitching</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
