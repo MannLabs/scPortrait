@@ -47,6 +47,13 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: scPortrait tools
+
+   pages/tools/parsing/parsing
+   pages/tools/stitching/stitching
+
+.. toctree::
+   :maxdepth: 2
    :includehidden:
    :caption: Module API
 
