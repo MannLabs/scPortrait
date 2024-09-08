@@ -2,16 +2,9 @@
 tools
 *******************
 
-parsing
--------
-
-stitching
----------
-
-ml
----
-
 .. toctree::
    :maxdepth: 4
    
-   ml
+   tools/parsing
+   tools/stitching
+   tools/ml
