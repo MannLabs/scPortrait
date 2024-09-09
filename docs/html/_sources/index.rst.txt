@@ -1,7 +1,7 @@
-SPARCSpy - image-based single cell analysis at scale in Python
-===============================================================
+scPortrait - image-based single cell analysis at scale in Python
+================================================================
 
-SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
+scPortrait is a scalable toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
 .. image:: pages/images/graphical_abstract_without_title.png
    :width: 100%
@@ -11,17 +11,17 @@ SPARCSpy is a scalable toolkit to analyse single-cell image datasets. This Pytho
 Installation
 =============
 
-Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks>`_.
+Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_.
 
 Getting Started
 ===============
 
-You can check out our :ref:`quickstart<quickstart>` guide to get started with SPARCSpy. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/SPARCSspatial/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/SPARCSspatial/issues>`_.
+You can check out our :ref:`quickstart<quickstart>` guide to get started with scPortrait. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
 
 Citing our Work
 ================
 
-SPARCSpy was developed by Sophia Mädler, Georg Wallmann and Niklas Schmacke in the labs of `Matthias Mann <https://www.biochem.mpg.de/de/mann>`_ and `Veit Hornung <https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html>`_ in 2023. SPARCSpy is actively developed with support from the labs of Matthias Mann, Veit Hornung and `Fabian Theis <https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab>`_.
+scPortrait was developed by Sophia Mädler and Niklas Schmacke in the labs of `Matthias Mann <https://www.biochem.mpg.de/de/mann>`_, `Veit Hornung <https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html>`_ and `Fabian Theis <https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab>`_ in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
 
 If you use our code please cite the `following manuscript <https://doi.org/10.1101/2023.06.01.542416>`_:
 
@@ -32,14 +32,14 @@ bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
 Contributing
 ============
 
-We are excited for people to adapt and extend SPARCSpy to their needs. If you are interested in contributing to SPARCSpy, please reach out to the developers or open a pull request on our github repository.
+We are excited for people to adapt and extend scPortrait to their needs. If you are interested in contributing to scPortrait, please reach out to the developers or open a pull request on our github repository.
 
 Documentation
 ==============
 
 .. toctree::
    :maxdepth: 2
-   :caption: SPARCSpy Ecosystem
+   :caption: scPortrait Ecosystem
 
    pages/quickstart/ 
    pages/pipeline/
@@ -47,8 +47,14 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: scPortrait tools
+
+   pages/tools/parsing/parsing
+   pages/tools/stitching/stitching
+
+.. toctree::
+   :maxdepth: 2
    :includehidden:
    :caption: Module API
 
-   pages/sparcscmd
    pages/module

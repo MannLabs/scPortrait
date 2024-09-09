@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example Stitching Notebook &mdash; scPortrait  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=5c2dde8a" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/fonts.css?v=5583d106" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            scPortrait
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">scPortrait Ecosystem</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart/computational_workflow.html">scPortrait workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart/computational_workflow.html#stitching">Stitching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart/computational_workflow.html#segmentation">Segmentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart/computational_workflow.html#extraction">Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart/computational_workflow.html#featurization">Featurization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart/computational_workflow.html#selection">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Load-Imaging-Data">Load Imaging Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Method-1:-loading-images-from-file">Method 1: loading images from file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Method-2:-loading-images-from-numpy-array">Method 2: loading images from numpy array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Looking-at-the-loaded-images">Looking at the loaded images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Generating-a-Segmentation">Generating a Segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Looking-at-Segmentation-Results">Looking at Segmentation Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Extracting-single-cell-images">Extracting single-cell images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Look-at-extracted-single-cell-images">Look at extracted single-cell images</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#looking-at-the-generated-results">looking at the generated results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">scPortrait Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/project.html">scPortrait Projects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/project.html#project-classes">Project classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/project.html#project">1. Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/project.html#timecourseproject">2. TimecourseProject</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/project.html#initializing-a-scportrait-project">Initializing a scPortrait Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/project.html#loading-images-into-a-scportrait-project">Loading Images into a scPortrait project</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/config.html">Config Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/spatialdata.html">spatialdata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/stitching.html">stitching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/segmentation.html">Segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/segmentation.html#segmentation-classes">Segmentation classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#id2">1. Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#shardedsegmentation">2. ShardedSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#timecoursesegmentation">3. TimecourseSegmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#multithreadedsegmentation">4. MultithreadedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/segmentation.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#wga-segmentation">WGA segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#dapi-segmentation">DAPI segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#cytosol-cellpose-segmentation">Cytosol Cellpose segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../pipeline/segmentation.html#dapi-cellpose-segmentation">DAPI Cellpose segmentation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/extraction.html">Extraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/extraction.html#extraction-classes">Extraction classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../pipeline/extraction.html#single-cell-image-datasets">Single-cell image datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/featurization.html">Featurization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/selection.html">Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../example_notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../example_notebooks.html#basic-scportrait-project">Basic scPortrait Project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html">A walk through the scPortrait Ecosystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Import-Required-Libraries">Import Required Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Generate-the-Project-Structure">Generate the Project Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Load-Imaging-Data">Load Imaging Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Generating-a-Segmentation">Generating a Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Extracting-single-cell-images">Extracting single-cell images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Classification-of-extracted-single-cells">Classification of extracted single-cells</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-the-LMD7">Exporting Cutting contours for excision on the LMD7</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../example_notebooks.html#segmentation-workflows">Segmentation Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_notebook_segmentation_workflows.html#WGA-Segmentation">WGA Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation">DAPI Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_notebook_segmentation_workflows.html#Cytosol-Segmentation-Cellpose">Cytosol Segmentation Cellpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../notebooks/example_notebook_segmentation_workflows.html#DAPI-Segmentation-Cellpose">DAPI Segmentation Cellpose</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../example_notebooks.html#additional-notebooks">Additional Notebooks</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../parsing/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stitching.html">stitching</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module.html">Module Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../module/pipeline.html">pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#project">project</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#id1">Project</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#segmentation">segmentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#id2">Segmentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#extraction">extraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#classification">classification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#mlclusterclassifier">MLClusterClassifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#cellfeaturizer">CellFeaturizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/pipeline.html#selection">selection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/pipeline.html#lmdselection">LMDSelection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module/processing.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module/processing.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/processing.html#module-scportrait.processing.masks">masks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module/io.html">processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module/io.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/io.html#module-scportrait.processing.masks">masks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module/tools.html">tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/tools/stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/stitching.html#parameters">Parameters:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../module/tools/ml.html">ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#models">models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#plmodels">plmodels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../module/tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">scPortrait</a>
+      </nav>
+
+      <div class="wy-nav-content">
+<div class="git-ribbon">
+  <a href="http://github.com/SwissDataScienceCenter" rel="me">Join us on GitHub</a>
+</div>
+
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Example Stitching Notebook</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/pages/tools/stitching/example_stitching_notebook.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Example-Stitching-Notebook">
+<h1>Example Stitching Notebook<a class="headerlink" href="#Example-Stitching-Notebook" title="Link to this heading"></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">sparcstools.stitch</span> <span class="kn">import</span> <span class="n">Stitcher</span><span class="p">,</span> <span class="n">ParallelStitcher</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap_tc6l1cu9. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+/Users/sophia/mambaforge/envs/stitching/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></div></div>
+</div>
+<section id="Single-threaded-Stitching">
+<h2>Single-threaded Stitching<a class="headerlink" href="#Single-threaded-Stitching" title="Link to this heading"></a></h2>
+<section id="initializing-the-stitcher-object">
+<h3>initializing the stitcher object<a class="headerlink" href="#initializing-the-stitcher-object" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/raw_image_tiles/&quot;</span><span class="p">)</span>
+<span class="n">slidename</span> <span class="o">=</span> <span class="s2">&quot;stitching_test&quot;</span>
+<span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
+
+<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
+<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
+<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
+<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specifz the timepoint you wish to stitch</span>
+
+<span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Timepoint</span><span class="si">{</span><span class="n">timepoint</span><span class="si">}</span><span class="s2">_Row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">_Well</span><span class="si">{</span><span class="n">well</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="s2">channel</span><span class="se">}}</span><span class="s2">_zstack</span><span class="si">{</span><span class="n">zstack_value</span><span class="si">}</span><span class="s2">_r</span><span class="se">{{</span><span class="s2">row:03</span><span class="se">}}</span><span class="s2">_c</span><span class="se">{{</span><span class="s2">col:03</span><span class="se">}}</span><span class="s2">.tif&quot;</span>
+
+<span class="c1">#initialize stitcher</span>
+<span class="n">stitcher</span> <span class="o">=</span> <span class="n">Stitcher</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span>
+                    <span class="n">slidename</span><span class="p">,</span>
+                    <span class="n">outdir</span><span class="p">,</span>
+                    <span class="n">pattern</span> <span class="o">=</span>  <span class="n">pattern</span><span class="p">,</span>
+                    <span class="n">stitching_channel</span> <span class="o">=</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
+                    <span class="n">overlap</span><span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                    <span class="n">max_shift</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                    <span class="n">filter_sigma</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="n">rescale_range</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
+                    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test already exists, overwriting.
+</pre></div></div>
+</div>
+</section>
+<section id="Generating-thumbnails">
+<h3>Generating thumbnails<a class="headerlink" href="#Generating-thumbnails" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">generate_thumbnail</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+    assembling thumbnail 9/9
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stitcher</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.image.AxesImage at 0xabaf24df0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_7_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_7_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alterantively it can be saved to a tif file</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_thumbnail</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Generating-full-scale-stitched-image">
+<h3>Generating full-scale stitched image<a class="headerlink" href="#Generating-full-scale-stitched-image" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">stitch</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+performing stitching on channel Alexa488 with id number 0
+    quantifying alignment error 1000/1000
+    aligning edge 12/12
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap_tc6l1cu9 with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Alignment complete.
+assembling mosaic with shape (3, 3040, 3038)
+created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d/temp_mmap_5733127938620250677.hdf
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|          | 0/3 [00:00&lt;?, ?it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+        merging tile 9/9
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 33%|███▎      | 1/3 [00:01&lt;00:02,  1.15s/it]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+        merging tile 9/9
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 67%|██████▋   | 2/3 [00:02&lt;00:01,  1.16s/it]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+        merging tile 9/9
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 3/3 [00:03&lt;00:00,  1.16s/it]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_10_12.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_10_12.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_10_13.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_10_13.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">assembled_mosaic</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table>
+    <tr>
+        <td>
+            <table style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <td> </td>
+                        <th> Array </th>
+                        <th> Chunk </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <th> Bytes </th>
+                        <td> 52.85 MiB </td>
+                        <td> 17.62 MiB </td>
+                    </tr>
+
+                    <tr>
+                        <th> Shape </th>
+                        <td> (3, 3040, 3038) </td>
+                        <td> (1, 3040, 3038) </td>
+                    </tr>
+                    <tr>
+                        <th> Dask graph </th>
+                        <td colspan="2"> 3 chunks in 7 graph layers </td>
+                    </tr>
+                    <tr>
+                        <th> Data type </th>
+                        <td colspan="2"> uint16 numpy.ndarray </td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+        <svg width="194" height="184" style="stroke:rgb(0,0,0);stroke-width:1" >
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="10" y1="120" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="10" y2="120" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="14" y2="124" />
+  <line x1="19" y1="9" x2="19" y2="129" />
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 24.9485979497544,14.948597949754403 24.9485979497544,134.9485979497544 10.0,120.0" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="129" y2="0" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="134" y2="4" />
+  <line x1="19" y1="9" x2="139" y2="9" />
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="129" y1="0" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 129.92105263157893,0.0 144.86965058133333,14.948597949754403 24.9485979497544,14.948597949754403" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+  <line x1="24" y1="134" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+  <line x1="144" y1="14" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="24.9485979497544,14.948597949754403 144.86965058133333,14.948597949754403 144.86965058133333,134.9485979497544 24.9485979497544,134.9485979497544" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Text -->
+  <text x="84.909124" y="154.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" >3038</text>
+  <text x="164.869651" y="74.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,164.869651,74.948598)">3040</text>
+  <text x="7.474299" y="147.474299" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,7.474299,147.474299)">3</text>
+</svg>
+        </td>
+    </tr>
+</table></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image can then be written to a variety of output formats</span>
+
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_tif</span><span class="p">(</span><span class="n">export_xml</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_ome_zarr</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/stitching_test_Alexa488.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/stitching_test_DAPI.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/stitching_test_mCherry.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(-0.5, 3037.5, 3039.5, -0.5)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_13_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_13_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">stitcher</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Multi-threaded-Stitching">
+<h2>Multi-threaded Stitching<a class="headerlink" href="#Multi-threaded-Stitching" title="Link to this heading"></a></h2>
+<p>Using the ParallelStitcher class stitching can be speed up by using multiple threads. The code to perform stitching remains more or less the same.</p>
+<section id="id1">
+<h3>initializing the stitcher object<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/raw_image_tiles/&quot;</span><span class="p">)</span>
+<span class="n">slidename</span> <span class="o">=</span> <span class="s2">&quot;stitching_test_parallel&quot;</span>
+<span class="n">outdir_parallel</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
+
+<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
+<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
+<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
+<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specifz the timepoint you wish to stitch</span>
+
+<span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Timepoint</span><span class="si">{</span><span class="n">timepoint</span><span class="si">}</span><span class="s2">_Row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">_Well</span><span class="si">{</span><span class="n">well</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="s2">channel</span><span class="se">}}</span><span class="s2">_zstack</span><span class="si">{</span><span class="n">zstack_value</span><span class="si">}</span><span class="s2">_r</span><span class="se">{{</span><span class="s2">row:03</span><span class="se">}}</span><span class="s2">_c</span><span class="se">{{</span><span class="s2">col:03</span><span class="se">}}</span><span class="s2">.tif&quot;</span>
+
+<span class="c1">#initialize stitcher</span>
+<span class="n">stitcher</span> <span class="o">=</span> <span class="n">ParallelStitcher</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span>
+                    <span class="n">slidename</span><span class="p">,</span>
+                    <span class="n">outdir_parallel</span><span class="p">,</span>
+                    <span class="n">pattern</span> <span class="o">=</span>  <span class="n">pattern</span><span class="p">,</span>
+                    <span class="n">stitching_channel</span> <span class="o">=</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
+                    <span class="n">overlap</span><span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                    <span class="n">max_shift</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                    <span class="n">filter_sigma</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="n">rescale_range</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
+                    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">threads</span> <span class="o">=</span> <span class="mi">12</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel already exists, overwriting.
+</pre></div></div>
+</div>
+</section>
+<section id="id2">
+<h3>Generating thumbnails<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">generate_thumbnail</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+    assembling thumbnail 1/9    assembling thumbnail 9/9
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stitcher</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.image.AxesImage at 0xaefb19630&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_20_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_20_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alterantively it can be saved to a tif file</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_thumbnail</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id3">
+<h3>Generating full-scale stitched image<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">stitch</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+performing stitching on channel Alexa488 with id number 0
+    quantifying alignment error: 100%|██████████| 1000/1000 [00:00&lt;00:00, 1116.28it/s]
+                  aligning edge: 100%|██████████| 12/12 [00:00&lt;00:00, 62.05it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:root:Folder /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel/temp_mmap_0tbn4pud. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Alignment complete.
+assembling mosaic with shape (3, 3040, 3038)
+created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel/temp_mmap_0tbn4pud/temp_mmap_2829859152836703899.hdf
+assembling channels with 3 workers
+assembling mosaic:   0%|          | 0/3 [00:00&lt;?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+assembling channel 0: 100%|██████████| 9/9 [00:01&lt;00:00,  7.18it/s]
+assembling mosaic:  33%|███▎      | 1/3 [00:01&lt;00:02,  1.28s/it]
+assembling channel 1: 100%|██████████| 9/9 [00:01&lt;00:00,  7.09it/s]
+
+
+assembling channel 2: 100%|██████████| 9/9 [00:01&lt;00:00,  7.05it/s]
+assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.30it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_23_3.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_23_3.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_23_4.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_23_4.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">assembled_mosaic</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<table>
+    <tr>
+        <td>
+            <table style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <td> </td>
+                        <th> Array </th>
+                        <th> Chunk </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <th> Bytes </th>
+                        <td> 52.85 MiB </td>
+                        <td> 17.62 MiB </td>
+                    </tr>
+
+                    <tr>
+                        <th> Shape </th>
+                        <td> (3, 3040, 3038) </td>
+                        <td> (1, 3040, 3038) </td>
+                    </tr>
+                    <tr>
+                        <th> Dask graph </th>
+                        <td colspan="2"> 3 chunks in 7 graph layers </td>
+                    </tr>
+                    <tr>
+                        <th> Data type </th>
+                        <td colspan="2"> uint16 numpy.ndarray </td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+        <svg width="194" height="184" style="stroke:rgb(0,0,0);stroke-width:1" >
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="10" y1="120" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="10" y2="120" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="14" y2="124" />
+  <line x1="19" y1="9" x2="19" y2="129" />
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 24.9485979497544,14.948597949754403 24.9485979497544,134.9485979497544 10.0,120.0" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="10" y1="0" x2="129" y2="0" style="stroke-width:2" />
+  <line x1="14" y1="4" x2="134" y2="4" />
+  <line x1="19" y1="9" x2="139" y2="9" />
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="10" y1="0" x2="24" y2="14" style="stroke-width:2" />
+  <line x1="129" y1="0" x2="144" y2="14" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="10.0,0.0 129.92105263157893,0.0 144.86965058133333,14.948597949754403 24.9485979497544,14.948597949754403" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Horizontal lines -->
+  <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
+  <line x1="24" y1="134" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Vertical lines -->
+  <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
+  <line x1="144" y1="14" x2="144" y2="134" style="stroke-width:2" />
+
+  <!-- Colored Rectangle -->
+  <polygon points="24.9485979497544,14.948597949754403 144.86965058133333,14.948597949754403 144.86965058133333,134.9485979497544 24.9485979497544,134.9485979497544" style="fill:#ECB172A0;stroke-width:0"/>
+
+  <!-- Text -->
+  <text x="84.909124" y="154.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" >3038</text>
+  <text x="164.869651" y="74.948598" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(-90,164.869651,74.948598)">3040</text>
+  <text x="7.474299" y="147.474299" font-size="1.0rem" font-weight="100" text-anchor="middle" transform="rotate(45,7.474299,147.474299)">3</text>
+</svg>
+        </td>
+    </tr>
+</table></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image can then be written to a variety of output formats</span>
+
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_tif</span><span class="p">(</span><span class="n">export_xml</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1">#alternatively the stitched images can also be written out to tifs in a multi-threaded format</span>
+<span class="c1">#speedups here are limited by write speed to disk, the number of threads is limited by the number of channels available</span>
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_tif_parallel</span><span class="p">(</span><span class="n">export_xml</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">stitcher</span><span class="o">.</span><span class="n">write_ome_zarr</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675.38it/s]
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Visualize-Stitching-Output">
+<h2>Visualize Stitching Output<a class="headerlink" href="#Visualize-Stitching-Output" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir_parallel</span><span class="si">}</span><span class="s2">/stitching_test_parallel_Alexa488.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir_parallel</span><span class="si">}</span><span class="s2">/stitching_test_parallel_DAPI.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir_parallel</span><span class="si">}</span><span class="s2">/stitching_test_parallel_mCherry.tif&quot;</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(-0.5, 3037.5, 3039.5, -0.5)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_27_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_27_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># compare parallel and non-parallel stitching</span>
+
+<span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir_parallel</span><span class="si">}</span><span class="s2">/stitching_test_parallel_Alexa488.tif&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/stitching_test_Alexa488.tif&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[ True,  True,  True, ...,  True,  True,  True],
+       [ True,  True,  True, ...,  True,  True,  True],
+       [ True,  True,  True, ...,  True,  True,  True],
+       ...,
+       [ True,  True,  True, ...,  True,  True,  True],
+       [ True,  True,  True, ...,  True,  True,  True],
+       [ True,  True,  True, ...,  True,  True,  True]])
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">stitcher</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024 Sophia Mädler and Niklas Schmacke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

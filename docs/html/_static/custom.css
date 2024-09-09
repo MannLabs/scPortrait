@@ -1,50 +1,32 @@
-/**
+/*!
+ * Copyright 2017 - Swiss Data Science Center (SDSC)
+ * A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
+ * Eidgenössische Technische Hochschule Zürich (ETHZ).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-  CHANGES FOR CUSTOM.CSS SHOULD BE MADE INSIDE CUSTOM.SCSS
-
-  
-
-  Requirements:
-
-  - pip install compile-scss https://pypi.org/project/compile-scss/
-
-
-
-To make changes to styling, first run the following in the root of the project:
-
-    - pip install -e .[dev]
-
-
-
-Then you can edit and make changes to this file and see the results by doing the following:
-
-  Steps:
-
-  - Run:  compile_scss --watch from inside /renku_sphinx_theme
-
-  - That command will compile scss changes into css.
-
-  - After doing changes commit scss and css files.
-
-*/
-.wy-nav-side {
-  background: #01192d;
-}
-
-@media screen and (min-width: 1100px) {
-  .wy-nav-content-wrap {
-      background:#01192d;
-  }
+ 
+.wy-nav-content-wrap {
+  background: #f5f5f5;
 }
 
 a {
   color: #009568;
 }
-
 a:hover {
   color: #00bd84;
 }
-
 a:visited {
   color: #009568;
 }
@@ -52,37 +34,30 @@ a:visited {
 .rst-content {
   color: #3d3d3d;
 }
-
 .rst-content code.literal {
   color: #d26a98;
 }
-
 .rst-content tt.literal {
   color: #d26a98;
 }
-
 .rst-content .note {
   color: #003274;
   background: #ccddf3;
   padding: 1rem;
   margin-bottom: 1rem;
 }
-
 .rst-content .note .admonition-title {
   display: none;
 }
-
 .rst-content .warning {
   color: #605000;
   background: #fcf4cc;
   padding: 1rem;
   margin-bottom: 1rem;
 }
-
 .rst-content .warning .admonition-title {
   display: none;
 }
-
 .rst-content .highlight {
   background: #f5f5f5;
 }
@@ -94,7 +69,6 @@ a:visited {
 .wy-side-nav-search {
   background-color: #01192d;
 }
-
 .wy-side-nav-search input[type="text"] {
   width: 100%;
   border-radius: 0px;
@@ -109,7 +83,6 @@ a:visited {
   padding-bottom: 0.6rem;
   background-color: inherit;
 }
-
 .wy-menu-vertical a:hover {
   background-color: unset;
   opacity: 1;
@@ -119,30 +92,25 @@ a:visited {
   background-color: #01192d;
   color: white;
 }
-
 .wy-menu-vertical li.current > a span.toctree-expand {
   display: block;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
 }
-
 .wy-menu-vertical li.current > a span.toctree-expand:before {
   display: block;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
 }
-
 .wy-menu-vertical li.current > a span.toctree-expand:hover {
   color: white;
 }
-
 .wy-menu-vertical li.current > a:hover {
   background-color: #01192d;
   color: white;
 }
-
 .wy-menu-vertical li.current > a:hover span.toctree-expand {
   color: white;
 }
@@ -150,7 +118,6 @@ a:visited {
 .wy-menu-vertical .toctree-l1 {
   opacity: 0.5;
 }
-
 .wy-menu-vertical .toctree-l1:hover {
   opacity: 1;
   background-color: inherit;
@@ -160,7 +127,6 @@ a:visited {
   opacity: 1;
   background-color: inherit;
 }
-
 .wy-menu-vertical li.toctree-l1.current > a {
   border: 0px;
 }
@@ -178,12 +144,14 @@ a:visited {
   background-color: #e4e7ea;
   color: #838383;
 }
-
 .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a:hover {
   color: #3d3d3d;
 }
-
-.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a:hover span.toctree-expand {
+.wy-menu-vertical
+  li.toctree-l2.current
+  li.toctree-l3
+  > a:hover
+  span.toctree-expand {
   color: #3d3d3d;
 }
 
@@ -196,30 +164,25 @@ a:visited {
   background-color: #566673;
   color: #d9d9d9;
 }
-
 .wy-menu-vertical li.toctree-l2 a span.toctree-expand {
   display: block;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
 }
-
 .wy-menu-vertical li.toctree-l2 a span.toctree-expand:before {
   display: block;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
 }
-
 .wy-menu-vertical li.toctree-l2 a span.toctree-expand:hover {
   color: white;
 }
-
 .wy-menu-vertical li.toctree-l2 a:hover {
   color: white;
   background-color: #566673;
 }
-
 .wy-menu-vertical li.toctree-l2 a:hover span.toctree-expand {
   color: white;
 }
@@ -259,7 +222,8 @@ a:visited {
   padding: 0.375rem 0.75rem;
   font-size: 1rem;
   border-radius: 0;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   box-shadow: unset;
 }
 
@@ -267,7 +231,6 @@ a:visited {
   background: unset !important;
   color: #838383 !important;
 }
-
 .btn-neutral:active {
   padding: 0.375rem 0.75rem;
   box-shadow: unset;

@@ -4,7 +4,7 @@ Module Documentation
 .. toctree::
    :maxdepth: 4
    
-   module/processing 
    module/pipeline
-   module/ml
-   module/utils
+   module/processing 
+   module/io
+   module/tools
