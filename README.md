@@ -35,3 +35,7 @@ If you use our code please cite [this manuscript](https://www.biorxiv.org/conten
 SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
 Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
 bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
+
+## Contributing
+
+If you like this software, you can give us a star to boost our visibility! All direct contributions are also welcome. Feel free to post a new [issue](https://github.com/MannLabs/alphapeptstats/issues) or clone the repository and create a [pull request](https://github.com/MannLabs/scPortrait/pulls) with a new branch. For an even more interactive participation, check out the [discussions](https://github.com/MannLabs/scPortrait/discussions).
