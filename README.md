@@ -1,7 +1,7 @@
 [![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/html/index.html)](https://mannlabs.github.io/scPortrait/html/index.html)
 
-![Graphical Abstract](https://github.com/MannLabs/SPARCSspatial/assets/15019107/47461f35-3dec-4aa6-ba51-ee1b631ddab9)
+![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
 
 scPortrait is a scalable toolkit to generate single-cell representations from raw microscopy images.
 
