@@ -36,7 +36,7 @@ pyqt5
 lxml_html_clean
 ashlar @ git+https://github.com/labsyspharm/ashlar.git@master
 networkx
-py-lmd @ git+https://github.com/MannLabs/py-lmd.git@refs/pull/11/head#egg=py-lmd
+py-lmd
 
 #packages for building the documentation
 sphinx
