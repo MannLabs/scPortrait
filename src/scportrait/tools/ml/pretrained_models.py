@@ -71,25 +71,24 @@ def _get_data_dir():
 def autophagy_classifier(device = "cuda"):
     """
     Load binary autophagy classification model published as Model 2.1 in original scPortrait publication.
-    """
-
-    # check if cuda is available
-    if device == "cuda" and torch.cuda.is_available() is False:
-        print("CUDA is not available. Loading model on CPU.")
-        device = "cpu"
-        
+    """ 
     data_dir = _get_data_dir()
     save_path = os.path.join(data_dir, "vgg_autophagy_classifier")
 
     if not Path(save_path).exists():
         _download(
-            url="", # TODO: URL to download 
+            url="https://zenodo.org/records/13385705/files/vgg_autophagy_classifier.zip?download=1",
             output_path=data_dir,
             archive_format="zip",
         )
     
     checkpoint_path = os.path.join(save_path, "VGG2_autophagy_classifier2.1.cpkt")
     hparam_path = os.path.join(save_path, "hparams.yaml")
+
+    # check if cuda is available
+    if device == "cuda" and torch.cuda.is_available() is False:
+        print("CUDA is not available. Loading model on CPU.")
+        device = "cpu"
     
     model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG2_old", device = device)
 
