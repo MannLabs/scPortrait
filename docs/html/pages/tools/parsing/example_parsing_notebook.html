@@ -264,27 +264,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+  <div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">sparcstools.parse</span> <span class="kn">import</span> <span class="n">PhenixParser</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
+<span class="kn">from</span> <span class="nn">scportrait.tools.parse</span> <span class="kn">import</span> <span class="n">PhenixParser</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-WARNING:root:Temp mmap arrays are written to /tmp/temp_mmap_bl8redu9. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-/fs/home/maedler/.local/miniconda3/envs/SPARCS_complete/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/phenix/experiment&quot;</span> <span class="c1">#do not need to go to the image directory, the main directory is sufficient</span>
