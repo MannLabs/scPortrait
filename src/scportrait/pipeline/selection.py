@@ -170,7 +170,6 @@ class LMDSelection(ProcessingStep):
         )
 
         segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
-        print(segmentation)
 
         # create segmentation loader
         sl = SegmentationLoader(
@@ -178,6 +177,13 @@ class LMDSelection(ProcessingStep):
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
+
+        if len(segmentation.shape) == 3:
+            segmentation = np.squeeze(segmentation)
+        else:
+            raise ValueError(
+                f"Segmentation shape is not correct. Expected 2D array, got {segmentation.shape}"
+                )
 
         # get shape collections
         shape_collection = sl(segmentation, self.cell_sets, self.calibration_marker)
