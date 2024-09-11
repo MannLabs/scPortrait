@@ -23,17 +23,97 @@ def dataset_1():
     return save_path
 
 def dataset_2():
-    pass
+    """
+    Download and extract the example dataset 2 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "example_2_images")
+
+    if not Path(save_path).exists():
+        _download(
+            url="",
+            output_path=save_path,
+            archive_format="zip",
+        )
+    
+    return save_path
 
 def dataset_3():
-    pass
+    """
+    Download and extract the example dataset 3 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "example_3_images")
+
+    if not Path(save_path).exists():
+        _download(
+            url="",
+            output_path=save_path,
+            archive_format="zip",
+        )
+    
+    return save_path
 
 def dataset_4():
-    pass
+    """
+    Download and extract the example dataset 4 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "example_4_images")
+
+    if not Path(save_path).exists():
+        _download(
+            url="",
+            output_path=save_path,
+            archive_format="zip",
+        )
+    
+    return save_path
 
 def dataset_5():
-    pass
+    """
+    Download and extract the example dataset 5 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "example_5_images")
+
+    if not Path(save_path).exists():
+        _download(
+            url="",
+            output_path=save_path,
+            archive_format="zip",
+        )
+    
+    return save_path
 
 def dataset_6():
-    pass
+    """
+    Download and extract the example dataset 6 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "example_6_images")
+
+    if not Path(save_path).exists():
+        _download(
+            url="",
+            output_path=save_path,
+            archive_format="zip",
+        )
+    
+    return save_path
 
