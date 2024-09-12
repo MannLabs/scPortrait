@@ -4,6 +4,9 @@ import h5py
 import torch
 from torch.utils.data import Dataset
 
+#type checking functions
+from typing import List, Union
+from collections.abc import Iterable
 
 class HDF5SingleCellDataset(Dataset):
     """
@@ -15,11 +18,11 @@ class HDF5SingleCellDataset(Dataset):
 
     Attributes
     ----------
-    dir_labels : list of int
-        List of labels corresponding to the directories in dir_list.
     dir_list : list of str
         List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
         containing hdf5 files.
+    dir_labels : list of int
+        List of labels corresponding to the directories in dir_list.
     index_list : list of int, or None
         List of indices to select from the dataset. If set to None all cells are taken. Default is None.
     transform : callable, optional
@@ -37,8 +40,6 @@ class HDF5SingleCellDataset(Dataset):
     -------
     add_hdf_to_index(current_label, path)
         Adds single cell data from the hdf5 file located at `path` with the specified `current_label` to the index.
-    scan_directory(path, current_label, levels_left)
-        Scans directories for hdf5 files and adds their data to the index with the specified `current_label`.
     stats()
         Prints dataset statistics including total count and count per label.
     len()
@@ -71,11 +72,12 @@ class HDF5SingleCellDataset(Dataset):
         self,
         dir_list,
         dir_labels,
-        max_level=5,
+        index_list=None, # list of indices to select from the index
         transform=None,
+        max_level=5,
+
         return_id=False,
         return_fake_id=False,
-        index_list=None,  # list of indices to select from the index
         select_channel=None,
     ):
         """
@@ -145,7 +147,22 @@ class HDF5SingleCellDataset(Dataset):
         self.return_fake_id = return_fake_id
         self.stats()
 
-    def add_hdf_to_index(self, current_label, path, current_index_list):
+    def add_hdf_to_index(self, 
+                          current_label: int, 
+                          path: str, 
+                          current_index_list: Union[List, None] = None):
+        """
+        Adds single cell data from the hdf5 file located at `path` with the specified `current_label` to the index.
+
+        Parameters
+        ----------
+        current_label : int
+            label which should be added to the dataset
+        path : str
+            path where the dataset that should be added is located.
+        current_index_list : [int] | None 
+            list of indices to select from the dataset. If set to None all cells are taken. Default is None.
+        """
         try:
             input_hdf = h5py.File(path, "r")
 
@@ -153,6 +170,7 @@ class HDF5SingleCellDataset(Dataset):
                 index_handle = np.zeros((len(current_index_list), 2), dtype=np.int64)
                 for i, ix in enumerate(current_index_list):
                     index_handle[i] = input_hdf.get("single_cell_index")[ix]
+            
             else:
                 index_handle = input_hdf.get("single_cell_index")
 
@@ -161,10 +179,31 @@ class HDF5SingleCellDataset(Dataset):
 
             for row in index_handle:
                 self.data_locator.append([current_label, handle_id] + list(row))
+
         except Exception:
             return
 
-    def scan_directory(self, path, current_label, levels_left, current_index_list=None):
+    def _scan_directory(self, 
+                        path:str, 
+                        current_label:int, 
+                        levels_left:int, 
+                        current_index_list: Union[List, None]=None):
+        """
+        iterates over all files and folders in the directory provided by path and adds all found hdf5 files to the index.
+        Subfolders are recursively scanned.
+
+        Parameters
+        ----------
+        path : str
+            directory that should be searched for HDF5 files
+        current_label : int
+            label that should be attached to any found HDF5 files
+        levels_left : int
+            how many subfolder levels should be recurisively scanned for additional files
+        current_index_list : Union[List, None], optional
+            List of indices to select from the dataset. If set to None all cells are taken, by default None
+        """
+
         # iterates over all files and folders in a directory
         # hdf5 files are added to the index
         # subfolders are recursively scanned
@@ -195,7 +234,7 @@ class HDF5SingleCellDataset(Dataset):
 
             # recursively scan subdirectories
             for subdirectory in current_level_directories:
-                self.scan_directory(subdirectory, current_label, levels_left - 1)
+                self._scan_directory(subdirectory, current_label, levels_left - 1)
 
         else:
             return
@@ -274,6 +313,7 @@ class HDF5SingleCellDataset(Dataset):
 class HDF5SingleCellDatasetRegression(Dataset):
     """
     Class for handling scPortrait single cell datasets stored in HDF5 files where the label should be read from the dataset itself.
+    should be read from the dataset itself instead of being provided as an additional parameter.
     """
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
@@ -309,7 +349,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
             if filetype in self.HDF_FILETYPES:  # check if filetype is supported
                 self.add_hdf_to_index(path, target_col)  # add hdf5 files to index
             else:
-                self.scan_directory(
+                self._scan_directory(
                     path, target_col, max_level
                 )  # recursively scan for files
 
@@ -350,7 +390,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
         except Exception:
             return
 
-    def scan_directory(self, path, target_col, levels_left):
+    def _scan_directory(self, path, target_col, levels_left):
         if (
             levels_left > 0
         ):  # iterate over all files and folders in a directory if levels_left > 0
@@ -378,7 +418,7 @@ class HDF5SingleCellDatasetRegression(Dataset):
             for (
                 subdirectory
             ) in current_level_directories:  # recursively scan subdirectories
-                self.scan_directory(subdirectory, target_col, levels_left - 1)
+                self._scan_directory(subdirectory, target_col, levels_left - 1)
         else:
             return
 
@@ -472,7 +512,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
                 self.add_hdf_to_index(path, target_col)  # add hdf5 files to index
 
             else:
-                self.scan_directory(
+                self._scan_directory(
                     path, target_col, max_level
                 )  # recursively scan for files
 
@@ -514,7 +554,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
         except Exception:
             return
 
-    def scan_directory(self, path, target_col, levels_left):
+    def _scan_directory(self, path, target_col, levels_left):
         if (
             levels_left > 0
         ):  # iterate over all files and folders in a directory if levels_left > 0
@@ -542,7 +582,7 @@ class HDF5SingleCellDatasetRegressionSubset(Dataset):
             for (
                 subdirectory
             ) in current_level_directories:  # recursively scan subdirectories
-                self.scan_directory(subdirectory, target_col, levels_left - 1)
+                self._scan_directory(subdirectory, target_col, levels_left - 1)
         else:
             return
 
