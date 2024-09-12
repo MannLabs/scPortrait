@@ -176,6 +176,13 @@ class HDF5SingleCellDataset(Dataset):
 
             if current_index_list is not None:
                 index_handle = np.zeros((len(current_index_list), 2), dtype=np.int64)
+
+                #ensure that no out of bound elements are provided for the dataset
+                max_elements = input_hdf.get("single_cell_index").shape[0]
+                max_index = max(current_index_list)
+
+                assert max_index < max_elements, f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                
                 for i, ix in enumerate(current_index_list):
                     index_handle[i] = input_hdf.get("single_cell_index")[ix]
             
