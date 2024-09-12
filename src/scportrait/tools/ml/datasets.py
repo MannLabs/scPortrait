@@ -154,9 +154,7 @@ class HDF5SingleCellDataset(Dataset):
                 for i, ix in enumerate(current_index_list):
                     index_handle[i] = input_hdf.get("single_cell_index")[ix]
             else:
-                index_handle = input_hdf.get("single_cell_index")  # to float
-
-            print(f"Adding hdf5 file {path} to index...")
+                index_handle = input_hdf.get("single_cell_index")
 
             handle_id = len(self.handle_list)
             self.handle_list.append(input_hdf.get("single_cell_data"))
