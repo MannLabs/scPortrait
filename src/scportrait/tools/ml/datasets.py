@@ -8,6 +8,11 @@ from torch.utils.data import Dataset
 from typing import List, Union
 from collections.abc import Iterable
 
+def _check_type_input_list(var):
+    return (isinstance(var, Iterable) and
+            all(isinstance(sublist, Iterable) and all(isinstance(item, int) for item in sublist)
+                for sublist in var))
+
 class HDF5SingleCellDataset(Dataset):
     """
     Class for handling scPortrait single cell datasets stored in HDF5 files.
@@ -111,6 +116,9 @@ class HDF5SingleCellDataset(Dataset):
         else:
             if len(index_list) < len(dir_list):
                 raise ValueError("index_list should be as long as dir_list")
+        
+            #type check index list to make sure its correctly constructed
+            assert (_check_type_input_list(index_list)), "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
 
         self.index_list = index_list
         self.transform = transform
