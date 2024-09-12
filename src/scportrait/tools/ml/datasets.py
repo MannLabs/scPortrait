@@ -138,7 +138,7 @@ class _HDF5SingleCellDataset(Dataset):
 
                 # get the column containing the labelling
                 label_col = input_hdf.get("single_cell_index_labelled").asstr()[
-                    :, label_col
+                    :, label_column
                 ]
 
                 # dirty fix that we have some old datasets that have empty strings instead of nan
