@@ -19,7 +19,7 @@ from alphabase.io import tempmmap
 import datatree
 import xarray
 
-from typing import List
+from typing import List, Tuple
 
 class sdata_filehandler(Logable):
     def __init__(self, 
@@ -113,7 +113,11 @@ class sdata_filehandler(Logable):
     ### Write new objects to sdata ###
     
     def _write_segmentation_object_sdata(
-        self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
+        self, 
+        segmentation_object, 
+        segmentation_label: str, 
+        classes: set = None, 
+        overwrite: bool = False
     ):
         _sdata = self._read_sdata()
 
@@ -138,8 +142,8 @@ class sdata_filehandler(Logable):
         segmentation,
         segmentation_label: str,
         classes: set = None,
-        chunks=(1000, 1000),
-        overwrite = False
+        chunks: Tuple[int] =(1000, 1000),
+        overwrite: bool = False
     ):
         transform_original = Identity()
         mask = spLabels2DModel.parse(
@@ -154,7 +158,10 @@ class sdata_filehandler(Logable):
 
         self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
 
-    def _write_points_object_sdata(self, points, points_name: str, overwrite):
+    def _write_points_object_sdata(self, 
+                                   points, 
+                                   points_name: str, 
+                                   overwrite: bool = False):
         
         _sdata = self._read_sdata()
         
