@@ -132,7 +132,6 @@ class sdata_filehandler(Logable):
         self.log(f"Segmentation {segmentation_label} written to sdata object.")
 
         self._check_sdata_status()
-        print(self.nuc_seg_status, self.cyto_seg_status)
 
     def _write_segmentation_sdata(
         self,
