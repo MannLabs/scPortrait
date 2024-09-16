@@ -17,14 +17,14 @@ def _check_type_input_list(var):
 
 
 class _HDF5SingleCellDataset(Dataset):
-    """Base Class with shared methods for loading scPortrait single cell datasets stored in HDF5 files."""
+    """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files."""
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
 
     def __init__(
         self,
         dir_list,
-        index_list=None,  # list of indices to select from the index
+        index_list=None,
         select_channel=None,
         transform=None,
         return_id=False,
@@ -409,7 +409,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
         containing hdf5 files.
     dir_labels : list of int
-        List of bulk labels that should be applied to all cells contained within each dataset.
+        List of bulk labels that should be applied to all cells contained within each dataset in dir_list.
     index_list : list of int, or None
         List of indices to select from the dataset. If set to None all cells are taken. Default is None.
     select_channel : int, optional
@@ -458,7 +458,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
     ):
         super().__init__(
             dir_list=dir_list,
-            index_list=index_list,  # list of indices to select from the index
+            index_list=index_list,
             select_channel=select_channel,
             transform=transform,
             return_id=return_id,
