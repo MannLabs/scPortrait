@@ -21,32 +21,33 @@ import xarray
 
 from typing import List, Tuple
 
+
 class sdata_filehandler(Logable):
-    def __init__(self, 
-                 directory, 
-                 sdata_path, 
-                 input_image_name,
-                 nuc_seg_name,
-                 cyto_seg_name,
-                 centers_name,
-                 debug=False):
-        
-        super().__init__(directory=directory, 
-                       debug=debug)
-        
+    def __init__(
+        self,
+        directory,
+        sdata_path,
+        input_image_name,
+        nuc_seg_name,
+        cyto_seg_name,
+        centers_name,
+        debug=False,
+    ):
+        super().__init__(directory=directory, debug=debug)
+
         self.sdata_path = sdata_path
         self.input_image_name = input_image_name
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
-    
+
     def _read_sdata(self):
         if os.path.exists(self.sdata_path):
             if len(os.listdir(self.sdata_path)) == 0:
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
                 _sdata = SpatialData()
                 _sdata.write(self.sdata_path, overwrite=True)
-            else:   
+            else:
                 _sdata = SpatialData.read(self.sdata_path)
         else:
             _sdata = SpatialData()
@@ -54,18 +55,18 @@ class sdata_filehandler(Logable):
 
         for key in _sdata.labels:
             segmentation_object = _sdata.labels[key]
-            
-            if not hasattr(segmentation_object.attrs, "cell_ids"):
-                    segmentation_object = spLabels2DModel().convert(
-                        segmentation_object, classes=None
-                    )
 
-        return(_sdata)
-    
+            if not hasattr(segmentation_object.attrs, "cell_ids"):
+                segmentation_object = spLabels2DModel().convert(
+                    segmentation_object, classes=None
+                )
+
+        return _sdata
+
     def get_sdata(self) -> SpatialData:
-        return(self._read_sdata())
-    
-    def _force_delete_object(self, sdata, name:str, type:str):
+        return self._read_sdata()
+
+    def _force_delete_object(self, sdata, name: str, type: str):
         """
         Force delete an object from the sdata object and the corresponding directory.
 
@@ -78,46 +79,42 @@ class sdata_filehandler(Logable):
         """
         if name in sdata:
             del sdata[name]
-        
-        #define path 
+
+        # define path
         path = os.path.join(self.sdata_path, type, name)
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=True)
 
-    def _check_sdata_status(self, return_sdata = False):
+    def _check_sdata_status(self, return_sdata=False):
         _sdata = self._read_sdata()
-        
+
         self.input_image_status = self.input_image_name in _sdata.images
         self.nuc_seg_status = self.nuc_seg_name in _sdata.labels
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
         self.centers_status = self.centers_name in _sdata.points
 
         if return_sdata:
-            return(_sdata)
+            return _sdata
 
     def _get_input_image(self, sdata):
         if self.input_image_status:
-            if isinstance(
-                sdata.images[self.input_image_name], datatree.DataTree
-            ):
+            if isinstance(sdata.images[self.input_image_name], datatree.DataTree):
                 input_image = sdata.images[self.input_image_name]["scale0"].image
-            elif isinstance(
-                sdata.images[self.input_image_name], xarray.DataArray
-            ):
+            elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
                 input_image = sdata.images[self.input_image_name].image
         else:
             raise ValueError("Input image not found in sdata object.")
-        
-        return(input_image)
+
+        return input_image
 
     ### Write new objects to sdata ###
-    
+
     def _write_segmentation_object_sdata(
-        self, 
-        segmentation_object, 
-        segmentation_label: str, 
-        classes: set = None, 
-        overwrite: bool = False
+        self,
+        segmentation_object,
+        segmentation_label: str,
+        classes: set = None,
+        overwrite: bool = False,
     ):
         _sdata = self._read_sdata()
 
@@ -142,8 +139,8 @@ class sdata_filehandler(Logable):
         segmentation,
         segmentation_label: str,
         classes: set = None,
-        chunks: Tuple[int] =(1000, 1000),
-        overwrite: bool = False
+        chunks: Tuple[int] = (1000, 1000),
+        overwrite: bool = False,
     ):
         transform_original = Identity()
         mask = spLabels2DModel.parse(
@@ -156,15 +153,18 @@ class sdata_filehandler(Logable):
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
+        self._write_segmentation_object_sdata(
+            mask, segmentation_label, classes=classes, overwrite=overwrite
+        )
 
-    def _write_points_object_sdata(self, 
-                                   points, 
-                                   points_name: str, 
-                                   overwrite: bool = False):
-        
+    def _write_points_object_sdata(
+        self, 
+        points, 
+        points_name: str, 
+        overwrite: bool = False
+    ):
         _sdata = self._read_sdata()
-        
+
         if overwrite:
             self._force_delete_object(_sdata, points_name, "points")
 
@@ -201,12 +201,14 @@ class sdata_filehandler(Logable):
 
         return centers
 
-    def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
+    def _add_centers(self, segmentation_label: str, overwrite=False) -> None:
         _sdata = self._read_sdata()
         centroids_object = self._get_centers(_sdata, segmentation_label)
-        self._write_points_object_sdata(centroids_object, self.centers_name, overwrite = overwrite)
+        self._write_points_object_sdata(
+            centroids_object, self.centers_name, overwrite=overwrite
+        )
 
-    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str, image = None):
+    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str, image=None):
         """
         Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
         Loading happens in a chunked manner to avoid memory issues.
@@ -226,7 +228,7 @@ class sdata_filehandler(Logable):
         """
         # ensure all elements are loaded
         if image is None:
-            _sdata = self._check_sdata_status(return_sdata = True)
+            _sdata = self._check_sdata_status(return_sdata=True)
 
             if not self.input_image_status:
                 raise ValueError("Input image not found in sdata object.")
@@ -255,17 +257,21 @@ class sdata_filehandler(Logable):
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
-                        input_image_mmap[z][c] = image[z][c].compute()
+                    input_image_mmap[z][c] = image[z][c].compute()
         else:
             for c in range(C):
-                    input_image_mmap[c] = image[c].compute()
+                input_image_mmap[c] = image[c].compute()
 
         # cleanup the cache
-        del input_image_mmap, image   
+        del input_image_mmap, image
 
         return path_input_image
-    
-    def _load_seg_to_memmap(self, seg_name: List[str], tmp_dir_abs_path: str,):
+
+    def _load_seg_to_memmap(
+        self,
+        seg_name: List[str],
+        tmp_dir_abs_path: str,
+    ):
         """
         Helper function to load segmentation masks from sdata to memory mapped temp arrays for faster access.
         Loading happens in a chunked manner to avoid memory issues.
@@ -288,15 +294,14 @@ class sdata_filehandler(Logable):
         """
 
         # ensure all elements are loaded
-        _sdata = self._check_sdata_status(return_sdata = True)
+        _sdata = self._check_sdata_status(return_sdata=True)
 
         assert all(
             [seg in _sdata.labels for seg in seg_name]
         ), "Not all passed segmentation elements found in sdata object."
-        
+
         seg_objects = [_sdata.labels[seg] for seg in seg_name]
-        
-    
+
         # get the shape of the segmentation
         shapes = [seg.shape for seg in seg_objects]
 
@@ -340,9 +345,9 @@ class sdata_filehandler(Logable):
         for i, seg in enumerate(seg_objects):
             if Z is not None:
                 for z in range(Z):
-                        seg_masks[i][z] = seg.data[z].compute()
+                    seg_masks[i][z] = seg.data[z].compute()
             else:
-                    seg_masks[i] = seg.data.compute()
+                seg_masks[i] = seg.data.compute()
 
         # cleanup the cache
         del seg_masks, seg_objects, seg
