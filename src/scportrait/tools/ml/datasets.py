@@ -38,7 +38,7 @@ class _HDF5SingleCellDataset(Dataset):
             List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
             containing hdf5 files.
         index_list : list of int, or None
-            List of indices to select from the dataset. If set to None all cells are taken. Default is None.
+            List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
         select_channel : int, optional
             Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels.
             Using this operation is more efficient than if this selection occurs via a passed transform.
