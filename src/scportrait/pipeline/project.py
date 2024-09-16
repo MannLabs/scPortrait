@@ -38,6 +38,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
 )
 
+
 class Project(Logable):
     CLEAN_LOG = True
 
@@ -105,15 +106,17 @@ class Project(Logable):
             os.makedirs(self.project_location)
         else:
             warnings.warn("There is already a directory in the location path")
-        
+
         # === setup sdata reader/writer ===
-        self.filehandler = sdata_filehandler(directory=self.directory, 
-                                             sdata_path=self.sdata_path, 
-                                             input_image_name = self.DEFAULT_INPUT_IMAGE_NAME,
-                                             nuc_seg_name = self.nuc_seg_name,
-                                             cyto_seg_name = self.cyto_seg_name,
-                                             centers_name = self.DEFAULT_CENTERS_NAME,
-                                             debug=self.debug)
+        self.filehandler = sdata_filehandler(
+            directory=self.directory,
+            sdata_path=self.sdata_path,
+            input_image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+            nuc_seg_name=self.nuc_seg_name,
+            cyto_seg_name=self.cyto_seg_name,
+            centers_name=self.DEFAULT_CENTERS_NAME,
+            debug=self.debug,
+        )
         self._read_sdata()
         self._check_sdata_status()
 
@@ -128,7 +131,6 @@ class Project(Logable):
 
         # ==== setup selection ===
         self._setup_selection(selection_f)
-
 
     ##### Setup Functions #####
 
@@ -166,19 +168,17 @@ class Project(Logable):
 
         else:
             if not os.path.isfile(config_path):
-                
                 raise ValueError(
                     f"Your config path {config_path} is invalid. Please specify a valid config path."
                 )
 
             else:
-
                 print("Updating project config file.")
-                
+
                 if os.path.isfile(self.config_path):
                     os.remove(self.config_path)
 
-                #ensure that the project location exists
+                # ensure that the project location exists
                 if not os.path.isdir(self.project_location):
                     os.makedirs(self.project_location)
 
@@ -187,7 +187,6 @@ class Project(Logable):
                 self._load_config_from_file(self.config_path)
 
     def _setup_segmentation_f(self, segmentation_f):
-
         if self.segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
                 raise ValueError(
@@ -203,14 +202,14 @@ class Project(Logable):
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
                 self.seg_directory,
-                nuc_seg_name = self.nuc_seg_name,
-                cyto_seg_name = self.cyto_seg_name, 
-                _tmp_image_path = None,
+                nuc_seg_name=self.nuc_seg_name,
+                cyto_seg_name=self.cyto_seg_name,
+                _tmp_image_path=None,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=None,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def _setup_extraction_f(self, extraction_f):
@@ -233,7 +232,7 @@ class Project(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def _setup_classification_f(self, classification_f):
@@ -256,7 +255,7 @@ class Project(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def _setup_selection(self, selection_f):
@@ -279,7 +278,7 @@ class Project(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def update_classification_f(self, classification_f) -> None:
@@ -446,7 +445,7 @@ class Project(Logable):
         self._check_sdata_status()
 
     def view_sdata(self):
-        self.sdata = self.filehandler.get_sdata() # ensure its up to date
+        self.sdata = self.filehandler.get_sdata()  # ensure its up to date
 
         # open interactive viewer in napari
         interactive = Interactive(self.sdata)
@@ -469,7 +468,7 @@ class Project(Logable):
     #     self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
 
     #### Functions for adding elements to sdata object ########
-    def _force_delete_object(self, name:str, type:str):
+    def _force_delete_object(self, name: str, type: str):
         """
         Force delete an object from the sdata object and the corresponding directory.
 
@@ -482,8 +481,8 @@ class Project(Logable):
         """
         if name in self.sdata:
             del self.sdata[name]
-        
-        #define path 
+
+        # define path
         path = os.path.join(self.sdata_path, type, name)
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=True)
@@ -495,7 +494,7 @@ class Project(Logable):
         channel_names=None,
         scale_factors=[2, 4, 8],
         chunks=(1, 1000, 1000),
-        overwrite = False
+        overwrite=False,
     ):
         """
         Write the supplied image to the spatialdata object.
@@ -538,44 +537,6 @@ class Project(Logable):
 
         # track that input image has been loaded
         self.input_image_status = True
-
-    # def _write_segmentation_object_sdata(
-    #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
-    # ):
-    #     # ensure that the segmentation object is converted to the scPortrait Labels2DModel
-    #     if not hasattr(segmentation_object.attrs, "cell_ids"):
-    #         segmentation_object = spLabels2DModel().convert(
-    #             segmentation_object, classes=classes
-    #         )
-
-    #     if overwrite:
-    #         self._force_delete_object(segmentation_label, "labels")
-
-    #     self.sdata.labels[segmentation_label] = segmentation_object
-    #     self.sdata.write_element(segmentation_label, overwrite=True)
-
-    #     self.log(f"Segmentation {segmentation_label} written to sdata object.")
-
-    # def _write_segmentation_sdata(
-    #     self,
-    #     segmentation,
-    #     segmentation_label: str,
-    #     classes: set = None,
-    #     chunks=(1000, 1000),
-    #     overwrite = False
-    # ):
-    #     transform_original = Identity()
-    #     mask = spLabels2DModel.parse(
-    #         segmentation,
-    #         dims=["y", "x"],
-    #         transformations={"global": transform_original},
-    #         chunks=chunks,
-    #     )
-
-    #     if not get_chunk_size(mask) == chunks:
-    #         mask.data = mask.data.rechunk(chunks)
-
-    #     self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
 
     #### Functions for getting elements from sdata object #####
 
@@ -654,9 +615,9 @@ class Project(Logable):
         for i, seg in enumerate(seg_objects):
             if Z is not None:
                 for z in range(Z):
-                        seg_masks[i][z] = seg.data[z].compute()
+                    seg_masks[i][z] = seg.data[z].compute()
             else:
-                    seg_masks[i] = seg.data.compute()
+                seg_masks[i] = seg.data.compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[seg_objects, seg_masks, seg])
@@ -711,10 +672,10 @@ class Project(Logable):
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
-                        input_image[z][c] = self.input_image[z][c].compute()
+                    input_image[z][c] = self.input_image[z][c].compute()
         else:
             for c in range(C):
-                    input_image[c] = self.input_image[c].compute()
+                input_image[c] = self.input_image[c].compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[input_image])
@@ -905,8 +866,8 @@ class Project(Logable):
         self._clear_cache(vars_to_delete=[temp_image_path, im, channels])
         self._clear_temp_dir()
 
-        #strange workaround that is required so that the sdata input image does not point to the dask array anymore but
-        #to the image which was written to disk
+        # strange workaround that is required so that the sdata input image does not point to the dask array anymore but
+        # to the image which was written to disk
         self._check_sdata_status()
 
     def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
@@ -1094,20 +1055,21 @@ class Project(Logable):
         original_overwrite = self.segmentation_f.overwrite
         if overwrite is not None:
             self.segmentation_f.overwrite = overwrite
-        
+
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
+                raise ValueError(
+                    "Segmentation already exists. Set overwrite=True to overwrite."
+                )
 
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
-        
+
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-        self.sdata = self.filehandler.get_sdata() #update
+        self.sdata = self.filehandler.get_sdata()  # update
 
     def complete_segmentation(self, overwrite: Union[bool, None] = None):
-        
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
@@ -1121,17 +1083,19 @@ class Project(Logable):
         original_overwrite = self.segmentation_f.overwrite
         if overwrite is not None:
             self.segmentation_f.overwrite = overwrite
-        
+
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
+                raise ValueError(
+                    "Segmentation already exists. Set overwrite=True to overwrite."
+                )
 
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
-        
+
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-   
+
     def extract(self, partial=False, n_cells=None, overwrite: Union[bool, None] = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
