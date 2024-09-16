@@ -43,7 +43,7 @@ class Project(Logable):
 
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
-    DEFAULT_SDATA_FILE = "sparcs.sdata"
+    DEFAULT_SDATA_FILE = "scportrait.sdata"
 
     DEFAULT_PREFIX_MAIN_SEG = "seg_all"
     DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
