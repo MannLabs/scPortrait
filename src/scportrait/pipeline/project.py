@@ -451,22 +451,6 @@ class Project(Logable):
         interactive = Interactive(self.sdata)
         interactive.run()
 
-    #### Functions for operations on sdata object #####
-
-    # def _get_centers(self, segmentation_label: str) -> PointsModel:
-    #     if segmentation_label not in self.sdata.labels:
-    #         raise ValueError(
-    #             f"Segmentation {segmentation_label} not found in sdata object."
-    #         )
-
-    #     centers = calculate_centroids(self.sdata.labels[segmentation_label])
-
-    #     return centers
-
-    # def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
-    #     centroids_object = self._get_centers(segmentation_label)
-    #     self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
-
     #### Functions for adding elements to sdata object ########
     def _force_delete_object(self, name: str, type: str):
         """
