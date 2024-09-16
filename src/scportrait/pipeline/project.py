@@ -577,16 +577,6 @@ class Project(Logable):
 
     #     self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
 
-    def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
-        
-        if overwrite:
-            self._force_delete_object(table_name, "tables")
-
-        self.sdata.tables[table_name] = table
-        self.sdata.write_element(table_name, overwrite=False)
-
-        self.log(f"Table {table_name} written to sdata object.")
-
     #### Functions for getting elements from sdata object #####
 
     def _load_seg_to_memmap(self, seg_name: List[str], tmp_dir_abs_path: str):
