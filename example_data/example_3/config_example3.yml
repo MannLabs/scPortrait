@@ -16,9 +16,9 @@ WGASegmentation:
         median_step: 4
         threshold: 0.2 # threshold above local median for nuclear segmentation
         speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-        peak_footprint: 7 # 
+        peak_footprint: 7 #
         min_distance: 8 # minimum distance between two nucleis in pixel
-        dilation: 0 # final dilation of pixel mask       
+        dilation: 0 # final dilation of pixel mask
         min_size: 200 # minimum nucleus area in pixel
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
@@ -48,9 +48,9 @@ DAPISegmentation:
         median_step: 4
         threshold: 0.2 # threshold above local median for nuclear segmentation
         min_distance: 8 # minimum distance between two nucleis in pixel
-        peak_footprint: 7 # 
+        peak_footprint: 7 #
         speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-        dilation: 0 # final dilation of pixel mask       
+        dilation: 0 # final dilation of pixel mask
         min_size: 200 # minimum nucleus area in pixel
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
@@ -98,6 +98,6 @@ HDF5CellExtraction:
     image_size: 128 # image size in pixel
     normalization_range: None #turn of percentile normalization for cells -> otherwise normalise out differences for the alexa647 channel
     cache: "."
-    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 50000

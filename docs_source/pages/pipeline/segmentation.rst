@@ -22,7 +22,7 @@ Segmentation is an essential step in the scPortrait workflow. The goal of segmen
 
 To ensure overall flexibility, scPortrait seperates the segmentation code framework (i.e. loading input data, calling a segmentation method or saving results) from the actual segmentation algorithm (i.e. how the segmentation mask is calculated for a given input).
 
-The segmentation code framework is implemented through so called segmentation classes. Each class is optimized for a given input data format and level of parallelization. The segmentation algorithms themselves are implemented by so called segmentation workflows. Each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation). 
+The segmentation code framework is implemented through so called segmentation classes. Each class is optimized for a given input data format and level of parallelization. The segmentation algorithms themselves are implemented by so called segmentation workflows. Each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation).
 
 Using class inheritance each segmentation workflow inherits from a segmentation class to provide the segmentation code framework, but updates the segmentation generation method with the desired algorithm. This way you can easily exchange one segmentation algorithm for another while retaining the rest of the code framework.
 
@@ -51,11 +51,11 @@ Using a shardings approach has two main advantages:
     1. the possibility to segment images larger than the available memory the segmentation of images
     2. the parallelized segmentation of shards over mutiple threads to better utilize the available hardware
 
-To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (``shard_size``). scPortrait then dynamically calculates a so-called `sharding plan` which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (``overlap_px``) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented. 
+To determine how many shards should be generated, the user specifies the maximum number of pixels that can be allocated to one shard via the configuration file (``shard_size``). scPortrait then dynamically calculates a so-called `sharding plan` which splits the input image into the minimum number of equally sized shards. If desired, the user can also specify a pixel overlap (``overlap_px``) which determines how far the shards should overlap. This can be useful to ensure that cells which are located on the border between two shards are still fully segmented.
 
 The :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class then segments each of the calculated shards individually using the designated number of parallel processes (``threads``). The intermediate segmentation results from each shard are saved to disk  before proceeding with the next shard. This ensures that memory usage during the segmentation process is kept to a minimum as only the required data to calculate the current shard segmentation are retained in memory.
 
-After segmentation of each individual shard is completed, the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the ``cell ids`` are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted. 
+After segmentation of each individual shard is completed, the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class merges the individual segmentation masks back together to generate a final segmentation mask which extends over the complete input image. During this process the ``cell ids`` are adjusted on each shard so that they remain unique throughout the final segmentation mask. After this process is completed the final segmentation mask is saved to disk and all intermediate results are deleted.
 
 Configuration parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -69,7 +69,7 @@ The following parameters for a sharded segmentation need to be specified in the 
         overlap_px: 0 # number of pixels by which the shards should overlap
         threads: 2 # number of threads to be used for parallelized segmentation of shards
         ... additional workflow specific parameters...
-    
+
 
 3. TimecourseSegmentation
 +++++++++++++++++++++++++
@@ -91,7 +91,7 @@ The following parameters for a multithreaded segmentation need to be specified i
     MultithreadedSegmentationWorkflow:
         threads: 2 # number of threads to be used for parallelized segmentation of shards
         ... additional workflow specific parameters...
-    
+
 Segmentation Workflows
 ----------------------
 Within scPortrait a segmentation workflow refers to a specific segmentation algorithm that can be called by one of the segmentation classes described above. Currently the following segmentation workflows are available for each of the different segmentation classes. They are explained in more detail below:
@@ -108,7 +108,7 @@ If none of these segmentation approaches suit your particular needs you can easi
 WGA segmentation
 ++++++++++++++++
 
-This segmentation workflow aims to segment mononucleated cells, i.e. cells that contain exactly one nucleus. Based on a nuclear stain and a cellmembrane stain, it first uses a thresholding approach to identify nuclei which are assumed to be the center of each cell. Then in a second step, the center of the identified nuclei are used as a starting point to generate a potential map using the cytosolic stain. This potential map is then used to segment the cytosol using a watershed approach. At the end of the workflow the user obtains both a nuclear and a cytosolic segmentation mask where each cytosol is matched to exactly one nucleus as kann be identified by the matching ``cell id``. 
+This segmentation workflow aims to segment mononucleated cells, i.e. cells that contain exactly one nucleus. Based on a nuclear stain and a cellmembrane stain, it first uses a thresholding approach to identify nuclei which are assumed to be the center of each cell. Then in a second step, the center of the identified nuclei are used as a starting point to generate a potential map using the cytosolic stain. This potential map is then used to segment the cytosol using a watershed approach. At the end of the workflow the user obtains both a nuclear and a cytosolic segmentation mask where each cytosol is matched to exactly one nucleus as kann be identified by the matching ``cell id``.
 
 This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class or the :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.
 
@@ -128,9 +128,9 @@ This segmentation workflow is implemented to only run on the CPU. As such it can
             median_step: 4
             threshold: 0.2 # threshold above which nucleus is detected, if not specified a global threshold is calcualted using otsu
             min_distance: 8 # minimum distance between two nucleis in pixel
-            peak_footprint: 7 # 
+            peak_footprint: 7 #
             speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-            dilation: 0 # final dilation of pixel mask       
+            dilation: 0 # final dilation of pixel mask
             min_size: 200 # minimum nucleus area in pixel
             max_size: 5000 # maximum nucleus area in pixel
             contact_filter: 0.5 # minimum nucleus contact with background
@@ -187,9 +187,9 @@ This segmentation workflow aims to only segment nuclei. Based on a nuclear stain
             median_step: 4
             threshold: 0.2 # threshold above which nucleus is detected, if not specified a global threshold is calcualted using otsu
             min_distance: 8 # minimum distance between two nucleis in pixel
-            peak_footprint: 7 # 
+            peak_footprint: 7 #
             speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-            dilation: 0 # final dilation of pixel mask       
+            dilation: 0 # final dilation of pixel mask
             min_size: 200 # minimum nucleus area in pixel
             max_size: 5000 # maximum nucleus area in pixel
             contact_filter: 0.5 # minimum nucleus contact with background
@@ -207,13 +207,13 @@ Nucleus Segmentation Algorithm
 Cytosol Cellpose segmentation
 +++++++++++++++++++++++++++++
 
-This segmentation workflow is built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_ . Cellpose is a deep neural network with a U-net style architecture that was trained on large datasets of microscopy images of cells. It provides very accurate out of the box segmentation models for both nuclei and cytosols but also allows you to fine-tune models using your own data. 
+This segmentation workflow is built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_ . Cellpose is a deep neural network with a U-net style architecture that was trained on large datasets of microscopy images of cells. It provides very accurate out of the box segmentation models for both nuclei and cytosols but also allows you to fine-tune models using your own data.
 
 The scPortrait implementation of the cellpose segmenation algorithm allows you to perform both a nuclear and cytosolic segmentation and align the ``cellids`` between the two resulting masks. This means that the nucleus and the cytosol belonging to the same cell have the same ``cellids``. Furthermore, it performs some filtering steps to remove the masks from multi-nucleated cells or those with only a nuclear or cytosolic mask. This ensures that only cells which show a normal physiology are retained for further analysis.
 
-While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance. 
+While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance.
 
-If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_. 
+If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
 
 ..  code-block:: yaml
     :caption: Example configuration for  Sharded Cytosol Cellpose Segmentation
@@ -248,7 +248,7 @@ This segmentation workflow is also built around the cellular segmentation algori
 
 As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU.
 
-If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_. 
+If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
 
 ..  code-block:: yaml
     :caption: Example configuration for  DAPI Cellpose segmentation

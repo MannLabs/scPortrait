@@ -7,18 +7,18 @@ scPortrait workflow
 .. image:: ../images/scPortrait_workflow_steps.png
    :width: 100%
    :align: center
-   :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection 
+   :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection
 
 The scPortrait workflow consists of up to 5 steps:
 
   1. :ref:`Stitching <quickstart_stitching>`: Stitching of input images to create a single whole-slide image. This step is optional and depends on the type of data that is to be processed.
 
   2. :ref:`Segmentation <quickstart_segmentation>`: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
-  
+
   3. :ref:`Extraction <quickstart_extraction>`: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
-  
+
   4. :ref:`Featurization <quickstart_featurization>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
-  
+
   5. :ref:`Selection <quickstart_selection>`: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
 
 The results from each processing step are saved to file and logs generated in seperate subfolders in the main project directory. For each processing step, different methods can be chosen and their parameters specified via the ``config.yml`` file.
@@ -28,7 +28,7 @@ The results from each processing step are saved to file and logs generated in se
 Stitching
 =========
 
-During stitching, individual fields-of-view are registered and combined into a single whole-slide image. Using parallel processing and out-of-memory computation scPortrait can efficiently align and assemble large 
+During stitching, individual fields-of-view are registered and combined into a single whole-slide image. Using parallel processing and out-of-memory computation scPortrait can efficiently align and assemble large
 datasets that exceed the memory capacities of a single machine. The stitching process is optional and can be skipped if the input images are already in the form of a single whole-slide image or individual images need to be processed.
 
 .. _quickstart_segmentation:
@@ -53,7 +53,7 @@ The cell segmentation process in scPortrait is split into two parts: **nuclear s
 | |pic1|                | |pic2|                | |pic3|                |
 +-----------------------+-----------------------+-----------------------+
 
-During the segmentation process, a mask is generated which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``. 
+During the segmentation process, a mask is generated which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``.
 
 If we zoomed in on the corner of the segmentation mask of a nucleus, the segmentation mask (a numpy array) would look like this:
 

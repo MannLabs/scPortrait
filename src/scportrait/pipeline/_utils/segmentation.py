@@ -1,23 +1,21 @@
-import numpy as np
-from scipy import ndimage
 import matplotlib.pyplot as plt
-
 import numba as nb
-from numba import njit
-from numba import prange
-
-from skimage.transform import resize
-from skimage.color import label2rgb
-from skimage import filters
-from skimage.feature import peak_local_max
-from skimage.segmentation import watershed
-from skimage.morphology import dilation as sk_dilation
-from skimage.morphology import binary_erosion, disk
+import numpy as np
 import skfmm
+from numba import njit, prange
+from scipy import ndimage
+from skimage import filters
+from skimage.color import label2rgb
+from skimage.feature import peak_local_max
+from skimage.morphology import binary_erosion, disk
+from skimage.morphology import dilation as sk_dilation
+from skimage.segmentation import watershed
+from skimage.transform import resize
 
 from scportrait.plotting.vis import plot_image
 
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
 
 #### Thresholding Functions to binarize input images
 def global_otsu(image):
@@ -121,20 +119,14 @@ def _segment_threshold(
     image_mask_clean = binary_erosion(image_mask, footprint=disk(speckle_kernel))
     image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel - 1))
 
-    return(image_mask_clean)
+    return image_mask_clean
 
-def _generate_labels_from_mask(image_mask, 
-                               dilation=4,
-                               min_distance=10,
-                               peak_footprint=7,
-                               debug = False):
-    
+
+def _generate_labels_from_mask(image_mask, dilation=4, min_distance=10, peak_footprint=7, debug=False):
     # Find peaks in the image mask using a distance transform
     distance = ndimage.distance_transform_edt(image_mask)
 
-    peak_idx = peak_local_max(
-        distance, min_distance=min_distance, footprint=disk(peak_footprint)
-    )
+    peak_idx = peak_local_max(distance, min_distance=min_distance, footprint=disk(peak_footprint))
     local_maxi = np.zeros_like(
         image_mask, dtype=bool
     )  # Initialize an array of zeros with the same shape as image_mask_clean
@@ -142,12 +134,12 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is set to True, plot the local maxima on the binary mask
     if debug:
-        fig = plt.figure(frameon=False, figsize = (10,10))
+        fig = plt.figure(frameon=False, figsize=(10, 10))
         fig.set_size_inches(10, 10)
         plt.imshow(image_mask, cmap="Greys_r")
         plt.title("Generated Mask")
         plt.axis("off")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s=2, color="red")
         plt.show()
 
     # segmentation by fast marching and watershed
@@ -162,10 +154,10 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is True, plot the calculated distance_2
     if debug:
-        fig = plt.figure(frameon=False, figsize = (10,10))
+        fig = plt.figure(frameon=False, figsize=(10, 10))
         plt.title("Distance Transform")
         plt.imshow(distance_2, cmap="viridis")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s=2, color="red")
         plt.axis("off")
         plt.show()
 
@@ -179,9 +171,8 @@ def _generate_labels_from_mask(image_mask,
 
     return labels
 
-def segment_global_threshold(
-    image, dilation=4, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False
-):
+
+def segment_global_threshold(image, dilation=4, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False):
     """
     Segments an image based on a global threshold determined using Otsu's method, followed by peak detection using
     distance transforms and watershed segmentation.
@@ -212,8 +203,10 @@ def segment_global_threshold(
     >>> from skimage import data
     >>> from segment import segment_global_threshold
     >>> coins = data.coins()
-    >>> labels = segment_global_threshold(coins, dilation=5, min_distance=20, peak_footprint=7, speckle_kernel=3, debug=True)
-    >>> plt.imshow(labels, cmap='jet')
+    >>> labels = segment_global_threshold(
+    ...     coins, dilation=5, min_distance=20, peak_footprint=7, speckle_kernel=3, debug=True
+    ... )
+    >>> plt.imshow(labels, cmap="jet")
     >>> plt.colorbar()
     >>> plt.show()
     """
@@ -224,16 +217,13 @@ def segment_global_threshold(
     mask = _segment_threshold(
         image,
         threshold,
-
         speckle_kernel=speckle_kernel,
         debug=debug,
     )
 
-    labels = _generate_labels_from_mask(mask, 
-                                        dilation=dilation, 
-                                        min_distance=min_distance, 
-                                        peak_footprint=peak_footprint, 
-                                        debug=debug)
+    labels = _generate_labels_from_mask(
+        mask, dilation=dilation, min_distance=min_distance, peak_footprint=peak_footprint, debug=debug
+    )
 
     # returnt the segmented image
     return labels
@@ -287,8 +277,17 @@ def segment_local_threshold(
     >>> import matplotlib.pyplot as plt
     >>> from skimage import data
     >>> image = data.coins()
-    >>> labels = segment_local_threshold(image, dilation=4, thr=0.01, median_block=51, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False)
-    >>> plt.imshow(labels, cmap='jet')
+    >>> labels = segment_local_threshold(
+    ...     image,
+    ...     dilation=4,
+    ...     thr=0.01,
+    ...     median_block=51,
+    ...     min_distance=10,
+    ...     peak_footprint=7,
+    ...     speckle_kernel=4,
+    ...     debug=False,
+    ... )
+    >>> plt.imshow(labels, cmap="jet")
     >>> plt.colorbar()
     >>> plt.show()
     """
@@ -300,9 +299,7 @@ def segment_local_threshold(
     downsampled_image = image[::median_step, ::median_step]
 
     # Calculate the local threshold using median filtering
-    local_threshold = filters.threshold_local(
-        downsampled_image, block_size=median_block, method="median", offset=-thr
-    )
+    local_threshold = filters.threshold_local(downsampled_image, block_size=median_block, method="median", offset=-thr)
 
     # Resize the local threshold image to match the original input image
     local_threshold = resize(local_threshold, image.shape)
@@ -315,11 +312,9 @@ def segment_local_threshold(
         debug=debug,
     )
 
-    labels = _generate_labels_from_mask(mask,
-                                        dilation=dilation,
-                                        min_distance=min_distance,
-                                        peak_footprint=peak_footprint,
-                                        debug=debug)
+    labels = _generate_labels_from_mask(
+        mask, dilation=dilation, min_distance=min_distance, peak_footprint=peak_footprint, debug=debug
+    )
 
     return labels
 
@@ -376,12 +371,13 @@ def _return_edge_labels_2d(input_map):
         .union(set(bottom_row.flatten()))
         .union(set(first_column.flatten()))
         .union(set(last_column.flatten()))
-        )
-    
+    )
+
     full_union = set([np.uint64(i) for i in full_union])
     full_union.discard(0)
 
-    return(list(full_union))
+    return list(full_union)
+
 
 def _return_edge_labels(input_map):
     """
@@ -407,8 +403,9 @@ def _return_edge_labels(input_map):
 
     elif len(input_map.shape) == 2:
         full_union = _return_edge_labels_2d(input_map)
-    
+
     return list(full_union)
+
 
 def remove_edge_labels(input_map):
     """
@@ -417,15 +414,14 @@ def remove_edge_labels(input_map):
     ----------
     input_map : np.ndarray
         Input segmentation as a 2D or 3D numpy array of integers.
- """
-    
+    """
+
     edge_labels = _return_edge_labels(input_map)
     cleaned_map = np.where(np.isin(input_map, edge_labels), 0, input_map)
-    return(cleaned_map)
+    return cleaned_map
 
-def shift_labels(
-    input_map, shift, return_shifted_labels=False, remove_edge_labels=True
-):
+
+def shift_labels(input_map, shift, return_shifted_labels=False, remove_edge_labels=True):
     """
 
     Shift the labels of a given labeled map (2D or 3D numpy array) by a specific value.
@@ -453,9 +449,7 @@ def shift_labels(
     Example
     -------
     >>> import numpy as np
-    >>> input_map = np.array([[1, 0, 0],
-    ...                       [0, 2, 0],
-    ...                       [0, 0, 3]])
+    >>> input_map = np.array([[1, 0, 0], [0, 2, 0], [0, 0, 3]])
     >>> shift = 10
     >>> shifted_map, edge_labels = shift_labels(input_map, shift)
     >>> print(shifted_map)
@@ -611,9 +605,7 @@ def contact_filter_lambda(label, background=0):
     Example
     -------
     >>> import numpy as np
-    >>> label = np.array([[0, 1, 1],
-    ...                   [0, 2, 1],
-    ...                   [0, 0, 2]])
+    >>> label = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     >>> contact_filter_lambda(label)
     array([1.        , 1.,  0.6 ])
 
@@ -672,9 +664,7 @@ def contact_filter(inarr, threshold=1, reindex=False, background=0):
     Example
     -------
     >>> import numpy as np
-    >>> inarr = np.array([[0, 1, 1],
-    ...                   [0, 2, 1],
-    ...                   [0, 0, 2]])
+    >>> inarr = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     >>> contact_filter(inarr, threshold=0.5)
     array([[0, 1, 1],
            [0, 0, 1],
@@ -731,9 +721,7 @@ def _class_size(mask, debug=False, background=0):
     Example
     -------
     >>> import numpy as np
-    >>> mask = np.array([[0, 1, 1],
-    ...                  [0, 2, 1],
-    ...                  [0, 0, 2]])
+    >>> mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     >>> _class_size(mask)
     (array([[       nan,        nan],
             [0.33333333, 1.66666667],
@@ -780,9 +768,7 @@ def _class_size(mask, debug=False, background=0):
                 mean_sum[return_id] += np.array(
                     [row, col], dtype=np.uint32
                 )  # Add the coordinates to the corresponding class ID in mean_sum
-                length[return_id][0] += (
-                    1  # Increment the number of pixels for the corresponding class ID in length
-                )
+                length[return_id][0] += 1  # Increment the number of pixels for the corresponding class ID in length
 
     # Divide the mean_sum array by the length array to get the mean_arr
     mean_arr = np.divide(mean_sum, length)
@@ -822,9 +808,7 @@ def size_filter(label, limits=[0, 100000], background=0, reindex=False):
     Example
     -------
     >>> import numpy as np
-    >>> label = np.array([[0, 1, 1],
-    ...                   [0, 2, 1],
-    ...                   [0, 0, 2]])
+    >>> label = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     >>> size_filter(label, limits=[1, 2])
     array([[0, 0, 0],
            [0, 2, 0],
@@ -893,7 +877,9 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     # Get the unique cell_ids and remove the background (0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: #this more cumbersone way of removing the background is necessary for masks that dont have any background
+    if (
+        0 in cell_ids
+    ):  # this more cumbersone way of removing the background is necessary for masks that dont have any background
         cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
 
@@ -901,7 +887,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     if min_cell_id == 0:
         print("no cells in image. Only contains background with value 0.")
-        
+
         # return empty arrays
         return None, None, None
 
@@ -909,13 +895,18 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
         num_classes = np.max(mask)
     else:
         num_classes = np.max(mask) + 1
-    
-    #explicit conversion to int to ensure that numba can type the function correctly
-    num_classes = int(num_classes)  
 
-    #initialize empty arrays for storing the results
+    # explicit conversion to int to ensure that numba can type the function correctly
+    num_classes = int(num_classes)
+
+    # initialize empty arrays for storing the results
     points_class = np.zeros((num_classes,), dtype=nb.uint32)
-    center = np.zeros((num_classes, 2,))
+    center = np.zeros(
+        (
+            num_classes,
+            2,
+        )
+    )
     ids = np.full((num_classes,), np.nan)
 
     if skip_background:
@@ -923,7 +914,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
                 if class_id != 0:
-                    #index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
+                    # index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
                     points_class[class_id - 1] += 1
                     center[class_id - 1] += np.array([x, y])
                     ids[class_id - 1] = class_id
