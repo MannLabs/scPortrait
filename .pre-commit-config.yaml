@@ -1,0 +1,50 @@
+fail_fast: false
+default_language_version:
+  python: python3
+default_stages:
+  - commit
+  - push
+minimum_pre_commit_version: 2.16.0
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        exclude: |
+          (?x)(
+              docs/|
+              docs_source/|
+              example_data/
+          )
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.7
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --unsafe-fixes]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: detect-private-key
+      - id: check-ast
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+      - id: check-case-conflict
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        args: [--no-strict-optional, --ignore-missing-imports]
+        additional_dependencies:
+          ["types-requests", "types-attrs", "types-PyYAML"]
+  - repo: local
+    hooks:
+      - id: forbid-to-commit
+        name: Don't commit rej files
+        entry: |
+          Cannot commit .rej files. These indicate merge conflicts that arise during automated template updates.
+          Fix the merge conflicts manually and remove the .rej files.
+        language: fail
+        files: '.*\.rej$'

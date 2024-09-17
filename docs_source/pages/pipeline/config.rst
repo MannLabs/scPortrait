@@ -1,9 +1,9 @@
 .. _config:
 
-Config Files 
+Config Files
 ============
 
-The configuration file is a ``.yml`` file which specifies all of the parameters for each of the methods chosen in a specific scPortrait Project run. 
+The configuration file is a ``.yml`` file which specifies all of the parameters for each of the methods chosen in a specific scPortrait Project run.
 
 .. code:: yaml
     :caption: Example Configuration File
@@ -36,7 +36,7 @@ The configuration file is a ``.yml`` file which specifies all of the parameters 
         image_size: 400 # image size in pixel
         normalization_range: None #turn of percentile normalization for cells -> otherwise normalise out differences for the alexa647 channel
         cache: "."
-        hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
+        hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
         hdf5_rdcc_w0: 1
         hdf5_rdcc_nslots: 50000
     CellFeaturizer:

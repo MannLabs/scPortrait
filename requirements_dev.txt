@@ -45,4 +45,6 @@ sphinx-rtd-theme==2.0.0
 nbsphinx
 renku-sphinx-theme
 #for testing
-pytest 
+pytest
+# development
+pre-commit

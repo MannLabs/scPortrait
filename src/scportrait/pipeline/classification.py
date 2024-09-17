@@ -1,24 +1,22 @@
-import os
-from typing import Union, List
 import io
+import os
+import platform
+import shutil
 from contextlib import redirect_stdout
 from functools import partial as func_partial
-import shutil
-import platform
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
-
+import pytorch_lightning as pl
+import torch
 from anndata import AnnData
 from spatialdata.models import TableModel
-
-import torch
-import pytorch_lightning as pl
 from torchvision import transforms
 
+from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import HDF5SingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
-from scportrait.pipeline._base import ProcessingStep
 
 
 class _ClassificationBase(ProcessingStep):
@@ -62,28 +60,18 @@ class _ClassificationBase(ProcessingStep):
 
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
-            self.log(
-                f"Created new directory for classification results: {self.run_path}"
-            )
+            self.log(f"Created new directory for classification results: {self.run_path}")
         else:
             if self.overwrite:
-                self.log(
-                    "Overwrite flag is set, deleting existing directory for classification results."
-                )
+                self.log("Overwrite flag is set, deleting existing directory for classification results.")
                 shutil.rmtree(self.run_path)
                 os.makedirs(self.run_path)
-                self.log(
-                    f"Created new directory for classification results: {self.run_path}"
-                )
+                self.log(f"Created new directory for classification results: {self.run_path}")
             elif self.overwrite_run_path:
-                self.log(
-                    "Overwrite flag is set, deleting existing directory for classification results."
-                )
+                self.log("Overwrite flag is set, deleting existing directory for classification results.")
                 shutil.rmtree(self.run_path)
                 os.makedirs(self.run_path)
-                self.log(
-                    f"Created new directory for classification results: {self.run_path}"
-                )
+                self.log(f"Created new directory for classification results: {self.run_path}")
             else:
                 raise ValueError(
                     f"Directory for classification results already exists at {self.run_path}. Please set the overwrite flag to True if you wish to overwrite the existing directory."
@@ -136,9 +124,7 @@ class _ClassificationBase(ProcessingStep):
                         )
                         self.inference_device = "cpu"
                 else:
-                    self.inference_device = torch.device(
-                        "cuda"
-                    )  # ensure that the complete device is always specified
+                    self.inference_device = torch.device("cuda")  # ensure that the complete device is always specified
 
             elif self.inference_device in ("mps", torch.device("mps")):
                 if not torch.backends.mps.is_available():
@@ -153,15 +139,11 @@ class _ClassificationBase(ProcessingStep):
                         )
                         self.inference_device = "cpu"
                 else:
-                    self.inference_device = torch.device(
-                        "mps"
-                    )  # ensure that the complete device is always specified
+                    self.inference_device = torch.device("mps")  # ensure that the complete device is always specified
 
             elif self.inference_device in ("automatic", "auto"):
                 self.inference_device = self._detect_automatic_inference_device()
-                self.log(
-                    f"Automatically configured inference device to {self.inference_device}"
-                )
+                self.log(f"Automatically configured inference device to {self.inference_device}")
 
             elif self.inference_device == "cpu":
                 if torch.backends.mps.is_available():
@@ -179,9 +161,7 @@ class _ClassificationBase(ProcessingStep):
 
         else:
             self.inference_device = self._detect_automatic_inference_device()
-            self.log(
-                f"Automatically configured inferece device to {self.inference_device}"
-            )
+            self.log(f"Automatically configured inferece device to {self.inference_device}")
 
     def _general_setup(self):
         """Helper function to execute all setup functions that are common to all classification steps."""
@@ -237,14 +217,9 @@ class _ClassificationBase(ProcessingStep):
                 memory_usage = []
 
                 for i in range(torch.cuda.device_count()):
-                    gpu_memory = (
-                        torch.cuda.memory_reserved(i) / 1024**2
-                    )  # Convert bytes to MiB
+                    gpu_memory = torch.cuda.memory_reserved(i) / 1024**2  # Convert bytes to MiB
                     memory_usage.append(gpu_memory)
-                results = {
-                    f"GPU_{i}": f"{memory_usage[i]} MiB"
-                    for i in range(len(memory_usage))
-                }
+                results = {f"GPU_{i}": f"{memory_usage[i]} MiB" for i in range(len(memory_usage))}
                 return results
             except Exception as e:
                 print("Error:", e)
@@ -252,10 +227,7 @@ class _ClassificationBase(ProcessingStep):
 
         elif self.inference_device == torch.device("mps"):
             try:
-                used_memory = (
-                    torch.mps.driver_allocated_memory()
-                    + torch.mps.driver_allocated_memory()
-                )
+                used_memory = torch.mps.driver_allocated_memory() + torch.mps.driver_allocated_memory()
                 used_memory = used_memory / 1024**2  # Convert bytes to MiB
                 return {"MPS": f"{memory_usage} MiB"}
             except Exception as e:
@@ -365,9 +337,7 @@ class _ClassificationBase(ProcessingStep):
         """
 
         if self.model_class is None:
-            raise ValueError(
-                "Model class not defined. Please define a model class before loading a model."
-            )
+            raise ValueError("Model class not defined. Please define a model class before loading a model.")
 
         self.log(f"Loading model from checkpoint path: {ckpt_path}")
 
@@ -381,9 +351,7 @@ class _ClassificationBase(ProcessingStep):
             hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yml")
 
             if not os.path.isfile(hparams_path):
-                hparams_path = ckpt_path.replace(
-                    os.path.basename(ckpt_path), "hparams.yaml"
-                )
+                hparams_path = ckpt_path.replace(os.path.basename(ckpt_path), "hparams.yaml")
 
                 if not os.path.isfile(hparams_path):
                     raise ValueError(
@@ -411,9 +379,7 @@ class _ClassificationBase(ProcessingStep):
         model.to(self.inference_device)
 
         if self.debug:
-            self.log(
-                f"model loaded, set to eval mode and transferred to device {self.inference_device}"
-            )
+            self.log(f"model loaded, set to eval mode and transferred to device {self.inference_device}")
 
         return model
 
@@ -467,9 +433,7 @@ class _ClassificationBase(ProcessingStep):
         t = self.transforms
 
         if self.expected_imagesize is not None:
-            self.log(
-                f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size."
-            )
+            self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
         f = io.StringIO()
@@ -491,28 +455,20 @@ class _ClassificationBase(ProcessingStep):
             if size < len(dataset):
                 residual_size = len(dataset) - size
                 if seed is not None:
-                    self.log(
-                        f"Using a seeded generator with seed {seed} to split dataset"
-                    )
+                    self.log(f"Using a seeded generator with seed {seed} to split dataset")
                     gen = torch.Generator()
                     gen.manual_seed(seed)
-                    dataset, _ = torch.utils.data.random_split(
-                        dataset, [size, residual_size], generator=gen
-                    )
+                    dataset, _ = torch.utils.data.random_split(dataset, [size, residual_size], generator=gen)
                 else:
                     self.log("Using a random generator to split dataset.")
-                    dataset, _ = torch.utils.data.random_split(
-                        dataset, [size, residual_size]
-                    )
+                    dataset, _ = torch.utils.data.random_split(dataset, [size, residual_size])
             # randomly select n elements from the dataset to process
             dataset = torch.utils.data.Subset(dataset, range(size))
 
         # check operating system
         if platform.system() == "Windows":
             context = "spawn"
-            num_workers = (
-                0  # need to disable multiprocessing otherwise it will throw an error
-            )
+            num_workers = 0  # need to disable multiprocessing otherwise it will throw an error
         elif platform.system() == "Darwin":
             context = "fork"
             num_workers = self.num_workers
@@ -617,9 +573,7 @@ class _ClassificationBase(ProcessingStep):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(
-                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
-            )
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
@@ -641,9 +595,7 @@ class _ClassificationBase(ProcessingStep):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(
-                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
-            )
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
@@ -768,9 +720,7 @@ class MLClusterClassifier(_ClassificationBase):
                 # then we assume this is a directory containing multiple checkpoints and we want to load a specific one based on the model_loading_strategy
 
                 model_path = self.network_dir
-                checkpoints = [
-                    file for file in os.listdir(model_path) if file.endswith(".ckpt")
-                ]
+                checkpoints = [file for file in os.listdir(model_path) if file.endswith(".ckpt")]
                 checkpoints.sort()
 
                 if len(checkpoints) < 1:
@@ -783,29 +733,15 @@ class MLClusterClassifier(_ClassificationBase):
                     self.network_dir = os.path.join(model_path, checkpoints[0])
                 else:
                     if self.model_loading_strategy == "max":
-                        max_epoch = max(
-                            [
-                                int(file.split("epoch=")[1].split("-")[0])
-                                for file in checkpoints
-                            ]
-                        )
-                        max_epoch_file = [
-                            file for file in checkpoints if f"epoch={max_epoch}" in file
-                        ][0]
+                        max_epoch = max([int(file.split("epoch=")[1].split("-")[0]) for file in checkpoints])
+                        max_epoch_file = [file for file in checkpoints if f"epoch={max_epoch}" in file][0]
                         self.network_dir = os.path.join(model_path, max_epoch_file)
                         self.log(
                             f"Using model selection strategy 'max', selecting model with the maximum epoch {max_epoch} from path {self.network_dir}"
                         )
                     elif self.model_loading_strategy == "min":
-                        min_epoch = min(
-                            [
-                                int(file.split("epoch=")[1].split("-")[0])
-                                for file in checkpoints
-                            ]
-                        )
-                        min_epoch_file = [
-                            file for file in checkpoints if f"epoch={min_epoch}" in file
-                        ][0]
+                        min_epoch = min([int(file.split("epoch=")[1].split("-")[0]) for file in checkpoints])
+                        min_epoch_file = [file for file in checkpoints if f"epoch={min_epoch}" in file][0]
                         self.network_dir = os.path.join(model_path, min_epoch_file)
                         self.log(
                             f"Using model selection strategy 'min', selecting model with the minimum epoch {min_epoch} from path {self.network_dir}"
@@ -1003,9 +939,7 @@ class EnsembleClassifier(_ClassificationBase):
         self.model_names = []
 
         for model_name, model_path in self.network_dir.items():
-            model = self._load_model(
-                ckpt_path=model_path, hparams_path=self.hparams_path
-            )
+            model = self._load_model(ckpt_path=model_path, hparams_path=self.hparams_path)
 
             # check for hparams expected_imagesize
             if self.expected_imagesize is None:
@@ -1014,9 +948,7 @@ class EnsembleClassifier(_ClassificationBase):
             else:
                 if "expected_imagesize" in model.hparams.keys():
                     if self.expected_imagesize != model.hparams["expected_imagesize"]:
-                        raise ValueError(
-                            "Expected image sizes of models in ensemble do not match."
-                        )
+                        raise ValueError("Expected image sizes of models in ensemble do not match.")
 
             self.model.append(model)
             self.model_names.append(model_name)
@@ -1243,19 +1175,11 @@ class _cellFeaturizerBase(_ClassificationBase):
                 )  # ensure we have correct dytpe for subsequent calculations
 
                 mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
-                median = _img_selected.view(N, -1).nanquantile(
-                    q=0.5, dim=1, keepdim=True
-                )
-                quant75 = _img_selected.view(N, -1).nanquantile(
-                    q=0.75, dim=1, keepdim=True
-                )
-                quant25 = _img_selected.view(N, -1).nanquantile(
-                    q=0.25, dim=1, keepdim=True
-                )
+                median = _img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
+                quant75 = _img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
+                quant25 = _img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
                 summed_intensity = _img_selected.view(N, -1).sum(1, keepdim=True)
-                summed_intensity_area_normalized = (
-                    summed_intensity / mask_statistics[-1]
-                )
+                summed_intensity_area_normalized = summed_intensity / mask_statistics[-1]
 
                 # save results
                 channel_statistics.extend(
@@ -1297,9 +1221,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(
-                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
-            )
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
@@ -1317,9 +1239,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
-            self.project._write_table_object_sdata(
-                table, table_name, overwrite=self.overwrite_run_path
-            )
+            self.project._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
 
         if self.project.cyto_seg_status:
             # save cytosol segmentation
@@ -1339,9 +1259,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(
-                X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs
-            )
+            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
             table = TableModel.parse(
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
@@ -1355,9 +1273,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
-            self.project._write_table_object_sdata(
-                table, table_name, overwrite=self.overwrite_run_path
-            )
+            self.project._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
 
 
 class CellFeaturizer(_cellFeaturizerBase):
@@ -1383,9 +1299,7 @@ class CellFeaturizer(_cellFeaturizerBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.channel_classification = (
-            None  # ensure that all images are passed to the function
-        )
+        self.channel_classification = None  # ensure that all images are passed to the function
 
     def _setup(self):
         self._general_setup()
@@ -1466,9 +1380,7 @@ class CellFeaturizer(_cellFeaturizerBase):
         ), f"Number of images in the dataset ({c}) does not match the number of masks ({self.n_masks}) and channel names ({len(self.channel_names)}) specified in the project."
 
         # generate column names
-        self._generate_column_names(
-            n_masks=self.n_masks, n_channels=c, channel_names=self.channel_names
-        )
+        self._generate_column_names(n_masks=self.n_masks, n_channels=c, channel_names=self.channel_names)
 
         # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
@@ -1510,9 +1422,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         self._get_channel_specs()
 
     def process(self, extraction_dir, size=0):
-        self.log(
-            f"Started CellFeaturization of selected channel {self.channel_classification}."
-        )
+        self.log(f"Started CellFeaturization of selected channel {self.channel_classification}.")
 
         # perform setup
         self._setup()
@@ -1525,12 +1435,8 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         )
 
         # generate column names
-        channel_name = self.channel_names[
-            self.channel_classification[-1] - self.n_masks
-        ]
-        self._generate_column_names(
-            n_masks=self.n_masks, n_channels=1, channel_names=[channel_name]
-        )
+        channel_name = self.channel_names[self.channel_classification[-1] - self.n_masks]
+        self._generate_column_names(n_masks=self.n_masks, n_channels=1, channel_names=[channel_name])
 
         # define inference function
         f = func_partial(self.calculate_statistics, n_masks=self.n_masks)
