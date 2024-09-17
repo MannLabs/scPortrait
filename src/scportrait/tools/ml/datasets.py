@@ -1,18 +1,18 @@
 import os
-import numpy as np
-import h5py
-import torch
-from torch.utils.data import Dataset
+from collections.abc import Iterable
 
 # type checking functions
 from typing import List, Union
-from collections.abc import Iterable
+
+import h5py
+import numpy as np
+import torch
+from torch.utils.data import Dataset
 
 
 def _check_type_input_list(var):
     return isinstance(var, Iterable) and all(
-        isinstance(sublist, Iterable) and all(isinstance(item, int) for item in sublist)
-        for sublist in var
+        isinstance(sublist, Iterable) and all(isinstance(item, int) for item in sublist) for sublist in var
     )
 
 
@@ -98,9 +98,7 @@ class _HDF5SingleCellDataset(Dataset):
 
         # check to ensure that HDF5 file exists
         if not os.path.exists(path):
-            raise FileNotFoundError(
-                f"File {path} not found. Please ensure that the file exists."
-            )
+            raise FileNotFoundError(f"File {path} not found. Please ensure that the file exists.")
 
         try:
             # connect to h5py file
@@ -126,20 +124,14 @@ class _HDF5SingleCellDataset(Dataset):
 
             # add connection to singe cell datasets
             handle_id = len(self.handle_list)
-            self.handle_list.append(
-                input_hdf.get("single_cell_data")
-            )  # add new dataset to list of datasets
+            self.handle_list.append(input_hdf.get("single_cell_data"))  # add new dataset to list of datasets
 
             # add single-cell labelling
             if read_label:
-                assert (
-                    label_column is not None
-                ), "Label column must be provided if read_label is set to True."
+                assert label_column is not None, "Label column must be provided if read_label is set to True."
 
                 # get the column containing the labelling
-                label_col = input_hdf.get("single_cell_index_labelled").asstr()[
-                    :, label_column
-                ]
+                label_col = input_hdf.get("single_cell_index_labelled").asstr()[:, label_column]
 
                 # dirty fix that we have some old datasets that have empty strings instead of nan
                 if len(label_col[label_col == ""]) > 0:
@@ -162,9 +154,7 @@ class _HDF5SingleCellDataset(Dataset):
                     self.data_locator.append([current_target, handle_id] + list(row))
 
             else:
-                assert (
-                    label is not None
-                ), "Label must be provided if read_label is set to False."
+                assert label is not None, "Label must be provided if read_label is set to False."
 
                 # generate identifiers for all single-cells
                 for row in index_handle:
@@ -185,7 +175,7 @@ class _HDF5SingleCellDataset(Dataset):
                 self.label_column is not None
             ), "trying to read labels from dataset but no column to access information has been passed"
             self._add_hdf_to_index(
-                path=[path],
+                path=path,
                 index_list=current_index_list,
                 label=None,
                 label_column=self.label_column,
@@ -240,16 +230,10 @@ class _HDF5SingleCellDataset(Dataset):
             # get files and directories at current level
 
             current_level_directories = [
-                os.path.join(path, name)
-                for name in os.listdir(path)
-                if os.path.isdir(os.path.join(path, name))
+                os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))
             ]
 
-            current_level_files = [
-                name
-                for name in os.listdir(path)
-                if os.path.isfile(os.path.join(path, name))
-            ]
+            current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
 
             for i, file in enumerate(current_level_files):
                 filetype = file.split(".")[-1]
@@ -307,7 +291,6 @@ class _HDF5SingleCellDataset(Dataset):
                 # recursively scan for files
                 self._scan_directory(
                     path,
-                    current_label,
                     self.max_level,
                     current_index_list=current_index_list,
                 )
@@ -348,11 +331,7 @@ class _HDF5SingleCellDataset(Dataset):
                 # If t is 2D (Y, X), add a channel dimension
                 t = torch.unsqueeze(t, 0)
 
-            assert (
-                t.ndim == 3
-            ), (
-                f"Expected 3D tensor, got {t.ndim}D tensor"
-            )  # add check to ensure 3D tensor
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor"  # add check to ensure 3D tensor
 
         else:
             cell_tensor = self.handle_list[dataset_id][index_loc]
@@ -360,11 +339,7 @@ class _HDF5SingleCellDataset(Dataset):
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
 
-            assert (
-                t.ndim == 3
-            ), (
-                f"Expected 3D tensor, got {t.ndim}D tensor"
-            )  # add check to ensure 3D tensor
+            assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor"  # add check to ensure 3D tensor
 
         t = t.float()  # convert to float tensor
 
@@ -436,10 +411,10 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
     Examples
     --------
     >>> hdf5_data = HDF5SingleCellDataset(
-    ...     dir_list=['path/to/data/data1.hdf5', 'path/to/data2/data2.hdf5'],
+    ...     dir_list=["path/to/data/data1.hdf5", "path/to/data2/data2.hdf5"],
     ...     dir_labels=[0, 1],
     ...     transform=None,
-    ...     return_id=True
+    ...     return_id=True,
     ... )
     >>> len(hdf5_data)
     2000
@@ -520,10 +495,10 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
     Examples
     --------
     >>> hdf5_data = HDF5SingleCellDataset(
-    ...     dir_list=['path/to/data/data1.hdf5', 'path/to/data2/data2.hdf5'],
+    ...     dir_list=["path/to/data/data1.hdf5", "path/to/data2/data2.hdf5"],
     ...     dir_labels=[0, 1],
     ...     transform=None,
-    ...     return_id=True
+    ...     return_id=True,
     ... )
     >>> len(hdf5_data)
     2000

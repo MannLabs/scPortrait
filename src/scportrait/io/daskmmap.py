@@ -1,7 +1,8 @@
-import numpy as np
 import dask
 import dask.array as da
 import h5py
+import numpy as np
+
 
 def dask_array_from_path(file_path, container_name="array"):
     """Create a Dask array from a HDF5 file, supporting both contiguous and chunked datasets.
@@ -21,7 +22,7 @@ def dask_array_from_path(file_path, container_name="array"):
         array = hdf_file[container_name]
         shape = array.shape
         dtype = array.dtype
-        
+
         # Check if the dataset is chunked or contiguous
         if array.chunks is None:
             # Contiguous dataset
@@ -32,8 +33,9 @@ def dask_array_from_path(file_path, container_name="array"):
             # Chunked dataset
             chunks = calculate_chunk_sizes_chunks(shape, dtype, HDF5_chunk_size=array.chunks)
             dask_array = mmap_dask_array_chunked(file_path, shape, dtype, container_name, chunks)
-    
+
     return dask_array
+
 
 def calculate_chunk_sizes(shape, dtype, target_size_gb=5):
     """
@@ -73,6 +75,7 @@ def calculate_chunk_sizes(shape, dtype, target_size_gb=5):
 
     return tuple(chunk_sizes)
 
+
 def calculate_chunk_sizes_chunks(shape, dtype, HDF5_chunk_size, target_size_gb=5):
     """
     Calculate chunk sizes that result in chunks of approximately the target size in GB which are equal multiples of the existing chunk sizes.
@@ -94,7 +97,7 @@ def calculate_chunk_sizes_chunks(shape, dtype, HDF5_chunk_size, target_size_gb=5
     """
     # Size of each element in bytes
     element_size = np.dtype(dtype).itemsize
-    
+
     # Target number of bytes per chunk
     target_size_bytes = target_size_gb * 1024**3
 
@@ -114,6 +117,7 @@ def calculate_chunk_sizes_chunks(shape, dtype, HDF5_chunk_size, target_size_gb=5
                     break
 
     return tuple(chunk_sizes)
+
 
 def mmap_dask_array_contigious(filename, shape, dtype, offset=0, chunks=(5,)):
     """
@@ -165,6 +169,7 @@ def mmap_dask_array_contigious(filename, shape, dtype, offset=0, chunks=(5,)):
         chunk_arrays.append(da.concatenate(row_chunks, axis=1))
     return da.concatenate(chunk_arrays, axis=0)
 
+
 def mmap_dask_array_chunked(filename, shape, dtype, container_name, chunks=(5,)):
     """
     Create a Dask array from raw binary data in `filename` by memory mapping.
@@ -214,6 +219,7 @@ def mmap_dask_array_chunked(filename, shape, dtype, container_name, chunks=(5,))
             row_chunks.append(da.concatenate(col_chunks, axis=2))
         chunk_arrays.append(da.concatenate(row_chunks, axis=1))
     return da.concatenate(chunk_arrays, axis=0)
+
 
 def load_hdf5_contigious(filename, shape, dtype, offset, slices):
     """

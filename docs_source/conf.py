@@ -12,33 +12,34 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath("../src/scportrait"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'scPortrait'
-copyright = '2024 Sophia Mädler and Niklas Schmacke'
-author = 'Sophia Mädler and Niklas Schmacke'
+project = "scPortrait"
+copyright = "2024 Sophia Mädler and Niklas Schmacke"
+author = "Sophia Mädler and Niklas Schmacke"
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc','sphinx.ext.napoleon','sphinxarg.ext','sphinx_rtd_theme', "nbsphinx"]
-exclude_patterns = ['**.ipynb_checkpoints']
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinxarg.ext", "sphinx_rtd_theme", "nbsphinx"]
+exclude_patterns = ["**.ipynb_checkpoints"]
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-#autodoc_mock_imports = []
-autodoc_mock_imports = []
+# autodoc_mock_imports = []
+autodoc_mock_imports = []  # type: ignore
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -48,17 +49,17 @@ autodoc_mock_imports = []
 html_theme = "renku"
 
 html_theme_options = {
-    'collapse_navigation': False,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
 }
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['html/_static']
+html_static_path = ["html/_static"]
 
 autodoc_default_options = {
-    'member-order': 'bysource',
+    "member-order": "bysource",
 }

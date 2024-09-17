@@ -1,31 +1,30 @@
-import sys
-import shutil
 import os
-from typing import Union, List
+import shutil
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from typing import List, Union
 
 import numpy as np
+from alphabase.io.tempmmap import (
+    create_empty_mmap,
+    mmap_array_from_path,
+    redefine_temp_location,
+)
 from ashlar import thumbnail
 from ashlar.reg import EdgeAligner, Mosaic
 from ashlar.scripts.ashlar import process_axis_flip
-
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
 
-from alphabase.io.tempmmap import (
-    create_empty_mmap,
-    redefine_temp_location,
-    mmap_array_from_path,
-)
-
-from scportrait.processing.images._image_processing import rescale_image
-from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
-from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_scatter, plot_edge_quality
-from scportrait.tools.stitch._utils.filereaders import (
-    FilePatternReaderRescale,
-    BioformatsReaderRescale,
-)
-from scportrait.tools.stitch._utils.filewriters import write_xml, write_tif, write_ome_zarr, write_spatialdata
 from scportrait.io.daskmmap import dask_array_from_path
+from scportrait.processing.images._image_processing import rescale_image
+from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
+from scportrait.tools.stitch._utils.filereaders import (
+    BioformatsReaderRescale,
+    FilePatternReaderRescale,
+)
+from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
+from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
+
 
 class Stitcher:
     def __init__(
@@ -103,7 +102,7 @@ class Stitcher:
             self.do_intensity_rescale = True
 
         else:
-            self.do_intensity_rescale = do_intensity_rescale
+            self.do_intensity_rescale = do_intensity_rescale  # type: ignore
             self.rescale_full_image = False
         self.rescale_range = rescale_range
 
@@ -133,7 +132,7 @@ class Stitcher:
             TEMP_DIR_NAME = redefine_temp_location(self.outdir)
         else:
             TEMP_DIR_NAME = redefine_temp_location(self.cache)
-        
+
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
     def clear_cache(self):
@@ -169,9 +168,7 @@ class Stitcher:
         self.channel_lookup = self.reader.metadata.channel_map
         self.channel_names = list(self.reader.metadata.channel_map.values())
         self.channels = list(self.reader.metadata.channel_map.keys())
-        self.stitching_channel_id = list(self.channel_lookup.values()).index(
-            self.stitching_channel
-        )
+        self.stitching_channel_id = list(self.channel_lookup.values()).index(self.stitching_channel)
         self.n_channels = len(self.channels)
 
     def setup_rescaling(self):
@@ -191,14 +188,10 @@ class Stitcher:
 
             # make sure all channels provided in lookup dictionary are in the experiment
             if not set(rescale_channels).issubset(set(self.channel_names)):
-                raise ValueError(
-                    "The rescale_range dictionary contains a channel not found in the experiment."
-                )
+                raise ValueError("The rescale_range dictionary contains a channel not found in the experiment.")
 
             # check if we have any channels missing in the rescale_range dictionary
-            missing_channels = set.difference(
-                set(self.channel_names), set(rescale_channels)
-            )
+            missing_channels = set.difference(set(self.channel_names), set(rescale_channels))
 
             if len(missing_channels) > 0:
                 Warning(
@@ -210,19 +203,13 @@ class Stitcher:
                     self.rescale_range[missing_channel] = (0, 1)
 
                 self.reader.no_rescale_channel = [
-                    list(self.channel_names).index(missing_channel)
-                    for missing_channel in missing_channels
+                    list(self.channel_names).index(missing_channel) for missing_channel in missing_channels
                 ]
 
             # lookup channel names and match them with channel ids to return a new dict whose keys are the channel ids
-            rescale_range_ids = {
-                list(self.channel_names).index(k): v
-                for k, v in self.rescale_range.items()
-            }
+            rescale_range_ids = {list(self.channel_names).index(k): v for k, v in self.rescale_range.items()}
             self.reader.do_rescale = True
-            self.reader.rescale_range = (
-                rescale_range_ids  # update so that the lookup can occur correctly
-            )
+            self.reader.rescale_range = rescale_range_ids  # update so that the lookup can occur correctly
 
         else:
             self.reader.no_rescale_channel = []
@@ -257,10 +244,7 @@ class Stitcher:
                 rescale_range=self.rescale_range,
             )
         elif self.reader_type == BioformatsReaderRescale:
-            self.reader = self.reader_type(
-                self.input_dir,
-                rescale_range = self.rescale_range
-            )
+            self.reader = self.reader_type(self.input_dir, rescale_range=self.rescale_range)
 
         # setup correct orientation of slide (this depends on microscope used to generate the data)
         process_axis_flip(
@@ -294,14 +278,10 @@ class Stitcher:
             Scale factor for the thumbnail (default is 0.05).
         """
         self.initialize_reader()
-        self.thumbnail = thumbnail.make_thumbnail(
-            self.reader, channel=self.stitching_channel_id, scale=scale
-        )
+        self.thumbnail = thumbnail.make_thumbnail(self.reader, channel=self.stitching_channel_id, scale=scale)
 
         # rescale thumbnail to 0-1 range
-        self.thumbnail = rescale_image(
-            self.thumbnail, self.rescale_range[self.stitching_channel]
-        )
+        self.thumbnail = rescale_image(self.thumbnail, self.rescale_range[self.stitching_channel])
 
     def initialize_aligner(self):
         """
@@ -336,9 +316,7 @@ class Stitcher:
         # intitialize reader for getting individual image tiles
         self.initialize_reader()
 
-        print(
-            f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}"
-        )
+        print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
         self.aligner = self.initialize_aligner()
         self.aligner.run()
 
@@ -384,9 +362,7 @@ class Stitcher:
         self.create_cache()
 
         # create empty mmap array to store assembled mosaic
-        hdf5_path = create_empty_mmap(
-            shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME
-        )
+        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)
         self.hdf5_path = hdf5_path  # save variable into self for easier access
@@ -399,9 +375,7 @@ class Stitcher:
 
             if self.rescale_full_image:
                 # warning this has not been tested for memory efficiency
-                print(
-                    "Rescaling entire input image to 0-1 range using percentiles specified in rescale_range."
-                )
+                print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
                 self.assembled_mosaic[i, :, :] = rescale_image(
                     self.assembled_mosaic[i, :, :], self.rescale_range[channel]
                 )
@@ -444,9 +418,7 @@ class Stitcher:
         if export_xml:
             write_xml(filenames, self.channel_names, self.slidename)
 
-    def write_ome_zarr(
-        self, downscaling_size=4, n_downscaling_layers=4, chunk_size=(1, 1024, 1024)
-    ):
+    def write_ome_zarr(self, downscaling_size=4, n_downscaling_layers=4, chunk_size=(1, 1024, 1024)):
         """
         Write the assembled mosaic as an OME-Zarr file.
 
@@ -485,7 +457,7 @@ class Stitcher:
         )
         write_tif(filename, self.thumbnail)
 
-    def write_spatialdata(self, scale_factors = [2, 4, 8]):
+    def write_spatialdata(self, scale_factors=[2, 4, 8]):
         """
         Write the assembled mosaic as a SpatialData object.
 
@@ -495,15 +467,18 @@ class Stitcher:
             List of scale factors for the generated SpatialData object (default is [2, 4, 8]).
             The scale factors are used to generate downsampled versions of the image for faster visualization at lower resolutions.
         """
-        
+
         filepath = os.path.join(self.outdir, f"{self.slidename}.spatialdata")
 
-        #create spatialdata object
-        write_spatialdata(filepath, 
-                          image = self.assembled_mosaic, 
-                          channel_names = self.channels, 
-                          scale_factors= scale_factors,
-                          overwrite = self.overwrite)
+        # create spatialdata object
+        write_spatialdata(
+            filepath,
+            image=self.assembled_mosaic,
+            channel_names=self.channels,
+            scale_factors=scale_factors,
+            overwrite=self.overwrite,
+        )
+
 
 class ParallelStitcher(Stitcher):
     """
@@ -562,7 +537,7 @@ class ParallelStitcher(Stitcher):
         rescale_range: tuple = (1, 99),
         plot_QC: bool = True,
         WGAchannel: str = None,
-        channel_order: [str] = None,
+        channel_order: list[str] = None,
         overwrite: bool = False,
         reader_type=FilePatternReaderRescale,
         orientation={"flip_x": False, "flip_y": True},
@@ -587,11 +562,15 @@ class ParallelStitcher(Stitcher):
             overwrite,
             cache,
         )
-        #dirty fix to avoide multithreading error with BioformatsReader until this can be fixed
+        # dirty fix to avoide multithreading error with BioformatsReader until this can be fixed
         if self.reader_type == BioformatsReaderRescale:
             threads = 1
-            print("BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread.")
-            Warning("BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread.")
+            print(
+                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
+            )
+            Warning(
+                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
+            )
 
         self.threads = threads
 
@@ -604,38 +583,36 @@ class ParallelStitcher(Stitcher):
         aligner : ParallelEdgeAligner
             Initialized ParallelEdgeAligner object.
         """
-        aligner = ParallelEdgeAligner(self.reader, 
-                                    channel=self.stitching_channel_id, 
-                                    filter_sigma=self.filter_sigma, 
-                                    verbose=True, 
-                                    do_make_thumbnail=False, 
-                                    max_shift = self.max_shift,
-                                    n_threads = self.threads)
-        return(aligner)
-    
+        aligner = ParallelEdgeAligner(
+            self.reader,
+            channel=self.stitching_channel_id,
+            filter_sigma=self.filter_sigma,
+            verbose=True,
+            do_make_thumbnail=False,
+            max_shift=self.max_shift,
+            n_threads=self.threads,
+        )
+        return aligner
+
     def initialize_mosaic(self):
-        mosaic = ParallelMosaic(self.aligner, 
-                                self.aligner.mosaic_shape, 
-                                verbose = True,
-                                channels = self.channels,
-                                n_threads = self.threads
-                                )
-        return(mosaic)
-    
+        mosaic = ParallelMosaic(
+            self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
+        )
+        return mosaic
+
     def assemble_channel(self, args):
         hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
-        out = mmap_array_from_path(hdf5_path) 
-        self.mosaic.assemble_channel_parallel(channel = channel, ch_index = i, hdf5_path = hdf5_path)
+        out = mmap_array_from_path(hdf5_path)
+        self.mosaic.assemble_channel_parallel(channel=channel, ch_index=i, hdf5_path=hdf5_path)
 
-        if self.rescale_full_image: 
-            #warning this has not been tested for memory efficiency
+        if self.rescale_full_image:
+            # warning this has not been tested for memory efficiency
             print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
             out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
-            
+
     def assemble_mosaic(self):
-        
-        #get dimensions of assembled final mosaic
+        # get dimensions of assembled final mosaic
         x, y = self.mosaic.shape
         shape = (self.n_channels, x, y)
 
@@ -643,11 +620,11 @@ class ParallelStitcher(Stitcher):
 
         self.create_cache()
 
-        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path = self.TEMP_DIR_NAME)
+        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
 
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)
-        self.hdf5_path = hdf5_path #save variable to self for easier access
+        self.hdf5_path = hdf5_path  # save variable to self for easier access
 
         # assemble each of the channels
         args = []

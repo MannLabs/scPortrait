@@ -42,3 +42,78 @@ dev = {file = ["requirements_dev.txt"]}
 Homepage = "https://github.com/MannLabs/scPortrait"
 Documentation = "https://mannlabs.github.io/scPortrait/html/index.html"
 Source = "https://github.com/MannLabs/scPortrait"
+
+[tool.ruff]
+src = ["src"]
+line-length = 120
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    #"F",  # Errors detected by Pyflakes
+    #"E",  # Error detected by Pycodestyle
+    #"W",  # Warning detected by Pycodestyle
+    "I",  # isort
+    #"D",  # pydocstyle
+    #"B",  # flake8-bugbear
+    #"TID",  # flake8-tidy-imports
+    #"C4",  # flake8-comprehensions
+    #"BLE",  # flake8-blind-except
+    #"UP",  # pyupgrade
+    #"RUF100",  # Report unused noqa directives
+    #"TCH",  # Typing imports
+    #"NPY",  # Numpy specific rules
+    #"PTH"  # Use pathlib
+]
+ignore = [
+    # line too long -> we accept long comment lines; black gets rid of long code lines
+    "E501",
+    # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
+    "E731",
+    # allow I, O, l as variable names -> I is the identity matrix
+    "E741",
+    # Missing docstring in public package
+    "D104",
+    # Missing docstring in public module
+    "D100",
+    # Missing docstring in __init__
+    "D107",
+    # Errors from function calls in argument defaults. These are fine when the result is immutable.
+    "B008",
+    # __magic__ methods are are often self-explanatory, allow missing docstrings
+    "D105",
+    # first line should end with a period [Bug: doesn't work with single-line docstrings]
+    "D400",
+    # First line should be in imperative mood; try rephrasing
+    "D401",
+    ## Disable one in each pair of mutually incompatible rules
+    # We don’t want a blank line before a class docstring
+    "D203",
+    # We want docstrings to start immediately after the opening triple quote
+    "D213",
+    # Imports unused
+    "F401",
+    # camcelcase imported as lowercase
+    "N813",
+    # module import not at top level of file
+    "E402",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"docs/*" = ["I"]
+"tests/*" = ["D"]
+"*/__init__.py" = ["F401"]
+
+[tool.mypy]
+strict = false
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+ignore_missing_imports = true
+no_strict_optional = true

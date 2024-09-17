@@ -3,7 +3,7 @@
 scPortrait Projects
 ===================
 
-Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. This directory also contains copies of the configuration file which specifies the parameters used for all methods associated with that run. This allows for easy reproducibility of results. 
+Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. This directory also contains copies of the configuration file which specifies the parameters used for all methods associated with that run. This allows for easy reproducibility of results.
 
 .. image:: ../images/project_structure.png
     :width: 100%
@@ -22,7 +22,7 @@ The base :func:`Project <scportrait.pipeline.project.Project>` class is for sing
 Associated methods classes
 **************************
 
-1. segmentation methods: :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>`, :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>`  
+1. segmentation methods: :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>`, :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>`
 2. extraction methods: :func:`HDF5CellExtraction <scportrait.pipeline.extraction.HDF5CellExtraction>`
 
 2. TimecourseProject
@@ -33,8 +33,8 @@ The :func:`TimecourseProject <scportrait.pipeline.project.TimecourseProject>` cl
 Associated methods classes
 **************************
 
-1. segmentation methods: :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <scportrait.pipeline.segmentation.MultithreadedTimecourseSegmentation>`   
-2. extraction methods: :func:`TimecourseHDF5CellExtraction <scportrait.pipeline.extraction.TimecourseHDF5CellExtraction>`  
+1. segmentation methods: :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <scportrait.pipeline.segmentation.MultithreadedTimecourseSegmentation>`
+2. extraction methods: :func:`TimecourseHDF5CellExtraction <scportrait.pipeline.extraction.TimecourseHDF5CellExtraction>`
 
 Initializing a scPortrait Project
 ---------------------------------
@@ -65,6 +65,4 @@ During initialization you can also specify the projects general behaviour throug
 Loading Images into a scPortrait project
 ----------------------------------------
 
-Once you have initialized a project, you can load images into it. Each scPortrait ``Project`` class is associated with several different methods to load the input images. 
-
-
+Once you have initialized a project, you can load images into it. Each scPortrait ``Project`` class is associated with several different methods to load the input images.

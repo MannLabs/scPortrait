@@ -1,25 +1,26 @@
 # import general packages for testing
-import pytest
-import numpy as np
 import os
+
+import numpy as np
+import pytest
+from skimage import data  # test datasets for segmentation testing
 
 #######################################################
 # Unit tests for ../proccessing/segmentation.py
 #######################################################
-
 from scportrait.pipeline._utils.segmentation import (
-    global_otsu,
     _segment_threshold,
+    global_otsu,
     segment_global_threshold,
     segment_local_threshold,
 )
-from skimage import data  # test datasets for segmentation testing
 
 
 def test_global_otsu():
     image = data.coins()
     threshold = global_otsu(image)
     assert isinstance(threshold, float), "The result is not a float"
+
 
 def test_segment_threshold():
     image = data.coins()
@@ -30,9 +31,7 @@ def test_segment_threshold():
     assert isinstance(labels, np.ndarray), "The result is not a numpy.ndarray"
 
     # Check if output has the same shape as the input image
-    assert (
-        labels.shape == image.shape
-    ), "Output labels and input image shapes are not equal"
+    assert labels.shape == image.shape, "Output labels and input image shapes are not equal"
 
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
@@ -46,9 +45,7 @@ def test_segment_global_threshold():
     assert isinstance(labels, np.ndarray), "The result is not a numpy.ndarray"
 
     # Check if output has the same shape as the input image
-    assert (
-        labels.shape == image.shape
-    ), "Output labels and input image shapes are not equal"
+    assert labels.shape == image.shape, "Output labels and input image shapes are not equal"
 
     # Check if values are non-negative
     assert np.all(labels >= 0), "Output labels contain negative values"
@@ -110,35 +107,24 @@ def test_shift_labels():
     assert set(edge_labels) == set(expected_edge_labels)
     assert set(edge_labels_with_shift) == set(expected_edge_labels_with_shift)
 
-    input_map_3d = np.array(
-        [[[1, 0, 0], [0, 2, 0], [0, 0, 3]], [[0, 1, 0], [2, 0, 0], [0, 3, 0]]]
-    )
+    input_map_3d = np.array([[[1, 0, 0], [0, 2, 0], [0, 0, 3]], [[0, 1, 0], [2, 0, 0], [0, 3, 0]]])
 
-    expected_shifted_map_3d = np.array(
-        [[[11, 0, 0], [0, 12, 0], [0, 0, 13]], [[0, 11, 0], [12, 0, 0], [0, 13, 0]]]
-    )
+    expected_shifted_map_3d = np.array([[[11, 0, 0], [0, 12, 0], [0, 0, 13]], [[0, 11, 0], [12, 0, 0], [0, 13, 0]]])
     expected_edge_labels = [1, 2, 3]
 
-    shifted_map_3d, edge_labels_3d = shift_labels(
-        input_map_3d, shift, remove_edge_labels=False
-    )
+    shifted_map_3d, edge_labels_3d = shift_labels(input_map_3d, shift, remove_edge_labels=False)
 
     assert np.array_equal(shifted_map_3d, expected_shifted_map_3d)
     assert set(edge_labels_3d) == set(expected_edge_labels)
 
     # test if removing edge labels works
-    shifted_map_removed_edge_labels, edge_labels = shift_labels(
-        input_map, shift, remove_edge_labels=True
-    )
-    expected_shifted_map_removed_edge_labels = np.array(
-        [[0, 0, 0], [0, 12, 0], [0, 0, 0]]
-    )
-    assert np.array_equal(
-        shifted_map_removed_edge_labels, expected_shifted_map_removed_edge_labels
-    )
+    shifted_map_removed_edge_labels, edge_labels = shift_labels(input_map, shift, remove_edge_labels=True)
+    expected_shifted_map_removed_edge_labels = np.array([[0, 0, 0], [0, 12, 0], [0, 0, 0]])
+    assert np.array_equal(shifted_map_removed_edge_labels, expected_shifted_map_removed_edge_labels)
 
 
 from scportrait.pipeline._utils.segmentation import _remove_classes, remove_classes
+
 
 def test_remove_classes():
     label_in = np.array([[1, 2, 1], [1, 0, 2], [0, 2, 3]])
@@ -163,14 +149,12 @@ def test_remove_classes():
     # Test custom background parameter
     background_value = 1
     expected_output_custom_background = np.array([[1, 2, 1], [1, 0, 2], [0, 2, 1]])
-    result_custom_background = remove_classes(
-        label_in, to_remove, background=background_value
-    )
+    result_custom_background = remove_classes(label_in, to_remove, background=background_value)
 
     assert np.array_equal(result_custom_background, expected_output_custom_background)
 
 
-from scportrait.pipeline._utils.segmentation import contact_filter_lambda, contact_filter
+from scportrait.pipeline._utils.segmentation import contact_filter, contact_filter_lambda
 
 
 def test_contact_filter_lambda():
@@ -204,9 +188,7 @@ def test_class_size():
 
     _, length = _class_size(mask)
     expected_length = np.array([float(np.nan), 3, 2])
-    assert np.all(
-        length[1:] == expected_length[1:]
-    )  # only compare [1:] to ignore the nan in the first element
+    assert np.all(length[1:] == expected_length[1:])  # only compare [1:] to ignore the nan in the first element
     assert np.isnan(length[0])
 
 
@@ -238,11 +220,12 @@ def test_numba_mask_centroid():
 #######################################################
 
 from scportrait.processing.images._image_processing import (
+    MinMax,
     _percentile_norm,
     percentile_normalization,
     rolling_window_mean,
-    MinMax,
 )
+
 
 def test_percentile_norm():
     img = np.random.rand(4, 4)
@@ -283,6 +266,7 @@ def test_MinMax():
     assert np.min(normalized_array) == 0
     assert np.max(normalized_array) == 1
 
+
 #######################################################
 # Unit tests for ../proccessing/utils.py
 #######################################################
@@ -290,10 +274,12 @@ def test_MinMax():
 from scportrait.pipeline._utils.helper import flatten
 from scportrait.plotting.vis import plot_image, visualize_class
 
+
 def test_flatten():
     nested_list = [[1, 2, 3], [4, 5], [6, 7, 8, 9]]
     expected_output = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert flatten(nested_list) == expected_output
+
 
 def test_visualize_class():
     class_ids = [1, 2]
@@ -304,6 +290,7 @@ def test_visualize_class():
         visualize_class(class_ids, seg_map, background)
     except Exception as e:
         pytest.fail(f"visualize_class raised exception: {str(e)}")
+
 
 def test_plot_image(tmpdir):
     array = np.random.rand(10, 10)
@@ -322,7 +309,9 @@ def test_plot_image(tmpdir):
 #######################################################
 
 import tempfile
+
 from scportrait.pipeline._base import Logable, ProcessingStep
+
 
 def test_logable_init():
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -332,7 +321,7 @@ def test_logable_init():
 
 def test_logable_log():
     with tempfile.TemporaryDirectory() as temp_dir:
-        logable = Logable(directory = temp_dir, debug=True)
+        logable = Logable(directory=temp_dir, debug=True)
         logable.log("Testing")
 
         log_path = os.path.join(temp_dir, logable.DEFAULT_LOG_NAME)
@@ -346,9 +335,7 @@ def test_logable_log():
 def test_processing_step_init():
     config = {"setting1": "value1"}
     with tempfile.TemporaryDirectory() as temp_dir:
-        processing_step = ProcessingStep(
-            config, f"{temp_dir}/test_step", temp_dir, debug=True
-        )
+        processing_step = ProcessingStep(config, f"{temp_dir}/test_step", temp_dir, debug=True)
 
         assert processing_step.debug
         assert config == processing_step.config

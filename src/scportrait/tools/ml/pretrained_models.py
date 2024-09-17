@@ -2,10 +2,12 @@
 Collection of functions to load pretrained models to use in the scPortrait environment.
 """
 
-from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 import os
 
-def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = True, device = "cuda"):
+from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
+
+
+def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval=True, device="cuda"):
     """
     Load a pretrained model uploaded to the github repository.
 
@@ -42,7 +44,8 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = 
     if eval:
         model.eval()
 
-    return(model)
+    return model
+
 
 def _get_data_dir():
     """
@@ -53,11 +56,12 @@ def _get_data_dir():
         str: path to data directory
     """
     src_code_dir, _ = os.path.split(__file__)
-    data_dir = os.path.join(src_code_dir, os.pardir, os.pardir, 'pretrained_models')
+    data_dir = os.path.join(src_code_dir, os.pardir, os.pardir, "pretrained_models")
     data_dir = os.path.abspath(data_dir)  # Get the absolute path
-    return (data_dir)
+    return data_dir
 
-def autophagy_classifier1_0(device = "cuda"):
+
+def autophagy_classifier1_0(device="cuda"):
     """
     Load binary autophagy classification model published as Model 1.0 in original scPortrait publication.
     """
@@ -67,10 +71,11 @@ def autophagy_classifier1_0(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy1.0/VGG1_autophagy_classifier1.0.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy1.0/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG1_old", device = device)
-    return(model)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG1_old", device=device)
+    return model
 
-def autophagy_classifier2_0(device = "cuda"):
+
+def autophagy_classifier2_0(device="cuda"):
     """
     Load binary autophagy classification model published as Model 2.0 in original scPortrait publication.
     """
@@ -80,10 +85,11 @@ def autophagy_classifier2_0(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.0/VGG2_autophagy_classifier2.0.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy2.0/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG2_old", device = device)
-    return(model)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG2_old", device=device)
+    return model
 
-def autophagy_classifier2_1(device = "cuda"):
+
+def autophagy_classifier2_1(device="cuda"):
     """
     Load binary autophagy classification model published as Model 2.1 in original scPortrait publication.
     """
@@ -93,5 +99,5 @@ def autophagy_classifier2_1(device = "cuda"):
     checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.1/VGG2_autophagy_classifier2.1.cpkt")
     hparam_path = os.path.join(data_dir, "autophagy/autophagy2.1/hparams.yaml")
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type = "VGG2_old", device = device)
-    return(model)
+    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG2_old", device=device)
+    return model
