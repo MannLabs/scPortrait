@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from typing import List, Tuple
 
 import datatree
 import xarray
@@ -22,7 +22,16 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 
 
 class sdata_filehandler(Logable):
-    def __init__(self, directory, sdata_path, input_image_name, nuc_seg_name, cyto_seg_name, centers_name, debug=False):
+    def __init__(
+        self,
+        directory,
+        sdata_path,
+        input_image_name,
+        nuc_seg_name,
+        cyto_seg_name,
+        centers_name,
+        debug=False,
+    ):
         super().__init__(directory=directory, debug=debug)
 
         self.sdata_path = sdata_path
@@ -98,7 +107,11 @@ class sdata_filehandler(Logable):
     ### Write new objects to sdata ###
 
     def _write_segmentation_object_sdata(
-        self, segmentation_object, segmentation_label: str, classes: set = None, overwrite=False
+        self,
+        segmentation_object,
+        segmentation_label: str,
+        classes: set = None,
+        overwrite: bool = False,
     ):
         _sdata = self._read_sdata()
 
@@ -115,10 +128,14 @@ class sdata_filehandler(Logable):
         self.log(f"Segmentation {segmentation_label} written to sdata object.")
 
         self._check_sdata_status()
-        print(self.nuc_seg_status, self.cyto_seg_status)
 
     def _write_segmentation_sdata(
-        self, segmentation, segmentation_label: str, classes: set = None, chunks=(1000, 1000), overwrite=False
+        self,
+        segmentation,
+        segmentation_label: str,
+        classes: set = None,
+        chunks: Tuple[int, int] = (1000, 1000),
+        overwrite: bool = False,
     ):
         transform_original = Identity()
         mask = spLabels2DModel.parse(
@@ -133,7 +150,7 @@ class sdata_filehandler(Logable):
 
         self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite=overwrite)
 
-    def _write_points_object_sdata(self, points, points_name: str, overwrite):
+    def _write_points_object_sdata(self, points, points_name: str, overwrite: bool = False):
         _sdata = self._read_sdata()
 
         if overwrite:
@@ -143,6 +160,18 @@ class sdata_filehandler(Logable):
         _sdata.write_element(points_name, overwrite=True)
 
         self.log(f"Points {points_name} written to sdata object.")
+
+    def _write_table_object_sdata(self, table, table_name: str, overwrite: bool = False):
+        # reconnect to sdata object
+        _sdata = self._read_sdata()
+
+        if overwrite:
+            self._force_delete_object(_sdata, table_name, "tables")
+
+        _sdata.tables[table_name] = table
+        _sdata.write_element(table_name, overwrite=False)
+
+        self.log(f"Table {table_name} written to sdata object.")
 
     ### Perform operations on sdata object ###
     def _get_centers(self, sdata, segmentation_label: str) -> PointsModel:

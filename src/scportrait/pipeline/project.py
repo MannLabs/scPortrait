@@ -412,22 +412,6 @@ class Project(Logable):
         interactive = Interactive(self.sdata)
         interactive.run()
 
-    #### Functions for operations on sdata object #####
-
-    # def _get_centers(self, segmentation_label: str) -> PointsModel:
-    #     if segmentation_label not in self.sdata.labels:
-    #         raise ValueError(
-    #             f"Segmentation {segmentation_label} not found in sdata object."
-    #         )
-
-    #     centers = calculate_centroids(self.sdata.labels[segmentation_label])
-
-    #     return centers
-
-    # def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
-    #     centroids_object = self._get_centers(segmentation_label)
-    #     self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
-
     #### Functions for adding elements to sdata object ########
     def _force_delete_object(self, name: str, type: str):
         """
@@ -449,7 +433,13 @@ class Project(Logable):
             shutil.rmtree(path, ignore_errors=True)
 
     def _write_image_sdata(
-        self, image, image_name, channel_names=None, scale_factors=[2, 4, 8], chunks=(1, 1000, 1000), overwrite=False
+        self,
+        image,
+        image_name,
+        channel_names=None,
+        scale_factors=[2, 4, 8],
+        chunks=(1, 1000, 1000),
+        overwrite=False,
     ):
         """
         Write the supplied image to the spatialdata object.
@@ -492,53 +482,6 @@ class Project(Logable):
 
         # track that input image has been loaded
         self.input_image_status = True
-
-    # def _write_segmentation_object_sdata(
-    #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
-    # ):
-    #     # ensure that the segmentation object is converted to the scPortrait Labels2DModel
-    #     if not hasattr(segmentation_object.attrs, "cell_ids"):
-    #         segmentation_object = spLabels2DModel().convert(
-    #             segmentation_object, classes=classes
-    #         )
-
-    #     if overwrite:
-    #         self._force_delete_object(segmentation_label, "labels")
-
-    #     self.sdata.labels[segmentation_label] = segmentation_object
-    #     self.sdata.write_element(segmentation_label, overwrite=True)
-
-    #     self.log(f"Segmentation {segmentation_label} written to sdata object.")
-
-    # def _write_segmentation_sdata(
-    #     self,
-    #     segmentation,
-    #     segmentation_label: str,
-    #     classes: set = None,
-    #     chunks=(1000, 1000),
-    #     overwrite = False
-    # ):
-    #     transform_original = Identity()
-    #     mask = spLabels2DModel.parse(
-    #         segmentation,
-    #         dims=["y", "x"],
-    #         transformations={"global": transform_original},
-    #         chunks=chunks,
-    #     )
-
-    #     if not get_chunk_size(mask) == chunks:
-    #         mask.data = mask.data.rechunk(chunks)
-
-    #     self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
-
-    def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
-        if overwrite:
-            self._force_delete_object(table_name, "tables")
-
-        self.sdata.tables[table_name] = table
-        self.sdata.write_element(table_name, overwrite=False)
-
-        self.log(f"Table {table_name} written to sdata object.")
 
     #### Functions for getting elements from sdata object #####
 
