@@ -1,1 +1,1 @@
-from scportrait.tools.stitch._stitch import Stitcher, ParallelStitcher
+from scportrait.tools.stitch._stitch import ParallelStitcher, Stitcher

@@ -1,41 +1,38 @@
 # -*- coding: utf-8 -*-
-import warnings
-import shutil
 import os
-import yaml
-import psutil
-from typing import List, Union, Dict
-import tempfile
 import re
+import shutil
+import tempfile
+import warnings
 from time import time
+from typing import Dict, List, Union
 
-import numpy as np
-from alphabase.io import tempmmap
 import dask.array as darray
 import datatree
+import numpy as np
+import psutil
 import xarray
-
-from tifffile import imread
+import yaml
+from alphabase.io import tempmmap
+from napari_spatialdata import Interactive
 from ome_zarr.io import parse_url
 from ome_zarr.reader import Reader
-
 from spatialdata import SpatialData
+from spatialdata.models import Image2DModel, PointsModel
 from spatialdata.transformations.transformations import Identity
-from spatialdata.models import PointsModel, Image2DModel
-from napari_spatialdata import Interactive
+from tifffile import imread
 
 from scportrait.io import daskmmap
-
 from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
 from scportrait.pipeline._utils.spatialdata_helper import (
-    get_unique_cell_ids,
-    generate_region_annotation_lookuptable,
-    remap_region_annotation_table,
-    rechunk_image,
-    get_chunk_size,
     calculate_centroids,
+    generate_region_annotation_lookuptable,
+    get_chunk_size,
+    get_unique_cell_ids,
+    rechunk_image,
+    remap_region_annotation_table,
 )
 
 
@@ -162,15 +159,11 @@ class Project(Logable):
             if os.path.isfile(self.config_path):
                 self._load_config_from_file(self.config_path)
             else:
-                raise ValueError(
-                    "No config passed and no config found in project directory."
-                )
+                raise ValueError("No config passed and no config found in project directory.")
 
         else:
             if not os.path.isfile(config_path):
-                raise ValueError(
-                    f"Your config path {config_path} is invalid. Please specify a valid config path."
-                )
+                raise ValueError(f"Your config path {config_path} is invalid. Please specify a valid config path.")
 
             else:
                 print("Updating project config file.")
@@ -189,13 +182,9 @@ class Project(Logable):
     def _setup_segmentation_f(self, segmentation_f):
         if self.segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {segmentation_f.__name__} is missing from the config file."
-                )
+                raise ValueError(f"Config for {segmentation_f.__name__} is missing from the config file.")
 
-            seg_directory = os.path.join(
-                self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME
-            )
+            seg_directory = os.path.join(self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME)
 
             self.seg_directory = seg_directory
 
@@ -214,16 +203,12 @@ class Project(Logable):
 
     def _setup_extraction_f(self, extraction_f):
         if extraction_f is not None:
-            extraction_directory = os.path.join(
-                self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
-            )
+            extraction_directory = os.path.join(self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME)
 
             self.extraction_directory = extraction_directory
 
             if extraction_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {extraction_f.__name__} is missing from the config file"
-                )
+                raise ValueError(f"Config for {extraction_f.__name__} is missing from the config file")
 
             self.extraction_f = extraction_f(
                 self.config[extraction_f.__name__],
@@ -238,13 +223,9 @@ class Project(Logable):
     def _setup_classification_f(self, classification_f):
         if classification_f is not None:
             if classification_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {classification_f.__name__} is missing from the config file"
-                )
+                raise ValueError(f"Config for {classification_f.__name__} is missing from the config file")
 
-            classification_directory = os.path.join(
-                self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
-            )
+            classification_directory = os.path.join(self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME)
 
             self.classification_directory = classification_directory
 
@@ -261,13 +242,9 @@ class Project(Logable):
     def _setup_selection(self, selection_f):
         if self.selection_f is not None:
             if selection_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {selection_f.__name__} is missing from the config file"
-                )
+                raise ValueError(f"Config for {selection_f.__name__} is missing from the config file")
 
-            selection_directory = os.path.join(
-                self.project_location, self.DEFAULT_SELECTION_DIR_NAME
-            )
+            selection_directory = os.path.join(self.project_location, self.DEFAULT_SELECTION_DIR_NAME)
 
             self.selection_directory = selection_directory
 
@@ -290,9 +267,7 @@ class Project(Logable):
             The classification method that should be used for the project.
 
         """
-        self.log(
-            f"Replacing current classification method {self.classification_f.__class__} with {classification_f}"
-        )
+        self.log(f"Replacing current classification method {self.classification_f.__class__} with {classification_f}")
         self._setup_classification_f(classification_f)
 
     ##### General small helper functions ####
@@ -349,9 +324,7 @@ class Project(Logable):
         self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
         self._tmp_dir_path = self._tmp_dir.name
 
-        self.log(
-            f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
-        )
+        self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
 
     def _clear_temp_dir(self):
         if "_tmp_dir" in self.__dict__.keys():
@@ -371,9 +344,7 @@ class Project(Logable):
 
         if os.path.exists(self.sdata_path):
             if self.overwrite:
-                self.log(
-                    f"Output location {self.sdata_path} already exists. Overwriting."
-                )
+                self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
@@ -399,9 +370,7 @@ class Project(Logable):
         """Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
         for keys in list(self.sdata.labels.keys()):
             if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
-                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(
-                    self.sdata.labels[keys]
-                )
+                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
 
     def _check_sdata_status(self, print_status=False):
         if self.sdata is None:
@@ -414,18 +383,10 @@ class Project(Logable):
             self.centers_status = self.filehandler.centers_status
 
             if self.input_image_status:
-                if isinstance(
-                    self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree
-                ):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME][
-                        "scale0"
-                    ].image
-                elif isinstance(
-                    self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray
-                ):
-                    self.input_image = self.sdata.images[
-                        self.DEFAULT_INPUT_IMAGE_NAME
-                    ].image
+                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+                elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
                 else:
                     self.input_image = None
 
@@ -667,9 +628,7 @@ class Project(Logable):
         return path_input_image
 
     #### Functions to load input data ####
-    def load_input_from_array(
-        self, array: np.ndarray, channel_names: List[str] = None, overwrite=None
-    ):
+    def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None, overwrite=None):
         # check if an input image was already loaded if so throw error if overwrite = False
 
         # setup overwrite
@@ -813,9 +772,7 @@ class Project(Logable):
 
             self._check_image_dtype(im)
 
-            im = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[
-                slice(*crop[0]), slice(*crop[1])
-            ]
+            im = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[slice(*crop[0]), slice(*crop[1])]
 
             if i == 0:
                 # define shape of required tempmmap array to read results to
@@ -874,9 +831,7 @@ class Project(Logable):
             zarr_reader.load("0").compute()
         )  ### adapt here to not read the entire image to memory TODO
         time_end = time()
-        self.log(
-            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes."
-        )
+        self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
         # Access the metadata to get channel names
         zarr_group = loc.zarr_group()
@@ -937,9 +892,7 @@ class Project(Logable):
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
-            self.log(
-                "Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
-            )
+            self.log("Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
@@ -949,16 +902,13 @@ class Project(Logable):
             self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
             self.cyto_seg_status = True
-            self.log(
-                "Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
-            )
+            self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
         assert (
-            self.sdata[self.nuc_seg_name].attrs["cell_ids"]
-            == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
+            self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
         ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
 
         # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
@@ -978,23 +928,17 @@ class Project(Logable):
 
                         new_table_name = f"annot_{region_name}_{table_name}"
 
-                        table = remap_region_annotation_table(
-                            table, region_name=region_name
-                        )
+                        table = remap_region_annotation_table(table, region_name=region_name)
 
                         self._write_table_object_sdata(table, new_table_name)
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
                 else:
-                    self.log(
-                        f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}."
-                    )
+                    self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
 
                 # add centers of cells for available nucleus map
-                centroids = calculate_centroids(
-                    self.sdata.labels[region_name], coordinate_system="global"
-                )
+                centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
                 self._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
 
                 self.centers_status = True
@@ -1007,18 +951,14 @@ class Project(Logable):
                         region_name = self.cyto_seg_name
                         new_table_name = f"annot_{region_name}_{table_name}"
 
-                        table = remap_region_annotation_table(
-                            table, region_name=region_name
-                        )
+                        table = remap_region_annotation_table(table, region_name=region_name)
                         self._write_table_object_sdata(table, new_table_name)
 
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
                 else:
-                    self.log(
-                        f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}."
-                    )
+                    self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
 
         self._check_sdata_status()
         self.overwrite = original_overwrite  # reset to original value
@@ -1042,9 +982,7 @@ class Project(Logable):
 
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError(
-                    "Segmentation already exists. Set overwrite=True to overwrite."
-                )
+                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
@@ -1070,9 +1008,7 @@ class Project(Logable):
 
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError(
-                    "Segmentation already exists. Set overwrite=True to overwrite."
-                )
+                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
@@ -1088,9 +1024,7 @@ class Project(Logable):
         self._check_sdata_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         # setup overwrite if specified in call
         if overwrite is not None:
@@ -1112,9 +1046,7 @@ class Project(Logable):
         self._check_sdata_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         extraction_dir = self.extraction_f.get_directory()
 
@@ -1122,9 +1054,7 @@ class Project(Logable):
             cells_path = f"{extraction_dir}/data/single_cells.h5"
 
         if data_type == "partial":
-            partial_runs = [
-                x for x in os.listdir(extraction_dir) if x.startswith("partial_data")
-            ]
+            partial_runs = [x for x in os.listdir(extraction_dir) if x.startswith("partial_data")]
             selected_runs = [x for x in partial_runs if f"ncells_{n_cells}" in x]
 
             if len(selected_runs) == 0:
@@ -1136,17 +1066,11 @@ class Project(Logable):
                         f"Multiple partial data runs found for n_cells = {n_cells} with varying seed number. Please select one by specifying partial_seed."
                     )
                 else:
-                    selected_run = [
-                        x for x in selected_runs if f"seed_{partial_seed}" in x
-                    ]
+                    selected_run = [x for x in selected_runs if f"seed_{partial_seed}" in x]
                     if len(selected_run) == 0:
-                        raise ValueError(
-                            f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}."
-                        )
+                        raise ValueError(f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}.")
                     else:
-                        cells_path = (
-                            f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
-                        )
+                        cells_path = f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
             else:
                 cells_path = f"{extraction_dir}/{selected_runs[0]}/single_cells.h5"
 
@@ -1184,13 +1108,9 @@ class Project(Logable):
         self._check_sdata_status()
 
         if not self.nuc_seg_status or not self.cyto_seg_status:
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
-        assert (
-            segmentation_name in self.sdata.labels
-        ), f"Segmentation {segmentation_name} not found in sdata object."
+        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
 
         self.selection_f(
             segmentation_name=segmentation_name,

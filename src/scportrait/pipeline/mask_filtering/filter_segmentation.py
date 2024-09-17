@@ -1,20 +1,20 @@
-import os
-import gc
-import sys
-import numpy as np
 import csv
-import h5py
-from tqdm.auto import tqdm
+import gc
+import os
 import shutil
-from collections import defaultdict
+import sys
 import traceback
-
+from collections import defaultdict
 from multiprocessing import Pool
 
-from scportrait.pipeline._utils.segmentation import sc_any
-from scportrait.pipeline._base import ProcessingStep
-
+import h5py
+import numpy as np
 from alphabase.io import tempmmap
+from tqdm.auto import tqdm
+
+from scportrait.pipeline._base import ProcessingStep
+from scportrait.pipeline._utils.segmentation import sc_any
+
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction."""
@@ -106,9 +106,7 @@ class SegmentationFilter(ProcessingStep):
             x = x2 - x1
             y = y2 - y1
 
-            input_image = tempmmap.array(
-                shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path
-            )
+            input_image = tempmmap.array(shape=(2, x, y), dtype=np.uint16, tmp_dir_abs_path=self._tmp_dir_path)
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
         if sc_any(input_image):
@@ -277,9 +275,7 @@ class TiledSegmentationFilter(SegmentationFilter):
                 if last_column:
                     upper_x = mask_size[1]
 
-                _tileing_plan.append(
-                    (slice(lower_y, upper_y, None), slice(lower_x, upper_x, None))
-                )
+                _tileing_plan.append((slice(lower_y, upper_y, None), slice(lower_x, upper_x, None)))
 
         with open(tileing_plan_path, "w") as f:
             for item in _tileing_plan:
@@ -303,6 +299,7 @@ class TiledSegmentationFilter(SegmentationFilter):
         list
             List of output file paths for the processed tiles.
         """
+
         def f(x):
             try:
                 x.call_as_tile()

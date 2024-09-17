@@ -1,25 +1,24 @@
 import os
 import shutil
+from typing import List, Tuple
 
-from spatialdata import SpatialData
-from spatialdata.transformations.transformations import Identity
-from spatialdata.models import PointsModel, Image2DModel
-
-from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
-from scportrait.pipeline._utils.spatialdata_helper import (
-    get_unique_cell_ids,
-    generate_region_annotation_lookuptable,
-    remap_region_annotation_table,
-    rechunk_image,
-    get_chunk_size,
-    calculate_centroids,
-)
-from scportrait.pipeline._base import Logable
-from alphabase.io import tempmmap
 import datatree
 import xarray
+from alphabase.io import tempmmap
+from spatialdata import SpatialData
+from spatialdata.models import Image2DModel, PointsModel
+from spatialdata.transformations.transformations import Identity
 
-from typing import List, Tuple
+from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
+from scportrait.pipeline._utils.spatialdata_helper import (
+    calculate_centroids,
+    generate_region_annotation_lookuptable,
+    get_chunk_size,
+    get_unique_cell_ids,
+    rechunk_image,
+    remap_region_annotation_table,
+)
 
 
 class sdata_filehandler(Logable):
@@ -57,9 +56,7 @@ class sdata_filehandler(Logable):
             segmentation_object = _sdata.labels[key]
 
             if not hasattr(segmentation_object.attrs, "cell_ids"):
-                segmentation_object = spLabels2DModel().convert(
-                    segmentation_object, classes=None
-                )
+                segmentation_object = spLabels2DModel().convert(segmentation_object, classes=None)
 
         return _sdata
 
@@ -120,9 +117,7 @@ class sdata_filehandler(Logable):
 
         # ensure that the segmentation object is converted to the scPortrait Labels2DModel
         if not hasattr(segmentation_object.attrs, "cell_ids"):
-            segmentation_object = spLabels2DModel().convert(
-                segmentation_object, classes=classes
-            )
+            segmentation_object = spLabels2DModel().convert(segmentation_object, classes=classes)
 
         if overwrite:
             self._force_delete_object(_sdata, segmentation_label, "labels")
@@ -139,7 +134,7 @@ class sdata_filehandler(Logable):
         segmentation,
         segmentation_label: str,
         classes: set = None,
-        chunks: Tuple[int] = (1000, 1000),
+        chunks: Tuple[int, int] = (1000, 1000),
         overwrite: bool = False,
     ):
         transform_original = Identity()
@@ -153,16 +148,9 @@ class sdata_filehandler(Logable):
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(
-            mask, segmentation_label, classes=classes, overwrite=overwrite
-        )
+        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite=overwrite)
 
-    def _write_points_object_sdata(
-        self, 
-        points, 
-        points_name: str, 
-        overwrite: bool = False
-    ):
+    def _write_points_object_sdata(self, points, points_name: str, overwrite: bool = False):
         _sdata = self._read_sdata()
 
         if overwrite:
@@ -173,29 +161,22 @@ class sdata_filehandler(Logable):
 
         self.log(f"Points {points_name} written to sdata object.")
 
-    def _write_table_object_sdata(
-            self, 
-            table, 
-            table_name: str, 
-            overwrite: bool =False):
-        
-        #reconnect to sdata object
+    def _write_table_object_sdata(self, table, table_name: str, overwrite: bool = False):
+        # reconnect to sdata object
         _sdata = self._read_sdata()
-        
+
         if overwrite:
-            self._force_delete_object(table_name, "tables")
+            self._force_delete_object(_sdata, table_name, "tables")
 
         _sdata.tables[table_name] = table
         _sdata.write_element(table_name, overwrite=False)
 
         self.log(f"Table {table_name} written to sdata object.")
-        
+
     ### Perform operations on sdata object ###
     def _get_centers(self, sdata, segmentation_label: str) -> PointsModel:
         if segmentation_label not in sdata.labels:
-            raise ValueError(
-                f"Segmentation {segmentation_label} not found in sdata object."
-            )
+            raise ValueError(f"Segmentation {segmentation_label} not found in sdata object.")
 
         centers = calculate_centroids(sdata.labels[segmentation_label])
 
@@ -204,9 +185,7 @@ class sdata_filehandler(Logable):
     def _add_centers(self, segmentation_label: str, overwrite=False) -> None:
         _sdata = self._read_sdata()
         centroids_object = self._get_centers(_sdata, segmentation_label)
-        self._write_points_object_sdata(
-            centroids_object, self.centers_name, overwrite=overwrite
-        )
+        self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
 
     def _load_input_image_to_memmap(self, tmp_dir_abs_path: str, image=None):
         """

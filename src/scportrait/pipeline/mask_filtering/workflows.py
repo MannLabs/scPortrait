@@ -1,10 +1,9 @@
+import numpy as np
+
 from scportrait.pipeline.filter_segmentation import (
     SegmentationFilter,
     TiledSegmentationFilter,
 )
-
-import numpy as np
-
 from scportrait.processing.masks.mask_filtering import MatchNucleusCytosolIds
 
 
@@ -47,9 +46,7 @@ class filtering_match_nucleus_to_cytosol(BaseFiltering):
             erosion_dilation=self.erosion_dilation,
             smoothing_kernel_size=self.kernel_size,
         )
-        nucleus_cytosol_pairs = filter.generate_lookup_table(
-            input_masks[0], input_masks[1]
-        )
+        nucleus_cytosol_pairs = filter.generate_lookup_table(input_masks[0], input_masks[1])
 
         # save results
         self.save_classes(classes=nucleus_cytosol_pairs)

@@ -1,14 +1,15 @@
-from datetime import datetime
-import os
-import warnings
-import shutil
-import tempfile
-import sys
-import platform
 import gc
+import os
+import platform
+import shutil
+import sys
+import tempfile
+import warnings
+from datetime import datetime
 
 import numpy as np
 import torch
+
 
 class Logable(object):
     """
@@ -38,9 +39,7 @@ class Logable(object):
         """
 
         if not hasattr(self, "directory"):
-            raise ValueError(
-                "Please define a valid self.directory in every descended of the Logable class"
-            )
+            raise ValueError("Please define a valid self.directory in every descended of the Logable class")
 
         if isinstance(message, str):
             lines = message.split("\n")
@@ -157,14 +156,7 @@ class ProcessingStep(Logable):
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
     def __init__(
-        self,
-        config,
-        directory,
-        project_location,
-        debug=False,
-        overwrite=False,
-        project=None,
-        filehandler = None
+        self, config, directory, project_location, debug=False, overwrite=False, project=None, filehandler=None
     ):
         super().__init__(directory=directory)
 
@@ -183,9 +175,7 @@ class ProcessingStep(Logable):
 
         if "cache" not in self.config.keys():
             self.config["cache"] = os.path.abspath(os.getcwd())
-            self.log(
-                f"No cache directory specified in config using current working directory {self.config['cache']}."
-            )
+            self.log(f"No cache directory specified in config using current working directory {self.config['cache']}.")
 
     def __call__(self, *args, debug=None, overwrite=None, **kwargs):
         """
@@ -270,17 +260,13 @@ class ProcessingStep(Logable):
             config_handle = self.config
 
         elif isinstance(key, list):
-            raise NotImplementedError(
-                "registration of parameters is not yet supported for nested parameters"
-            )
+            raise NotImplementedError("registration of parameters is not yet supported for nested parameters")
 
         else:
             raise TypeError("Key must be of string or a list of strings")
 
         if key not in config_handle:
-            self.log(
-                f"No configuration for {key} found, parameter will be set to {value}"
-            )
+            self.log(f"No configuration for {key} found, parameter will be set to {value}")
             config_handle[key] = value
 
     def get_directory(self):
@@ -302,9 +288,7 @@ class ProcessingStep(Logable):
             self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
             self._tmp_dir_path = self._tmp_dir.name
 
-            self.log(
-                f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
-            )
+            self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
         else:
             raise ValueError("No cache directory specified in config.")
 

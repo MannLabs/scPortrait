@@ -1,28 +1,28 @@
-from spatialdata import SpatialData, get_centroids
-from spatialdata.models import Labels2DModel, TableModel, PointsModel, Image2DModel
-from spatialdata.transformations.transformations import Identity
-from spatialdata._core.operations.transform import transform
-from spatialdata.transformations.operations import get_transformation
-from napari_spatialdata import Interactive
+import _pickle as cPickle
+import os
+import shutil
+import tempfile
 
 import anndata
 import h5py
-import _pickle as cPickle
-import tempfile
-import os
-import pandas as pd
 import numpy as np
-import shutil
+import pandas as pd
 import psutil
-
 from alphabase.io import tempmmap
+from napari_spatialdata import Interactive
 from sparcstools.base import daskmmap
+from spatialdata import SpatialData, get_centroids
+from spatialdata._core.operations.transform import transform
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
+from spatialdata.transformations.operations import get_transformation
+from spatialdata.transformations.transformations import Identity
 
-from scportrait.pipeline._utils.segmentation import numba_mask_centroid
 from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.segmentation import numba_mask_centroid
 
 DEFAULT_IMAGE_DTYPE = np.uint16
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
 
 class convert_SPARCSproject_to_spatialdata(Logable):
     def __init__(
@@ -35,7 +35,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         overwrite=True,
     ):
         self.new_project_location = new_project_location
-        self.directory = new_project_location # This is the directory where the new spatialdata project will be saved and where log output will be saved. This key definition required for the Logable class.
+        self.directory = new_project_location  # This is the directory where the new spatialdata project will be saved and where log output will be saved. This key definition required for the Logable class.
         self.old_project_location = old_project_location
         self.channel_names = channel_names
         self.cache = cache
@@ -68,10 +68,8 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
         self._tmp_dir_path = self._tmp_dir.name
 
-        self.log(
-            f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
-        )
-    
+        self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
+
     def clear_temp_dir(self):
         """Delete created temporary directory."""
 
@@ -92,9 +90,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         """
         if os.path.exists(self.new_project_location):
             if self.overwrite:
-                self.log(
-                    f"Output location {self.new_project_location} already exists. Overwriting."
-                )
+                self.log(f"Output location {self.new_project_location} already exists. Overwriting.")
                 shutil.rmtree(self.new_project_location)
             else:
                 raise ValueError(
@@ -104,18 +100,16 @@ class convert_SPARCSproject_to_spatialdata(Logable):
             os.makedirs(self.new_project_location)
 
     def _get_sdata_path(self):
-        """ 
+        """
         Get the path to the spatialdata object.
         """
         return os.path.join(self.new_project_location, "sparcs.sdata")
 
     def _load_input_image(self):
-        """ 
+        """
         Load the input image from the project and save it to a temporary memory mapped array.
         """
-        with h5py.File(
-            f"{self.old_project_location}/segmentation/segmentation.h5", "r"
-        ) as hf:
+        with h5py.File(f"{self.old_project_location}/segmentation/segmentation.h5", "r") as hf:
             input_image = hf["channels"]
 
             self.temp_image_path = tempmmap.create_empty_mmap(
@@ -170,9 +164,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         """
         Load the segmentation mask from the project and save it to a temporary memory mapped array.
         """
-        with h5py.File(
-            f"{self.old_project_location}/segmentation/segmentation.h5", "r"
-        ) as hf:
+        with h5py.File(f"{self.old_project_location}/segmentation/segmentation.h5", "r") as hf:
             if "labels" in hf:
                 segmentation = hf["labels"]
 
@@ -189,9 +181,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
                     for j in range(segmentation.shape[1]):
                         temp_image[i, j] = segmentation[i, j]
 
-                self.log(
-                    "Finished loading segmentation mask to memory mapped temp array."
-                )
+                self.log("Finished loading segmentation mask to memory mapped temp array.")
             else:
                 self.log("No segmentation found in project.")
                 self.segmentation_status = False
@@ -209,9 +199,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
         if self.segmentation_status is None:
             # reconnect to temporary image as a dask array
-            temp_segmentation = daskmmap.dask_array_from_path(
-                self.temp_segmentation_path
-            )
+            temp_segmentation = daskmmap.dask_array_from_path(self.temp_segmentation_path)
 
             # transform to spatialdata image model
             transform_original = Identity()
@@ -230,14 +218,14 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
             sdata = SpatialData.read(self._get_sdata_path())
 
-            #write nucleus mask
+            # write nucleus mask
             sdata.labels["seg_all_nucleus"] = mask_0
             sdata.write_element("seg_all_nucleus", overwrite=True)
 
-            #write cytosol mask
+            # write cytosol mask
             sdata.labels["seg_all_cytosol"] = mask_1
             sdata.write_element("seg_all_cytosol", overwrite=True)
-            
+
             # track that segmentation has been loaded
             self.segmentation_status = True
             self.nucleus_segmentation = True
@@ -258,10 +246,10 @@ class convert_SPARCSproject_to_spatialdata(Logable):
                 region_lookup[region] = [(table_name, table)]
             else:
                 region_lookup[region].append((table_name, table))
-        
+
         return region_lookup
 
-    def add_multiscale_segmentation(self, region_keys = ["seg_all_nucleus", "seg_all_cytosol"], scale_factors=[2, 4, 8]):
+    def add_multiscale_segmentation(self, region_keys=["seg_all_nucleus", "seg_all_cytosol"], scale_factors=[2, 4, 8]):
         """
         Add multiscale segmentation to the spatialdata object.
         """
@@ -280,12 +268,18 @@ class convert_SPARCSproject_to_spatialdata(Logable):
                     table = table.copy()
                     table.obs["region"] = f"{region_key}_multiscale"
                     table.obs["region"] = table.obs["region"].astype("category")
-                    del table.uns["spatialdata_attrs"] #remove the spatialdata attributes so that the table can be re-written
+                    del table.uns[
+                        "spatialdata_attrs"
+                    ]  # remove the spatialdata attributes so that the table can be re-written
 
-                    table = TableModel.parse(table, region_key="region", region=f"{region_key}_multiscale", instance_key="cell_id")
+                    table = TableModel.parse(
+                        table, region_key="region", region=f"{region_key}_multiscale", instance_key="cell_id"
+                    )
                     sdata.tables[f"{table_name}_multiscale"] = table
                     sdata.write_element(f"{table_name}_multiscale", overwrite=True)
-                    self.log(f"Added annotation {table_name} to spatialdata object for multiscaled segmentation of {region_key}.")
+                    self.log(
+                        f"Added annotation {table_name} to spatialdata object for multiscaled segmentation of {region_key}."
+                    )
 
     def _make_centers_object(
         self,
@@ -294,19 +288,17 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         transformation,
         coordinate_system="global",
     ):
-        """ 
+        """
         Create a spatialdata PointsModel object from the provided centers and ids.
         """
         coordinates = pd.DataFrame(centers, columns=["y", "x"], index=ids)
-        centroids = PointsModel.parse(
-            coordinates, transformations={coordinate_system: transformation}
-        )
+        centroids = PointsModel.parse(coordinates, transformations={coordinate_system: transformation})
         centroids = transform(centroids, to_coordinate_system=coordinate_system)
 
         return centroids
 
     def write_centers_to_spatialdata(self, coordinate_system="global"):
-        """ 
+        """
         Write the centers of the cells (based on their nuclear segmentation masks) to a spatialdata object.
 
         Parameters
@@ -323,39 +315,28 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
         if os.path.exists(centers_path) and os.path.exists(cell_ids_path):
             self.log("Centers already precalculated. Loading from project.")
-            with open(
-                f"{self.old_project_location}/extraction/center.pickle", "rb"
-            ) as input_file:
+            with open(f"{self.old_project_location}/extraction/center.pickle", "rb") as input_file:
                 centers = cPickle.load(input_file)
             with open(cell_ids_path, "rb") as input_file:
                 _ids = cPickle.load(input_file)
-            centroids = self._make_centers_object(
-                centers, _ids, transform, coordinate_system=coordinate_system
-            )
+            centroids = self._make_centers_object(centers, _ids, transform, coordinate_system=coordinate_system)
         else:
             if self.segementation_status:
-                self.log(
-                    "No centers found in project. Recalculating based on the provided segmentation mask."
-                )
+                self.log("No centers found in project. Recalculating based on the provided segmentation mask.")
 
                 if self.check_memory(mask):
                     self.log("Calculating centers using numba This should be quick.")
                     centers, _, _ids = numba_mask_centroid(mask.values)
-                    centroids = self._make_centers_object(
-                        centers, _ids, transform, coordinate_system=coordinate_system
-                    )
+                    centroids = self._make_centers_object(centers, _ids, transform, coordinate_system=coordinate_system)
                 else:
-                    self.log(
-                        "Array larger than available memory, using dask-delayed calculation of centers."
-                    )
+                    self.log("Array larger than available memory, using dask-delayed calculation of centers.")
                     centroids = get_centroids(mask, coordinate_system)
 
         sdata.points["centers_cells"] = centroids
         sdata.write_element("centers_cells", overwrite=True)
         self.centers_status = True
-    
-    def _read_classification_results(self, classification_result):
 
+    def _read_classification_results(self, classification_result):
         classification_dir = f"{self.old_project_location}/classification/{classification_result}/"
         filename = os.listdir(classification_dir)
         filename = [x for x in filename if x.endswith(".csv")]
@@ -364,44 +345,47 @@ class convert_SPARCSproject_to_spatialdata(Logable):
             raise ValueError("Multiple classification files found in the classification directory.")
         elif len(filename) == 0:
             raise ValueError("No classification files found in the classification directory.")
-        
+
         classification_file = f"{classification_dir}/{filename[0]}"
 
-        #read classification results
-        classification_results = pd.read_csv(classification_file, index_col = 0)
+        # read classification results
+        classification_results = pd.read_csv(classification_file, index_col=0)
         feature_matrix = classification_results.to_numpy()
         var_names = classification_results.columns
 
         obs = pd.DataFrame()
         obs["cell_id"] = classification_results.cell_id
 
-        #map into an anndata object
+        # map into an anndata object
         table = anndata.AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-        return(table)
+        return table
 
-    def write_classification_result_to_spatialdata(self, classification_result, segmentation_regions = ["seg_all_nucleus", "seg_all_cytosol"]):
-
+    def write_classification_result_to_spatialdata(
+        self, classification_result, segmentation_regions=["seg_all_nucleus", "seg_all_cytosol"]
+    ):
         class_result = self._read_classification_results(classification_result)
         sdata = SpatialData.read(self._get_sdata_path())
-        
+
         for segmentation_region in segmentation_regions:
-            table = class_result.copy() #need to copy so that we can modify the object without changing the original
+            table = class_result.copy()  # need to copy so that we can modify the object without changing the original
             table.obs["region"] = segmentation_region
             table.obs["region"] = table.obs["region"].astype("category")
 
-            table = TableModel.parse(table, region_key = "region", region = segmentation_region, instance_key="cell_id")
+            table = TableModel.parse(table, region_key="region", region=segmentation_region, instance_key="cell_id")
 
             sdata.tables[f"{classification_result}_{segmentation_region}"] = table
             sdata.write_element(f"{classification_result}_{segmentation_region}", overwrite=True)
 
-        self.log(f"Added classification result from folder {classification_result} to spatialdata object. Annotated the following regions: {segmentation_regions}")
+        self.log(
+            f"Added classification result from folder {classification_result} to spatialdata object. Annotated the following regions: {segmentation_regions}"
+        )
 
-        
     def process(self):
-
         # setup new project location correctly
         self._check_output_location()
-        self.log(f"Transferring SPARCS project from {self.old_project_location} to spatialdata object at {self.new_project_location}.")
+        self.log(
+            f"Transferring SPARCS project from {self.old_project_location} to spatialdata object at {self.new_project_location}."
+        )
 
         # setup cache for tempmmap arrays
         self._create_temp_dir()
@@ -419,13 +403,15 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
         # write classification results to sdata object
         classification_results = os.listdir(f"{self.old_project_location}/classification/")
-        classification_results = [x for x in classification_results if os.path.isdir(f"{self.old_project_location}/classification/{x}")]
+        classification_results = [
+            x for x in classification_results if os.path.isdir(f"{self.old_project_location}/classification/{x}")
+        ]
 
         if len(classification_results) > 0:
             for classification_result in classification_results:
                 self.write_classification_result_to_spatialdata(classification_result)
 
-        #add multiscale
+        # add multiscale
         self.add_multiscale_segmentation()
         self.clear_temp_dir()
         self.log("Finished transferring SPARCS project to spatialdata object.")
