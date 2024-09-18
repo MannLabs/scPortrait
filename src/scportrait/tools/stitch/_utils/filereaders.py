@@ -7,7 +7,7 @@ from ashlar.reg import BioformatsMetadata, BioformatsReader
 from skimage.filters import gaussian
 from skimage.util import invert
 
-from scportrait.processing.images._image_processing import rescale_image
+from scportrait.processing.preprocessing import rescale_image
 
 
 class FilePatternReaderRescale(FilePatternReader):
