@@ -1,7 +1,9 @@
+import os
+from pathlib import Path
+
 from scportrait.data._dataloader import _download
 from scportrait.tools.ml.pretrained_models import _get_data_dir
-from pathlib import Path
-import os
+
 
 def dataset_1():
     """
@@ -19,8 +21,9 @@ def dataset_1():
             output_path=save_path,
             archive_format="zip",
         )
-    
+
     return save_path
+
 
 def dataset_2():
     """
@@ -38,8 +41,9 @@ def dataset_2():
             output_path=save_path,
             archive_format="zip",
         )
-    
+
     return save_path
+
 
 def dataset_3():
     """
@@ -57,8 +61,9 @@ def dataset_3():
             output_path=save_path,
             archive_format="zip",
         )
-    
+
     return save_path
+
 
 def dataset_4():
     """
@@ -76,8 +81,9 @@ def dataset_4():
             output_path=save_path,
             archive_format="zip",
         )
-    
+
     return save_path
+
 
 def dataset_5():
     """
@@ -95,8 +101,9 @@ def dataset_5():
             output_path=save_path,
             archive_format="zip",
         )
-    
+
     return save_path
+
 
 def dataset_6():
     """
@@ -114,6 +121,5 @@ def dataset_6():
             output_path=save_path,
             archive_format="zip",
         )
-    
-    return save_path
 
+    return save_path

@@ -84,4 +84,3 @@ def _download(
             os.remove(download_to_path)
 
     Path(lock_path).unlink()
-    
