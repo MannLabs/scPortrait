@@ -1,36 +1,55 @@
 #### Required Packages #####
 
-# General dependencies
-numpy
+tqdm
+numpy<2.0.0
 pandas
+numba
+matplotlib
+seaborn
+h5py
+yattag
+alphabase
+pillow
 tabulate
 colorama
-matplotlib
-tqdm
-h5py
 pyyaml
-pillow
+
 zarr
 ome-zarr
-alphabase
+tifffile
 aicspylibczi
+
+mahotas
 shapely
 rasterio
 imagesize
+imagecodecs
 xarray
-
-
-# Packages better installed via conda due to dependencies
-cellpose
+xarray-datatree
+opencv-python
+scikit-image>=0.22.0
 scikit-fmm
+scipy
+cellpose
 
-# Packages to be installed via conda
-# (Ensure these are installed in your conda environment beforehand)
-numba
 torch
 pytorch-lightning
 torchvision
-opencv-python
-scikit-image
-scipy
-mahotas
+
+lxml_html_clean
+ashlar @ git+https://github.com/labsyspharm/ashlar.git@master
+networkx
+py-lmd @ git+https://github.com/MannLabs/py-lmd.git@refs/pull/11/head#egg=py-lmd
+
+#packages for building the documentation
+sphinx
+sphinx-argparse
+sphinx-rtd-theme==2.0.0
+nbsphinx
+renku-sphinx-theme
+
+#for testing
+pytest
+
+# development
+pre-commit
