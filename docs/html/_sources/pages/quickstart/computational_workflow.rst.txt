@@ -7,16 +7,16 @@ scPortrait workflow
 .. image:: ../images/scPortrait_workflow_steps.png
    :width: 100%
    :align: center
-   :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection 
+   :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection
 
 The scPortrait workflow consists of up to 4 steps:
 
   1. :ref:`Segmentation <quickstart_segmentation>`: Generates masks for the segmentation of input images into individual cells. Depending on the desired type of segmentation, different segmentation methods can be selected.
-  
+
   2. :ref:`Extraction <quickstart_extraction>`: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
-  
+
   3. :ref:`Classification <quickstart_classification>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
-  
+
   4. :ref:`Selection <quickstart_selection>`: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
 
 The results and logs from each processing step are saved into seperate subfolders in the main project directory. For each processing step, different methods can be chosen and their parameters specified via the ``config.yml`` file.
@@ -43,7 +43,7 @@ The cell segmentation process in scPortrait is split into two parts: **nuclear s
 | |pic1|                | |pic2|                | |pic3|                |
 +-----------------------+-----------------------+-----------------------+
 
-During the segmentation process, a mask is generated which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``. 
+During the segmentation process, a mask is generated which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``.
 
 If we zoomed in on the corner of the segmentation mask of a nucleus, the segmentation mask (a numpy array) would look like this:
 

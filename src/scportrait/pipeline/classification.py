@@ -1,4 +1,3 @@
-from datetime import datetime
 import os
 import sys
 import numpy as np
@@ -17,6 +16,7 @@ import pandas as pd
 
 import io
 from contextlib import redirect_stdout
+
 
 class MLClusterClassifier(ProcessingStep):
     """
@@ -136,7 +136,7 @@ class MLClusterClassifier(ProcessingStep):
         extraction_dir,
         accessory,
         size=0,
-        partial = False,
+        partial=False,
         project_dataloader=HDF5SingleCellDataset,
         accessory_dataloader=HDF5SingleCellDataset,
     ):
@@ -373,11 +373,11 @@ class MLClusterClassifier(ProcessingStep):
         encoders = self.config["encoders"]
         for encoder in encoders:
             if encoder == "forward":
-                self.inference(dataloader, model.network.forward, partial = partial)
+                self.inference(dataloader, model.network.forward, partial=partial)
             if encoder == "encoder":
-                self.inference(dataloader, model.network.encoder, partial = partial)
+                self.inference(dataloader, model.network.encoder, partial=partial)
 
-    def inference(self, dataloader, model_fun, partial = False):
+    def inference(self, dataloader, model_fun, partial=False):
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
 
@@ -515,7 +515,7 @@ class EnsembleClassifier(ProcessingStep):
                 print("Error:", e)
                 return None
 
-    def inference(self, dataloader, model_ensemble, partial = False):
+    def inference(self, dataloader, model_ensemble, partial=False):
         data_iter = iter(dataloader)
         self.log(
             f"Start processing {len(data_iter)} batches with {len(model_ensemble)} models from ensemble."
@@ -586,7 +586,7 @@ class EnsembleClassifier(ProcessingStep):
 
         self.log(f"Results saved to file: {path}")
 
-    def __call__(self, extraction_dir, partial = False):
+    def __call__(self, extraction_dir, partial=False):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -671,7 +671,9 @@ class EnsembleClassifier(ProcessingStep):
         )
 
         # perform inference
-        self.inference(dataloader=dataloader, model_ensemble=model_ensemble, partial = partial)
+        self.inference(
+            dataloader=dataloader, model_ensemble=model_ensemble, partial=partial
+        )
 
 
 class CellFeaturizer(ProcessingStep):

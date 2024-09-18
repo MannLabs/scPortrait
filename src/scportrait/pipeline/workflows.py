@@ -6,17 +6,13 @@ from scportrait.pipeline.segmentation import (
 )
 from scportrait.processing.preprocessing import percentile_normalization, downsample_img
 from scportrait.processing.filtering import SizeFilter, MatchNucleusCytosolIds
-from scportrait.processing.utils import visualize_class
 from scportrait.processing.segmentation import (
     segment_local_threshold,
     segment_global_threshold,
     numba_mask_centroid,
     contact_filter,
-    size_filter,
-    _class_size,
     global_otsu,
     remove_edge_labels,
-    _return_edge_labels,
 )
 
 import os
@@ -25,7 +21,6 @@ import gc
 import time
 
 # for typing
-import xarray
 from typing import Tuple, Union, List
 
 import numpy as np
@@ -48,13 +43,21 @@ from alphabase.io import tempmmap
 import torch
 from cellpose import models
 
-#for visualization 
+# for visualization
 
 from scportrait.utils.vis import _custom_cmap
+
 
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # initialize empty variable
+        self.maps = None
+        self.nucleus_thresholds = None
+        self.cytosol_thresholds = None
+        self.nucleus_confidence_interval = None
+        self.cytosol_confidence_interval = None
 
     def return_empty_mask(self, input_image):
         n_channels, x, y = input_image.shape
@@ -281,10 +284,12 @@ class _BaseSegmentation(Segmentation):
 
         if len(mask.shape) == 2:
             assert (mask.shape[0] == self.original_image_size[1]) and (
-                mask.shape[1] == self.original_image_size[2])
+                mask.shape[1] == self.original_image_size[2]
+            )
         elif len(mask.shape) == 3:
             assert (mask.shape[1] == self.original_image_size[1]) and (
-                mask.shape[2] == self.original_image_size[2])
+                mask.shape[2] == self.original_image_size[2]
+            )
 
         return mask
 
@@ -293,8 +298,8 @@ class _BaseSegmentation(Segmentation):
     def _normalize_image(
         self,
         input_image: np.array,
-        lower: Union[float, dict],
-        upper: Union[float, dict],
+        lower: Union[float, List],
+        upper: Union[float, List],
         debug: bool = False,
     ) -> np.array:
         # check that both are specified as the same type
@@ -391,13 +396,11 @@ class _BaseSegmentation(Segmentation):
                     type=mask_type
                 )
 
-                #save attributes for use later
+                # save attributes for use later
                 setattr(self, f"{mask_type}_thresholds", thresholds)
                 setattr(self, f"{mask_type}_confidence_interval", confidence_interval)
 
-    def _get_params_cellsize_filtering(
-        self, type
-    ) -> Tuple[Union[Tuple[float], None], Union[float, None]]:
+    def _get_params_cellsize_filtering(self, type):
         absolute_filter_status = False
 
         if "min_size" in self.config[f"{type}_segmentation"].keys():
@@ -475,7 +478,6 @@ class _BaseSegmentation(Segmentation):
         )
 
         if self.debug:
-            
             # plot mask before and after filtering to visualize the results
             if "input_image" in self.maps.keys():
                 input_image = self.maps["input_image"]
@@ -489,9 +491,7 @@ class _BaseSegmentation(Segmentation):
             else:
                 image_map = None
 
-            mask = filter.visualize_filtering_results(
-                plot_fig=False, return_maps=True
-            )
+            mask = filter.visualize_filtering_results(plot_fig=False, return_maps=True)
 
             cmap, norm = _custom_cmap()
 
@@ -502,14 +502,16 @@ class _BaseSegmentation(Segmentation):
             elif len(mask.shape) == 3:
                 axs.imshow(mask[0], cmap=cmap, norm=norm)
             axs.axis("off")
-            axs.set_title(f"Visualization of classes removed during {mask_name} size filtering")
-            fig_path = os.path.join(self.directory, f"Results_{mask_name}_size_filtering.png")
+            axs.set_title(
+                f"Visualization of classes removed during {mask_name} size filtering"
+            )
+            fig_path = os.path.join(
+                self.directory, f"Results_{mask_name}_size_filtering.png"
+            )
             fig.savefig(fig_path)
 
             # clearup memory
-            self._clear_cache(
-                vars_to_delete=[fig, mask, cmap, norm, input_image]
-            )
+            self._clear_cache(vars_to_delete=[fig, mask, cmap, norm, input_image])
 
         end_time = time.time()
 
@@ -564,8 +566,8 @@ class _BaseSegmentation(Segmentation):
         self.log("Performing filtering to match Cytosol and Nucleus IDs.")
 
         if debug:
-            masks_nucleus_unfiltered = nucleus_mask.copy()
-            masks_cytosol_unfiltered = cytosol_mask.copy()
+            nucleus_mask.copy()
+            cytosol_mask.copy()
 
         # perform filtering to remove cytosols which do not have a corresponding nucleus
         filter = MatchNucleusCytosolIds(filtering_threshold=filtering_threshold)
@@ -581,16 +583,16 @@ class _BaseSegmentation(Segmentation):
         )
 
         if debug:
-
-            mask_nuc, mask_cyto = filter.visualize_filtering_results(plot_fig = False, return_maps = True)
+            mask_nuc, mask_cyto = filter.visualize_filtering_results(
+                plot_fig=False, return_maps=True
+            )
 
             if "input_image" in self.maps.keys():
                 input_image = self.maps["input_image"]
             else:
                 raise ValueError("No input image found to visualize filtering results.")
 
-
-            #convert input image from uint16 to uint8
+            # convert input image from uint16 to uint8
             input_image = (input_image / 256).astype(np.uint8)
 
             cmap, norm = _custom_cmap()
@@ -598,17 +600,17 @@ class _BaseSegmentation(Segmentation):
             fig, axs = plt.subplots(1, 2, figsize=(20, 10))
 
             axs[0].imshow(input_image[0], cmap="gray")
-            axs[0].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-            axs[0].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+            axs[0].imshow(mask_nuc[0], cmap=cmap, norm=norm)
+            axs[0].imshow(mask_cyto[0], cmap=cmap, norm=norm)
             axs[0].axis("off")
             axs[0].set_title("results overlayed nucleus channel")
 
             axs[1].imshow(input_image[1], cmap="gray")
-            axs[1].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-            axs[1].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+            axs[1].imshow(mask_nuc[0], cmap=cmap, norm=norm)
+            axs[1].imshow(mask_cyto[0], cmap=cmap, norm=norm)
             axs[1].axis("off")
             axs[1].set_title("results overlayed cytosol channel")
-            
+
             fig.tight_layout()
             fig_path = os.path.join(self.directory, "Results_mask_matching.png")
             fig.savefig(fig_path)
@@ -738,8 +740,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 )
 
             # check that the normalization ranges are of the same type otherwise this will result in issues
-            assert type(self.lower_quantile_normalization_input_image) == type(
-                self.upper_quantile_normalization_input_image
+            assert isinstance(
+                type(self.lower_quantile_normalization_input_image),
+                type(self.upper_quantile_normalization_input_image),
             )
 
         # check if median filtering is required
@@ -1027,7 +1030,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
             self.maps["cytosol_mask"] > 0.5, 0, cytosol_labels
         )
 
-        self._clear_cache(vars_to_delete=[travel_time, marker, cytosol_labels, px_center])
+        self._clear_cache(
+            vars_to_delete=[travel_time, marker, cytosol_labels, px_center]
+        )
 
         # ensure all edge labels are removed
         cytosol_segmentation = remove_edge_labels(cytosol_segmentation)
@@ -1675,7 +1680,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         input_image = input_image[:2, :, :]
         gc.collect()  # cleanup to ensure memory is freed up
 
-        #perform downsampling
+        # perform downsampling
         input_image = self._downsample_image(input_image)
 
         self.cellpose_segmentation(input_image)
@@ -1812,7 +1817,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _finalize_segmentation_results(self, size_padding):
+    def _finalize_segmentation_results(self):
         required_maps = [self.maps["input_image"][0], self.maps["input_image"][1]]
 
         # Feature maps are all further channel which contain phenotypes needed for the classification
@@ -1830,7 +1835,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
         )
 
-        _, x, y = size_padding
+        _, x, y = self.expected_padded_image_size
 
         cyto_seg = self.maps["cytosol_segmentation"]
         cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(

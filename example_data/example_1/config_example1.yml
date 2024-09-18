@@ -16,9 +16,9 @@ WGASegmentation:
         median_step: 4
         threshold: 0.2 # threshold above local median for nuclear segmentation
         min_distance: 8 # minimum distance between two nucleis in pixel
-        peak_footprint: 7 # 
+        peak_footprint: 7 #
         speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-        dilation: 0 # final dilation of pixel mask       
+        dilation: 0 # final dilation of pixel mask
         min_size: 200 # minimum nucleus area in pixel
         max_size: 1000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
@@ -36,7 +36,7 @@ WGASegmentation:
     filter_masks_size: True
 ShardedWGASegmentation:
     input_channels: 3
-    shard_size: 4000000 # Average number of pixel per tile. 10.000 * 10.000 pixel are recommended. Can be adapted to memory and computation needs. 
+    shard_size: 4000000 # Average number of pixel per tile. 10.000 * 10.000 pixel are recommended. Can be adapted to memory and computation needs.
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
     threads: 1 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
     lower_quantile_normalization:   0.001
@@ -49,9 +49,9 @@ ShardedWGASegmentation:
         median_step: 4
         threshold: 0.3 # threshold above local median for nuclear segmentation
         min_distance: 8 # minimum distance between two nucleis in pixel
-        peak_footprint: 7 # 
+        peak_footprint: 7 #
         speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
-        dilation: 0 # final dilation of pixel mask       
+        dilation: 0 # final dilation of pixel mask
         min_size: 200 # minimum nucleus area in pixel
         max_size: 5000 # maximum nucleus area in pixel
         contact_filter: 0.5 # minimum nucleus contact with background
@@ -72,7 +72,7 @@ HDF5CellExtraction:
     threads: 80 # threads used in multithreading
     image_size: 128 # image size in pixel
     cache: "."
-    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000 
+    hdf5_rdcc_nbytes: 5242880000 # 5gb 1024 * 1024 * 5000
     hdf5_rdcc_w0: 1
     hdf5_rdcc_nslots: 50000
 MLClusterClassifier:
@@ -110,13 +110,12 @@ LMDSelection:
 
     # fold reduction of datapoints for compression
     poly_compression_factor: 30
-    
+
     # can be "none", "greedy", or "hilbert"
     path_optimization: "hilbert"
-    
+
     # number of nearest neighbours for optimized greedy search
     greedy_k: 15
-    
+
     # hilbert curve order
     hilbert_p: 7
-

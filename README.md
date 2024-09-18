@@ -13,7 +13,7 @@ The current documentation can be found under https://mannlabs.github.io/SPARCSsp
 
 ## Installation from Github
 
-scPortrait has been tested with **Python 3.8 and 3.9**. We recommended installing the library within a conda environment. 
+scPortrait has been tested with **Python 3.8 and 3.9**. We recommended installing the library within a conda environment.
 
 To install the scPortrait library clone the Github repository and use pip to install the library in your current environment.
 Please make sure that the package is installed editable (with the `-e` flag). Otherwise pretrained models might not be available.
@@ -36,6 +36,7 @@ import torch
 x = torch.rand(5, 3)
 print(x)
 ```
+
 You can access the python console by typing `python` and exit it when you are finished by entering `exit()`.
 The output should look something like this:
 
@@ -66,7 +67,6 @@ Once these steps are completed you can proceed to install the scPortrait package
 ```
 pip install -e .
 ```
-  
 
 ## Citing our Work
 

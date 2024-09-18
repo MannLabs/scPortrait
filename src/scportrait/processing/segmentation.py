@@ -7,7 +7,6 @@ from numba import njit
 from numba import prange
 
 from skimage.transform import resize
-from skimage.color import label2rgb
 from skimage import filters
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed
@@ -18,6 +17,7 @@ import skfmm
 from scportrait.processing.utils import plot_image
 
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
+
 
 #### Thresholding Functions to binarize input images
 def global_otsu(image):
@@ -121,14 +121,12 @@ def _segment_threshold(
     image_mask_clean = binary_erosion(image_mask, footprint=disk(speckle_kernel))
     image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel - 1))
 
-    return(image_mask_clean)
+    return image_mask_clean
 
-def _generate_labels_from_mask(image_mask, 
-                               dilation=4,
-                               min_distance=10,
-                               peak_footprint=7,
-                               debug = False):
-    
+
+def _generate_labels_from_mask(
+    image_mask, dilation=4, min_distance=10, peak_footprint=7, debug=False
+):
     # Find peaks in the image mask using a distance transform
     distance = ndimage.distance_transform_edt(image_mask)
 
@@ -142,12 +140,12 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is set to True, plot the local maxima on the binary mask
     if debug:
-        fig = plt.figure(frameon=False, figsize = (10,10))
+        fig = plt.figure(frameon=False, figsize=(10, 10))
         fig.set_size_inches(10, 10)
         plt.imshow(image_mask, cmap="Greys_r")
         plt.title("Generated Mask")
         plt.axis("off")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s=2, color="red")
         plt.show()
 
     # segmentation by fast marching and watershed
@@ -162,10 +160,10 @@ def _generate_labels_from_mask(image_mask,
 
     # If debug is True, plot the calculated distance_2
     if debug:
-        fig = plt.figure(frameon=False, figsize = (10,10))
+        fig = plt.figure(frameon=False, figsize=(10, 10))
         plt.title("Distance Transform")
         plt.imshow(distance_2, cmap="viridis")
-        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s = 2, color="red")
+        plt.scatter(peak_idx[:, 1], peak_idx[:, 0], s=2, color="red")
         plt.axis("off")
         plt.show()
 
@@ -178,6 +176,7 @@ def _generate_labels_from_mask(image_mask,
     labels = labels.astype(DEFAULT_SEGMENTATION_DTYPE)
 
     return labels
+
 
 def segment_global_threshold(
     image, dilation=4, min_distance=10, peak_footprint=7, speckle_kernel=4, debug=False
@@ -224,16 +223,17 @@ def segment_global_threshold(
     mask = _segment_threshold(
         image,
         threshold,
-
         speckle_kernel=speckle_kernel,
         debug=debug,
     )
 
-    labels = _generate_labels_from_mask(mask, 
-                                        dilation=dilation, 
-                                        min_distance=min_distance, 
-                                        peak_footprint=peak_footprint, 
-                                        debug=debug)
+    labels = _generate_labels_from_mask(
+        mask,
+        dilation=dilation,
+        min_distance=min_distance,
+        peak_footprint=peak_footprint,
+        debug=debug,
+    )
 
     # returnt the segmented image
     return labels
@@ -315,11 +315,13 @@ def segment_local_threshold(
         debug=debug,
     )
 
-    labels = _generate_labels_from_mask(mask,
-                                        dilation=dilation,
-                                        min_distance=min_distance,
-                                        peak_footprint=peak_footprint,
-                                        debug=debug)
+    labels = _generate_labels_from_mask(
+        mask,
+        dilation=dilation,
+        min_distance=min_distance,
+        peak_footprint=peak_footprint,
+        debug=debug,
+    )
 
     return labels
 
@@ -376,12 +378,13 @@ def _return_edge_labels_2d(input_map):
         .union(set(bottom_row.flatten()))
         .union(set(first_column.flatten()))
         .union(set(last_column.flatten()))
-        )
-    
+    )
+
     full_union = set([np.uint64(i) for i in full_union])
     full_union.discard(0)
 
-    return(list(full_union))
+    return list(full_union)
+
 
 def _return_edge_labels(input_map):
     """
@@ -407,8 +410,9 @@ def _return_edge_labels(input_map):
 
     elif len(input_map.shape) == 2:
         full_union = _return_edge_labels_2d(input_map)
-    
+
     return list(full_union)
+
 
 def remove_edge_labels(input_map):
     """
@@ -417,11 +421,12 @@ def remove_edge_labels(input_map):
     ----------
     input_map : np.ndarray
         Input segmentation as a 2D or 3D numpy array of integers.
- """
-    
+    """
+
     edge_labels = _return_edge_labels(input_map)
     cleaned_map = np.where(np.isin(input_map, edge_labels), 0, input_map)
-    return(cleaned_map)
+    return cleaned_map
+
 
 def shift_labels(
     input_map, shift, return_shifted_labels=False, remove_edge_labels=True
@@ -893,7 +898,9 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     # Get the unique cell_ids and remove the background (0)
     cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids: #this more cumbersone way of removing the background is necessary for masks that dont have any background
+    if (
+        0 in cell_ids
+    ):  # this more cumbersone way of removing the background is necessary for masks that dont have any background
         cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
 
@@ -901,7 +908,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     if min_cell_id == 0:
         print("no cells in image. Only contains background with value 0.")
-        
+
         # return empty arrays
         return None, None, None
 
@@ -909,13 +916,18 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
         num_classes = np.max(mask)
     else:
         num_classes = np.max(mask) + 1
-    
-    #explicit conversion to int to ensure that numba can type the function correctly
-    num_classes = int(num_classes)  
 
-    #initialize empty arrays for storing the results
+    # explicit conversion to int to ensure that numba can type the function correctly
+    num_classes = int(num_classes)
+
+    # initialize empty arrays for storing the results
     points_class = np.zeros((num_classes,), dtype=nb.uint32)
-    center = np.zeros((num_classes, 2,))
+    center = np.zeros(
+        (
+            num_classes,
+            2,
+        )
+    )
     ids = np.full((num_classes,), np.nan)
 
     if skip_background:
@@ -923,7 +935,7 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
                 if class_id != 0:
-                    #index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
+                    # index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
                     points_class[class_id - 1] += 1
                     center[class_id - 1] += np.array([x, y])
                     ids[class_id - 1] = class_id

@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import gc
 
+
 class Logable(object):
     """
     Object which can create log entries.
@@ -84,7 +85,7 @@ class Logable(object):
 
         dt_string = now.strftime(self.DEFAULT_FORMAT)
         return "[" + dt_string + "] "
-    
+
     def _clear_cache(self, vars_to_delete=None):
         """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
 
@@ -109,33 +110,34 @@ class ProcessingStep(Logable):
         debug (bool, default ``False``): When set to True debug outputs will be printed where applicable.
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
-    #input data
+
+    # input data
     DEFAULT_INPUT_IMAGE_NAME = "input_image.ome.zarr"
 
-    #segmentation
+    # segmentation
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
     DEFAULT_CLASSES_FILE = "classes.csv"
     DEFAULT_REMOVED_CLASSES_FILE = "removed_classes_too_close_to_edges.csv"
 
-    #filtering
+    # filtering
     DEFAULT_SEGMENTATION_FILTERING_DIR_NAME = "segmentation/filtering"
     DEFAULT_FILTERED_CLASSES_FILE = "filtered_classes.csv"
 
-    #processes with tiling
+    # processes with tiling
     DEFAULT_TILES_FOLDER = "tiles"
 
-    #extraction
+    # extraction
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
     DEFAULT_DATA_FILE = "single_cells.h5"
     DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
-    #classification
+    # classification
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
-    #dtypes
+    # dtypes
     DEFAULT_IMAGE_DTYPE = np.uint16
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
     DEFAULT_SEGMENTATION_DTYPE = np.uint32
@@ -313,11 +315,11 @@ class ProcessingStep(Logable):
         """
         Define context for multiprocessing steps that should be used.
         The context is platform dependent.
-        """ 
+        """
 
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             self.context = "spawn"
-        elif platform.system() == 'Darwin':
+        elif platform.system() == "Darwin":
             self.context = "spawn"
-        elif platform.system() == 'Linux':
+        elif platform.system() == "Linux":
             self.context = "fork"

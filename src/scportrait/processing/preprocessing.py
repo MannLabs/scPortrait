@@ -7,6 +7,7 @@ from scipy.ndimage import distance_transform_edt
 from mahotas import sobel
 import xarray as xr
 
+
 def _normalize_image(im, lower_value, upper_value):
     """
     Normalize an input 2D image (np.array) based on input values.
@@ -24,24 +25,25 @@ def _normalize_image(im, lower_value, upper_value):
     >>> norm_img = _normalize_image(img, 200, 15000)
     """
 
-    # Compute inter-percentile range (IPR)                                     
+    # Compute inter-percentile range (IPR)
     IPR = upper_value - lower_value
 
     # Normalize the image
-    out_im = im - lower_value 
-    
-    if IPR != 0: #add check to make sure IPR is not 0
+    out_im = im - lower_value
+
+    if IPR != 0:  # add check to make sure IPR is not 0
         out_im = out_im / IPR
-    
+
     # Clip values outside [0, 1]
     out_im = np.clip(out_im, 0, 1)
-            
+
     return out_im
+
 
 def _percentile_norm(im, lower_percentile, upper_percentile):
     """
     Normalize an input 2D image (np.array) based on the defined percentiles.
-    
+
     This is an helper function used in the percentile_normalization function.
 
     Args:
@@ -51,21 +53,24 @@ def _percentile_norm(im, lower_percentile, upper_percentile):
 
     Returns:
         out_im (np.array): Normalized Numpy array.
-    
+
     Example:
     >>> img = np.random.rand(4, 4)
     >>> norm_img = _percentile_norm(img, 0.001, 0.999)
     """
-    
+
     # Calculate the quantiles
-    lower_value = np.quantile(np.ravel(im),lower_percentile)
-    upper_value = np.quantile(np.ravel(im),upper_percentile)
+    lower_value = np.quantile(np.ravel(im), lower_percentile)
+    upper_value = np.quantile(np.ravel(im), upper_percentile)
 
     out_im = _normalize_image(im, lower_value, upper_value)
-            
+
     return out_im
 
-def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.999, return_copy = True):
+
+def percentile_normalization(
+    im, lower_percentile=0.001, upper_percentile=0.999, return_copy=True
+):
     """
     Normalize an input image channel-wise based on defined percentiles.
 
@@ -76,7 +81,7 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
         im (np.array): Numpy array of shape (height, width) or (channels, height, width).
         lower_percentile (float, optional): Lower percentile used for normalization, all lower values will be clipped to 0. Defaults to 0.001.
         upper_percentile (float, optional): Upper percentile used for normalization, all higher values will be clipped to 1. Defaults to 0.999.
-    
+
     Returns:
         im (np.array): Normalized Numpy array with dtype == float
 
@@ -84,30 +89,33 @@ def percentile_normalization(im, lower_percentile = 0.001, upper_percentile = 0.
     >>> img = np.random.rand(3, 4, 4) # (channels, height, width)
     >>> norm_img = percentile_normalization(img, 0.001, 0.999)
     """
-    #if false the input image is directly updated
+    # if false the input image is directly updated
     if return_copy:
-        im = im.copy() #ensure we are working on a copy not the original data
+        im = im.copy()  # ensure we are working on a copy not the original data
 
-    #ensure that the dtype is converted to a float before running this function
+    # ensure that the dtype is converted to a float before running this function
     if not isinstance(im.dtype, float):
         im = im.astype(np.float32)
 
     # chek if data is passed as (height, width) or (channels, height, width)
     if len(im.shape) == 2:
         im = _percentile_norm(im, lower_percentile, upper_percentile)
-        
+
     elif len(im.shape) == 3:
         for i, channel in enumerate(im):
             im[i] = _percentile_norm(im[i], lower_percentile, upper_percentile)
-            
+
     else:
-        raise ValueError("Input dimensions should be (height, width) or (channels, height, width).")
+        raise ValueError(
+            "Input dimensions should be (height, width) or (channels, height, width)."
+        )
 
     return im
 
-def downsample_img(img, N=2, return_dtype = np.uint16):
+
+def downsample_img(img, N=2, return_dtype=np.uint16):
     """
-    Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels. 
+    Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels.
     Takes a numpy array image as input and returns a numpy array as uint16.
 
     Parameters
@@ -117,14 +125,21 @@ def downsample_img(img, N=2, return_dtype = np.uint16):
     N : int, default = 2
         number of pixels that should be binned together using mean between pixels
     """
-    downsampled = xr.DataArray(img, dims=['c', 'x', 'y']).coarsen(c = 1, x= N, y= N, boundary = "exact").mean()
-    downsampled = (downsampled/downsampled.max()*np.iinfo(return_dtype).max).astype(return_dtype)
-    return(np.array(downsampled))    
+    downsampled = (
+        xr.DataArray(img, dims=["c", "x", "y"])
+        .coarsen(c=1, x=N, y=N, boundary="exact")
+        .mean()
+    )
+    downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(
+        return_dtype
+    )
+    return np.array(downsampled)
+
 
 def downsample_img_pxs(img, N=2):
     """
-    Function to downsample an image in shape CXY equivalent to taking every N'th pixel from each dimension. 
-    Channels are preserved as is. This does not use any interpolation and is therefore faster than the mean 
+    Function to downsample an image in shape CXY equivalent to taking every N'th pixel from each dimension.
+    Channels are preserved as is. This does not use any interpolation and is therefore faster than the mean
     method but is less precise.
 
     Parameters
@@ -135,11 +150,14 @@ def downsample_img_pxs(img, N=2):
         the nth pixel to take from each dimension
     """
 
-    downsampled = img[:,0:-1:N,0:-1:N] 
-    return(downsampled)  
+    downsampled = img[:, 0:-1:N, 0:-1:N]
+    return downsampled
 
-@jit(nopython=True, parallel = True) # Set "nopython" mode for best performance, equivalent to @njit
-def rolling_window_mean(array, size, scaling = False):
+
+@jit(
+    nopython=True, parallel=True
+)  # Set "nopython" mode for best performance, equivalent to @njit
+def rolling_window_mean(array, size, scaling=False):
     """
     Compute rolling window mean and normalize the input 2D array.
 
@@ -162,47 +180,48 @@ def rolling_window_mean(array, size, scaling = False):
     >>> rolling_array = rolling_window_mean(array, size=5, scaling=False)
     """
 
-    overlap=0
+    overlap = 0
     lengthy, lengthx = array.shape
-    delta = size-overlap
-    
-    #calculate the number of steps given the window size
+    delta = size - overlap
+
+    # calculate the number of steps given the window size
     ysteps = lengthy // delta
     xsteps = lengthx // delta
-    
+
     x = 0
     y = 0
-    
+
     # Iterate through the array with the given window size
     for i in range(ysteps):
         for j in range(xsteps):
-            y = i*delta
-            x = j*delta
-            
-            yd = min(y+size,lengthy)
-            xd = min(x+size,lengthx)
-            
+            y = i * delta
+            x = j * delta
+
+            yd = min(y + size, lengthy)
+            xd = min(x + size, lengthx)
+
             # Extract the current window (chunk) and calculate statistics
-            chunk = array[y:yd,x:xd]
+            chunk = array[y:yd, x:xd]
             std = np.std(chunk.flatten())
             max = np.max(chunk.flatten())
-            
-             # Scale the chunk, if scaling is True
+
+            # Scale the chunk, if scaling is True
             if scaling:
-                    chunk = chunk / std
-                    
+                chunk = chunk / std
+
             # Compute the mean and remove it from the chunk
             mean = np.median(chunk.flatten())
-            
+
             if max > 0:
-                chunk = (chunk - mean)
-                chunk = np.where(chunk < 0,0,chunk)
-       
-            array[y:yd,x:xd] = chunk
+                chunk = chunk - mean
+                chunk = np.where(chunk < 0, 0, chunk)
+
+            array[y:yd, x:xd] = chunk
 
     if scaling:
-        array = array/np.max(array.flatten())
+        array = array / np.max(array.flatten())
     return array
+
 
 def origins_from_distance(array):
     """
@@ -215,7 +234,7 @@ def origins_from_distance(array):
 
     Args:
         array (np.array): Input 2D numpy array.
-    
+
     Returns:
         peak_list (np.array): List of peak coordinates, shape (num_peaks, 2).
         peak_map (np.array): Binary map of peaks, same shape as input array.
@@ -228,19 +247,22 @@ def origins_from_distance(array):
     # Apply Gaussian filter to the input array
     array = gaussian(array, sigma=1)
     std = np.std(array.flatten())
-    
+
     # Threshold the filtered array and perform distance transform
-    thr_mask = np.where(array > 3 * std, 1,0)
+    thr_mask = np.where(array > 3 * std, 1, 0)
     distance = distance_transform_edt(thr_mask)
-    
+
     # Find local peaks in the distance-transformed array
-    peak_list  = peak_local_max(distance, min_distance=5, threshold_abs=std,footprint=np.ones((3, 3)))
+    peak_list = peak_local_max(
+        distance, min_distance=5, threshold_abs=std, footprint=np.ones((3, 3))
+    )
 
     # Create a map with True elements at peak locations
-    peak_map = np.zeros_like(array, dtype=bool) ### WHAT IS BASE AND WHAT DOES IT DO??
+    peak_map = np.zeros_like(array, dtype=bool)  ### WHAT IS BASE AND WHAT DOES IT DO??
     peak_map[tuple(peak_list.T)] = True
-    
+
     return peak_list, peak_map
+
 
 def MinMax(inarr):
     """
@@ -251,7 +273,7 @@ def MinMax(inarr):
 
     Args:
         inarr (np.array): Input 2D numpy array.
-    
+
     Returns:
         np.array: Min-Max normalized numpy array.
 
@@ -264,9 +286,10 @@ def MinMax(inarr):
         return (inarr - np.min(inarr)) / (np.max(inarr) - np.min(inarr))
     else:
         return inarr
-    
+
+
 def EDF(image):
-    """ Calculate Extended Depth of Field for the given input image Z-stack.
+    """Calculate Extended Depth of Field for the given input image Z-stack.
     Based on implementation here: https://mahotas.readthedocs.io/en/latest/edf.html#id3
 
     Args:
@@ -276,24 +299,27 @@ def EDF(image):
         np.array: EDF selected image
     """
 
-    #get image stack sizes
+    # get image stack sizes
     stack, h, w = image.shape
 
-    #determine in focusness for each pixel
+    # determine in focusness for each pixel
     focus = np.array([sobel(z, just_filter=True) for z in image])
-    
-    #select best focal plane for each pixel
+
+    # select best focal plane for each pixel
     best = np.argmax(focus, 0)
 
-    image = image.reshape((stack,-1)) # image is now (stack, nr_pixels)
-    image = image.transpose() # image is now (nr_pixels, stack)
-    r = image[np.arange(len(image)), best.ravel()] # Select the right pixel at each location
-    r = r.reshape((h,w)) # reshape to get final result
+    image = image.reshape((stack, -1))  # image is now (stack, nr_pixels)
+    image = image.transpose()  # image is now (nr_pixels, stack)
+    r = image[
+        np.arange(len(image)), best.ravel()
+    ]  # Select the right pixel at each location
+    r = r.reshape((h, w))  # reshape to get final result
 
-    return (r)
+    return r
+
 
 def maximum_intensity_projection(image):
-    """ Calculate Extended Depth of Field for the given input image Zstack.
+    """Calculate Extended Depth of Field for the given input image Zstack.
 
     Args:
         image (np.array): Input image array of shape (Z, X, Y)
@@ -301,4 +327,4 @@ def maximum_intensity_projection(image):
     Returns:
         np.array: Maximum Intensity Projected Image.
     """
-    return(np.max(image, axis=0))
+    return np.max(image, axis=0)

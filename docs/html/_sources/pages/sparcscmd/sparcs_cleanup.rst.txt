@@ -6,7 +6,7 @@ sparcs-cleanup
    :module: sparcscmd.sparcs-stat
    :func: generate_parser
    :prog: sparcs-cleanup
-   
+
 List intermediate files contained in sparcs projects that can be deleted to free up disk-space.
 Can be run in dry-run to only list found files before deleteting.
 
@@ -16,11 +16,11 @@ Examples
     Show found files in a folder containing multiple datasets
     ::
         sparcs-cleanup -n True .
-        
+
     Result:
     ::
         Searching for intermediate files that can be deleted, this may take a moment...
-        
+
         ProjectA
         Found the following files to delete:
         ('~/ProjectA/segmentation/input_image.h5', '42.6GiB')
@@ -48,7 +48,7 @@ Examples
         ('~/ProjectA/segmentation/tiles/8', '7.7GiB')
         ('~/ProjectA/segmentation/tiles/18', '7.7GiB')
         Rerun with -n False to remove these files
-        
+
         ProjectB
         Found the following files to delete:
         ('~/ProjectA/segmentation/input_image.h5', '42.6GiB')
@@ -76,11 +76,11 @@ Examples
         ('~/ProjectA/segmentation/tiles/8', '7.7GiB')
         ('~/ProjectA/segmentation/tiles/18', '7.7GiB')
         Rerun with -n False to remove these files
-    
+
     Delete intermediate files in folder containing multiple datasets
     ::
         sparcs-cleanup -n False .
-        
+
     Result:
     ::
         Searching for intermediate files that can be deleted, this may take a moment...

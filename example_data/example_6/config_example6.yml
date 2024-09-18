@@ -8,7 +8,7 @@ Multithreaded_Cytosol_Cellpose_TimecourseSegmentation:
     cache: "." #path to where intermediate results are written to memory mapped temp arrays
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
-    median_filter_size:   4 
+    median_filter_size:   4
     nucleus_segmentation:
         model: "nuclei"
         diameter: 400 #if this parameter is not set then cellpose will determine the diameter of the segemented shapes automatically
@@ -26,7 +26,7 @@ Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     cache: "."
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
-    median_filter_size:   4 
+    median_filter_size:   4
     nucleus_segmentation:
         model: "nuclei"
     cytosol_segmentation:
@@ -43,7 +43,7 @@ Cytosol_Cellpose_Downsampling_TimecourseSegmentation:
     cache: "."
     lower_quantile_normalization:   0.000
     upper_quantile_normalization:   1.000
-    median_filter_size:   4 
+    median_filter_size:   4
     nucleus_segmentation:
         model: "nuclei"
     cytosol_segmentation:
@@ -64,7 +64,7 @@ TimecourseHDF5CellExtraction:
     hdf5_rdcc_nslots: 1250
 CellFeaturizer:
     channel_classification: 4
-    threads: 20 
+    threads: 20
     batch_size: 100
     dataloader_worker_number: 5
     inference_device: "cuda"

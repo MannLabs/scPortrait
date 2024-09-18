@@ -3,10 +3,6 @@ import pytest
 import numpy as np
 import os
 
-#######################################################
-# Unit tests for ../proccessing/segmentation.py
-#######################################################
-
 from scportrait.processing.segmentation import (
     global_otsu,
     _segment_threshold,
@@ -14,6 +10,34 @@ from scportrait.processing.segmentation import (
     segment_local_threshold,
 )
 from skimage import data  # test datasets for segmentation testing
+
+from scportrait.processing.segmentation import _return_edge_labels, shift_labels
+from scportrait.processing.segmentation import _remove_classes, remove_classes
+
+from scportrait.processing.segmentation import contact_filter_lambda, contact_filter
+
+from scportrait.processing.segmentation import _class_size, size_filter
+from scportrait.processing.segmentation import _numba_subtract, numba_mask_centroid
+from scportrait.processing.preprocessing import (
+    _percentile_norm,
+    percentile_normalization,
+    rolling_window_mean,
+    MinMax,
+)
+
+from scportrait.processing.utils import (
+    plot_image,
+    visualize_class,
+    download_testimage,
+    flatten,
+)
+import tempfile
+from scportrait.pipeline.base import Logable, ProcessingStep
+
+
+#######################################################
+# Unit tests for ../proccessing/segmentation.py
+#######################################################
 
 
 def test_global_otsu():
@@ -80,9 +104,6 @@ def test_segment_local_threshold():
     assert labels.max() > 0
 
 
-from scportrait.processing.segmentation import _return_edge_labels, shift_labels
-
-
 def test_return_edge_labels():
     input_map = np.array([[1, 0, 0], [0, 2, 0], [0, 0, 3]])
 
@@ -139,9 +160,6 @@ def test_shift_labels():
     )
 
 
-from scportrait.processing.segmentation import _remove_classes, remove_classes
-
-
 def test_remove_classes():
     label_in = np.array([[1, 2, 1], [1, 0, 2], [0, 2, 3]])
     to_remove = [1, 3]
@@ -172,9 +190,6 @@ def test_remove_classes():
     assert np.array_equal(result_custom_background, expected_output_custom_background)
 
 
-from scportrait.processing.segmentation import contact_filter_lambda, contact_filter
-
-
 def test_contact_filter_lambda():
     label = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     result = contact_filter_lambda(label)
@@ -187,9 +202,6 @@ def test_contact_filter():
     result = contact_filter(inarr, threshold=0.7)
     expected_result = np.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]])
     assert np.all(result == expected_result)
-
-
-from scportrait.processing.segmentation import _class_size, size_filter
 
 
 def test_size_filter():
@@ -210,9 +222,6 @@ def test_class_size():
         length[1:] == expected_length[1:]
     )  # only compare [1:] to ignore the nan in the first element
     assert np.isnan(length[0])
-
-
-from scportrait.processing.segmentation import _numba_subtract, numba_mask_centroid
 
 
 def test_numba_subtract():
@@ -238,13 +247,6 @@ def test_numba_mask_centroid():
 #######################################################
 # Unit tests for ../proccessing/preprocessing.py
 #######################################################
-
-from scportrait.processing.preprocessing import (
-    _percentile_norm,
-    percentile_normalization,
-    rolling_window_mean,
-    MinMax,
-)
 
 
 def test_percentile_norm():
@@ -291,13 +293,6 @@ def test_MinMax():
 # Unit tests for ../proccessing/utils.py
 #######################################################
 
-from scportrait.processing.utils import (
-    plot_image,
-    visualize_class,
-    download_testimage,
-    flatten,
-)
-
 
 def test_flatten():
     nested_list = [[1, 2, 3], [4, 5], [6, 7, 8, 9]]
@@ -340,9 +335,6 @@ def test_plot_image(tmpdir):
 # Unit tests for ../pipeline/base.py
 #######################################################
 
-import tempfile
-from scportrait.pipeline.base import Logable, ProcessingStep
-
 
 def test_logable_init():
     logable = Logable()
@@ -372,6 +364,7 @@ def test_processing_step_init():
 
         assert processing_step.debug
         assert config == processing_step.config
+
 
 def test_processing_step_register_parameter():
     config = {"setting1": "value1"}

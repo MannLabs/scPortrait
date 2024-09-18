@@ -5,7 +5,7 @@ scPortrait Workflow
 
 scPortrait is a toolkit to analyse single-cell image datasets. This Python implementation efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications.
 
-The scPortrait computational workflow consists of upto four steps: Segmentation, Extraction, Classification and Selection and is designed to be modular and flexible. 
+The scPortrait computational workflow consists of upto four steps: Segmentation, Extraction, Classification and Selection and is designed to be modular and flexible.
 
 .. image:: images/scPortrait_workflow_steps_with_explaination.png
     :width: 100%
@@ -20,7 +20,7 @@ scPortrait is designed around the concept of class inheritance. Class inheritanc
     :width: 100%
     :align: center
     :alt: scPortrait Workflow Class Inheritance
-    
+
     Inheritance Hierarchy of scPortrait classes
 
 For a short overview of each step in the scPortrait workflow please refer to our short guide :ref:`here <computational_workflow>`. In this section we will discuss each of the processing steps in more detail.
@@ -28,7 +28,7 @@ For a short overview of each step in the scPortrait workflow please refer to our
 .. toctree::
    :maxdepth: 2
    :caption: Computational Workflow:
-   
+
    pipeline/project
    pipeline/config
    pipeline/segmentation

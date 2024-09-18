@@ -95,44 +95,46 @@ class Segmentation(ProcessingStep):
     def save_classes(self, classes):
         # define path where classes should be saved
         filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
-        
+
         to_write = "\n".join([str(i) for i in list(classes)])
 
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
-            
+
         self.log(f"Saved cell_id classes to file {filtered_path}.")
-    
+
     def _check_gpu_status(self):
         # check if cuda GPU is available
         if torch.cuda.is_available():
             self.use_GPU = True
             self.device = "cuda"
             self.nGPUs = torch.cuda.device_count()
-        
+
         # check if MPS is available
         elif torch.backends.mps.is_available():
             self.use_GPU = True
             self.device = torch.device("mps")
-            self.nGPUs  = 1
+            self.nGPUs = 1
 
         # default to CPU
         else:
             self.use_GPU = False
             self.device = torch.device("cpu")
             self.nGPUs = 0
-    
+
     def _setup_processing(self):
         """
         Checks and updates the GPU status.
         """
         self._check_gpu_status()
 
-        #compare with config configuration
+        # compare with config configuration
         if "nGPUs" in self.config.keys():
             if self.nGPUs != self.config["nGPUs"]:
                 nGPUs = self.config["nGPUs"]
-                self.log(f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config.")
+                self.log(
+                    f"Found {self.nGPUs} available GPUS but {nGPUs} GPUs specified in config."
+                )
 
                 if self.nGPUs >= 1 and nGPUs >= 1:
                     if self.nGPUs > nGPUs:
@@ -145,7 +147,7 @@ class Segmentation(ProcessingStep):
                         f"Will proceed with the number of available GPUs ({self.nGPUs})."
                     )
 
-        #set up threading
+        # set up threading
         if "threads" in self.config.keys():
             self.processes_per_GPU = self.config["threads"]
         else:
@@ -233,7 +235,9 @@ class Segmentation(ProcessingStep):
                     f"Generating a memory mapped temp array with the dimensions {(2, x, y)}"
                 )
             input_image = tempmmap.array(
-                shape=(2, x, y), dtype=self.DEFAULT_IMAGE_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
+                shape=(2, x, y),
+                dtype=self.DEFAULT_IMAGE_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
             )
             input_image = hdf_input[:2, self.window[0], self.window[1]]
 
@@ -262,7 +266,9 @@ class Segmentation(ProcessingStep):
 
         # write out window location
         if self.deep_debug:
-            self.log(f"Writing out window location to file at {self.directory}/window.csv")
+            self.log(
+                f"Writing out window location to file at {self.directory}/window.csv"
+            )
         with open(f"{self.directory}/window.csv", "w") as f:
             f.write(f"{self.window}\n")
 
@@ -322,7 +328,7 @@ class Segmentation(ProcessingStep):
         self.save_classes(classes)
 
         if not self.deep_debug:
-            #remove all intermediate results to free up memory
+            # remove all intermediate results to free up memory
             if "maps" in self.__dict__.keys():
                 del self.maps
 
@@ -359,7 +365,9 @@ class Segmentation(ProcessingStep):
 
                 # reading labels
                 if labels is None:
-                    path_labels = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
+                    path_labels = os.path.join(
+                        self.directory, self.DEFAULT_SEGMENTATION_FILE
+                    )
 
                     with h5py.File(path_labels, "r") as hf:
                         # initialize tempmmap array to save label results into
@@ -376,7 +384,10 @@ class Segmentation(ProcessingStep):
 
                 for seg, name in zip(segmentations, segmentation_names):
                     write_labels(
-                        labels=seg.astype(self.DEFAULT_SEGMENTATION_DTYPE), group=group, name=name, axes="cyx"
+                        labels=seg.astype(self.DEFAULT_SEGMENTATION_DTYPE),
+                        group=group,
+                        name=name,
+                        axes="cyx",
                     )
                     write_label_metadata(
                         group=group,
@@ -529,10 +540,12 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
+    def process(self, input_image):
+        self.method.__call__(input_image)
+
 
 class ShardedSegmentation(Segmentation):
-    """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together.
-    """
+    """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -545,14 +558,17 @@ class ShardedSegmentation(Segmentation):
         self.save_zarr = False
 
     def save_input_image(self, input_image):
-        
         start = time.time()
         output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
-        #check dtype of input image
+        # check dtype of input image
         if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
-            Warning(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
-            self.log(f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results.")
+            Warning(
+                f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results."
+            )
+            self.log(
+                f"The Input Image dtype was not {self.DEFAULT_IMAGE_DTYPE} but {input_image.dtype} instead. {self.DEFAULT_IMAGE_DTYPE} is expected and proceeding with a different dtype can lead to unexpected results."
+            )
 
             input_image = input_image.astype(self.DEFAULT_IMAGE_DTYPE)
 
@@ -564,7 +580,7 @@ class ShardedSegmentation(Segmentation):
                 dtype=self.DEFAULT_IMAGE_DTYPE,
             )
         duration = time.time() - start
-        
+
         self.log(
             f"Input image added to .h5 in {np.round(duration/60, 3)} minutes. Provides data source for reading shard information."
         )
@@ -777,7 +793,7 @@ class ShardedSegmentation(Segmentation):
 
             for i, window in enumerate(sharding_plan):
                 timer = time.time()
-                
+
                 self.log(f"Stitching tile {i}")
 
                 local_shard_directory = os.path.join(self.shard_directory, str(i))
@@ -786,14 +802,16 @@ class ShardedSegmentation(Segmentation):
                 )
                 local_classes = os.path.join(local_shard_directory, "classes.csv")
 
-                #check if this file exists otherwise abort process
+                # check if this file exists otherwise abort process
                 if not os.path.isfile(local_classes):
-                    sys.exit(f"File {local_classes} does not exist. Processing of Shard {i} seems to be incomplete. \nAborting process to resolve sharding. Please run project.complete_segmentation() to regenerate this shard information.")
+                    sys.exit(
+                        f"File {local_classes} does not exist. Processing of Shard {i} seems to be incomplete. \nAborting process to resolve sharding. Please run project.complete_segmentation() to regenerate this shard information."
+                    )
 
                 # check to make sure windows match
                 with open(f"{local_shard_directory}/window.csv", "r") as f:
                     window_local = eval(f.read())
-                
+
                 if window_local != window:
                     Warning("Sharding plans do not match.")
                     self.log("Sharding plans do not match.")
@@ -808,7 +826,10 @@ class ShardedSegmentation(Segmentation):
                 local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)
 
                 shifted_map, edge_labels = shift_labels(
-                    local_hdf_labels, class_id_shift, return_shifted_labels=True, remove_edge_labels=True
+                    local_hdf_labels,
+                    class_id_shift,
+                    return_shifted_labels=True,
+                    remove_edge_labels=True,
                 )
 
                 orig_input = hdf_labels[:, window[0], window[1]]
@@ -827,115 +848,158 @@ class ShardedSegmentation(Segmentation):
                 # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the
                 # new ones from the second shard
 
-                #since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
-                #the segmentation mask to remove unwanted shapes before merging
+                # since segmentations resulting from cellpose are not necessarily deterministic we can not do this lookup on a pixel by pixel basis but need to edit
+                # the segmentation mask to remove unwanted shapes before merging
 
                 start_time_step1 = time.time()
 
-                #assumptions: if a nucleus is discarded the cytosol must also be discarded and vice versa otherwise this could leave cells with only one of the two
-                ids_discard = set(np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])) #gets all ids that potentially need to be discarded over both masks 
-                
+                # assumptions: if a nucleus is discarded the cytosol must also be discarded and vice versa otherwise this could leave cells with only one of the two
+                ids_discard = set(
+                    np.unique(
+                        orig_input[np.where((orig_input != 0) & (shifted_map != 0))]
+                    )
+                )  # gets all ids that potentially need to be discarded over both masks
+
                 # we dont want to discard any ideas that touch the edge of the image
                 # for these ids we can not ensure when processing this shard that the entire cell is present in the shard
                 # if we would delete these ids we would potentially be deleting half of a cell
                 edge_labels = set(_return_edge_labels(orig_input))
                 ids_discard = ids_discard - edge_labels
 
-                #set ids to 0 that we dont want to keep that are already in the final map
+                # set ids to 0 that we dont want to keep that are already in the final map
                 orig_input[np.isin(orig_input, list(ids_discard))] = 0
 
                 time_step1 = time.time() - start_time_step1
 
                 start_time_step2 = time.time()
 
-                #identify all ids from the new map that potentially could lead to problems
-                problematic_ids = set(np.unique(shifted_map[np.where((orig_input != 0) & (shifted_map != 0))]))
-                
-                #remove all potentially problematic ids from the new map
+                # identify all ids from the new map that potentially could lead to problems
+                problematic_ids = set(
+                    np.unique(
+                        shifted_map[np.where((orig_input != 0) & (shifted_map != 0))]
+                    )
+                )
+
+                # remove all potentially problematic ids from the new map
                 shifted_map[np.isin(shifted_map, list(problematic_ids))] = 0
 
                 time_step2 = time.time() - start_time_step2
 
-                if self.deep_debug: 
+                if self.deep_debug:
                     orig_input_manipulation = orig_input.copy()
                     shifted_map_manipulation = shifted_map.copy()
 
-                    orig_input_manipulation[orig_input_manipulation>0] = 1
-                    shifted_map_manipulation[shifted_map_manipulation>0] = 2
+                    orig_input_manipulation[orig_input_manipulation > 0] = 1
+                    shifted_map_manipulation[shifted_map_manipulation > 0] = 2
 
                     resulting_map = orig_input_manipulation + shifted_map_manipulation
 
                     plt.figure()
                     plt.imshow(resulting_map[0])
-                    plt.title(f"Combined nucleus segmentation mask after\n resolving sharding for region {i}")
+                    plt.title(
+                        f"Combined nucleus segmentation mask after\n resolving sharding for region {i}"
+                    )
                     plt.colorbar()
                     plt.show()
-                    plt.savefig(f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png")
+                    plt.savefig(
+                        f"{self.directory}/combined_nucleus_segmentation_mask_{i}.png"
+                    )
 
                     plt.figure()
                     plt.imshow(resulting_map[1])
                     plt.colorbar()
-                    plt.title(f"Combined cytosol segmentation mask after\n resolving sharding for region {i}")
+                    plt.title(
+                        f"Combined cytosol segmentation mask after\n resolving sharding for region {i}"
+                    )
                     plt.show()
-                    plt.savefig(f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png")
+                    plt.savefig(
+                        f"{self.directory}/combined_cytosol_segmentation_mask_{i}.png"
+                    )
 
                 start_time_step3 = time.time()
                 shifted_map = np.where(
                     (orig_input != 0) & (shifted_map == 0), orig_input, shifted_map
                 )
-        
+
                 time_step3 = time.time() - start_time_step3
                 total_time = time_step1 + time_step2 + time_step3
-                
-                self.log(f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s")
+
+                self.log(
+                    f"Time taken to cleanup overlapping shard regions for shard {i}: {total_time}s"
+                )
 
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
-                
-                class_id_shift += np.max(shifted_map) #get highest existing cell id and add it to the shift 
-                unique_ids = set(np.unique(shifted_map[0])[1:]) #get unique cellids in the shifted map
 
-                #save results to hdf_labels
+                class_id_shift += np.max(
+                    shifted_map
+                )  # get highest existing cell id and add it to the shift
+                unique_ids = set(
+                    np.unique(shifted_map[0])[1:]
+                )  # get unique cellids in the shifted map
+
+                # save results to hdf_labels
                 hdf_labels[:, window[0], window[1]] = shifted_map
 
                 # updated classes list
-                filtered_classes_combined = filtered_classes_combined - set(ids_discard) #ensure that the deleted ids are also removed from the classes list (class list is always in reference to the nucleus id!)
-                filtered_classes_combined = filtered_classes_combined.union(unique_ids)  #get unique nucleus ids and add them to the combined filtered class    
-                
-                if self.debug:
-                        self.log(f"Number of classes contained in shard after processing: {len(unique_ids)}")
-                        self.log(f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}")
+                filtered_classes_combined = (
+                    filtered_classes_combined - set(ids_discard)
+                )  # ensure that the deleted ids are also removed from the classes list (class list is always in reference to the nucleus id!)
+                filtered_classes_combined = filtered_classes_combined.union(
+                    unique_ids
+                )  # get unique nucleus ids and add them to the combined filtered class
 
-                #check if filtering of classes has been successfull
-                #ideally the classes contained in the mask should be identical with those contained in the classes file
-                #if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
+                if self.debug:
+                    self.log(
+                        f"Number of classes contained in shard after processing: {len(unique_ids)}"
+                    )
+                    self.log(
+                        f"Number of Ids in filtered_classes after adding shard {i}: {len(filtered_classes_combined)}"
+                    )
+
+                # check if filtering of classes has been successfull
+                # ideally the classes contained in the mask should be identical with those contained in the classes file
+                # if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
                 if self.deep_debug:
                     masks = hdf_labels[:, :, :]
                     unique_ids = set(np.unique(masks[0])) - set([0])
-                    self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
-                    
-                    difference_classes = filtered_classes_combined.difference(unique_ids)
-                    self.log(f"Classes contained in classes list that are not found in the segmentation mask: {difference_classes}")
+                    self.log(
+                        f"Total number of classes in final segmentation after processing: {len(unique_ids)}"
+                    )
+
+                    difference_classes = filtered_classes_combined.difference(
+                        unique_ids
+                    )
+                    self.log(
+                        f"Classes contained in classes list that are not found in the segmentation mask: {difference_classes}"
+                    )
 
                     difference_masks = unique_ids.difference(filtered_classes_combined)
-                    self.log(f"Classes contained in segmentation mask that are not contained in classes list: {difference_masks}")
-                    
+                    self.log(
+                        f"Classes contained in segmentation mask that are not contained in classes list: {difference_masks}"
+                    )
+
                     if len(difference_masks) > 0:
                         _masks = np.isin(masks[0], list(difference_masks))
                         plt.figure()
                         plt.imshow(_masks)
-                        plt.set_title(f"Classes in segmentation mask that are not contained in classes list after processing shard {i}")
+                        plt.set_title(
+                            f"Classes in segmentation mask that are not contained in classes list after processing shard {i}"
+                        )
                         plt.axis("off")
                         plt.show()
 
-                    
                 local_hf.close()
-                self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
-            
-            #remove background class
-            filtered_classes_combined = filtered_classes_combined - set([0]) 
-            
-            self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
+                self.log(
+                    f"Finished stitching tile {i} in {time.time() - timer} seconds."
+                )
+
+            # remove background class
+            filtered_classes_combined = filtered_classes_combined - set([0])
+
+            self.log(
+                f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}"
+            )
 
             # check filtering classes to ensure that segmentation run is properly tagged
             self._check_filter_status()
@@ -967,7 +1031,7 @@ class ShardedSegmentation(Segmentation):
             "finished saving segmentation results to ome.zarr from sharded segmentation."
         )
 
-        #self.cleanup_shards(sharding_plan)
+        # self.cleanup_shards(sharding_plan)
 
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
@@ -1014,7 +1078,7 @@ class ShardedSegmentation(Segmentation):
         del input_image  # remove from memory to free up space
         gc.collect()  # perform garbage collection
 
-        #get GPU status
+        # get GPU status
         self._setup_processing()
 
         if self.n_processes == 1:
@@ -1026,7 +1090,7 @@ class ShardedSegmentation(Segmentation):
                 initializer=self.initializer_function,
                 initargs=[self.gpu_id_list],
             ) as pool:
-                results = list(
+                list(
                     tqdm(
                         pool.imap(self.method.call_as_shard, shard_list),
                         total=len(shard_list),
@@ -1056,7 +1120,7 @@ class ShardedSegmentation(Segmentation):
                 "No Shard Directory found for the given project. Can not complete a segmentation which has not started. Please rerun the segmentation method."
             )
 
-        #save input image to segmentation.h5
+        # save input image to segmentation.h5
         self.save_input_image(input_image)
 
         # check to see which tiles are incomplete
@@ -1161,7 +1225,7 @@ class ShardedSegmentation(Segmentation):
                 initializer=self.initializer_function,
                 initargs=[gpu_id_list],
             ) as pool:
-                results = list(
+                list(
                     tqdm(
                         pool.imap(self.method.call_as_shard, shard_list),
                         total=len(shard_list),
@@ -1289,7 +1353,7 @@ class TimecourseSegmentation(Segmentation):
         del _tmp_seg
 
         if not self.deep_debug:
-            #remove all intermediate results to free up memory
+            # remove all intermediate results to free up memory
             if "maps" in self.__dict__.keys():
                 del self.maps
 
@@ -1413,9 +1477,9 @@ class TimecourseSegmentation(Segmentation):
                 final_classes = list(filtered_classes - set(edge_labels))
 
                 hdf_labels[i, :, :] = shifted_map
-                hdf_classes[i] = np.array(final_classes, dtype=self.DEFAULT_SEGMENTATION_DTYPE).reshape(
-                    1, 1, -1
-                )
+                hdf_classes[i] = np.array(
+                    final_classes, dtype=self.DEFAULT_SEGMENTATION_DTYPE
+                ).reshape(1, 1, -1)
 
                 # save all cells in general
                 filtered_classes_combined.extend(filtered_classes)
@@ -1461,7 +1525,7 @@ class TimecourseSegmentation(Segmentation):
 
         self.log("resolved segmentation list")
 
-    def process(self):
+    def process(self, input_image):
         input_path = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         with h5py.File(input_path, "r") as hf:
@@ -1498,7 +1562,7 @@ class TimecourseSegmentation(Segmentation):
         )
 
         # calculate results for each shard
-        results = [current_shard.call_as_shard()]
+        [current_shard.call_as_shard()]
 
         # save results to hdf5
         self.log("Writing segmentation results to .hdf5 file.")

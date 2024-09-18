@@ -41,7 +41,7 @@ Documentation
    :maxdepth: 2
    :caption: scPortrait Ecosystem
 
-   pages/quickstart/ 
+   pages/quickstart/
    pages/pipeline/
    pages/example_notebooks
 

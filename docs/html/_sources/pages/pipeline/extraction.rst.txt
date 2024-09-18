@@ -3,7 +3,7 @@
 Extraction
 ==========
 
-The scPortrait framework is built around the idea of generating standardized single-cell image datasets. A scPortrait single cell image dataset consists of a collection of images for each cell containing both the segmentation masks and imaging channels of that particular cell. 
+The scPortrait framework is built around the idea of generating standardized single-cell image datasets. A scPortrait single cell image dataset consists of a collection of images for each cell containing both the segmentation masks and imaging channels of that particular cell.
 
 .. image:: ../images/extraction_process.png
     :width: 100%

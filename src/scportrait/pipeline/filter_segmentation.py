@@ -1,6 +1,5 @@
 import os
 import gc
-import sys
 import numpy as np
 import csv
 import h5py
@@ -15,6 +14,7 @@ from scportrait.processing.segmentation import sc_any
 from scportrait.pipeline.base import ProcessingStep
 
 from alphabase.io import tempmmap
+
 
 class SegmentationFilter(ProcessingStep):
     """SegmentationFilter helper class used for creating workflows to filter generated segmentation masks before extraction."""
@@ -62,7 +62,9 @@ class SegmentationFilter(ProcessingStep):
         to_write = "\n".join([f"{str(x)}:{str(y)}" for x, y in classes.items()])
         with open(filtered_path, "w") as myfile:
             myfile.write(to_write)
-        self.log(f"Saved nucleus_id:cytosol_id matchings of all cells that passed filtering to {filtered_path}.")
+        self.log(
+            f"Saved nucleus_id:cytosol_id matchings of all cells that passed filtering to {filtered_path}."
+        )
 
     def initialize_as_tile(self, identifier, window, input_path, zarr_status=True):
         """
@@ -113,12 +115,16 @@ class SegmentationFilter(ProcessingStep):
 
         if sc_any(input_image):
             try:
-                self.log(f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]")
+                self.log(
+                    f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]"
+                )
                 super().__call__(input_image)
             except Exception:
                 self.log(traceback.format_exc())
         else:
-            print(f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
+            print(
+                f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes."
+            )
             try:
                 super().__call_empty__(input_image)
             except Exception:
@@ -150,7 +156,9 @@ class TiledSegmentationFilter(SegmentationFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not hasattr(self, "method"):
-            raise AttributeError("No SegmentationFilter method defined, please set attribute ``method``")
+            raise AttributeError(
+                "No SegmentationFilter method defined, please set attribute ``method``"
+            )
 
     def initialize_tile_list(self, tileing_plan, input_path):
         """
@@ -181,12 +189,16 @@ class TiledSegmentationFilter(SegmentationFilter):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-            current_tile.initialize_as_tile(i, window, self.input_path, zarr_status=False)
+            current_tile.initialize_as_tile(
+                i, window, self.input_path, zarr_status=False
+            )
             _tile_list.append(current_tile)
 
         return _tile_list
 
-    def initialize_tile_list_incomplete(self, tileing_plan, incomplete_indexes, input_path):
+    def initialize_tile_list_incomplete(
+        self, tileing_plan, incomplete_indexes, input_path
+    ):
         """
         Initialize the list of incomplete tiles for segmentation filtering.
 
@@ -217,7 +229,9 @@ class TiledSegmentationFilter(SegmentationFilter):
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
-            current_tile.initialize_as_tile(i, window, self.input_path, zarr_status=False)
+            current_tile.initialize_as_tile(
+                i, window, self.input_path, zarr_status=False
+            )
             _tile_list.append(current_tile)
 
         return _tile_list
@@ -303,6 +317,7 @@ class TiledSegmentationFilter(SegmentationFilter):
         list
             List of output file paths for the processed tiles.
         """
+
         def f(x):
             try:
                 x.call_as_tile()
@@ -377,7 +392,9 @@ class TiledSegmentationFilter(SegmentationFilter):
             out_dir = os.path.join(self.tile_directory, str(i))
             with h5py.File(f"{out_dir}/segmentation.h5", "r") as hf:
                 data = hf.get("labels")
-                for cls, mappings in csv.reader(open(f"{out_dir}/filtered_classes.csv")):
+                for cls, mappings in csv.reader(
+                    open(f"{out_dir}/filtered_classes.csv")
+                ):
                     classes[cls].append(mappings)
                 output_image[:, loc[0], loc[1]] = data[:, :]
 

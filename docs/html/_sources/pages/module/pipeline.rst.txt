@@ -1,5 +1,5 @@
 *******************
-pipeline 
+pipeline
 *******************
 
 .. toctree::
@@ -13,7 +13,7 @@ A collection of base classes from which other classes in the scPortrait environm
 Logable
 =======
 
-Base Class which generates framework for logging. 
+Base Class which generates framework for logging.
 
 .. autoclass:: scportrait.pipeline.base.Logable
     :members:
@@ -21,7 +21,7 @@ Base Class which generates framework for logging.
 ProcessingStep
 ==============
 
-Starting point for all processing steps. Reads a config file that contains the parameters used to set up a processing method and generates the folder structure necessary for saving the generated outputs. 
+Starting point for all processing steps. Reads a config file that contains the parameters used to set up a processing method and generates the folder structure necessary for saving the generated outputs.
 
 .. autoclass:: scportrait.pipeline.base.ProcessingStep
     :members:
@@ -32,14 +32,14 @@ project
 
 Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see :ref:`here <projects>` for more information.
 
-Project 
+Project
 =======
 .. autoclass:: scportrait.pipeline.project.Project
     :members:
     :show-inheritance:
 
 
-TimecourseProject 
+TimecourseProject
 =================
 .. autoclass:: scportrait.pipeline.project.TimecourseProject
     :members:
@@ -120,4 +120,3 @@ LMDSelection
 .. autoclass:: scportrait.pipeline.selection.LMDSelection
     :members:
     :show-inheritance:
-

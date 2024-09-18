@@ -1,7 +1,7 @@
 Command Line Tools
 ==================
 
-scPortrait comes equipped with several command line tools for easy handling of scPortrait datasets. 
+scPortrait comes equipped with several command line tools for easy handling of scPortrait datasets.
 
 1. :ref:`sparcs-split <sparcs-split>`: Split, shuffle and compress scPortrait datasets.
 2. :ref:`sparcs-stat <sparcs-stat>`: Get information on the status of scPortrait datasets.
