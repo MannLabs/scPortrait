@@ -34,7 +34,7 @@ def dataset_2():
 
     if not Path(save_path).exists():
         _download(
-            url="",
+            url="https://zenodo.org/records/13742316/files/example_2_images.zip?download=1",
             output_path=save_path,
             archive_format="zip",
         )
@@ -53,7 +53,7 @@ def dataset_3():
 
     if not Path(save_path).exists():
         _download(
-            url="",
+            url="https://zenodo.org/records/13742319/files/example_3_images.zip?download=1",
             output_path=save_path,
             archive_format="zip",
         )
@@ -72,7 +72,7 @@ def dataset_4():
 
     if not Path(save_path).exists():
         _download(
-            url="",
+            url="https://zenodo.org/records/13742331/files/example_4_images.zip?download=1",
             output_path=save_path,
             archive_format="zip",
         )
@@ -91,7 +91,7 @@ def dataset_5():
 
     if not Path(save_path).exists():
         _download(
-            url="",
+            url="https://zenodo.org/records/13742344/files/example_5_images.zip?download=1",
             output_path=save_path,
             archive_format="zip",
         )
@@ -110,7 +110,7 @@ def dataset_6():
 
     if not Path(save_path).exists():
         _download(
-            url="",
+            url="https://zenodo.org/records/13742373/files/example_6_images.zip?download=1",
             output_path=save_path,
             archive_format="zip",
         )
