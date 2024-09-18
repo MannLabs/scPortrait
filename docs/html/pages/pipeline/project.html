@@ -10,11 +10,11 @@
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
 
-  
+
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
+
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -25,17 +25,17 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Config Files" href="config.html" />
-    <link rel="prev" title="scPortrait Workflow" href="../pipeline.html" /> 
+    <link rel="prev" title="scPortrait Workflow" href="../pipeline.html" />
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-          
-          
+
+
           <a href="../../index.html" class="icon icon-home">
             scPortrait
           </a>
@@ -155,8 +155,28 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html">Example Stitching Notebook</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#Single-threaded-Stitching">Single-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#initializing-the-stitcher-object">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#Generating-thumbnails">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#Generating-full-scale-stitched-image">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#Multi-threaded-Stitching">Multi-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#id1">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#id2">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#id3">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html#Visualize-Stitching-Output">Visualize Stitching Output</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
@@ -171,23 +191,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#segmentation-workflows">segmentation workflows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../module/pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 </ul>
@@ -204,29 +208,26 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/processing.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/processing.html#masks">masks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/io.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/io.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/io.html#images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/io.html#masks">masks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/tools.html">tools</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#parameters">Parameters:</a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../module/tools/ml.html">ml</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#datasets">datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#metrics">metrics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#models">models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#plmodels">plmodels</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#pretrained-models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#transforms">transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/ml.html#utils">utils</a></li>
 </ul>
 </li>
 </ul>
@@ -263,7 +264,7 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+
   <section id="scportrait-projects">
 <span id="projects"></span><h1>scPortrait Projects<a class="headerlink" href="#scportrait-projects" title="Link to this heading"></a></h1>
 <p>Within scPortrait, all operations are centered around the concept of a <code class="docutils literal notranslate"><span class="pre">Project</span></code>. A <code class="docutils literal notranslate"><span class="pre">Project</span></code> is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each <code class="docutils literal notranslate"><span class="pre">Project</span></code> directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. This directory also contains copies of the configuration file which specifies the parameters used for all methods associated with that run. This allows for easy reproducibility of results.</p>
@@ -273,12 +274,12 @@
 <p>scPortrait provides several different <code class="docutils literal notranslate"><span class="pre">Project</span></code> classes which are designed to handle different input data types. Each <code class="docutils literal notranslate"><span class="pre">Project</span></code> class comes with its own set of segmentation and extraction methods which are tailored to the specific type of data. Please refer to the <a class="reference internal" href="segmentation.html#segmentation"><span class="std std-ref">segmentation</span></a> and <a class="reference internal" href="extraction.html#extraction"><span class="std std-ref">extraction</span></a> sections for more details. Below you can find a brief outline of the different <code class="docutils literal notranslate"><span class="pre">Project</span></code> classes, what type of data structures they are suited for and their associated methods classes.</p>
 <section id="project">
 <h3>1. Project<a class="headerlink" href="#project" title="Link to this heading"></a></h3>
-<p>The base <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.project.Project" title="scportrait.pipeline.project.Project"><code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code></a> class is for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.</p>
+<p>The base <code class="xref py py-func docutils literal notranslate"><span class="pre">Project</span></code> class is for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.</p>
 <section id="associated-methods-classes">
 <h4>Associated methods classes<a class="headerlink" href="#associated-methods-classes" title="Link to this heading"></a></h4>
 <ol class="arabic simple">
-<li><p>segmentation methods: <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.Segmentation" title="scportrait.pipeline.segmentation.Segmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code></a>, <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a></p></li>
-<li><p>extraction methods: <a class="reference internal" href="../module/pipeline.html#scportrait.pipeline.extraction.HDF5CellExtraction" title="scportrait.pipeline.extraction.HDF5CellExtraction"><code class="xref py py-func docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code></a></p></li>
+<li><p>segmentation methods: <code class="xref py py-func docutils literal notranslate"><span class="pre">Segmentation</span></code>, <code class="xref py py-func docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></p></li>
+<li><p>extraction methods: <code class="xref py py-func docutils literal notranslate"><span class="pre">HDF5CellExtraction</span></code></p></li>
 </ol>
 </section>
 </section>
@@ -341,7 +342,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+
 
 </footer>
         </div>
@@ -352,7 +353,7 @@
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
 
 </body>
 </html>

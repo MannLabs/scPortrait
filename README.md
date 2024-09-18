@@ -1,7 +1,7 @@
 [![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/html/index.html)](https://mannlabs.github.io/scPortrait/html/index.html)
 
-![Graphical Abstract](https://github.com/MannLabs/SPARCSspatial/assets/15019107/47461f35-3dec-4aa6-ba51-ee1b631ddab9)
+![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
 
 scPortrait is a scalable toolkit to generate single-cell representations from raw microscopy images.
 
@@ -10,7 +10,7 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 Please refer to our [documentation](https://mannlabs.github.io/scPortrait/html/index.html) in particular:
 
 - [getting started](https://mannlabs.github.io/scPortrait/html/index.html)
-- [example notebooks](https://mannlabs.github.io/scPortrait/html/index.html)
+- [example notebooks](<[https://mannlabs.github.io/scPortrait/html/index.html](https://mannlabs.github.io/scPortrait/html/pages/example_notebooks.html)>)
 
 ## Installation from Github
 
@@ -35,3 +35,7 @@ If you use our code please cite [this manuscript](https://www.biorxiv.org/conten
 SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
 Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
 bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
+
+## Contributing
+
+If you like this software, you can give us a star to boost our visibility! All direct contributions are also welcome. Feel free to post a new [issue](https://github.com/MannLabs/alphapeptstats/issues) or clone the repository and create a [pull request](https://github.com/MannLabs/scPortrait/pulls) with a new branch. For an even more interactive participation, check out the [discussions](https://github.com/MannLabs/scPortrait/discussions).

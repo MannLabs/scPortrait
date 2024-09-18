@@ -1,11 +1,12 @@
 import os
-from typing import List, Dict, Union
+from typing import Dict, List, Union
 
 import numpy as np
-from lmd.lib import SegmentationLoader
 from alphabase.io import tempmmap
+from lmd.lib import SegmentationLoader
 
 from scportrait.pipeline._base import ProcessingStep
+
 
 class LMDSelection(ProcessingStep):
     """
@@ -69,23 +70,23 @@ class LMDSelection(ProcessingStep):
             .. code-block:: python
 
                 # Calibration marker should be defined as (row, column).
-                marker_0 = np.array([-10,-10])
-                marker_1 = np.array([-10,1100])
-                marker_2 = np.array([1100,505])
+                marker_0 = np.array([-10, -10])
+                marker_1 = np.array([-10, 1100])
+                marker_2 = np.array([1100, 505])
 
                 # A numpy Array of shape (3, 2) should be passed.
                 calibration_marker = np.array([marker_0, marker_1, marker_2])
 
 
                 # Sets of cells can be defined by providing a name and a list of classes in a dictionary.
-                cells_to_select = [{"name": "dataset1", "classes": [1,2,3]}]
+                cells_to_select = [{"name": "dataset1", "classes": [1, 2, 3]}]
 
                 # Alternatively, a path to a csv file can be provided.
                 # If a relative path is provided, it is accessed relativ to the projects base directory.
                 cells_to_select += [{"name": "dataset2", "classes": "segmentation/class_subset.csv"}]
 
                 # If desired, wells can be passed with the individual sets.
-                cells_to_select += [{"name": "dataset3", "classes": [4,5,6], "well":"A1"}]
+                cells_to_select += [{"name": "dataset3", "classes": [4, 5, 6], "well": "A1"}]
 
                 project.select(cells_to_select, calibration_marker)
 
@@ -170,7 +171,6 @@ class LMDSelection(ProcessingStep):
         )
 
         segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
-        print(segmentation)
 
         # create segmentation loader
         sl = SegmentationLoader(
@@ -178,6 +178,11 @@ class LMDSelection(ProcessingStep):
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
+
+        if len(segmentation.shape) == 3:
+            segmentation = np.squeeze(segmentation)
+        else:
+            raise ValueError(f"Segmentation shape is not correct. Expected 2D array, got {segmentation.shape}")
 
         # get shape collections
         shape_collection = sl(segmentation, self.cell_sets, self.calibration_marker)
@@ -191,6 +196,4 @@ class LMDSelection(ProcessingStep):
         self.log(f"Saved output at {self.savepath}")
 
         # perform post processing cleanup
-        self._post_processing_cleanup(
-            vars_to_delete=[shape_collection, sl, segmentation]
-        )
+        self._post_processing_cleanup(vars_to_delete=[shape_collection, sl, segmentation])

@@ -1,3 +1,3 @@
-from scportrait.tools.parse import PhenixParser, CombinedPhenixParser
-from scportrait.tools.stitch import Stitcher, ParallelStitcher
 from scportrait.tools import ml
+from scportrait.tools.parse import CombinedPhenixParser, PhenixParser
+from scportrait.tools.stitch import ParallelStitcher, Stitcher

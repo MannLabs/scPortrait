@@ -1,17 +1,18 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.mixture import GaussianMixture
-from scipy.stats import norm
 import os
-
-from skimage.morphology import disk, dilation, erosion
 from collections import defaultdict
 
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import norm
+from skimage.morphology import dilation, disk, erosion
+from sklearn.mixture import GaussianMixture
+
 from scportrait.pipeline._base import Logable
+
+# for visualization purposes
+from scportrait.plotting._utils import _custom_cmap
 from scportrait.processing.images._image_processing import downsample_img_pxs
 
-#for visualization purposes
-from scportrait.plotting._utils import _custom_cmap
 
 class _BaseFilter(Logable):
     def __init__(self, *args, **kwargs):
@@ -42,9 +43,7 @@ class _BaseFilter(Logable):
         return downsample_img_pxs(mask, N=self.downsampling_factor)
 
     def get_upscaled_mask_basic(self, mask, erosion_dilation=False):
-        mask = mask.repeat(self.downsampling_factor, axis=0).repeat(
-            self.downsampling_factor, axis=1
-        )
+        mask = mask.repeat(self.downsampling_factor, axis=0).repeat(self.downsampling_factor, axis=1)
 
         if erosion_dilation:
             mask = erosion(mask, footprint=disk(self.smoothing_kernel_size))
@@ -120,20 +119,20 @@ class SizeFilter(_BaseFilter):
         confidence_interval=0.95,
         n_components=1,
         population_to_keep="largest",
-        filter_lower = True,
-        filter_upper = True,
+        filter_lower=True,
+        filter_upper=True,
         downsampling_factor=None,
         erosion_dilation=True,
         smoothing_kernel_size=7,
         *args,
         **kwargs,
-    ):  
+    ):
         if directory is not None:
             self.directory = directory
         else:
             self.directory = os.getcwd()
 
-        super().__init__(*args, directory = self.directory, **kwargs)
+        super().__init__(*args, directory=self.directory, **kwargs)
 
         self.log_values = log
         self.plot_qc = plot_qc
@@ -153,14 +152,15 @@ class SizeFilter(_BaseFilter):
         else:
             self.downsample = False
 
-        #sanity check to ensure that some filtering will be performed
+        # sanity check to ensure that some filtering will be performed
         if not self.filter_lower and not self.filter_upper:
-            raise ValueError("At least one of filter_lower or filter_upper must be True otherwise no filtering will be performed.")
+            raise ValueError(
+                "At least one of filter_lower or filter_upper must be True otherwise no filtering will be performed."
+            )
 
         # if no directory is provided, use the current working directory
 
-        
-        #initialize empty placeholders for results
+        # initialize empty placeholders for results
         self.ids_to_remove = None
         self.mask = None
 
@@ -350,7 +350,7 @@ class SizeFilter(_BaseFilter):
             idx = np.argmin(weights)
         return idx
 
-    def _calculate_filtering_threshold(self, counts, return_plot = False):
+    def _calculate_filtering_threshold(self, counts, return_plot=False):
         """
         Calculate the filtering thresholds for the given counts.
 
@@ -372,7 +372,7 @@ class SizeFilter(_BaseFilter):
         >>> counts1 = np.random.normal(0, 1, 1000)
         >>> counts2 = np.random.normal(3, 1, 1000)
         >>> counts = np.concatenate((counts1, counts2))
-        >>> size_filter = SizeFilter(log = False)
+        >>> size_filter = SizeFilter(log=False)
         >>> thresholds = size_filter.calculate_filtering_threshold(counts)
         >>> thresholds
         (1.0785720179538172, 4.911918901671607)
@@ -434,7 +434,7 @@ class SizeFilter(_BaseFilter):
 
         if return_plot:
             return fig
-        
+
     def _get_ids_to_remove(self, input_mask):
         """
         Get the IDs to remove from the input mask based on the filtering threshold.
@@ -461,7 +461,7 @@ class SizeFilter(_BaseFilter):
 
         # get value counts of the mask
         counts = np.unique(self.mask, return_counts=True)
-        
+
         self.ids = counts[0][1:]
         pixel_counts = counts[1][1:]
 
@@ -486,8 +486,10 @@ class SizeFilter(_BaseFilter):
             )
         else:
             _ids = counts[0][1:][np.where(pixel_counts < self.filter_threshold[0])]
-            self.log(f"Filtering lower threshold is disabled. Not filtering {len(_ids)} that fall below the threshold range {self.filter_threshold}.")
-        
+            self.log(
+                f"Filtering lower threshold is disabled. Not filtering {len(_ids)} that fall below the threshold range {self.filter_threshold}."
+            )
+
         if self.filter_upper:
             _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
             ids_remove.extend(_ids)
@@ -497,42 +499,43 @@ class SizeFilter(_BaseFilter):
             )
         else:
             _ids = counts[0][1:][np.where(pixel_counts > self.filter_threshold[1])]
-            self.log(f"Filtering upper threshold is disabled. Not filtering {len(_ids)} that fall above the threshold range {self.filter_threshold}.")
+            self.log(
+                f"Filtering upper threshold is disabled. Not filtering {len(_ids)} that fall above the threshold range {self.filter_threshold}."
+            )
 
         self.ids_to_remove = ids_remove
-    
-    def visualize_filtering_results(self, return_fig = True, return_maps = False, plot_fig = True):
 
+    def visualize_filtering_results(self, return_fig=True, return_maps=False, plot_fig=True):
         mask = self.mask.copy()
 
         class_ids = set(self.ids)
 
-        #get the ids to visualize as red for discarded 
+        # get the ids to visualize as red for discarded
         ids_discard = list(self.ids_to_remove)
         ids_keep = list(class_ids - set(self.ids_to_remove))
 
-        #generate masks for the two classes
+        # generate masks for the two classes
         final_mask = np.where(np.isin(mask, ids_keep), 2, mask)
         final_mask = np.where(np.isin(mask, ids_discard), 1, final_mask)
 
-        #only plot results if requested
+        # only plot results if requested
         if not plot_fig:
             if return_maps:
                 return final_mask
         else:
-            #generate the plot
+            # generate the plot
             cmap, norm = _custom_cmap()
 
-            fig, axs = plt.subplots(1, 1, figsize = (10, 10))
+            fig, axs = plt.subplots(1, 1, figsize=(10, 10))
 
-            #visualize masks
+            # visualize masks
             if len(final_mask.shape) == 3:
-                axs.imshow(np.zeroes(final_mask[0]), cmap=cmap, norm = norm)
-                axs.imshow(final_mask[0], cmap=cmap, norm = norm)
+                axs.imshow(np.zeroes(final_mask[0]), cmap=cmap, norm=norm)
+                axs.imshow(final_mask[0], cmap=cmap, norm=norm)
             elif len(final_mask.shape) == 2:
-                axs.imshow(np.zeroes(final_mask), cmap=cmap, norm = norm)
-                axs.imshow(final_mask, cmap=cmap, norm = norm)
-            
+                axs.imshow(np.zeroes(final_mask), cmap=cmap, norm=norm)
+                axs.imshow(final_mask, cmap=cmap, norm=norm)
+
             axs.axis("off")
             axs.set_title("Filtered {self.label} mask")
 
@@ -547,7 +550,7 @@ class SizeFilter(_BaseFilter):
                     return fig, final_mask
                 else:
                     return fig
-    
+
     def filter(self, input_mask):
         """
         Filter the input mask based on the filtering threshold.
@@ -651,7 +654,7 @@ class MatchNucleusCytosolIds(_BaseFilter):
         downsampling_factor=None,
         erosion_dilation=True,
         smoothing_kernel_size=7,
-        directory = None,
+        directory=None,
         *args,
         **kwargs,
     ):
@@ -659,8 +662,8 @@ class MatchNucleusCytosolIds(_BaseFilter):
             self.directory = directory
         else:
             self.directory = os.getcwd()
-            
-        super().__init__(*args, directory = self.directory, **kwargs)
+
+        super().__init__(*args, directory=self.directory, **kwargs)
 
         # set relevant parameters
         self.filtering_threshold = filtering_threshold
@@ -723,7 +726,7 @@ class MatchNucleusCytosolIds(_BaseFilter):
         """
         updated = np.zeros_like(cytosol_mask, dtype=bool)
 
-        #remove cytosols that need to be deleted
+        # remove cytosols that need to be deleted
         cytosol_mask = self.get_updated_mask(cytosol_mask, self.cytosol_discard_list)
 
         for nucleus_id, cytosol_id in self.nucleus_lookup_dict.items():
@@ -741,18 +744,12 @@ class MatchNucleusCytosolIds(_BaseFilter):
         tuple
             A tuple containing the updated nucleus mask and cytosol mask.
         """
-        nucleus_mask = self.get_updated_mask(
-            self.nucleus_mask, self.nuclei_discard_list
-        )
+        nucleus_mask = self.get_updated_mask(self.nucleus_mask, self.nuclei_discard_list)
         cytosol_mask = self._get_updated_cytosol_mask(self.cytosol_mask)
 
         if self.downsample:
-            nucleus_mask = self.get_upscaled_mask_basic(
-                nucleus_mask, self.erosion_dilation
-            )
-            cytosol_mask = self.get_upscaled_mask_basic(
-                self.cytosol_mask, self.erosion_dilation
-            )
+            nucleus_mask = self.get_upscaled_mask_basic(nucleus_mask, self.erosion_dilation)
+            cytosol_mask = self.get_upscaled_mask_basic(self.cytosol_mask, self.erosion_dilation)
 
         return nucleus_mask, cytosol_mask
 
@@ -779,9 +776,7 @@ class MatchNucleusCytosolIds(_BaseFilter):
             cytosol_proportions = counts / all_counts
 
             if np.any(cytosol_proportions >= self.filtering_threshold):
-                cytosol_id = unique_cytosol[
-                    np.argmax(cytosol_proportions >= self.filtering_threshold)
-                ]
+                cytosol_id = unique_cytosol[np.argmax(cytosol_proportions >= self.filtering_threshold)]
                 if cytosol_id != 0:
                     self._nucleus_lookup_dict[nucleus_id] = cytosol_id
                     return cytosol_id
@@ -885,46 +880,45 @@ class MatchNucleusCytosolIds(_BaseFilter):
 
         return self.nucleus_lookup_dict
 
-    def visualize_filtering_results(self, return_fig = True, return_maps = False, plot_fig = True):
-
+    def visualize_filtering_results(self, return_fig=True, return_maps=False, plot_fig=True):
         nuc_mask = self.nucleus_mask.copy()
         cyto_mask = self.cytosol_mask.copy()
 
         class_ids_nuc = set(np.unique(nuc_mask)) - set([0])
         class_ids_cyto = set(np.unique(cyto_mask)) - set([0])
 
-        #get the ids to visualize as red for discarded 
+        # get the ids to visualize as red for discarded
         ids_discard_nuc = self.nuclei_discard_list
         ids_keep_nuc = list(set(class_ids_nuc) - set(ids_discard_nuc))
 
         ids_discard_cyto = self.cytosol_discard_list
         ids_keep_cyto = list(set(class_ids_cyto) - set(ids_discard_cyto))
 
-        #generate masks for the two classes
+        # generate masks for the two classes
         final_mask_nuc = np.where(np.isin(nuc_mask, ids_keep_nuc), 2, nuc_mask)
         final_mask_nuc = np.where(np.isin(nuc_mask, ids_discard_nuc), 1, final_mask_nuc)
 
         final_mask_cyto = np.where(np.isin(cyto_mask, ids_keep_cyto), 2, cyto_mask)
         final_mask_cyto = np.where(np.isin(cyto_mask, ids_discard_cyto), 1, final_mask_cyto)
 
-        #only plot results if requested
+        # only plot results if requested
         if not plot_fig:
             if return_maps:
                 return final_mask_nuc, final_mask_cyto
         else:
-            #generate the plot
+            # generate the plot
             cmap, norm = _custom_cmap()
 
-            fig, axs = plt.subplots(1, 1, figsize = (10, 10))
+            fig, axs = plt.subplots(1, 1, figsize=(10, 10))
 
-            #visualize masks
+            # visualize masks
             if len(final_mask_nuc.shape) == 3:
-                axs[0].imshow(final_mask_nuc[0], cmap=cmap, norm = norm)
-                axs[0].imshow(final_mask_cyto[0], cmap=cmap, norm = norm)
+                axs[0].imshow(final_mask_nuc[0], cmap=cmap, norm=norm)
+                axs[0].imshow(final_mask_cyto[0], cmap=cmap, norm=norm)
             elif len(final_mask_nuc.shape) == 2:
-                axs[0].imshow(final_mask_nuc, cmap=cmap, norm = norm)
-                axs[0].imshow(final_mask_cyto, cmap=cmap, norm = norm)
-            
+                axs[0].imshow(final_mask_nuc, cmap=cmap, norm=norm)
+                axs[0].imshow(final_mask_cyto, cmap=cmap, norm=norm)
+
             axs[0].axis("off")
             axs[0].set_title("Filtered Nucleus and Cytosol Masks")
 

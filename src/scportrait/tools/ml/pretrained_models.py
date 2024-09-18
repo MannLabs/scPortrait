@@ -2,13 +2,15 @@
 Collection of functions to load pretrained models to use in the scPortrait environment.
 """
 
+import os
+
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 from scportrait.data._dataloader import _download
 from pathlib import Path
 import torch
 import os
 
-def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = True, device = "cuda"):
+def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval=True, device="cuda"):
     """
     Load a pretrained model uploaded to the github repository.
 
@@ -45,7 +47,8 @@ def _load_multilabelSupervised(checkpoint_path, hparam_path, model_type, eval = 
     if eval:
         model.eval()
 
-    return(model)
+    return model
+
 
 def _get_data_dir():
     """

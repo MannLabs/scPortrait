@@ -11,11 +11,11 @@
       <link rel="stylesheet" type="text/css" href="../../../_static/fonts.css?v=5583d106" />
       <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
 
-  
+
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
+
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -26,17 +26,19 @@
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" /> 
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Module Documentation" href="../../module.html" />
+    <link rel="prev" title="stitching" href="stitching.html" />
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-          
-          
+
+
           <a href="../../../index.html" class="icon icon-home">
             scPortrait
           </a>
@@ -155,9 +157,30 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../parsing/parsing.html">parsing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stitching.html">stitching</a></li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../parsing/parsing.html">parsing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../parsing/example_parsing_notebook.html">Example Parsing Notebook to rename phenix experiments</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="stitching.html">stitching</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Example Stitching Notebook</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Single-threaded-Stitching">Single-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#initializing-the-stitcher-object">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generating-thumbnails">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Generating-full-scale-stitched-image">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Multi-threaded-Stitching">Multi-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Visualize-Stitching-Output">Visualize Stitching Output</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
@@ -254,6 +277,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="stitching.html">stitching</a></li>
       <li class="breadcrumb-item active">Example Stitching Notebook</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../_sources/pages/tools/stitching/example_stitching_notebook.ipynb.txt" rel="nofollow"> View page source</a>
@@ -263,7 +287,7 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+
   <section id="Example-Stitching-Notebook">
 <h1>Example Stitching Notebook<a class="headerlink" href="#Example-Stitching-Notebook" title="Link to this heading"></a></h1>
 <div class="nbinput docutils container">
@@ -271,8 +295,9 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">sparcstools.stitch</span> <span class="kn">import</span> <span class="n">Stitcher</span><span class="p">,</span> <span class="n">ParallelStitcher</span>
+<span class="kn">from</span> <span class="nn">scportrait.tools.stitch</span> <span class="kn">import</span> <span class="n">Stitcher</span><span class="p">,</span> <span class="n">ParallelStitcher</span>
 </pre></div>
 </div>
 </div>
@@ -281,8 +306,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap_tc6l1cu9. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-/Users/sophia/mambaforge/envs/stitching/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div></div>
 </div>
@@ -294,9 +318,9 @@ WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/raw_image_tiles/&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../../example_data/example_stitching/raw_image_tiles&quot;</span><span class="p">)</span>
 <span class="n">slidename</span> <span class="o">=</span> <span class="s2">&quot;stitching_test&quot;</span>
-<span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
+<span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../../example_data/example_stitching/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
 
 <span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
 <span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
@@ -306,7 +330,7 @@ WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns
 <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Timepoint</span><span class="si">{</span><span class="n">timepoint</span><span class="si">}</span><span class="s2">_Row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">_Well</span><span class="si">{</span><span class="n">well</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="s2">channel</span><span class="se">}}</span><span class="s2">_zstack</span><span class="si">{</span><span class="n">zstack_value</span><span class="si">}</span><span class="s2">_r</span><span class="se">{{</span><span class="s2">row:03</span><span class="se">}}</span><span class="s2">_c</span><span class="se">{{</span><span class="s2">col:03</span><span class="se">}}</span><span class="s2">.tif&quot;</span>
 
 <span class="c1">#initialize stitcher</span>
-<span class="n">stitcher</span> <span class="o">=</span> <span class="n">Stitcher</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span>
+<span class="n">stitcher</span> <span class="o">=</span> <span class="n">Stitcher</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">input_dir</span><span class="p">),</span>
                     <span class="n">slidename</span><span class="p">,</span>
                     <span class="n">outdir</span><span class="p">,</span>
                     <span class="n">pattern</span> <span class="o">=</span>  <span class="n">pattern</span><span class="p">,</span>
@@ -324,7 +348,7 @@ WARNING:root:Temp mmap arrays are written to /var/folders/35/p4c58_4n3bb0bxnzgns
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test already exists, overwriting.
+Output directory at /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test already exists, overwriting.
 </pre></div></div>
 </div>
 </section>
@@ -361,7 +385,7 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.image.AxesImage at 0xabaf24df0&gt;
+&lt;matplotlib.image.AxesImage at 0xa8e0f1ff0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -380,11 +404,19 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 </pre></div>
 </div>
 </div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">initialize_reader</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
 </section>
 <section id="Generating-full-scale-stitched-image">
 <h3>Generating full-scale stitched image<a class="headerlink" href="#Generating-full-scale-stitched-image" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">stitch</span><span class="p">()</span>
@@ -406,8 +438,8 @@ performing stitching on channel Alexa488 with id number 0
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap_tc6l1cu9 with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+WARNING:root:Folder /var/folders/35/p4c58_4n3bb0bxnzgns1t7kh0000gn/T/temp_mmap_eqb2txlq with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test/temp_mmap_qx6rbrpl. Cleanup of this folder is OS dependant, and might need to be triggered manually!
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -417,7 +449,7 @@ WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/so
 <div class="highlight"><pre>
 Alignment complete.
 assembling mosaic with shape (3, 3040, 3038)
-created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d/temp_mmap_5733127938620250677.hdf
+created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test/temp_mmap_qx6rbrpl/temp_mmap_8836257951842585069.hdf
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -441,7 +473,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
- 33%|███▎      | 1/3 [00:01&lt;00:02,  1.15s/it]
+ 33%|███▎      | 1/3 [00:01&lt;00:02,  1.07s/it]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -458,7 +490,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
- 67%|██████▋   | 2/3 [00:02&lt;00:01,  1.16s/it]
+ 67%|██████▋   | 2/3 [00:02&lt;00:01,  1.07s/it]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -475,7 +507,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 3/3 [00:03&lt;00:00,  1.16s/it]
+100%|██████████| 3/3 [00:03&lt;00:00,  1.08s/it]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -498,18 +530,18 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_10_12.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_10_12.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_11_12.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_11_12.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_10_13.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_10_13.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_11_13.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_11_13.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
@@ -518,7 +550,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -538,17 +570,17 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
                     <tr>
                         <th> Bytes </th>
                         <td> 52.85 MiB </td>
-                        <td> 17.62 MiB </td>
+                        <td> 52.85 MiB </td>
                     </tr>
 
                     <tr>
                         <th> Shape </th>
                         <td> (3, 3040, 3038) </td>
-                        <td> (1, 3040, 3038) </td>
+                        <td> (3, 3040, 3038) </td>
                     </tr>
                     <tr>
                         <th> Dask graph </th>
-                        <td colspan="2"> 3 chunks in 7 graph layers </td>
+                        <td colspan="2"> 1 chunks in 2 graph layers </td>
                     </tr>
                     <tr>
                         <th> Data type </th>
@@ -566,8 +598,6 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 
   <!-- Vertical lines -->
   <line x1="10" y1="0" x2="10" y2="120" style="stroke-width:2" />
-  <line x1="14" y1="4" x2="14" y2="124" />
-  <line x1="19" y1="9" x2="19" y2="129" />
   <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
 
   <!-- Colored Rectangle -->
@@ -575,8 +605,6 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 
   <!-- Horizontal lines -->
   <line x1="10" y1="0" x2="129" y2="0" style="stroke-width:2" />
-  <line x1="14" y1="4" x2="134" y2="4" />
-  <line x1="19" y1="9" x2="139" y2="9" />
   <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
 
   <!-- Vertical lines -->
@@ -607,7 +635,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </table></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image can then be written to a variety of output formats</span>
@@ -618,7 +646,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -637,7 +665,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -649,11 +677,11 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_13_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_13_1.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_14_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_14_1.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">stitcher</span>
@@ -668,12 +696,12 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 <section id="id1">
 <h3>initializing the stitcher object<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/raw_image_tiles/&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../../example_data/example_stitching/raw_image_tiles&quot;</span><span class="p">)</span>
 <span class="n">slidename</span> <span class="o">=</span> <span class="s2">&quot;stitching_test_parallel&quot;</span>
-<span class="n">outdir_parallel</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../test_data/example1/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
+<span class="n">outdir_parallel</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;../../../../example_data/example_stitching/&quot;</span><span class="p">,</span> <span class="n">slidename</span><span class="p">))</span>
 
 <span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
 <span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
@@ -702,14 +730,14 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SP
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel already exists, overwriting.
+Output directory at /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test_parallel already exists, overwriting.
 </pre></div></div>
 </div>
 </section>
 <section id="id2">
 <h3>Generating thumbnails<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">generate_thumbnail</span><span class="p">()</span>
@@ -725,7 +753,7 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
@@ -734,23 +762,23 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.image.AxesImage at 0xaefb19630&gt;
+&lt;matplotlib.image.AxesImage at 0xa9320ec20&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_20_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_20_1.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_21_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_21_1.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alterantively it can be saved to a tif file</span>
@@ -762,7 +790,7 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 <section id="id3">
 <h3>Generating full-scale stitched image<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">stitcher</span><span class="o">.</span><span class="n">stitch</span><span class="p">()</span>
@@ -775,8 +803,10 @@ Output directory at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 performing stitching on channel Alexa488 with id number 0
-    quantifying alignment error: 100%|██████████| 1000/1000 [00:00&lt;00:00, 1116.28it/s]
-                  aligning edge: 100%|██████████| 12/12 [00:00&lt;00:00, 62.05it/s]
+networkx
+HERE
+    quantifying alignment error: 100%|██████████| 1000/1000 [00:00&lt;00:00, 1187.36it/s]
+                  aligning edge: 100%|██████████| 12/12 [00:00&lt;00:00, 92.61it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -784,8 +814,8 @@ performing stitching on channel Alexa488 with id number 0
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-WARNING:root:Folder /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test/temp_mmap_39xj5p4d with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
-WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel/temp_mmap_0tbn4pud. Cleanup of this folder is OS dependant, and might need to be triggered manually!
+WARNING:root:Folder /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test/temp_mmap_qx6rbrpl with temp mmap arrays is being deleted. All existing temp mmapp arrays will be unusable!
+WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test_parallel/temp_mmap_urbkr3dy. Cleanup of this folder is OS dependant, and might need to be triggered manually!
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -795,7 +825,7 @@ WARNING:root:New temp folder location. Temp mmap arrays are written to /Users/so
 <div class="highlight"><pre>
 Alignment complete.
 assembling mosaic with shape (3, 3040, 3038)
-created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/SPARCStools/test_data/example1/stitching_test_parallel/temp_mmap_0tbn4pud/temp_mmap_2829859152836703899.hdf
+created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/scPortrait/example_data/example_stitching/stitching_test_parallel/temp_mmap_urbkr3dy/temp_mmap_2664334953454325339.hdf
 assembling channels with 3 workers
 assembling mosaic:   0%|          | 0/3 [00:00&lt;?, ?it/s]
 
@@ -824,31 +854,31 @@ assembling mosaic:   0%|          | 0/3 [00:00&lt;?, ?it/s]
 
 
 
-assembling channel 0: 100%|██████████| 9/9 [00:01&lt;00:00,  7.18it/s]
-assembling mosaic:  33%|███▎      | 1/3 [00:01&lt;00:02,  1.28s/it]
-assembling channel 1: 100%|██████████| 9/9 [00:01&lt;00:00,  7.09it/s]
+
+assembling channel 0: 100%|██████████| 9/9 [00:01&lt;00:00,  7.81it/s]
 
 
-assembling channel 2: 100%|██████████| 9/9 [00:01&lt;00:00,  7.05it/s]
-assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.30it/s]
+assembling channel 2: 100%|██████████| 9/9 [00:01&lt;00:00,  7.79it/s]
+assembling channel 1: 100%|██████████| 9/9 [00:01&lt;00:00,  7.78it/s]
+assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.59it/s]
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_23_3.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_23_3.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_24_3.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_24_3.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_23_4.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_23_4.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_24_4.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_24_4.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
@@ -857,7 +887,7 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -877,17 +907,17 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
                     <tr>
                         <th> Bytes </th>
                         <td> 52.85 MiB </td>
-                        <td> 17.62 MiB </td>
+                        <td> 52.85 MiB </td>
                     </tr>
 
                     <tr>
                         <th> Shape </th>
                         <td> (3, 3040, 3038) </td>
-                        <td> (1, 3040, 3038) </td>
+                        <td> (3, 3040, 3038) </td>
                     </tr>
                     <tr>
                         <th> Dask graph </th>
-                        <td colspan="2"> 3 chunks in 7 graph layers </td>
+                        <td colspan="2"> 1 chunks in 2 graph layers </td>
                     </tr>
                     <tr>
                         <th> Data type </th>
@@ -905,8 +935,6 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 
   <!-- Vertical lines -->
   <line x1="10" y1="0" x2="10" y2="120" style="stroke-width:2" />
-  <line x1="14" y1="4" x2="14" y2="124" />
-  <line x1="19" y1="9" x2="19" y2="129" />
   <line x1="24" y1="14" x2="24" y2="134" style="stroke-width:2" />
 
   <!-- Colored Rectangle -->
@@ -914,8 +942,6 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 
   <!-- Horizontal lines -->
   <line x1="10" y1="0" x2="129" y2="0" style="stroke-width:2" />
-  <line x1="14" y1="4" x2="134" y2="4" />
-  <line x1="19" y1="9" x2="139" y2="9" />
   <line x1="24" y1="14" x2="144" y2="14" style="stroke-width:2" />
 
   <!-- Vertical lines -->
@@ -946,7 +972,7 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 </table></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image can then be written to a variety of output formats</span>
@@ -966,7 +992,7 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675.38it/s]
+writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 212.63it/s]
 </pre></div></div>
 </div>
 </section>
@@ -974,7 +1000,7 @@ writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675
 <section id="Visualize-Stitching-Output">
 <h2>Visualize Stitching Output<a class="headerlink" href="#Visualize-Stitching-Output" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -993,7 +1019,7 @@ writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1005,11 +1031,11 @@ writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_27_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_27_1.png" />
+<img alt="../../../_images/pages_tools_stitching_example_stitching_notebook_28_1.png" src="../../../_images/pages_tools_stitching_example_stitching_notebook_28_1.png" />
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># compare parallel and non-parallel stitching</span>
@@ -1019,7 +1045,7 @@ writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 675
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1034,7 +1060,7 @@ array([[ True,  True,  True, ...,  True,  True,  True],
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">stitcher</span>
@@ -1063,7 +1089,10 @@ array([[ True,  True,  True, ...,  True,  True,  True],
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="stitching.html" class="btn btn-neutral float-left" title="stitching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../module.html" class="btn btn-neutral float-right" title="Module Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
@@ -1074,7 +1103,7 @@ array([[ True,  True,  True, ...,  True,  True,  True],
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+
 
 </footer>
         </div>
@@ -1085,7 +1114,7 @@ array([[ True,  True,  True, ...,  True,  True,  True],
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
 
 </body>
 </html>

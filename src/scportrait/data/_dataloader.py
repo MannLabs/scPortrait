@@ -69,12 +69,13 @@ def _download(
 
         temp_file_name = f"{download_to_path}.part"
 
-        with open(temp_file_name, "wb") as file, tqdm(
-                    total=total, unit="B", unit_scale=True, desc="Downloading..."
-                ) as progress_bar:
-                    for data in response.iter_content(block_size):
-                        file.write(data)
-                        progress_bar.update(len(data))
+        with (
+            open(temp_file_name, "wb") as file,
+            tqdm(total=total, unit="B", unit_scale=True, desc="Downloading...") as progress_bar,
+        ):
+            for data in response.iter_content(block_size):
+                file.write(data)
+                progress_bar.update(len(data))
 
         Path(temp_file_name).replace(download_to_path)
 

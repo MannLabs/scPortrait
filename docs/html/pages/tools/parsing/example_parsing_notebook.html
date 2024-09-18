@@ -4,18 +4,18 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; scPortrait  documentation</title>
+  <title>Example Parsing Notebook to rename phenix experiments &mdash; scPortrait  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../../_static/fonts.css?v=5583d106" />
       <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
 
-  
+
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
+
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -26,17 +26,19 @@
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" /> 
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="stitching" href="../stitching/stitching.html" />
+    <link rel="prev" title="parsing" href="parsing.html" />
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-          
-          
+
+
           <a href="../../../index.html" class="icon icon-home">
             scPortrait
           </a>
@@ -155,9 +157,30 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="parsing.html">parsing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stitching/stitching.html">stitching</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="parsing.html">parsing</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Example Parsing Notebook to rename phenix experiments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../stitching/stitching.html">stitching</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../stitching/example_stitching_notebook.html">Example Stitching Notebook</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stitching/example_stitching_notebook.html#Single-threaded-Stitching">Single-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#initializing-the-stitcher-object">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#Generating-thumbnails">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#Generating-full-scale-stitched-image">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../stitching/example_stitching_notebook.html#Multi-threaded-Stitching">Multi-threaded Stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#id1">initializing the stitcher object</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#id2">Generating thumbnails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../stitching/example_stitching_notebook.html#id3">Generating full-scale stitched image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../stitching/example_stitching_notebook.html#Visualize-Stitching-Output">Visualize Stitching Output</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Module API</span></p>
 <ul>
@@ -254,7 +277,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+          <li class="breadcrumb-item"><a href="parsing.html">parsing</a></li>
+      <li class="breadcrumb-item active">Example Parsing Notebook to rename phenix experiments</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../_sources/pages/tools/parsing/example_parsing_notebook.ipynb.txt" rel="nofollow"> View page source</a>
       </li>
@@ -263,28 +287,21 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
-  <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+
+  <section id="Example-Parsing-Notebook-to-rename-phenix-experiments">
+<h1>Example Parsing Notebook to rename phenix experiments<a class="headerlink" href="#Example-Parsing-Notebook-to-rename-phenix-experiments" title="Link to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">sparcstools.parse</span> <span class="kn">import</span> <span class="n">PhenixParser</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
+<span class="kn">from</span> <span class="nn">scportrait.tools.parse</span> <span class="kn">import</span> <span class="n">PhenixParser</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-WARNING:root:Temp mmap arrays are written to /tmp/temp_mmap_bl8redu9. Cleanup of this folder is OS dependant, and might need to be triggered manually!
-/fs/home/maedler/.local/miniconda3/envs/SPARCS_complete/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/phenix/experiment&quot;</span> <span class="c1">#do not need to go to the image directory, the main directory is sufficient</span>
@@ -340,11 +357,15 @@ Metadata used to parse images saved to file /fs/pool/pool-mann-projects/Thierry_
 Parsing completed.
 </pre></div></div>
 </div>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="parsing.html" class="btn btn-neutral float-left" title="parsing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../stitching/stitching.html" class="btn btn-neutral float-right" title="stitching" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
@@ -355,7 +376,7 @@ Parsing completed.
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+
 
 </footer>
         </div>
@@ -366,7 +387,7 @@ Parsing completed.
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
 
 </body>
 </html>
