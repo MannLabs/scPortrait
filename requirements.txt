@@ -31,6 +31,10 @@ scikit-fmm
 scipy
 cellpose
 
+spatialdata
+napari-spatialdata
+pyqt5
+
 torch
 pytorch-lightning
 torchvision

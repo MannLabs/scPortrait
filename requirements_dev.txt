@@ -36,6 +36,10 @@ torch
 pytorch-lightning
 torchvision
 
+spatialdata
+napari-spatialdata
+pyqt5
+
 lxml_html_clean
 ashlar @ git+https://github.com/labsyspharm/ashlar.git@master
 networkx
