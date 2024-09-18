@@ -3,7 +3,11 @@ Collection of functions to load pretrained models to use in the scPortrait envir
 """
 
 import os
+from pathlib import Path
 
+import torch
+
+from scportrait.data._dataloader import _download
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
@@ -55,49 +59,50 @@ def _get_data_dir():
     -------
         str: path to data directory
     """
-    src_code_dir, _ = os.path.split(__file__)
-    data_dir = os.path.join(src_code_dir, os.pardir, os.pardir, "pretrained_models")
-    data_dir = os.path.abspath(data_dir)  # Get the absolute path
+
+    def find_root_by_file(marker_file, current_path):
+        for parent in current_path.parents:
+            if (parent / marker_file).exists():
+                return parent
+        return None
+
+    src_code_dir = find_root_by_file("README.md", Path(__file__))
+    data_dir = os.path.join(src_code_dir, "scportrait_data")
+    data_dir = os.path.abspath(data_dir)
+
     return data_dir
 
 
-def autophagy_classifier1_0(device="cuda"):
+def autophagy_classifier(device="cuda"):
     """
-    Load binary autophagy classification model published as Model 1.0 in original scPortrait publication.
-    """
+    Load binary autophagy classification model published as Model 2.1 in original SPARCS publication.
 
+    References:
+        Schmacke NA, Mädler SC, Wallmann G, Metousis A, Bérouti M, Harz H, Leonhardt H, Mann M, Hornung V.
+        SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes.
+        bioRxiv. 2023 Jun 1;542416. doi: 10.1101/2023.06.01.542416.
+
+    Returns:
+        MultilabelSupervisedModel: pretrained autophagy classification model.
+    """
     data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "vgg_autophagy_classifier")
 
-    checkpoint_path = os.path.join(data_dir, "autophagy/autophagy1.0/VGG1_autophagy_classifier1.0.cpkt")
-    hparam_path = os.path.join(data_dir, "autophagy/autophagy1.0/hparams.yaml")
+    if not Path(save_path).exists():
+        _download(
+            url="https://zenodo.org/records/13385705/files/vgg_autophagy_classifier.zip?download=1",
+            output_path=data_dir,
+            archive_format="zip",
+        )
 
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG1_old", device=device)
-    return model
+    checkpoint_path = os.path.join(save_path, "VGG2_autophagy_classifier2.1.cpkt")
+    hparam_path = os.path.join(save_path, "hparams.yaml")
 
-
-def autophagy_classifier2_0(device="cuda"):
-    """
-    Load binary autophagy classification model published as Model 2.0 in original scPortrait publication.
-    """
-
-    data_dir = _get_data_dir()
-
-    checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.0/VGG2_autophagy_classifier2.0.cpkt")
-    hparam_path = os.path.join(data_dir, "autophagy/autophagy2.0/hparams.yaml")
+    # check if cuda is available
+    if device == "cuda" and torch.cuda.is_available() is False:
+        print("CUDA is not available. Loading model on CPU.")
+        device = "cpu"
 
     model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG2_old", device=device)
-    return model
 
-
-def autophagy_classifier2_1(device="cuda"):
-    """
-    Load binary autophagy classification model published as Model 2.1 in original scPortrait publication.
-    """
-
-    data_dir = _get_data_dir()
-
-    checkpoint_path = os.path.join(data_dir, "autophagy/autophagy2.1/VGG2_autophagy_classifier2.1.cpkt")
-    hparam_path = os.path.join(data_dir, "autophagy/autophagy2.1/hparams.yaml")
-
-    model = _load_multilabelSupervised(checkpoint_path, hparam_path, model_type="VGG2_old", device=device)
     return model

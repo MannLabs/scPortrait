@@ -22,9 +22,7 @@ from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 class _ClassificationBase(ProcessingStep):
     PRETRAINED_MODEL_NAMES = list(
         [
-            "autophagy_classifier1.0",
-            "autophagy_classifier2.0",
-            "autophagy_classifier2.1",
+            "autophagy_classifier",
         ]
     )
     MASK_NAMES = ["nucleus", "cytosol"]
@@ -286,21 +284,10 @@ class _ClassificationBase(ProcessingStep):
             The loaded model.
         """
 
-        if model_name == "autophagy_classifier1.0":
-            from scportrait.tools.ml.pretrained_models import autophagy_classifier1_0
+        if model_name == "autophagy_classifier":
+            from scportrait.tools.ml.pretrained_models import autophagy_classifier
 
-            model = autophagy_classifier1_0(device=self.config["inference_device"])
-            self.expected_imagesize = (128, 128)
-        elif model_name == "autophagy_classifier2.0":
-            from scportrait.tools.ml.pretrained_models import autophagy_classifier2_0
-
-            model = autophagy_classifier2_0(device=self.config["inference_device"])
-            # self.expected_imagesize = (128, 128)
-
-        elif model_name == "autophagy_classifier2.1":
-            from scportrait.tools.ml.pretrained_models import autophagy_classifier2_1
-
-            model = autophagy_classifier2_1(device=self.config["inference_device"])
+            model = autophagy_classifier(device=self.config["inference_device"])
             self.expected_imagesize = (128, 128)
         else:
             raise ValueError(
