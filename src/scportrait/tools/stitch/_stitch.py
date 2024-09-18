@@ -16,7 +16,7 @@ from ashlar.scripts.ashlar import process_axis_flip
 from tqdm import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
-from scportrait.processing.images._image_processing import rescale_image
+from scportrait.processing.preprocessing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import (
     plot_edge_quality,
     plot_edge_scatter,
