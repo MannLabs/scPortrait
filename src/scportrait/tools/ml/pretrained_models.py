@@ -70,7 +70,15 @@ def _get_data_dir():
 
 def autophagy_classifier(device = "cuda"):
     """
-    Load binary autophagy classification model published as Model 2.1 in original scPortrait publication.
+    Load binary autophagy classification model published as Model 2.1 in original SPARCS publication.
+
+    References:
+        Schmacke NA, Mädler SC, Wallmann G, Metousis A, Bérouti M, Harz H, Leonhardt H, Mann M, Hornung V. 
+        SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes. 
+        bioRxiv. 2023 Jun 1;542416. doi: 10.1101/2023.06.01.542416.
+    
+    Returns:
+        MultilabelSupervisedModel: pretrained autophagy classification model.
     """ 
     data_dir = _get_data_dir()
     save_path = os.path.join(data_dir, "vgg_autophagy_classifier")
