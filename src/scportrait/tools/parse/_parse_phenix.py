@@ -685,6 +685,7 @@ class CombinedPhenixParser(PhenixParser):
         compress_rows=False,
         compress_cols=False,
     ) -> None:
+        self.experiment_dir = experiment_dir
         self.get_datasets_to_combine()
 
         super().__init__(
