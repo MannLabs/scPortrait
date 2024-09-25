@@ -37,6 +37,7 @@ from scportrait.tools.stitch._utils.parallelized_ashlar import (
 )
 
 import re
+import pathlib
 
 
 class Stitcher:
@@ -532,8 +533,9 @@ class Stitcher:
         channels = set()
         n = 0
 
+        path = pathlib.Path(self.input_dir)
         # iterate through all files and generate matches
-        for p in self.input_dir.iterdir():
+        for p in path.iterdir():
             match = re.match(regex, p.name)
             if match:
                 gd = match.groupdict()
