@@ -685,6 +685,8 @@ class CombinedPhenixParser(PhenixParser):
         compress_rows=False,
         compress_cols=False,
     ) -> None:
+        self.get_datasets_to_combine()
+
         super().__init__(
             experiment_dir,
             flatfield_exported,
@@ -692,8 +694,6 @@ class CombinedPhenixParser(PhenixParser):
             compress_rows,
             compress_cols,
         )
-
-        self.get_datasets_to_combine()
 
     def get_xml_path(self):
         # directory depends on if flatfield images were exported or not
