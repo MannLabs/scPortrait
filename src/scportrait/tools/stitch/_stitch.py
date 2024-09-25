@@ -36,6 +36,8 @@ from scportrait.tools.stitch._utils.parallelized_ashlar import (
     ParallelMosaic,
 )
 
+import re
+
 
 class Stitcher:
     def __init__(
@@ -515,6 +517,37 @@ class Stitcher:
             scale_factors=scale_factors,
             overwrite=self.overwrite,
         )
+
+    def _check_missing_tiles(self):
+        # Translate a restricted subset of the "format" pattern language to
+        # a matching regex with named capture.
+        pattern = self.pattern.replace(".", "\.")
+        pattern = pattern.replace("(", "\(")
+        pattern = pattern.replace(")", "\)")
+        regex = re.sub(r"{([^:}]+)(?:[^}]*)}", r"(?P<\1>.*?)", pattern)
+
+        # initialize empty sets to save results
+        rows = set()
+        cols = set()
+        channels = set()
+        n = 0
+
+        # iterate through all files and generate matches
+        for p in self.input_dir.iterdir():
+            match = re.match(regex, p.name)
+            if match:
+                gd = match.groupdict()
+                rows.add(int(gd["row"]))
+                cols.add(int(gd["col"]))
+                channels.add(gd.get("channel"))
+                n += 1
+
+        # save results to stitcher object for retrieval later for troubleshooting
+        self._pattern_check = {}
+        self._pattern_check["rows"] = rows
+        self._pattern_check["cols"] = cols
+        self._pattern_check["channels"] = channels
+        self._pattern_check["n"] = n
 
 
 class ParallelStitcher(Stitcher):
