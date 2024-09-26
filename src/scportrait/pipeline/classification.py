@@ -20,11 +20,9 @@ from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
 class _ClassificationBase(ProcessingStep):
-    PRETRAINED_MODEL_NAMES = list(
-        [
-            "autophagy_classifier",
-        ]
-    )
+    PRETRAINED_MODEL_NAMES = [
+        "autophagy_classifier",
+    ]
     MASK_NAMES = ["nucleus", "cytosol"]
 
     def __init__(self, *args, **kwargs):

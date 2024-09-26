@@ -151,11 +151,11 @@ class ParallelEdgeAligner(EdgeAligner):
         errors = execute_indexed_parallel(
             register,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="    quantifying alignment error",
-            ),
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "    quantifying alignment error",
+            },
             n_threads=self.n_threads,
         )
 
@@ -172,11 +172,11 @@ class ParallelEdgeAligner(EdgeAligner):
         execute_parallel(
             self.register_pair,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="                  aligning edge",
-            ),
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "                  aligning edge",
+            },
             n_threads=self.n_threads,
         )
 
@@ -386,12 +386,12 @@ class ParallelMosaic(Mosaic):
                     "if specifying an out array, you also need to pass the HDF5 path of the memory mapped temparray"
                 )
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            disable=not self.verbose,
-            desc=f"assembling channel {ch_index}",
-            total=len(self.aligner.positions),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "disable": not self.verbose,
+            "desc": f"assembling channel {ch_index}",
+            "total": len(self.aligner.positions),
+        }
 
         # this can not be multi-threaded as it leads to inconsistent results in the overlap array
         # threading over the channels was the easiest and most robust way to implement

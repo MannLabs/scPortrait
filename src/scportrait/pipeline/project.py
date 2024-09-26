@@ -291,7 +291,7 @@ class Project(Logable):
 
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
-            if not all([x == chunk_size[0] for x in chunk_size]):
+            if not all(x == chunk_size[0] for x in chunk_size):
                 elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
             else:
                 # ensure that the chunk size is the default chunk size
@@ -513,7 +513,7 @@ class Project(Logable):
 
         # get the segmentation object
         assert all(
-            [seg in self.sdata.labels for seg in seg_name]
+            seg in self.sdata.labels for seg in seg_name
         ), "Not all passed segmentation elements found in sdata object."
         seg_objects = [self.sdata.labels[seg] for seg in seg_name]
 

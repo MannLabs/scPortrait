@@ -33,7 +33,7 @@ def plot_edge_quality(aligner, outdir, img=None, show_tree=True, pos="metadata",
         im_kwargs = {}
     if nx_kwargs is None:
         nx_kwargs = {}
-    final_nx_kwargs = dict(width=2, node_size=100, font_size=6)
+    final_nx_kwargs = {"width": 2, "node_size": 100, "font_size": 6}
     final_nx_kwargs.update(nx_kwargs)
     if show_tree:
         nrows, ncols = 1, 2

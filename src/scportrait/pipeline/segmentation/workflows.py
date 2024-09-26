@@ -842,7 +842,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
         if self.contact_filter_nuclei:
             if self.debug:
-                n_classes = len(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
+                n_classes = len(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
 
             self.maps["nucleus_segmentation"] = contact_filter(
                 self.maps["nucleus_segmentation"],
@@ -851,7 +851,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
             )
 
             if self.debug:
-                n_classes_post = len(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
+                n_classes_post = len(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
                 self.log(f"Filtered out {n_classes - n_classes_post} nuclei due to contact filtering.")
 
     def _cytosol_segmentation(self, input_image, debug: bool = False):
@@ -975,7 +975,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
         if self.contact_filter_cytosol:
             if self.debug:
-                n_classes = len(set(np.unique(self.maps["cytosol_segmentation"])) - set([0]))
+                n_classes = len(set(np.unique(self.maps["cytosol_segmentation"])) - {0})
 
             self.maps["cytosol_segmentation"] = contact_filter(
                 self.maps["cytosol_segmentation"],
@@ -984,10 +984,10 @@ class _ClassicalSegmentation(_BaseSegmentation):
             )
 
             if self.debug:
-                n_classes_post = len(set(np.unique(self.maps["cytosol_segmentation"])) - set([0]))
+                n_classes_post = len(set(np.unique(self.maps["cytosol_segmentation"])) - {0})
                 self.log(f"Filtered out {n_classes - n_classes_post} cytosols due to contact filtering.")
 
-        unique_cytosol_ids = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
+        unique_cytosol_ids = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
         # remove any ids from nucleus mask that dont have a cytosol mask
         self.maps["nucleus_segmentation"][~np.isin(self.maps["nucleus_segmentation"], list(unique_cytosol_ids))] = 0
@@ -1050,7 +1050,7 @@ class WGASegmentation(_ClassicalSegmentation):
         if self.debug:
             self._visualize_final_masks()
 
-        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
+        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()  # type: ignore
 
         print("Channels shape: ", segmentation.shape)
@@ -1110,7 +1110,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         if self.segment_nuclei:
             self._nucleus_segmentation(input_image[0], debug=self.debug)
 
-        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
+        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()
 
         results = self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
@@ -1323,7 +1323,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         self.cellpose_segmentation(input_image)
 
         # finalize classes list
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
@@ -1481,7 +1481,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         self.cellpose_segmentation(input_image)
 
         # finalize segmentation classes ensuring that background is removed
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
@@ -1562,7 +1562,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         self.cellpose_segmentation(input_image)
 
         # finalize classes list
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
 
@@ -1674,7 +1674,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         self.segmentation_time = stop_segmentation - start_segmentation
 
         # get final classes list
-        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
@@ -1774,7 +1774,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         self.cellpose_segmentation(input_image)
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()  # type: ignore
 

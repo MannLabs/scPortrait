@@ -117,7 +117,7 @@ def write_ome_zarr(
         max_layer=n_downscaling_layers,
         method="nearest",
     )  # increase downscale so that large slides can also be opened in napari
-    write_image(image, group=group, axes=axes, storage_options=dict(chunks=chunk_size), scaler=scaler)
+    write_image(image, group=group, axes=axes, storage_options={"chunks": chunk_size}, scaler=scaler)
 
 
 def write_xml(image_paths: List[str], channels: List[str], slidename: str, outdir: str = None):

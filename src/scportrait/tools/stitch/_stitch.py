@@ -631,11 +631,11 @@ class ParallelStitcher(Stitcher):
         for i, channel in enumerate(self.channels):
             args.append((channel, i, hdf5_path))
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            desc="assembling mosaic",
-            total=len(self.channels),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "desc": "assembling mosaic",
+            "total": len(self.channels),
+        }
 
         # threading over channels is safe as the channels are written to different postions in the hdf5 file and do not interact with one another
         # threading over the writing of a single channel is not safe and leads to inconsistent results
@@ -664,11 +664,11 @@ class ParallelStitcher(Stitcher):
             filenames.append(filename)
             args.append((filename, i))
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            desc="writing tif files",
-            total=len(self.channels),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "desc": "writing tif files",
+            "total": len(self.channels),
+        }
 
         # define helper function to execute in threadpooler
         def _write_tif(args):

@@ -76,7 +76,7 @@ def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *
         class_ids = list(class_ids)
 
     if all_ids is None:
-        all_ids = set(np.unique(seg_map)) - set([0])
+        all_ids = set(np.unique(seg_map)) - {0}
 
     # get the ids to keep
     keep_ids = list(all_ids - set(class_ids))

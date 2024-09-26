@@ -790,7 +790,7 @@ class ShardedSegmentation(Segmentation):
             # if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
             if self.deep_debug:
                 masks = hdf_labels[:, :, :]
-                unique_ids = set(np.unique(masks[0])) - set([0])
+                unique_ids = set(np.unique(masks[0])) - {0}
                 self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
 
                 difference_classes = filtered_classes_combined.difference(unique_ids)
@@ -817,7 +817,7 @@ class ShardedSegmentation(Segmentation):
             self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
 
             # remove background class
-            filtered_classes_combined = filtered_classes_combined - set([0])
+            filtered_classes_combined = filtered_classes_combined - {0}
 
             self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 

@@ -40,8 +40,8 @@ if __name__ == "__main__":
     with h5py.File(f"{project.seg_directory}/segmentation.h5", "r") as hf:
         masks = hf["labels"][:]
 
-    nucleus_ids = set(np.unique(masks[0])) - set([0])
-    cytosol_ids = set(np.unique(masks[1])) - set([0])
+    nucleus_ids = set(np.unique(masks[0])) - {0}
+    cytosol_ids = set(np.unique(masks[1])) - {0}
     classes = set(
         pd.read_csv(f"{project.seg_directory}/classes.csv", header=None)[0]
         .astype(project.DEFAULT_SEGMENTATION_DTYPE)
