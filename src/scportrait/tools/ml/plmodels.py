@@ -535,7 +535,7 @@ class AutoEncoderModel(pl.LightningModule):
 
         rows = ["Cell Mask", "Nucleus Mask", "Nucleus", "TGOLN2-mCherry", "WGA", "CAE"]
 
-        for ax, row in zip(axs[:, 0], rows):
+        for ax, row in zip(axs[:, 0], rows, strict=False):
             ax.set_ylabel(row, rotation=0, size="large", ha="right")
 
         plt.subplots_adjust(wspace=0.1, hspace=0.1)

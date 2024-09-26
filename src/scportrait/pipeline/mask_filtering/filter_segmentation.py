@@ -207,7 +207,7 @@ class TiledSegmentationFilter(SegmentationFilter):
         _tile_list = []
         self.input_path = input_path
 
-        for i, window in zip(incomplete_indexes, tileing_plan):
+        for i, window in zip(incomplete_indexes, tileing_plan, strict=False):
             local_tile_directory = os.path.join(self.tile_directory, str(i))
             current_tile = self.method(
                 self.config,

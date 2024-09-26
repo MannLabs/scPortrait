@@ -102,7 +102,7 @@ class Project(Logable):
         if not os.path.isdir(self.project_location):
             os.makedirs(self.project_location)
         else:
-            warnings.warn("There is already a directory in the location path")
+            Warning("There is already a directory in the location path")
 
         # === setup sdata reader/writer ===
         self.filehandler = sdata_filehandler(
@@ -437,7 +437,7 @@ class Project(Logable):
         image,
         image_name,
         channel_names=None,
-        scale_factors=[2, 4, 8],
+        scale_factors=None,
         chunks=(1, 1000, 1000),
         overwrite=False,
     ):
@@ -452,6 +452,8 @@ class Project(Logable):
             List of scale factors for the image. Default is [2, 4, 8]. This will load the image at 4 different resolutions to allow for fluid visualization.
         """
 
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         if self.sdata is None:
             self._read_sdata()
 
@@ -668,7 +670,7 @@ class Project(Logable):
         self,
         file_paths,
         channel_names=None,
-        crop=[(0, -1), (0, -1)],
+        crop=None,
         overwrite=None,
         remap=None,
         cache=None,
@@ -691,6 +693,9 @@ class Project(Logable):
             1000 px height and 2000 px width from the top left corner.
 
         """
+
+        if crop is None:
+            crop = [(0, -1), (0, -1)]
 
         def extract_unique_parts(paths: List[str]):
             """helper function to get unique channel names from filepaths

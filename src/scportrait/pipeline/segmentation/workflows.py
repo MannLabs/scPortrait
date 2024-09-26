@@ -340,12 +340,14 @@ class _BaseSegmentation(Segmentation):
     ##### Filtering Functions #####
 
     # 1. Size Filtering
-    def _check_for_size_filtering(self, mask_types=["nucleus", "cytosol"]) -> None:
+    def _check_for_size_filtering(self, mask_types=None) -> None:
         """
         Check if size filtering should be performed on the masks.
         If size filtering is turned on, the thresholds for filtering are loaded from the config file.
         """
 
+        if mask_types is None:
+            mask_types = ["nucleus", "cytosol"]
         if "filter_masks_size" in self.config.keys():
             self.filter_size = self.config["filter_masks_size"]
         else:
@@ -677,6 +679,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                     zip(
                         range(self.input_image.shape[0]),
                         self.config["lower_quantile_normalization"],
+                        strict=False,
                     )
                 )
             else:
@@ -698,6 +701,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                     zip(
                         range(self.input_image.shape[0]),
                         self.config["upper_quantile_normalization"],
+                        strict=False,
                     )
                 )
             else:

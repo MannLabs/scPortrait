@@ -337,6 +337,7 @@ class HDF5CellExtraction(ProcessingStep):
                 range(len(cell_ids)),
                 [self.save_index_lookup.index.get_loc(x) for x in cell_ids],
                 cell_ids,
+                strict=False,
             )
         )
         return args
@@ -620,7 +621,7 @@ class HDF5CellExtraction(ProcessingStep):
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
                 "single_cell_index",
-                data=list(zip(list(range(len(cell_ids))), cell_ids)),
+                data=list(zip(list(range(len(cell_ids))), cell_ids, strict=False)),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )  # increase to 64 bit otherwise information may become truncated
 

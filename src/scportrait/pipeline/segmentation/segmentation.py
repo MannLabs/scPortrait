@@ -261,7 +261,9 @@ class Segmentation(ProcessingStep):
 
         self.log("=== Finished segmentation of shard ===")
 
-    def _save_segmentation_sdata(self, labels, classes, masks=["nuclei", "cytosol"]):
+    def _save_segmentation_sdata(self, labels, classes, masks=None):
+        if masks is None:
+            masks = ["nuclei", "cytosol"]
         if self.is_shard:
             self._save_segmentation(labels, classes)
         else:
@@ -604,7 +606,7 @@ class ShardedSegmentation(Segmentation):
 
         if keep_plots:
             self.log("Moving generated plots from shard directory to main directory.")
-            for i, window in enumerate(sharding_plan):
+            for i, _window in enumerate(sharding_plan):
                 local_shard_directory = os.path.join(self.shard_directory, str(i))
                 for file in os.listdir(local_shard_directory):
                     if file.endswith(tuple(file_identifiers_plots)):

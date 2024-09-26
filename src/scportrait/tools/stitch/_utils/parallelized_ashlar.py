@@ -107,7 +107,7 @@ class ParallelEdgeAligner(EdgeAligner):
             random_state = np.random.RandomState()
         for i in range(n):
             # Limit tries to avoid infinite loop in pathological cases.
-            for current_try in range(max_tries):
+            for _current_try in range(max_tries):
                 t1, t2 = random_state.randint(self.metadata.num_images, size=2)
                 o1, o2 = random_state.randint(max_offset, size=2)
                 # Check for non-overlapping strips and abort the retry loop.
@@ -144,7 +144,7 @@ class ParallelEdgeAligner(EdgeAligner):
 
         # prepare arguments for executor
         args = []
-        for (t1, t2), (offset1, offset2) in zip(pairs, offsets):
+        for (t1, t2), (offset1, offset2) in zip(pairs, offsets, strict=False):
             arg = (t1, t2, offset1, offset2)
             args.append(copy.deepcopy(arg))
 

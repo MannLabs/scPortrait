@@ -57,7 +57,7 @@ select = [
     "W",  # Warning detected by Pycodestyle
     "I",  # isort
     #"D",  # pydocstyle
-    #"B",  # flake8-bugbear
+    "B",  # flake8-bugbear
     #"TID",  # flake8-tidy-imports
     "C4",  # flake8-comprehensions
     "BLE",  # flake8-blind-except

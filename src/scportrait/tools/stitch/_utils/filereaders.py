@@ -102,7 +102,7 @@ class BioformatsMetadataRescale(BioformatsMetadata):
 
         for id in range(n_channels):
             channel_names.append(self._metadata.getChannelName(0, id))
-        channel_map = dict(zip(list(range(n_channels)), channel_names))
+        channel_map = dict(zip(list(range(n_channels)), channel_names, strict=False))
 
         return channel_map
 

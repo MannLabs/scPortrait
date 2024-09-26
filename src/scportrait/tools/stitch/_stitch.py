@@ -41,7 +41,7 @@ class Stitcher:
         rescale_range: tuple = (1, 99),
         channel_order: List[str] = None,
         reader_type=FilePatternReaderRescale,
-        orientation: dict = {"flip_x": False, "flip_y": True},
+        orientation: dict = None,
         plot_QC: bool = True,
         overwrite: bool = False,
         cache: str = None,
@@ -85,6 +85,8 @@ class Stitcher:
         cache : str, optional
             Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
         """
+        if orientation is None:
+            orientation = {"flip_x": False, "flip_y": True}
         self.input_dir = input_dir
         self.slidename = slidename
         self.outdir = outdir
@@ -457,7 +459,7 @@ class Stitcher:
         )
         write_tif(filename, self.thumbnail)
 
-    def write_spatialdata(self, scale_factors=[2, 4, 8]):
+    def write_spatialdata(self, scale_factors=None):
         """
         Write the assembled mosaic as a SpatialData object.
 
@@ -468,6 +470,8 @@ class Stitcher:
             The scale factors are used to generate downsampled versions of the image for faster visualization at lower resolutions.
         """
 
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         filepath = os.path.join(self.outdir, f"{self.slidename}.spatialdata")
 
         # create spatialdata object
@@ -540,10 +544,12 @@ class ParallelStitcher(Stitcher):
         channel_order: list[str] = None,
         overwrite: bool = False,
         reader_type=FilePatternReaderRescale,
-        orientation={"flip_x": False, "flip_y": True},
+        orientation=None,
         cache: str = None,
         threads: int = 20,
     ) -> None:
+        if orientation is None:
+            orientation = {"flip_x": False, "flip_y": True}
         super().__init__(
             input_dir,
             slidename,

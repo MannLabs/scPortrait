@@ -1020,7 +1020,7 @@ class EnsembleClassifier(_ClassificationBase):
         )
 
         # perform inference
-        for model_name, model in zip(self.model_names, self.model):
+        for model_name, model in zip(self.model_names, self.model, strict=False):
             self.log(f"Starting inference for model {model_name}")
             results = self.inference(self.dataloader, model)
 

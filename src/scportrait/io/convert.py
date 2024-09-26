@@ -127,7 +127,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
             self.log("Finished loading input image to memory mapped temp array.")
 
-    def write_input_image_to_spatialdata(self, scale_factors=[2, 4, 8]):
+    def write_input_image_to_spatialdata(self, scale_factors=None):
         """
         Write the input image found under the label "channels" in the segmentation.h5 file to a spatialdata object.
 
@@ -138,6 +138,8 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         """
 
         # reconnect to temporary image as a dask array
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         temp_image = daskmmap.dask_array_from_path(self.temp_image_path)
 
         if self.channel_names is None:
@@ -186,7 +188,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
                 self.log("No segmentation found in project.")
                 self.segmentation_status = False
 
-    def write_segmentation_to_spatialdata(self, scale_factors=[]):
+    def write_segmentation_to_spatialdata(self, scale_factors=None):
         """
         Write the segmentation masks found under the label "labels" in the segmentation.h5 file to a spatialdata object.
 
@@ -197,6 +199,8 @@ class convert_SPARCSproject_to_spatialdata(Logable):
             In the future this behaviour may be changed but at the moment scPortrait is not designed to handle multiple resolutions for segmentation masks.
         """
 
+        if scale_factors is None:
+            scale_factors = []
         if self.segmentation_status is None:
             # reconnect to temporary image as a dask array
             temp_segmentation = daskmmap.dask_array_from_path(self.temp_segmentation_path)
@@ -249,10 +253,14 @@ class convert_SPARCSproject_to_spatialdata(Logable):
 
         return region_lookup
 
-    def add_multiscale_segmentation(self, region_keys=["seg_all_nucleus", "seg_all_cytosol"], scale_factors=[2, 4, 8]):
+    def add_multiscale_segmentation(self, region_keys=None, scale_factors=None):
         """
         Add multiscale segmentation to the spatialdata object.
         """
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
+        if region_keys is None:
+            region_keys = ["seg_all_nucleus", "seg_all_cytosol"]
         region_lookup = self._lookup_region_annotations()
         sdata = SpatialData.read(self._get_sdata_path())
 
@@ -360,9 +368,9 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         table = anndata.AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
         return table
 
-    def write_classification_result_to_spatialdata(
-        self, classification_result, segmentation_regions=["seg_all_nucleus", "seg_all_cytosol"]
-    ):
+    def write_classification_result_to_spatialdata(self, classification_result, segmentation_regions=None):
+        if segmentation_regions is None:
+            segmentation_regions = ["seg_all_nucleus", "seg_all_cytosol"]
         class_result = self._read_classification_results(classification_result)
         sdata = SpatialData.read(self._get_sdata_path())
 

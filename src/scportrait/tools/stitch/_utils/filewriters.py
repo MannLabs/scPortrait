@@ -184,10 +184,12 @@ def write_spatialdata(
     image_path: str,
     image: np.array,
     channel_names: List[str] = None,
-    scale_factors: List[int] = [2, 4, 8],
+    scale_factors: List[int] = None,
     overwrite: bool = False,
 ):
     # check if the file exists and delete if overwrite is set to True
+    if scale_factors is None:
+        scale_factors = [2, 4, 8]
     if os.path.exists(image_path):
         if overwrite:
             shutil.rmtree(image_path)

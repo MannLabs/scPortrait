@@ -133,8 +133,8 @@ class PhenixParser:
             if _get_child_name(child.tag) == "Images":
                 images = root[i]
 
-        for i, image in enumerate(images):
-            for ix, child in enumerate(image):
+        for image in images:
+            for _ix, child in enumerate(image):
                 tag = _get_child_name(child.tag)
                 if tag == "Row":
                     rows.append(child.text)
@@ -167,7 +167,7 @@ class PhenixParser:
 
         image_names = []
         for row, col, field, plane, channel_id, timepoint, flim_id in zip(
-            rows, cols, fields, planes, channel_ids, timepoints, flim_ids
+            rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
         ):
             image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
 
@@ -178,7 +178,7 @@ class PhenixParser:
         dates = [x.split("T")[0] for x in times]
         _times = [x.split("T")[1] for x in times]
         _times = [(x.split("+")[0].split(".")[0] + "+" + x.split("+")[1].replace(":", "")) for x in _times]
-        time_final = [x + " " + y for x, y in zip(dates, _times)]
+        time_final = [x + " " + y for x, y in zip(dates, _times, strict=False)]
 
         datetime_format = "%Y-%m-%d %H:%M:%S%z"
         time_unix = [datetime.strptime(x, datetime_format) for x in time_final]
@@ -434,6 +434,7 @@ class PhenixParser:
                 metadata.new_file_name.tolist(),
                 metadata.source.tolist(),
                 metadata.dest.tolist(),
+                strict=False,
             ),
             total=len(metadata.new_file_name.tolist()),
             desc="Copying files",
@@ -463,7 +464,7 @@ class PhenixParser:
         metadata = self.generate_metadata()
 
         # set destination for copying
-        metadata["dest"] = getattr(self, "outdir_parsed_images")
+        metadata["dest"] = self.outdir_parsed_images
 
         # copy/link the images to their new names
         self.copy_files(metadata=metadata)
@@ -510,13 +511,13 @@ class PhenixParser:
             print("\t Tiles: ", tiles)  # only print if these folders should be created
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, "outdir_sorted_wells"), f"row{row}_well{well}", tile)
-                for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles)
+                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}", tile)
+                for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, "outdir_sorted_wells"), f"row{row}_well{well}")
-                for row, well in zip(metadata.Row, metadata.Well)
+                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}")
+                for row, well in zip(metadata.Row, metadata.Well, strict=False)
             ]
 
         # unique directories for each tile
@@ -567,12 +568,12 @@ class PhenixParser:
         if sort_wells:
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, "outdir_sorted_timepoints"), timepoint, f"{row}_{well}")
-                for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint)
+                os.path.join(self.outdir_sorted_timepoints, timepoint, f"{row}_{well}")
+                for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, "outdir_sorted_timepoints"), timepoint) for timepoint in metadata.Timepoint
+                os.path.join(self.outdir_sorted_timepoints, timepoint) for timepoint in metadata.Timepoint
             ]
 
         # unique directories for each tile
@@ -640,7 +641,7 @@ class CombinedPhenixParser(PhenixParser):
         dates_times = [re.search(pattern, file_name).group() for file_name in phenix_dirs]
 
         # Sort the file names based on the extracted date and time information
-        sorted_phenix_dirs = [file_name for _, file_name in sorted(zip(dates_times, phenix_dirs))]
+        sorted_phenix_dirs = [file_name for _, file_name in sorted(zip(dates_times, phenix_dirs, strict=False))]
 
         self.phenix_dirs = [f"{input_path}/{phenix_dir}" for phenix_dir in sorted_phenix_dirs]
 

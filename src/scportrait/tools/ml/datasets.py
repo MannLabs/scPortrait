@@ -149,7 +149,7 @@ class _HDF5SingleCellDataset(Dataset):
 
                 # generate identifiers for all single-cells
                 # iterate over rows in index handle, i.e. over all cells
-                for current_target, row in zip(label_col, index_handle):
+                for current_target, row in zip(label_col, index_handle, strict=False):
                     # append target, handle id, and row to data locator
                     self.data_locator.append([current_target, handle_id] + list(row))
 

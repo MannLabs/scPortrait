@@ -47,7 +47,7 @@ def plot_image(array, size=(10, 10), save_name="", cmap="magma", return_fig=Fals
         plt.close()
 
 
-def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *args, **kwargs):
+def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, **kwargs):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
 
@@ -92,7 +92,7 @@ def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *
 
     vis_map = label2rgb(outmap, image=image, colors=["red", "blue"], alpha=0.4, bg_label=0)
 
-    fig = plot_image(vis_map, return_fig=True, *args, **kwargs)
+    fig = plot_image(vis_map, return_fig=True, **kwargs)
 
     if return_fig:
         return fig

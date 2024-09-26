@@ -57,9 +57,8 @@ class Logable(object):
                 lines = [str(message)]
             except (TypeError, ValueError):
                 raise TypeError(
-                    "Message must be a string, list of strings or a dictionary, but recieved type: ", type(message)
-                )
-                return
+                    "Message must be a string, list of strings or a dictionary, but received type: ", type(message)
+                ) from None
 
         for line in lines:
             log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
@@ -217,7 +216,7 @@ class ProcessingStep(Logable):
             return x
         else:
             self.clear_temp_dir()  # also ensure clearing if not callable just to make sure everything is cleaned up
-            warnings.warn("no process method defined")
+            Warning("no process method defined.")
 
     def __call_empty__(self, *args, debug=None, overwrite=None, **kwargs):
         """Call the empty processing step.
@@ -244,7 +243,7 @@ class ProcessingStep(Logable):
             x = self.return_empty_mask(*args, **kwargs)
             return x
         else:
-            warnings.warn("no return_empty_mask method defined")
+            Warning("no return_empty_mask method defined")
 
         # also clear empty temp directory here
         self.clear_temp_dir()
