@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import timeit
-from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -265,8 +264,8 @@ class _BaseSegmentation(Segmentation):
     def _normalize_image(
         self,
         input_image: np.array,
-        lower: Union[float, dict],
-        upper: Union[float, dict],
+        lower: float | dict,
+        upper: float | dict,
         debug: bool = False,
     ) -> np.array:
         # check that both are specified as the same type
@@ -363,7 +362,7 @@ class _BaseSegmentation(Segmentation):
                 setattr(self, f"{mask_type}_thresholds", thresholds)
                 setattr(self, f"{mask_type}_confidence_interval", confidence_interval)
 
-    def _get_params_cellsize_filtering(self, type) -> Tuple[Union[Tuple[float], None], Union[float, None]]:
+    def _get_params_cellsize_filtering(self, type) -> tuple[tuple[float] | None, float | None]:
         absolute_filter_status = False
 
         if "min_size" in self.config[f"{type}_segmentation"].keys():
@@ -397,7 +396,7 @@ class _BaseSegmentation(Segmentation):
     def _perform_size_filtering(
         self,
         mask: np.array,
-        thresholds: Union[Tuple[float], None],
+        thresholds: tuple[float] | None,
         confidence_interval: float,
         mask_name: str,
         log: bool = True,
@@ -524,7 +523,7 @@ class _BaseSegmentation(Segmentation):
         filtering_threshold: float,
         debug: bool = False,
         input_image: np.array = None,
-    ) -> Tuple[np.array, np.array]:
+    ) -> tuple[np.array, np.array]:
         """
         Match the nuclei and cytosol masks to ensure that the same cells are present in both masks.
 
@@ -603,9 +602,7 @@ class _BaseSegmentation(Segmentation):
             self._clear_cache(vars_to_delete=[mask_nuc, mask_cyto, plot_results])
 
         self.log(
-            "Total time to perform nucleus and cytosol mask matching filtering: {:.2f} seconds".format(
-                time.time() - start_time
-            )
+            f"Total time to perform nucleus and cytosol mask matching filtering: {time.time() - start_time:.2f} seconds"
         )
 
         return masks_nucleus, masks_cytosol
@@ -1151,7 +1148,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
         return model
 
-    def _load_model(self, model_type: str, gpu: str, device) -> Tuple[float, models.Cellpose]:
+    def _load_model(self, model_type: str, gpu: str, device) -> tuple[float, models.Cellpose]:
         """
         Loads cellpose model
 

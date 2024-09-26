@@ -4,7 +4,6 @@ import platform
 import shutil
 from contextlib import redirect_stdout
 from functools import partial as func_partial
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -301,8 +300,8 @@ class _ClassificationBase(ProcessingStep):
     def _load_model(
         self,
         ckpt_path,
-        hparams_path: Union[str, None] = None,
-        model_type: Union[str, None] = None,
+        hparams_path: str | None = None,
+        model_type: str | None = None,
     ) -> pl.LightningModule:
         """Load a model from a checkpoint file and transfer it to the inference device.
 
@@ -371,14 +370,14 @@ class _ClassificationBase(ProcessingStep):
     def load_model(
         self,
         ckpt_path,
-        hparams_path: Union[str, None] = None,
-        model_type: Union[str, None] = None,
+        hparams_path: str | None = None,
+        model_type: str | None = None,
     ):
         model = self._load_model(ckpt_path, hparams_path, model_type)
         self._assign_model(model)
 
     ### Functions regarding dataloading and transforms ####
-    def configure_transforms(self, selected_transforms: List):
+    def configure_transforms(self, selected_transforms: list):
         self.transforms = transforms.Compose(selected_transforms)
         self.log(f"The following transforms were applied: {self.transforms}")
 
@@ -387,7 +386,7 @@ class _ClassificationBase(ProcessingStep):
         extraction_dir: str,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
-        seed: Union[int, None] = 42,
+        seed: int | None = 42,
         dataset_class=HDF5SingleCellDataset,
     ) -> torch.utils.data.DataLoader:
         """Create a pytorch dataloader from the provided single-cell image dataset.
@@ -1078,7 +1077,7 @@ class _cellFeaturizerBase(_ClassificationBase):
         self,
         n_masks: int = 2,
         n_channels: int = 3,
-        channel_names: Union[List, None] = None,
+        channel_names: list | None = None,
     ) -> None:
         column_names = []
 

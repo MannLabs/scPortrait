@@ -1,6 +1,6 @@
 # helper functions for paralellization
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
 
 from tqdm.auto import tqdm
 

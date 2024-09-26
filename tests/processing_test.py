@@ -299,7 +299,7 @@ def test_plot_image(tmpdir):
     # Since this function does not return anything, we just check if it produces any exceptions
     try:
         plot_image(array, size=(5, 5), save_name=save_name)
-    except (ValueError, TypeError, IOError) as e:
+    except (OSError, ValueError, TypeError) as e:
         pytest.fail(f"plot_image raised exception: {str(e)}")
     assert os.path.isfile(str(save_name) + ".png")
 
@@ -327,7 +327,7 @@ def test_logable_log():
         log_path = os.path.join(temp_dir, logable.DEFAULT_LOG_NAME)
         assert os.path.isfile(log_path)
 
-        with open(log_path, "r") as f:
+        with open(log_path) as f:
             log_content = f.read()
             assert "Testing" in log_content
 

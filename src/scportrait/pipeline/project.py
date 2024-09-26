@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import shutil
 import tempfile
 import warnings
 from time import time
-from typing import Dict, List, Union
 
 import dask.array as darray
 import datatree
@@ -143,13 +141,13 @@ class Project(Logable):
         if not os.path.isfile(file_path):
             raise ValueError(f"Your config path {file_path} is invalid.")
 
-        with open(file_path, "r") as stream:
+        with open(file_path) as stream:
             try:
                 self.config = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
 
-    def _get_config_file(self, config_path: Union[str, None] = None):
+    def _get_config_file(self, config_path: str | None = None):
         # load config file
         self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
 
@@ -487,7 +485,7 @@ class Project(Logable):
 
     #### Functions for getting elements from sdata object #####
 
-    def _load_seg_to_memmap(self, seg_name: List[str], tmp_dir_abs_path: str):
+    def _load_seg_to_memmap(self, seg_name: list[str], tmp_dir_abs_path: str):
         """
         Helper function to load segmentation masks from sdata to memory mapped temp arrays for faster access.
         Loading happens in a chunked manner to avoid memory issues.
@@ -630,7 +628,7 @@ class Project(Logable):
         return path_input_image
 
     #### Functions to load input data ####
-    def load_input_from_array(self, array: np.ndarray, channel_names: List[str] = None, overwrite=None):
+    def load_input_from_array(self, array: np.ndarray, channel_names: list[str] = None, overwrite=None):
         # check if an input image was already loaded if so throw error if overwrite = False
 
         # setup overwrite
@@ -697,7 +695,7 @@ class Project(Logable):
         if crop is None:
             crop = [(0, -1), (0, -1)]
 
-        def extract_unique_parts(paths: List[str]):
+        def extract_unique_parts(paths: list[str]):
             """helper function to get unique channel names from filepaths
 
             Parameters
@@ -970,7 +968,7 @@ class Project(Logable):
 
     #### Functions to perform processing ####
 
-    def segment(self, overwrite: Union[bool, None] = None):
+    def segment(self, overwrite: bool | None = None):
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
@@ -996,7 +994,7 @@ class Project(Logable):
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
         self.sdata = self.filehandler.get_sdata()  # update
 
-    def complete_segmentation(self, overwrite: Union[bool, None] = None):
+    def complete_segmentation(self, overwrite: bool | None = None):
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
@@ -1021,7 +1019,7 @@ class Project(Logable):
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def extract(self, partial=False, n_cells=None, overwrite: Union[bool, None] = None):
+    def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
@@ -1043,7 +1041,7 @@ class Project(Logable):
         n_cells=0,
         data_type="complete",
         partial_seed=None,
-        overwrite: Union[bool, None] = None,
+        overwrite: bool | None = None,
     ):
         if self.classification_f is None:
             raise ValueError("No classification method defined")
@@ -1098,10 +1096,10 @@ class Project(Logable):
 
     def select(
         self,
-        cell_sets: List[Dict],
-        calibration_marker: Union[np.array, None] = None,
+        cell_sets: list[dict],
+        calibration_marker: np.array | None = None,
         segmentation_name: str = "seg_all_nucleus",
-        name: Union[str, None] = None,
+        name: str | None = None,
     ):
         """
         Select specified classes using the defined selection method.

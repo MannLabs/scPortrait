@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List, Union
 
 import numpy as np
 from alphabase.io import tempmmap
@@ -40,7 +39,7 @@ class LMDSelection(ProcessingStep):
         savename = name.replace(" ", "_") + ".xml"
         self.savepath = os.path.join(self.directory, savename)
 
-    def _post_processing_cleanup(self, vars_to_delete: Union[List, None] = None):
+    def _post_processing_cleanup(self, vars_to_delete: list | None = None):
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete=vars_to_delete)
 
@@ -53,9 +52,9 @@ class LMDSelection(ProcessingStep):
     def process(
         self,
         segmentation_name: str,
-        cell_sets: List[Dict],
+        cell_sets: list[dict],
         calibration_marker: np.array,
-        name: Union[str, None] = None,
+        name: str | None = None,
     ):
         """
         Process function for selecting cells and generating their XML.

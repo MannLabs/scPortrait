@@ -27,7 +27,7 @@ class FilePatternReaderRescale(FilePatternReader):
     ):
         try:
             super().__init__(path, pattern, overlap, pixel_size=pixel_size)
-        except (FileNotFoundError, IOError):
+        except (OSError, FileNotFoundError):
             print(
                 f"Error: Could not read images with the given pattern {pattern}. Please check the path {path} and pattern."
             )

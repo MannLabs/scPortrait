@@ -6,9 +6,7 @@ import time
 import timeit
 import traceback
 from multiprocessing import current_process
-from typing import List
 
-import datatree
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +16,6 @@ import xarray
 from alphabase.io import tempmmap
 from dask.array.core import Array as daskArray
 from PIL import Image
-from spatialdata import SpatialData
 from tqdm.auto import tqdm
 
 from scportrait.pipeline._base import ProcessingStep
@@ -223,7 +220,7 @@ class Segmentation(ProcessingStep):
             input_image = input_image.data
         return input_image
 
-    def _save_segmentation(self, labels: np.array, classes: List) -> None:
+    def _save_segmentation(self, labels: np.array, classes: list) -> None:
         """Helper function to save the results of a segmentation to file when generating a segmentation of a shard.
 
         Args:
@@ -306,20 +303,20 @@ class Segmentation(ProcessingStep):
         """
 
         if self.maps[map_name] is None:
-            self.log("Error saving map {}, map is None".format(map_name))
+            self.log(f"Error saving map {map_name}, map is None")
         else:
             map_index = list(self.maps.keys()).index(map_name)
 
             # check if map contains more than one channel (3, 1024, 1024) vs (1024, 1024)
             if len(self.maps[map_name].shape) > 2:
                 for i, channel in enumerate(self.maps[map_name]):
-                    channel_name = "{}_{}_{}_map".format(map_index, map_name, i)
+                    channel_name = f"{map_index}_{map_name}_{i}_map"
                     channel_path = os.path.join(self.directory, channel_name)
 
                     if self.debug and self.PRINT_MAPS_ON_DEBUG:
                         self.save_image(channel, save_name=channel_path)
             else:
-                channel_name = "{}_{}_map".format(map_index, map_name)
+                channel_name = f"{map_index}_{map_name}_map"
                 channel_path = os.path.join(self.directory, channel_name)
 
                 if self.debug and self.PRINT_MAPS_ON_DEBUG:
@@ -414,7 +411,7 @@ class Segmentation(ProcessingStep):
 
         self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
-    def _save_classes(self, classes: List) -> None:
+    def _save_classes(self, classes: list) -> None:
         """Helper function to save classes to a file when generating a segmentation of a shard."""
         # define path where classes should be saved
         filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
@@ -485,7 +482,7 @@ class ShardedSegmentation(Segmentation):
         if not hasattr(self, "method"):
             raise AttributeError("No Segmentation method defined, please set attribute ``method``")
 
-    def _calculate_sharding_plan(self, image_size) -> List:
+    def _calculate_sharding_plan(self, image_size) -> list:
         """Calculate the sharding plan for the given input image size."""
 
         _sharding_plan = []
@@ -533,7 +530,7 @@ class ShardedSegmentation(Segmentation):
 
         return _sharding_plan
 
-    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> List:
+    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> list:
         # check if a sharding plan already exists
         sharding_plan_path = f"{self.directory}/sharding_plan.csv"
 
@@ -544,7 +541,7 @@ class ShardedSegmentation(Segmentation):
                 os.remove(sharding_plan_path)
             else:
                 self.log("Reading existing sharding plan from file.")
-                with open(sharding_plan_path, "r") as f:
+                with open(sharding_plan_path) as f:
                     sharding_plan = [eval(line) for line in f.readlines()]
                     return sharding_plan
 
@@ -669,7 +666,7 @@ class ShardedSegmentation(Segmentation):
                 )
 
             # check to make sure windows match
-            with open(f"{local_shard_directory}/window.csv", "r") as f:
+            with open(f"{local_shard_directory}/window.csv") as f:
                 window_local = eval(f.read())
 
             if window_local != window:

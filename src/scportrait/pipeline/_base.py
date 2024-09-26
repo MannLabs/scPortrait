@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 
-class Logable(object):
+class Logable:
     """
     Object which can create log entries.
 

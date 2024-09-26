@@ -1,9 +1,6 @@
 import os
 from collections.abc import Iterable
 
-# type checking functions
-from typing import List, Union
-
 import h5py
 import numpy as np
 import torch
@@ -85,9 +82,9 @@ class _HDF5SingleCellDataset(Dataset):
     def _add_hdf_to_index(
         self,
         path: str,
-        index_list: Union[List, None] = None,
-        label: Union[int, None] = None,
-        label_column: Union[int, None] = None,
+        index_list: list | None = None,
+        label: int | None = None,
+        label_column: int | None = None,
         dtype_label_column=float,
         label_column_transform=None,
         read_label: bool = False,
@@ -167,7 +164,7 @@ class _HDF5SingleCellDataset(Dataset):
     def _add_dataset(
         self,
         path: str,
-        current_index_list: List,
+        current_index_list: list,
         id: int,
         read_label_from_dataset: bool,
     ):
@@ -202,7 +199,7 @@ class _HDF5SingleCellDataset(Dataset):
         self,
         path: str,
         levels_left: int,
-        current_index_list: Union[List, None] = None,
+        current_index_list: list | None = None,
         read_label_from_dataset: bool = False,
     ):
         """
@@ -300,10 +297,10 @@ class _HDF5SingleCellDataset(Dataset):
         """Print dataset statistics."""
         labels = [el[0] for el in self.data_locator]
 
-        print("Total: {}".format(len(labels)))
+        print(f"Total: {len(labels)}")
 
         for label in set(labels):
-            print("{}: {}".format(label, labels.count(label)))
+            print(f"{label}: {labels.count(label)}")
 
     def __len__(self):
         """get number of elements contained in the dataset"""

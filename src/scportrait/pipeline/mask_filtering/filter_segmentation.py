@@ -113,14 +113,14 @@ class SegmentationFilter(ProcessingStep):
             try:
                 self.log(f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
-            except (IOError, ValueError, RuntimeError) as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
         else:
             print(f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
             try:
                 super().__call_empty__(input_image)
-            except (IOError, ValueError, RuntimeError) as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
 
@@ -245,7 +245,7 @@ class TiledSegmentationFilter(SegmentationFilter):
                 os.remove(tileing_plan_path)
             else:
                 self.log("Reading existing tileing plan from file.")
-                with open(tileing_plan_path, "r") as f:
+                with open(tileing_plan_path) as f:
                     _tileing_plan = [eval(line) for line in f.readlines()]
                     return _tileing_plan
 
@@ -305,7 +305,7 @@ class TiledSegmentationFilter(SegmentationFilter):
         def f(x):
             try:
                 x.call_as_tile()
-            except (IOError, ValueError, RuntimeError) as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
             return x.get_output()
@@ -368,7 +368,7 @@ class TiledSegmentationFilter(SegmentationFilter):
         output_image = np.zeros((c, y, x), dtype=np.uint16)
         classes = defaultdict(list)
 
-        with open(f"{self.directory}/window.csv", "r") as f:
+        with open(f"{self.directory}/window.csv") as f:
             _window_locations = [eval(line.strip()) for line in f.readlines()]
 
         self.log(f"Expecting {len(_window_locations)} tiles")

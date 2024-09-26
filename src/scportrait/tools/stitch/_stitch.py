@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Union
 
 import numpy as np
 from alphabase.io.tempmmap import (
@@ -37,9 +36,9 @@ class Stitcher:
         overlap: float = 0.1,
         max_shift: float = 30,
         filter_sigma: int = 0,
-        do_intensity_rescale: Union[bool, str] = True,
+        do_intensity_rescale: bool | str = True,
         rescale_range: tuple = (1, 99),
-        channel_order: List[str] = None,
+        channel_order: list[str] = None,
         reader_type=FilePatternReaderRescale,
         orientation: dict = None,
         plot_QC: bool = True,

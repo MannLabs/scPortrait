@@ -6,7 +6,7 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 
-class RandomRotation(object):
+class RandomRotation:
     """
     Randomly rotate input image in 90 degree steps.
     """
@@ -26,7 +26,7 @@ class RandomRotation(object):
         return TF.rotate(tensor, angle)
 
 
-class GaussianNoise(object):
+class GaussianNoise:
     """
     Add gaussian noise to the input image.
     """
@@ -52,7 +52,7 @@ class GaussianNoise(object):
         return tensor
 
 
-class GaussianBlur(object):
+class GaussianBlur:
     """
     Apply a gaussian blur to the input image.
     """
@@ -78,7 +78,7 @@ class GaussianBlur(object):
         return blur(tensor)
 
 
-class ChannelReducer(object):
+class ChannelReducer:
     """
     can reduce an imaging dataset dataset to 5, 3 or 1 channel
     5: nuclei_mask, cell_mask, channel_nucleus, channel_cellmask, channel_of_interest
@@ -98,7 +98,7 @@ class ChannelReducer(object):
             return tensor
 
 
-class ChannelSelector(object):
+class ChannelSelector:
     """
     select the channel used for prediction.
     """

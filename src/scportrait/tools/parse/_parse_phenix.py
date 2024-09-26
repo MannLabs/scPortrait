@@ -246,7 +246,7 @@ class PhenixParser:
                     else:
                         max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == rows[0]))].Y_pos.max()
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
-                            metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + int(1)
+                            metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[0]
 
@@ -257,7 +257,7 @@ class PhenixParser:
                 else:
                     max_x = metadata.loc[(metadata.Well == wells[0])].X_pos.max()
                     metadata.loc[(metadata.Well == well), "X_pos"] = (
-                        metadata.loc[(metadata.Well == well), "X_pos"] + int(max_x) + int(1)
+                        metadata.loc[(metadata.Well == well), "X_pos"] + int(max_x) + 1
                     )
                     metadata.loc[(metadata.Well == well), "Well"] = wells[0]
 
@@ -269,9 +269,7 @@ class PhenixParser:
         # generate new file names
         for i in range(metadata.shape[0]):
             _row = metadata.loc[i, :]
-            name = "Timepoint{}_Row{}_Well{}_{}_zstack{}_r{}_c{}.tif".format(
-                _row.Timepoint, _row.Row, _row.Well, _row.Channel, _row.Zstack, _row.Y_pos, _row.X_pos
-            )
+            name = f"Timepoint{_row.Timepoint}_Row{_row.Row}_Well{_row.Well}_{_row.Channel}_zstack{_row.Zstack}_r{_row.Y_pos}_c{_row.X_pos}.tif"
             name = name
             metadata.loc[i, "new_file_name"] = name
 
@@ -363,7 +361,7 @@ class PhenixParser:
         else:
             # get size of missing images that need to be replaced
             image = imread(os.path.join(metadata["source"][0], metadata["filename"][0]))
-            image[:] = int(0)
+            image[:] = 0
             self.black_image = image
 
             print(f"The found missing tiles need to be replaced with black images of the size {image.shape}.")
