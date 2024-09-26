@@ -765,6 +765,10 @@ class ShardedSegmentation(Segmentation):
 
         self.log("resolve sharding plan")
 
+        # ensure a temp directory is created
+        if not hasattr(self, "_tmp_dir_path"):
+            self.create_temp_dir()
+
         output = os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
         if self.config["input_channels"] == 1:
