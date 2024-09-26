@@ -707,9 +707,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 )
 
             # check that the normalization ranges are of the same type otherwise this will result in issues
-            assert type(self.lower_quantile_normalization_input_image) == type(
+            assert type(self.lower_quantile_normalization_input_image) == type(  # noqa: E721
                 self.upper_quantile_normalization_input_image
-            )
+            )  # these need to be the same types! So we need to circumvent the ruff linting rules here
 
         # check if median filtering is required
         if "median_filter_size" in self.config.keys():

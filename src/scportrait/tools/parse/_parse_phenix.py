@@ -399,7 +399,8 @@ class PhenixParser:
             def copyfunction(input, output):
                 try:
                     os.symlink(input, output)
-                except:
+                except OSError as e:
+                    print("Error: ", e)
                     return ()
         else:
 

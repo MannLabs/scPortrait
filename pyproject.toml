@@ -53,7 +53,7 @@ docstring-code-format = true
 [tool.ruff.lint]
 select = [
     "F",  # Errors detected by Pyflakes
-    #"E",  # Error detected by Pycodestyle
+    "E",  # Error detected by Pycodestyle
     #"W",  # Warning detected by Pycodestyle
     "I",  # isort
     #"D",  # pydocstyle

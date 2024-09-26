@@ -52,7 +52,7 @@ class HDF5CellExtraction(ProcessingStep):
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
             self.config["threads"] = 1
 
-        if not "overwrite_run_path" in self.__dict__.keys():
+        if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
