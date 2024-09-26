@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import List, Tuple
 
 import datatree
 import xarray
@@ -134,7 +133,7 @@ class sdata_filehandler(Logable):
         segmentation,
         segmentation_label: str,
         classes: set = None,
-        chunks: Tuple[int, int] = (1000, 1000),
+        chunks: tuple[int, int] = (1000, 1000),
         overwrite: bool = False,
     ):
         transform_original = Identity()
@@ -248,7 +247,7 @@ class sdata_filehandler(Logable):
 
     def _load_seg_to_memmap(
         self,
-        seg_name: List[str],
+        seg_name: list[str],
         tmp_dir_abs_path: str,
     ):
         """
@@ -259,7 +258,7 @@ class sdata_filehandler(Logable):
 
         Parameters
         ----------
-        seg_name : List[str]
+        seg_name : list[str]
             List of segmentation element names that should be loaded found in the sdata object.
             The segmentation elments need to have the same size.
         tmp_dir_abs_path : str
@@ -276,7 +275,7 @@ class sdata_filehandler(Logable):
         _sdata = self._check_sdata_status(return_sdata=True)
 
         assert all(
-            [seg in _sdata.labels for seg in seg_name]
+            seg in _sdata.labels for seg in seg_name
         ), "Not all passed segmentation elements found in sdata object."
 
         seg_objects = [_sdata.labels[seg] for seg in seg_name]

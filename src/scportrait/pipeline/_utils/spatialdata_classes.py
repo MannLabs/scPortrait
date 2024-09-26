@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any
 
 from dask.array import Array as DaskArray
 from dask.array import unique as DaskUnique
@@ -19,7 +19,7 @@ Transform_s = AttrSchema(BaseTransformation, None)
 
 class spLabels2DModel(Labels2DModel):
     # add an additional attribute that always contains the unique classes in a labels image
-    attrs = AttrsSchema({"transform": Transform_s}, {"cell_ids": Set})
+    attrs = AttrsSchema({"transform": Transform_s}, {"cell_ids": set})
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -44,7 +44,7 @@ class spLabels2DModel(Labels2DModel):
         return data
 
     @singledispatchmethod
-    def convert(self, data: Union[DataTree, DataArray], classes: set = None) -> Union[DataTree, DataArray]:
+    def convert(self, data: DataTree | DataArray, classes: set = None) -> DataTree | DataArray:
         """ """
         raise ValueError(f"Unsupported data type: {type(data)}. Please use .convert() from Labels2DModel instead.")
 

@@ -6,7 +6,7 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 
-class RandomRotation(object):
+class RandomRotation:
     """
     Randomly rotate input image in 90 degree steps.
     """
@@ -26,12 +26,14 @@ class RandomRotation(object):
         return TF.rotate(tensor, angle)
 
 
-class GaussianNoise(object):
+class GaussianNoise:
     """
     Add gaussian noise to the input image.
     """
 
-    def __init__(self, sigma=0.1, channels_to_exclude=[]):
+    def __init__(self, sigma=0.1, channels_to_exclude=None):
+        if channels_to_exclude is None:
+            channels_to_exclude = []
         self.sigma = sigma
         self.channels = channels_to_exclude
 
@@ -50,12 +52,16 @@ class GaussianNoise(object):
         return tensor
 
 
-class GaussianBlur(object):
+class GaussianBlur:
     """
     Apply a gaussian blur to the input image.
     """
 
-    def __init__(self, kernel_size=[1, 1, 1, 1, 5, 5, 7, 9], sigma=(0.1, 2), channels=[]):
+    def __init__(self, kernel_size=None, sigma=(0.1, 2), channels=None):
+        if channels is None:
+            channels = []
+        if kernel_size is None:
+            kernel_size = [1, 1, 1, 1, 5, 5, 7, 9]
         self.kernel_size = kernel_size
         self.sigma = sigma
         self.channels = channels
@@ -72,7 +78,7 @@ class GaussianBlur(object):
         return blur(tensor)
 
 
-class ChannelReducer(object):
+class ChannelReducer:
     """
     can reduce an imaging dataset dataset to 5, 3 or 1 channel
     5: nuclei_mask, cell_mask, channel_nucleus, channel_cellmask, channel_of_interest
@@ -92,12 +98,14 @@ class ChannelReducer(object):
             return tensor
 
 
-class ChannelSelector(object):
+class ChannelSelector:
     """
     select the channel used for prediction.
     """
 
-    def __init__(self, channels=[0, 1, 2, 3, 4], num_channels=5):
+    def __init__(self, channels=None, num_channels=5):
+        if channels is None:
+            channels = [0, 1, 2, 3, 4]
         if not np.max(channels) < num_channels:
             raise ValueError("highest channel index exceeds channel numb")
         self.channels = channels

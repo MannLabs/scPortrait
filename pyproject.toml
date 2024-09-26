@@ -52,19 +52,19 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = [
-    #"F",  # Errors detected by Pyflakes
-    #"E",  # Error detected by Pycodestyle
-    #"W",  # Warning detected by Pycodestyle
+    "F",  # Errors detected by Pyflakes
+    "E",  # Error detected by Pycodestyle
+    "W",  # Warning detected by Pycodestyle
     "I",  # isort
     #"D",  # pydocstyle
-    #"B",  # flake8-bugbear
-    #"TID",  # flake8-tidy-imports
-    #"C4",  # flake8-comprehensions
-    #"BLE",  # flake8-blind-except
-    #"UP",  # pyupgrade
-    #"RUF100",  # Report unused noqa directives
-    #"TCH",  # Typing imports
-    #"NPY",  # Numpy specific rules
+    "B",  # flake8-bugbear
+    "TID",  # flake8-tidy-imports
+    "C4",  # flake8-comprehensions
+    "BLE",  # flake8-blind-except
+    "UP",  # pyupgrade
+    "RUF100",  # Report unused noqa directives
+    "TCH",  # Typing imports
+    "NPY",  # Numpy specific rules
     #"PTH"  # Use pathlib
 ]
 ignore = [

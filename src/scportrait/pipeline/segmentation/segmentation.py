@@ -6,9 +6,7 @@ import time
 import timeit
 import traceback
 from multiprocessing import current_process
-from typing import List
 
-import datatree
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +16,6 @@ import xarray
 from alphabase.io import tempmmap
 from dask.array.core import Array as daskArray
 from PIL import Image
-from spatialdata import SpatialData
 from tqdm.auto import tqdm
 
 from scportrait.pipeline._base import ProcessingStep
@@ -223,7 +220,7 @@ class Segmentation(ProcessingStep):
             input_image = input_image.data
         return input_image
 
-    def _save_segmentation(self, labels: np.array, classes: List) -> None:
+    def _save_segmentation(self, labels: np.array, classes: list) -> None:
         """Helper function to save the results of a segmentation to file when generating a segmentation of a shard.
 
         Args:
@@ -261,7 +258,9 @@ class Segmentation(ProcessingStep):
 
         self.log("=== Finished segmentation of shard ===")
 
-    def _save_segmentation_sdata(self, labels, classes, masks=["nuclei", "cytosol"]):
+    def _save_segmentation_sdata(self, labels, classes, masks=None):
+        if masks is None:
+            masks = ["nuclei", "cytosol"]
         if self.is_shard:
             self._save_segmentation(labels, classes)
         else:
@@ -304,20 +303,20 @@ class Segmentation(ProcessingStep):
         """
 
         if self.maps[map_name] is None:
-            self.log("Error saving map {}, map is None".format(map_name))
+            self.log(f"Error saving map {map_name}, map is None")
         else:
             map_index = list(self.maps.keys()).index(map_name)
 
             # check if map contains more than one channel (3, 1024, 1024) vs (1024, 1024)
             if len(self.maps[map_name].shape) > 2:
                 for i, channel in enumerate(self.maps[map_name]):
-                    channel_name = "{}_{}_{}_map".format(map_index, map_name, i)
+                    channel_name = f"{map_index}_{map_name}_{i}_map"
                     channel_path = os.path.join(self.directory, channel_name)
 
                     if self.debug and self.PRINT_MAPS_ON_DEBUG:
                         self.save_image(channel, save_name=channel_path)
             else:
-                channel_name = "{}_{}_map".format(map_index, map_name)
+                channel_name = f"{map_index}_{map_name}_map"
                 channel_path = os.path.join(self.directory, channel_name)
 
                 if self.debug and self.PRINT_MAPS_ON_DEBUG:
@@ -388,7 +387,8 @@ class Segmentation(ProcessingStep):
             try:
                 self._execute_segmentation(input_image)
                 self.clear_temp_dir()
-            except Exception:
+            except (RuntimeError, ValueError, TypeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
         else:
@@ -396,7 +396,8 @@ class Segmentation(ProcessingStep):
             try:
                 super().__call_empty__(input_image)
                 self.clear_temp_dir()
-            except Exception:
+            except (RuntimeError, ValueError, TypeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
 
@@ -410,7 +411,7 @@ class Segmentation(ProcessingStep):
 
         self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
-    def _save_classes(self, classes: List) -> None:
+    def _save_classes(self, classes: list) -> None:
         """Helper function to save classes to a file when generating a segmentation of a shard."""
         # define path where classes should be saved
         filtered_path = os.path.join(self.directory, self.DEFAULT_CLASSES_FILE)
@@ -481,7 +482,7 @@ class ShardedSegmentation(Segmentation):
         if not hasattr(self, "method"):
             raise AttributeError("No Segmentation method defined, please set attribute ``method``")
 
-    def _calculate_sharding_plan(self, image_size) -> List:
+    def _calculate_sharding_plan(self, image_size) -> list:
         """Calculate the sharding plan for the given input image size."""
 
         _sharding_plan = []
@@ -529,7 +530,7 @@ class ShardedSegmentation(Segmentation):
 
         return _sharding_plan
 
-    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> List:
+    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> list:
         # check if a sharding plan already exists
         sharding_plan_path = f"{self.directory}/sharding_plan.csv"
 
@@ -540,7 +541,7 @@ class ShardedSegmentation(Segmentation):
                 os.remove(sharding_plan_path)
             else:
                 self.log("Reading existing sharding plan from file.")
-                with open(sharding_plan_path, "r") as f:
+                with open(sharding_plan_path) as f:
                     sharding_plan = [eval(line) for line in f.readlines()]
                     return sharding_plan
 
@@ -602,7 +603,7 @@ class ShardedSegmentation(Segmentation):
 
         if keep_plots:
             self.log("Moving generated plots from shard directory to main directory.")
-            for i, window in enumerate(sharding_plan):
+            for i, _window in enumerate(sharding_plan):
                 local_shard_directory = os.path.join(self.shard_directory, str(i))
                 for file in os.listdir(local_shard_directory):
                     if file.endswith(tuple(file_identifiers_plots)):
@@ -665,7 +666,7 @@ class ShardedSegmentation(Segmentation):
                 )
 
             # check to make sure windows match
-            with open(f"{local_shard_directory}/window.csv", "r") as f:
+            with open(f"{local_shard_directory}/window.csv") as f:
                 window_local = eval(f.read())
 
             if window_local != window:
@@ -788,7 +789,7 @@ class ShardedSegmentation(Segmentation):
             # if this is not the case it is worth investigating and there it can be helpful to see which classes are contained in the mask but not in the classes file and vice versa
             if self.deep_debug:
                 masks = hdf_labels[:, :, :]
-                unique_ids = set(np.unique(masks[0])) - set([0])
+                unique_ids = set(np.unique(masks[0])) - {0}
                 self.log(f"Total number of classes in final segmentation after processing: {len(unique_ids)}")
 
                 difference_classes = filtered_classes_combined.difference(unique_ids)
@@ -815,7 +816,7 @@ class ShardedSegmentation(Segmentation):
             self.log(f"Finished stitching tile {i} in {time.time() - timer} seconds.")
 
             # remove background class
-            filtered_classes_combined = filtered_classes_combined - set([0])
+            filtered_classes_combined = filtered_classes_combined - {0}
 
             self.log(f"Number of filtered classes in Dataset: {len(filtered_classes_combined)}")
 
@@ -859,7 +860,7 @@ class ShardedSegmentation(Segmentation):
                 initializer=self._initializer_function,
                 initargs=[self.gpu_id_list],
             ) as pool:
-                results = list(
+                list(
                     tqdm(
                         pool.imap(self.method._call_as_shard, shard_list),
                         total=len(shard_list),

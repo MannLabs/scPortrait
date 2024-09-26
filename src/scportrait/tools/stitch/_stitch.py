@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Union
 
 import numpy as np
 from alphabase.io.tempmmap import (
@@ -37,11 +36,11 @@ class Stitcher:
         overlap: float = 0.1,
         max_shift: float = 30,
         filter_sigma: int = 0,
-        do_intensity_rescale: Union[bool, str] = True,
+        do_intensity_rescale: bool | str = True,
         rescale_range: tuple = (1, 99),
-        channel_order: List[str] = None,
+        channel_order: list[str] = None,
         reader_type=FilePatternReaderRescale,
-        orientation: dict = {"flip_x": False, "flip_y": True},
+        orientation: dict = None,
         plot_QC: bool = True,
         overwrite: bool = False,
         cache: str = None,
@@ -85,6 +84,8 @@ class Stitcher:
         cache : str, optional
             Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
         """
+        if orientation is None:
+            orientation = {"flip_x": False, "flip_y": True}
         self.input_dir = input_dir
         self.slidename = slidename
         self.outdir = outdir
@@ -306,8 +307,8 @@ class Stitcher:
         """
         Plot quality control (QC) figures for the alignment.
         """
-        fig = plot_edge_scatter(self.aligner, self.outdir)
-        fig = plot_edge_quality(self.aligner, self.outdir)
+        plot_edge_scatter(self.aligner, self.outdir)
+        plot_edge_quality(self.aligner, self.outdir)
 
     def perform_alignment(self):
         """
@@ -457,7 +458,7 @@ class Stitcher:
         )
         write_tif(filename, self.thumbnail)
 
-    def write_spatialdata(self, scale_factors=[2, 4, 8]):
+    def write_spatialdata(self, scale_factors=None):
         """
         Write the assembled mosaic as a SpatialData object.
 
@@ -468,6 +469,8 @@ class Stitcher:
             The scale factors are used to generate downsampled versions of the image for faster visualization at lower resolutions.
         """
 
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         filepath = os.path.join(self.outdir, f"{self.slidename}.spatialdata")
 
         # create spatialdata object
@@ -540,10 +543,12 @@ class ParallelStitcher(Stitcher):
         channel_order: list[str] = None,
         overwrite: bool = False,
         reader_type=FilePatternReaderRescale,
-        orientation={"flip_x": False, "flip_y": True},
+        orientation=None,
         cache: str = None,
         threads: int = 20,
     ) -> None:
+        if orientation is None:
+            orientation = {"flip_x": False, "flip_y": True}
         super().__init__(
             input_dir,
             slidename,
@@ -631,11 +636,11 @@ class ParallelStitcher(Stitcher):
         for i, channel in enumerate(self.channels):
             args.append((channel, i, hdf5_path))
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            desc="assembling mosaic",
-            total=len(self.channels),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "desc": "assembling mosaic",
+            "total": len(self.channels),
+        }
 
         # threading over channels is safe as the channels are written to different postions in the hdf5 file and do not interact with one another
         # threading over the writing of a single channel is not safe and leads to inconsistent results
@@ -664,11 +669,11 @@ class ParallelStitcher(Stitcher):
             filenames.append(filename)
             args.append((filename, i))
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            desc="writing tif files",
-            total=len(self.channels),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "desc": "writing tif files",
+            "total": len(self.channels),
+        }
 
         # define helper function to execute in threadpooler
         def _write_tif(args):

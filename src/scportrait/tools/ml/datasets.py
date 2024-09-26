@@ -1,9 +1,6 @@
 import os
 from collections.abc import Iterable
 
-# type checking functions
-from typing import List, Union
-
 import h5py
 import numpy as np
 import torch
@@ -85,9 +82,9 @@ class _HDF5SingleCellDataset(Dataset):
     def _add_hdf_to_index(
         self,
         path: str,
-        index_list: Union[List, None] = None,
-        label: Union[int, None] = None,
-        label_column: Union[int, None] = None,
+        index_list: list | None = None,
+        label: int | None = None,
+        label_column: int | None = None,
         dtype_label_column=float,
         label_column_transform=None,
         read_label: bool = False,
@@ -149,7 +146,7 @@ class _HDF5SingleCellDataset(Dataset):
 
                 # generate identifiers for all single-cells
                 # iterate over rows in index handle, i.e. over all cells
-                for current_target, row in zip(label_col, index_handle):
+                for current_target, row in zip(label_col, index_handle, strict=False):
                     # append target, handle id, and row to data locator
                     self.data_locator.append([current_target, handle_id] + list(row))
 
@@ -160,13 +157,14 @@ class _HDF5SingleCellDataset(Dataset):
                 for row in index_handle:
                     self.data_locator.append([label, handle_id] + list(row))
 
-        except Exception:
+        except (FileNotFoundError, KeyError, OSError) as e:
+            print(f"Error: {e}")
             return
 
     def _add_dataset(
         self,
         path: str,
-        current_index_list: List,
+        current_index_list: list,
         id: int,
         read_label_from_dataset: bool,
     ):
@@ -201,7 +199,7 @@ class _HDF5SingleCellDataset(Dataset):
         self,
         path: str,
         levels_left: int,
-        current_index_list: Union[List, None] = None,
+        current_index_list: list | None = None,
         read_label_from_dataset: bool = False,
     ):
         """
@@ -274,7 +272,7 @@ class _HDF5SingleCellDataset(Dataset):
             current_index_list = self.index_list[i]
 
             # get current label
-            current_label = self._get_dataset_label(i)
+            self._get_dataset_label(i)
 
             # check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]
@@ -299,10 +297,10 @@ class _HDF5SingleCellDataset(Dataset):
         """Print dataset statistics."""
         labels = [el[0] for el in self.data_locator]
 
-        print("Total: {}".format(len(labels)))
+        print(f"Total: {len(labels)}")
 
         for label in set(labels):
-            print("{}: {}".format(label, labels.count(label)))
+            print(f"{label}: {labels.count(label)}")
 
     def __len__(self):
         """get number of elements contained in the dataset"""

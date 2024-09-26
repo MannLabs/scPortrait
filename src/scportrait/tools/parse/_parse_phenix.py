@@ -133,8 +133,8 @@ class PhenixParser:
             if _get_child_name(child.tag) == "Images":
                 images = root[i]
 
-        for i, image in enumerate(images):
-            for ix, child in enumerate(image):
+        for image in images:
+            for _ix, child in enumerate(image):
                 tag = _get_child_name(child.tag)
                 if tag == "Row":
                     rows.append(child.text)
@@ -167,7 +167,7 @@ class PhenixParser:
 
         image_names = []
         for row, col, field, plane, channel_id, timepoint, flim_id in zip(
-            rows, cols, fields, planes, channel_ids, timepoints, flim_ids
+            rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
         ):
             image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
 
@@ -178,7 +178,7 @@ class PhenixParser:
         dates = [x.split("T")[0] for x in times]
         _times = [x.split("T")[1] for x in times]
         _times = [(x.split("+")[0].split(".")[0] + "+" + x.split("+")[1].replace(":", "")) for x in _times]
-        time_final = [x + " " + y for x, y in zip(dates, _times)]
+        time_final = [x + " " + y for x, y in zip(dates, _times, strict=False)]
 
         datetime_format = "%Y-%m-%d %H:%M:%S%z"
         time_unix = [datetime.strptime(x, datetime_format) for x in time_final]
@@ -246,7 +246,7 @@ class PhenixParser:
                     else:
                         max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == rows[0]))].Y_pos.max()
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
-                            metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + int(1)
+                            metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[0]
 
@@ -257,7 +257,7 @@ class PhenixParser:
                 else:
                     max_x = metadata.loc[(metadata.Well == wells[0])].X_pos.max()
                     metadata.loc[(metadata.Well == well), "X_pos"] = (
-                        metadata.loc[(metadata.Well == well), "X_pos"] + int(max_x) + int(1)
+                        metadata.loc[(metadata.Well == well), "X_pos"] + int(max_x) + 1
                     )
                     metadata.loc[(metadata.Well == well), "Well"] = wells[0]
 
@@ -269,9 +269,7 @@ class PhenixParser:
         # generate new file names
         for i in range(metadata.shape[0]):
             _row = metadata.loc[i, :]
-            name = "Timepoint{}_Row{}_Well{}_{}_zstack{}_r{}_c{}.tif".format(
-                _row.Timepoint, _row.Row, _row.Well, _row.Channel, _row.Zstack, _row.Y_pos, _row.X_pos
-            )
+            name = f"Timepoint{_row.Timepoint}_Row{_row.Row}_Well{_row.Well}_{_row.Channel}_zstack{_row.Zstack}_r{_row.Y_pos}_c{_row.X_pos}.tif"
             name = name
             metadata.loc[i, "new_file_name"] = name
 
@@ -363,7 +361,7 @@ class PhenixParser:
         else:
             # get size of missing images that need to be replaced
             image = imread(os.path.join(metadata["source"][0], metadata["filename"][0]))
-            image[:] = int(0)
+            image[:] = 0
             self.black_image = image
 
             print(f"The found missing tiles need to be replaced with black images of the size {image.shape}.")
@@ -399,7 +397,8 @@ class PhenixParser:
             def copyfunction(input, output):
                 try:
                     os.symlink(input, output)
-                except:
+                except OSError as e:
+                    print("Error: ", e)
                     return ()
         else:
 
@@ -433,6 +432,7 @@ class PhenixParser:
                 metadata.new_file_name.tolist(),
                 metadata.source.tolist(),
                 metadata.dest.tolist(),
+                strict=False,
             ),
             total=len(metadata.new_file_name.tolist()),
             desc="Copying files",
@@ -462,7 +462,7 @@ class PhenixParser:
         metadata = self.generate_metadata()
 
         # set destination for copying
-        metadata["dest"] = getattr(self, "outdir_parsed_images")
+        metadata["dest"] = self.outdir_parsed_images
 
         # copy/link the images to their new names
         self.copy_files(metadata=metadata)
@@ -509,13 +509,13 @@ class PhenixParser:
             print("\t Tiles: ", tiles)  # only print if these folders should be created
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_wells"), f"row{row}_well{well}", tile)
-                for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles)
+                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}", tile)
+                for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_wells"), f"row{row}_well{well}")
-                for row, well in zip(metadata.Row, metadata.Well)
+                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}")
+                for row, well in zip(metadata.Row, metadata.Well, strict=False)
             ]
 
         # unique directories for each tile
@@ -566,12 +566,12 @@ class PhenixParser:
         if sort_wells:
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_timepoints"), timepoint, f"{row}_{well}")
-                for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint)
+                os.path.join(self.outdir_sorted_timepoints, timepoint, f"{row}_{well}")
+                for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_timepoints"), timepoint) for timepoint in metadata.Timepoint
+                os.path.join(self.outdir_sorted_timepoints, timepoint) for timepoint in metadata.Timepoint
             ]
 
         # unique directories for each tile
@@ -639,7 +639,7 @@ class CombinedPhenixParser(PhenixParser):
         dates_times = [re.search(pattern, file_name).group() for file_name in phenix_dirs]
 
         # Sort the file names based on the extracted date and time information
-        sorted_phenix_dirs = [file_name for _, file_name in sorted(zip(dates_times, phenix_dirs))]
+        sorted_phenix_dirs = [file_name for _, file_name in sorted(zip(dates_times, phenix_dirs, strict=False))]
 
         self.phenix_dirs = [f"{input_path}/{phenix_dir}" for phenix_dir in sorted_phenix_dirs]
 

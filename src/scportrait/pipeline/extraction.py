@@ -52,7 +52,7 @@ class HDF5CellExtraction(ProcessingStep):
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
             self.config["threads"] = 1
 
-        if not "overwrite_run_path" in self.__dict__.keys():
+        if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
@@ -306,9 +306,9 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             # randomly sample n_cells from the centers
-            np.random.seed(self.seed)
-            chosen_ids = np.random.choice(list(range(len(self.centers_cell_ids))), self.n_cells, replace=False)
-            print(self.centers_cell_ids)
+            rng = np.random.default_rng(self.seed)
+            chosen_ids = rng.choice(list(range(len(self.centers_cell_ids))), self.n_cells, replace=False)
+
             self.classes = self.centers_cell_ids[chosen_ids]
             self.px_centers = self.centers[chosen_ids]
         else:
@@ -337,6 +337,7 @@ class HDF5CellExtraction(ProcessingStep):
                 range(len(cell_ids)),
                 [self.save_index_lookup.index.get_loc(x) for x in cell_ids],
                 cell_ids,
+                strict=False,
             )
         )
         return args
@@ -600,7 +601,8 @@ class HDF5CellExtraction(ProcessingStep):
             n_cells = 100
             n_cells_to_visualize = len(keep_index) // n_cells
 
-            random_indexes = np.random.choice(keep_index, n_cells_to_visualize, replace=False)
+            rng = np.random.default_rng()
+            random_indexes = rng.choice(keep_index, n_cells_to_visualize, replace=False)
 
             for index in random_indexes:
                 stack = _tmp_single_cell_data[index]
@@ -620,7 +622,7 @@ class HDF5CellExtraction(ProcessingStep):
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
                 "single_cell_index",
-                data=list(zip(list(range(len(cell_ids))), cell_ids)),
+                data=list(zip(list(range(len(cell_ids))), cell_ids, strict=False)),
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )  # increase to 64 bit otherwise information may become truncated
 

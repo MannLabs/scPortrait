@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Set, Tuple, Union
-
 import datatree
 import numpy as np
 import pandas as pd
@@ -24,7 +22,7 @@ def check_memory(item):
     return array_size < available_memory
 
 
-def generate_region_annotation_lookuptable(sdata: SpatialData) -> Dict:
+def generate_region_annotation_lookuptable(sdata: SpatialData) -> dict:
     """Generate a lookup table for the region annotation tables contained in a SpatialData object ordered according to the region they annotate.
 
     Parameters
@@ -80,7 +78,7 @@ def remap_region_annotation_table(table: TableModel, region_name: str) -> TableM
     return table
 
 
-def get_chunk_size(element: Union[datatree.DataTree, xarray.DataArray]) -> Union[Tuple, List[Tuple]]:
+def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> tuple | list[tuple]:
     """Get the chunk size of the image data.
 
     Parameters
@@ -148,8 +146,8 @@ def get_chunk_size(element: Union[datatree.DataTree, xarray.DataArray]) -> Union
 
 
 def rechunk_image(
-    element: Union[datatree.DataTree, xarray.DataArray], chunk_size: Tuple
-) -> Union[datatree.DataTree, xarray.DataArray]:
+    element: datatree.DataTree | xarray.DataArray, chunk_size: tuple
+) -> datatree.DataTree | xarray.DataArray:
     """
     Rechunk the image data to the desired chunksize. This is useful for ensuring that the data is chunked in a regular manner.
 
@@ -183,7 +181,7 @@ def rechunk_image(
 
 def make_centers_object(
     centers: np.ndarray,
-    ids: List,
+    ids: list,
     transformation: str,
     coordinate_system="global",
 ):

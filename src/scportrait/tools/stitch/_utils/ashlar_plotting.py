@@ -12,8 +12,6 @@ try:
 except ImportError:
     gtGraph = None
 
-nx.graph.Graph
-
 
 def draw_mosaic_image(ax, aligner, img, **kwargs):
     if img is None:
@@ -33,7 +31,7 @@ def plot_edge_quality(aligner, outdir, img=None, show_tree=True, pos="metadata",
         im_kwargs = {}
     if nx_kwargs is None:
         nx_kwargs = {}
-    final_nx_kwargs = dict(width=2, node_size=100, font_size=6)
+    final_nx_kwargs = {"width": 2, "node_size": 100, "font_size": 6}
     final_nx_kwargs.update(nx_kwargs)
     if show_tree:
         nrows, ncols = 1, 2
@@ -133,7 +131,7 @@ def plot_edge_scatter(aligner, outdir, annotate=True):
     g.ax_joint.set_yscale("log")
     g.set_axis_labels("error", "shift")
     if annotate:
-        for pair, x, y in zip(aligner.neighbors_graph.edges, xdata, ydata):
+        for pair, x, y in zip(aligner.neighbors_graph.edges, xdata, ydata, strict=False):
             plt.annotate(str(pair), (x, y), alpha=0.1)
 
     plt.tight_layout()

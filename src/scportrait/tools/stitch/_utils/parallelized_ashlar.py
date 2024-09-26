@@ -107,7 +107,7 @@ class ParallelEdgeAligner(EdgeAligner):
             random_state = np.random.RandomState()
         for i in range(n):
             # Limit tries to avoid infinite loop in pathological cases.
-            for current_try in range(max_tries):
+            for _current_try in range(max_tries):
                 t1, t2 = random_state.randint(self.metadata.num_images, size=2)
                 o1, o2 = random_state.randint(max_offset, size=2)
                 # Check for non-overlapping strips and abort the retry loop.
@@ -144,18 +144,18 @@ class ParallelEdgeAligner(EdgeAligner):
 
         # prepare arguments for executor
         args = []
-        for (t1, t2), (offset1, offset2) in zip(pairs, offsets):
+        for (t1, t2), (offset1, offset2) in zip(pairs, offsets, strict=False):
             arg = (t1, t2, offset1, offset2)
             args.append(copy.deepcopy(arg))
 
         errors = execute_indexed_parallel(
             register,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="    quantifying alignment error",
-            ),
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "    quantifying alignment error",
+            },
             n_threads=self.n_threads,
         )
 
@@ -172,11 +172,11 @@ class ParallelEdgeAligner(EdgeAligner):
         execute_parallel(
             self.register_pair,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="                  aligning edge",
-            ),
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "                  aligning edge",
+            },
             n_threads=self.n_threads,
         )
 
@@ -386,12 +386,12 @@ class ParallelMosaic(Mosaic):
                     "if specifying an out array, you also need to pass the HDF5 path of the memory mapped temparray"
                 )
 
-        tqdm_args = dict(
-            file=sys.stdout,
-            disable=not self.verbose,
-            desc=f"assembling channel {ch_index}",
-            total=len(self.aligner.positions),
-        )
+        tqdm_args = {
+            "file": sys.stdout,
+            "disable": not self.verbose,
+            "desc": f"assembling channel {ch_index}",
+            "total": len(self.aligner.positions),
+        }
 
         # this can not be multi-threaded as it leads to inconsistent results in the overlap array
         # threading over the channels was the easiest and most robust way to implement

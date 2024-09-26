@@ -27,11 +27,14 @@ class FilePatternReaderRescale(FilePatternReader):
     ):
         try:
             super().__init__(path, pattern, overlap, pixel_size=pixel_size)
-        except:
+        except (OSError, FileNotFoundError):
             print(
                 f"Error: Could not read images with the given pattern {pattern}. Please check the path {path} and pattern."
             )
-            print(f"At the provided location the following files could be found:{os.listdir(path)} ")
+            found_files = os.listdir(path)
+            print(
+                f"At the provided location the the files follow the naming convention:{found_files[0:max(5, len(found_files))]} "
+            )
 
         self.do_rescale = do_rescale
         self.WGAchannel = WGAchannel
@@ -99,7 +102,7 @@ class BioformatsMetadataRescale(BioformatsMetadata):
 
         for id in range(n_channels):
             channel_names.append(self._metadata.getChannelName(0, id))
-        channel_map = dict(zip(list(range(n_channels)), channel_names))
+        channel_map = dict(zip(list(range(n_channels)), channel_names, strict=False))
 
         return channel_map
 
@@ -145,7 +148,7 @@ class BioformatsReaderRescale(BioformatsReader):
         else:
             if c not in self.no_rescale_channel:
                 # get rescale_range for channel c
-                if type(self.rescale_range) is dict:
+                if isinstance(self.rescale_range, dict):
                     rescale_range = self.rescale_range[c]
                 else:
                     rescale_range = self.rescale_range

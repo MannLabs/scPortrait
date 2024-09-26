@@ -138,7 +138,7 @@ class VGG1(VGGBase):
         num_classes=2,
         image_size_factor=2,
     ):
-        super(VGG1, self).__init__()
+        super().__init__()
 
         # save num_classes for use in making MLP head
         self.num_classes = num_classes
@@ -171,7 +171,7 @@ class VGG2(VGGBase):
         num_classes=2,
         image_size_factor=2,
     ):
-        super(VGG2, self).__init__()
+        super().__init__()
 
         # save num_classes for use in making MLP head
         self.num_classes = num_classes
@@ -203,7 +203,7 @@ class VGG2_regression(VGGBase):
         num_classes=1,
         image_size_factor=2,
     ):
-        super(VGG2_regression, self).__init__()
+        super().__init__()
         self.num_classes = num_classes
         self.image_size_factor = image_size_factor
         self.norm = nn.BatchNorm2d(in_channels)
@@ -275,7 +275,7 @@ class CAEBase(nn.Module):
         in_channels=5,
         out_channels=5,
     ):
-        super(CAEBase, self).__init__()
+        super().__init__()
 
         self.norm = nn.BatchNorm2d(in_channels)
 
@@ -341,7 +341,7 @@ class VAEBase(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, latent_dim, hidden_dims=None, **kwargs):
-        super(VAEBase, self).__init__()
+        super().__init__()
 
         self.latent_dim = latent_dim
 
@@ -511,7 +511,7 @@ class _VGG1(nn.Module):
         in_channels=5,
         num_classes=2,
     ):
-        super(_VGG1, self).__init__()
+        super().__init__()
 
         self.norm = nn.BatchNorm2d(in_channels)
 
@@ -614,7 +614,7 @@ class _VGG2(nn.Module):
         in_channels=5,
         num_classes=2,
     ):
-        super(_VGG2, self).__init__()
+        super().__init__()
 
         self.norm = nn.BatchNorm2d(in_channels)
         # self.avgpool = nn.AdaptiveAvgPool2d((4, 4))

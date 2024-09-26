@@ -373,7 +373,7 @@ def _return_edge_labels_2d(input_map):
         .union(set(last_column.flatten()))
     )
 
-    full_union = set([np.uint64(i) for i in full_union])
+    full_union = set([np.uint64(i) for i in full_union])  # noqa: C403 set comprehensions are not supported by numba
     full_union.discard(0)
 
     return list(full_union)
@@ -780,7 +780,7 @@ def _class_size(mask, debug=False, background=0):
     return mean_arr, length.flatten()
 
 
-def size_filter(label, limits=[0, 100000], background=0, reindex=False):
+def size_filter(label, limits=None, background=0, reindex=False):
     """
     Filter classes in a labeled array based on their size (number of pixels).
 
@@ -817,6 +817,8 @@ def size_filter(label, limits=[0, 100000], background=0, reindex=False):
     """
 
     # Calculate the number of pixels for each class in the labeled array
+    if limits is None:
+        limits = [0, 100000]
     _, points_class = _class_size(label)
 
     # Find the classes with size below the lower limit and above the upper limit

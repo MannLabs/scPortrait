@@ -884,8 +884,8 @@ class MatchNucleusCytosolIds(_BaseFilter):
         nuc_mask = self.nucleus_mask.copy()
         cyto_mask = self.cytosol_mask.copy()
 
-        class_ids_nuc = set(np.unique(nuc_mask)) - set([0])
-        class_ids_cyto = set(np.unique(cyto_mask)) - set([0])
+        class_ids_nuc = set(np.unique(nuc_mask)) - {0}
+        class_ids_cyto = set(np.unique(cyto_mask)) - {0}
 
         # get the ids to visualize as red for discarded
         ids_discard_nuc = self.nuclei_discard_list

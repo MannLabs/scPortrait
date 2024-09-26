@@ -128,7 +128,7 @@ def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999,
         im = _percentile_norm(im, lower_percentile, upper_percentile)
 
     elif len(im.shape) == 3:
-        for i, channel in enumerate(im):
+        for i, _channel in enumerate(im):
             im[i] = _percentile_norm(im[i], lower_percentile, upper_percentile)
 
     else:

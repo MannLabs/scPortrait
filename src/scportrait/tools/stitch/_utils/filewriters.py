@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import List, Tuple
 
 import numpy as np
 import zarr
@@ -33,12 +32,12 @@ def write_tif(image_path: str, image: np.array, dtype="uint16"):
 def write_ome_zarr(
     filepath: str,
     image: np.array,
-    channels: List[str],
+    channels: list[str],
     slidename: str,
-    channel_colors: List[str] = None,
+    channel_colors: list[str] = None,
     downscaling_size: int = 4,
     n_downscaling_layers: int = 4,
-    chunk_size: Tuple[int, int, int] = (1, 1024, 1024),
+    chunk_size: tuple[int, int, int] = (1, 1024, 1024),
     overwrite: bool = False,
 ):
     """write out an image as an OME-Zarr file compatible with napari
@@ -117,10 +116,10 @@ def write_ome_zarr(
         max_layer=n_downscaling_layers,
         method="nearest",
     )  # increase downscale so that large slides can also be opened in napari
-    write_image(image, group=group, axes=axes, storage_options=dict(chunks=chunk_size), scaler=scaler)
+    write_image(image, group=group, axes=axes, storage_options={"chunks": chunk_size}, scaler=scaler)
 
 
-def write_xml(image_paths: List[str], channels: List[str], slidename: str, outdir: str = None):
+def write_xml(image_paths: list[str], channels: list[str], slidename: str, outdir: str = None):
     """Helper function to generate an XML for import of stitched .tifs into BIAS.
 
     Parameters
@@ -183,11 +182,13 @@ def write_xml(image_paths: List[str], channels: List[str], slidename: str, outdi
 def write_spatialdata(
     image_path: str,
     image: np.array,
-    channel_names: List[str] = None,
-    scale_factors: List[int] = [2, 4, 8],
+    channel_names: list[str] = None,
+    scale_factors: list[int] = None,
     overwrite: bool = False,
 ):
     # check if the file exists and delete if overwrite is set to True
+    if scale_factors is None:
+        scale_factors = [2, 4, 8]
     if os.path.exists(image_path):
         if overwrite:
             shutil.rmtree(image_path)
