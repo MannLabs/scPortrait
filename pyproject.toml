@@ -54,7 +54,7 @@ docstring-code-format = true
 select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
-    #"W",  # Warning detected by Pycodestyle
+    "W",  # Warning detected by Pycodestyle
     "I",  # isort
     #"D",  # pydocstyle
     #"B",  # flake8-bugbear
