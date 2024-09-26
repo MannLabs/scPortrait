@@ -388,7 +388,8 @@ class Segmentation(ProcessingStep):
             try:
                 self._execute_segmentation(input_image)
                 self.clear_temp_dir()
-            except Exception:
+            except (RuntimeError, ValueError, TypeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
         else:
@@ -396,7 +397,8 @@ class Segmentation(ProcessingStep):
             try:
                 super().__call_empty__(input_image)
                 self.clear_temp_dir()
-            except Exception:
+            except (RuntimeError, ValueError, TypeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
 

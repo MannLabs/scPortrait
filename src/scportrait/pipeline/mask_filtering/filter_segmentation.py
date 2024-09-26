@@ -113,13 +113,15 @@ class SegmentationFilter(ProcessingStep):
             try:
                 self.log(f"Beginning filtering on tile in position [{self.window[0]}, {self.window[1]}]")
                 super().__call__(input_image)
-            except Exception:
+            except (IOError, ValueError, RuntimeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
         else:
             print(f"Tile in position [{self.window[0]}, {self.window[1]}] only contained zeroes.")
             try:
                 super().__call_empty__(input_image)
-            except Exception:
+            except (IOError, ValueError, RuntimeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
 
         del input_image
@@ -303,7 +305,8 @@ class TiledSegmentationFilter(SegmentationFilter):
         def f(x):
             try:
                 x.call_as_tile()
-            except Exception:
+            except (IOError, ValueError, RuntimeError) as e:
+                self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
             return x.get_output()
 

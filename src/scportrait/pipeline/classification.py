@@ -219,7 +219,7 @@ class _ClassificationBase(ProcessingStep):
                     memory_usage.append(gpu_memory)
                 results = {f"GPU_{i}": f"{memory_usage[i]} MiB" for i in range(len(memory_usage))}
                 return results
-            except Exception as e:
+            except (RuntimeError, ValueError) as e:
                 print("Error:", e)
                 return None
 
@@ -228,7 +228,7 @@ class _ClassificationBase(ProcessingStep):
                 used_memory = torch.mps.driver_allocated_memory() + torch.mps.driver_allocated_memory()
                 used_memory = used_memory / 1024**2  # Convert bytes to MiB
                 return {"MPS": f"{memory_usage} MiB"}
-            except Exception as e:
+            except (RuntimeError, ValueError) as e:
                 print("Error:", e)
                 return None
 

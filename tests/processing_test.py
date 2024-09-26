@@ -288,7 +288,7 @@ def test_visualize_class():
     # Since this function does not return anything, we just check if it produces any exceptions
     try:
         visualize_class(class_ids, seg_map, background)
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         pytest.fail(f"visualize_class raised exception: {str(e)}")
 
 
@@ -299,7 +299,7 @@ def test_plot_image(tmpdir):
     # Since this function does not return anything, we just check if it produces any exceptions
     try:
         plot_image(array, size=(5, 5), save_name=save_name)
-    except Exception as e:
+    except (ValueError, TypeError, IOError) as e:
         pytest.fail(f"plot_image raised exception: {str(e)}")
     assert os.path.isfile(str(save_name) + ".png")
 

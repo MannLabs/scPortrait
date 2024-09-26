@@ -55,8 +55,10 @@ class Logable(object):
         else:
             try:
                 lines = [str(message)]
-            except Exception:
-                self.log("unknown type during logging")
+            except (TypeError, ValueError):
+                raise TypeError(
+                    "Message must be a string, list of strings or a dictionary, but recieved type: ", type(message)
+                )
                 return
 
         for line in lines:

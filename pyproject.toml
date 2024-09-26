@@ -60,7 +60,7 @@ select = [
     #"B",  # flake8-bugbear
     #"TID",  # flake8-tidy-imports
     #"C4",  # flake8-comprehensions
-    #"BLE",  # flake8-blind-except
+    "BLE",  # flake8-blind-except
     #"UP",  # pyupgrade
     #"RUF100",  # Report unused noqa directives
     #"TCH",  # Typing imports

@@ -1205,7 +1205,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             self.gpu_id = gpu_id_list[cpu_id]
             self.status = "multi_GPU"
 
-        except Exception:
+        except (AttributeError, ValueError):
             # default to single GPU
             self.gpu_id = 0
             self.status = "potentially_single_GPU"

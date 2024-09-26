@@ -160,7 +160,8 @@ class _HDF5SingleCellDataset(Dataset):
                 for row in index_handle:
                     self.data_locator.append([label, handle_id] + list(row))
 
-        except Exception:
+        except (FileNotFoundError, KeyError, OSError) as e:
+            print(f"Error: {e}")
             return
 
     def _add_dataset(

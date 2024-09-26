@@ -32,7 +32,8 @@ class LMDSelection(ProcessingStep):
         if self.name is None:
             try:
                 name = "_".join([cell_set["name"] for cell_set in self.cell_sets])
-            except Exception:
+            except KeyError:
+                Warning("No name provided for the selection. Will use default name.")
                 name = "selected_cells"
 
         # create savepath
