@@ -275,7 +275,7 @@ class _HDF5SingleCellDataset(Dataset):
             current_index_list = self.index_list[i]
 
             # get current label
-            current_label = self._get_dataset_label(i)
+            self._get_dataset_label(i)
 
             # check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]

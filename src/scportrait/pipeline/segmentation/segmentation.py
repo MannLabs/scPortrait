@@ -861,7 +861,7 @@ class ShardedSegmentation(Segmentation):
                 initializer=self._initializer_function,
                 initargs=[self.gpu_id_list],
             ) as pool:
-                results = list(
+                list(
                     tqdm(
                         pool.imap(self.method._call_as_shard, shard_list),
                         total=len(shard_list),

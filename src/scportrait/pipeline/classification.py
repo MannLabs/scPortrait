@@ -1215,9 +1215,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             )
 
             # define name to save table under
-            label = self.label.replace(
-                "CellFeaturizer_", ""
-            )  # remove class name from label to ensure we dont have duplicates
+            self.label.replace("CellFeaturizer_", "")  # remove class name from label to ensure we dont have duplicates
 
             if self.channel_classification is not None:
                 table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[0]}"

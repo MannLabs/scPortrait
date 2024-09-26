@@ -509,12 +509,12 @@ class PhenixParser:
             print("\t Tiles: ", tiles)  # only print if these folders should be created
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_wells"), f"row{row}_well{well}", tile)
+                os.path.join(getattr(self, "outdir_sorted_wells"), f"row{row}_well{well}", tile)
                 for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_wells"), f"row{row}_well{well}")
+                os.path.join(getattr(self, "outdir_sorted_wells"), f"row{row}_well{well}")
                 for row, well in zip(metadata.Row, metadata.Well)
             ]
 
@@ -566,12 +566,12 @@ class PhenixParser:
         if sort_wells:
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_timepoints"), timepoint, f"{row}_{well}")
+                os.path.join(getattr(self, "outdir_sorted_timepoints"), timepoint, f"{row}_{well}")
                 for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(getattr(self, f"outdir_sorted_timepoints"), timepoint) for timepoint in metadata.Timepoint
+                os.path.join(getattr(self, "outdir_sorted_timepoints"), timepoint) for timepoint in metadata.Timepoint
             ]
 
         # unique directories for each tile

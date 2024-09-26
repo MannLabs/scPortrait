@@ -306,8 +306,8 @@ class Stitcher:
         """
         Plot quality control (QC) figures for the alignment.
         """
-        fig = plot_edge_scatter(self.aligner, self.outdir)
-        fig = plot_edge_quality(self.aligner, self.outdir)
+        plot_edge_scatter(self.aligner, self.outdir)
+        plot_edge_quality(self.aligner, self.outdir)
 
     def perform_alignment(self):
         """

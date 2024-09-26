@@ -13,7 +13,7 @@ from scportrait.pipeline.segmentation_workflows import CytosolSegmentationCellpo
 
 if __name__ == "__main__":
     print(os.getcwd())
-    project_location = f"example_data/example_4/benchmark"
+    project_location = "example_data/example_4/benchmark"
 
     project = Project(
         os.path.abspath(project_location),
