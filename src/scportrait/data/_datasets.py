@@ -123,3 +123,23 @@ def dataset_6():
         )
 
     return save_path
+
+
+def dataset_stitching_example():
+    """
+    Download and extract the example dataset for stitching images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = _get_data_dir()
+    save_path = os.path.join(data_dir, "stitching_example")
+
+    if not Path(save_path).exists():
+        _download(
+            url="https://zenodo.org/records/13742379/files/example_stitching.zip?download=1",
+            output_path=save_path,
+            archive_format="zip",
+        )
+
+    return save_path
