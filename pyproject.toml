@@ -63,7 +63,7 @@ select = [
     "BLE",  # flake8-blind-except
     #"UP",  # pyupgrade
     "RUF100",  # Report unused noqa directives
-    #"TCH",  # Typing imports
+    "TCH",  # Typing imports
     #"NPY",  # Numpy specific rules
     #"PTH"  # Use pathlib
 ]
