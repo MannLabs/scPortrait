@@ -306,9 +306,9 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             # randomly sample n_cells from the centers
-            np.random.seed(self.seed)
-            chosen_ids = np.random.choice(list(range(len(self.centers_cell_ids))), self.n_cells, replace=False)
-            print(self.centers_cell_ids)
+            rng = np.random.default_rng(self.seed)
+            chosen_ids = rng.choice(list(range(len(self.centers_cell_ids))), self.n_cells, replace=False)
+
             self.classes = self.centers_cell_ids[chosen_ids]
             self.px_centers = self.centers[chosen_ids]
         else:
@@ -601,7 +601,8 @@ class HDF5CellExtraction(ProcessingStep):
             n_cells = 100
             n_cells_to_visualize = len(keep_index) // n_cells
 
-            random_indexes = np.random.choice(keep_index, n_cells_to_visualize, replace=False)
+            rng = np.random.default_rng()
+            random_indexes = rng.choice(keep_index, n_cells_to_visualize, replace=False)
 
             for index in random_indexes:
                 stack = _tmp_single_cell_data[index]

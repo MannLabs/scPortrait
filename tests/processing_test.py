@@ -228,14 +228,16 @@ from scportrait.processing.images._image_processing import (
 
 
 def test_percentile_norm():
-    img = np.random.rand(4, 4)
+    rng = np.random.default_rng()
+    img = rng.random((4, 4))
     norm_img = _percentile_norm(img, 0.1, 0.9)
     assert np.min(norm_img) == pytest.approx(0)
     assert np.max(norm_img) == pytest.approx(1)
 
 
 def test_percentile_normalization_C_H_W():
-    test_array = np.random.randint(2, size=(3, 100, 100))
+    rng = np.random.default_rng()
+    test_array = rng.integers(2, size=(3, 100, 100))
     test_array[:, 10:11, 10:11] = -1
     test_array[:, 12:13, 12:13] = 3
 
@@ -245,7 +247,8 @@ def test_percentile_normalization_C_H_W():
 
 
 def test_percentile_normalization_H_W():
-    test_array = np.random.randint(2, size=(100, 100))
+    rng = np.random.default_rng()
+    test_array = rng.integers(2, size=(100, 100))
     test_array[10:11, 10:11] = -1
     test_array[12:13, 12:13] = 3
 
@@ -255,13 +258,15 @@ def test_percentile_normalization_H_W():
 
 
 def test_rolling_window_mean():
-    array = np.random.rand(10, 10)
+    rng = np.random.default_rng()
+    array = rng.random((10, 10))
     rolling_array = rolling_window_mean(array, size=5, scaling=False)
     assert np.all(array.shape == rolling_array.shape)
 
 
 def test_MinMax():
-    array = np.random.rand(10, 10)
+    rng = np.random.default_rng()
+    array = rng.random((10, 10))
     normalized_array = MinMax(array)
     assert np.min(normalized_array) == 0
     assert np.max(normalized_array) == 1
@@ -284,7 +289,8 @@ def test_flatten():
 def test_visualize_class():
     class_ids = [1, 2]
     seg_map = np.array([[0, 1, 0], [1, 2, 1], [2, 0, 1]])
-    background = np.random.random((3, 3)) * 255
+    rng = np.random.default_rng()
+    background = rng.random((3, 3)) * 255
     # Since this function does not return anything, we just check if it produces any exceptions
     try:
         visualize_class(class_ids, seg_map, background)
@@ -293,7 +299,8 @@ def test_visualize_class():
 
 
 def test_plot_image(tmpdir):
-    array = np.random.rand(10, 10)
+    rng = np.random.default_rng()
+    array = rng.random((10, 10))
     save_name = tmpdir.join("test_plot_image")
 
     # Since this function does not return anything, we just check if it produces any exceptions
