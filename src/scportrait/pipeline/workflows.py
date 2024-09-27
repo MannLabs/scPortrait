@@ -31,6 +31,7 @@ from skfmm import travel_time as skfmm_travel_time
 from skimage.filters import median
 from skimage.segmentation import watershed
 from skimage.color import label2rgb
+from skimage.exposure import equalize_adapthist
 
 # mask processing
 from skimage.morphology import binary_erosion, disk, dilation, erosion
@@ -1698,8 +1699,92 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         return results
 
 
+class CytosolSegmentationDownsamplingCellpose_histogram_adjusted(
+    CytosolSegmentationDownsamplingCellpose
+):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def process(self, input_image):
+        # check image dtype since cellpose expects int input images
+        self._check_input_image_dtype(input_image)
+
+        # setup downsampling
+        self._get_downsampling_parameters()
+        self._calculate_padded_image_size(input_image)
+
+        # setup the memory mapped arrays to store the results
+        self.maps = {
+            "input_image": tempmmap.array(
+                shape=input_image.shape,
+                dtype=float,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+            "nucleus_segmentation": tempmmap.array(
+                shape=(1, input_image.shape[1], input_image.shape[2]),
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+            "cytosol_segmentation": tempmmap.array(
+                shape=(1, input_image.shape[1], input_image.shape[2]),
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+            "fullsize_nucleus_segmentation": tempmmap.array(
+                shape=(1, self.original_image_size[1], self.original_image_size[2]),
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+            "fullsize_cytosol_segmentation": tempmmap.array(
+                shape=(1, self.original_image_size[1], self.original_image_size[2]),
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
+                tmp_dir_abs_path=self._tmp_dir_path,
+            ),
+        }
+
+        # could add a normalization step here if so desired
+        # perform downsampling after saving input image to ensure that we have a duplicate preserving the original dimensions
+        self.maps["input_image"] = input_image.copy()
+
+        # only get the first 2 channels for segmentation (does not use excess space on the GPU this way)
+        input_image = input_image[:2, :, :]
+        gc.collect()  # cleanup to ensure memory is freed up
+
+        # perform downsampling
+        input_image = self._downsample_image(input_image)
+
+        # apply histogram adjustment to cytosol channel
+        _adjusted = equalize_adapthist(input_image[0], clip_limit=0.03)
+        _adjusted = (_adjusted / _adjusted.max() * np.iinfo(np.uint16).max).astype(
+            np.uint16
+        )
+
+        input_image[1] = _adjusted
+        del _adjusted
+
+        self.cellpose_segmentation(input_image)
+
+        del input_image
+        gc.collect()
+
+        # currently no implemented filtering steps to remove nuclei outside of specific thresholds
+        all_classes = np.unique(self.maps["nucleus_segmentation"])
+
+        channels, segmentation = self._finalize_segmentation_results()
+
+        results = self.save_segmentation(channels, segmentation, all_classes)
+
+        return results
+
+
 class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
     method = CytosolSegmentationDownsamplingCellpose
+
+
+class ShardedCytosolSegmentationDownsamplingCellpose_histogram_adjusted(
+    ShardedSegmentation
+):
+    method = CytosolSegmentationDownsamplingCellpose_histogram_adjusted
 
 
 class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
