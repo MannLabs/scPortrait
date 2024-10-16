@@ -1097,7 +1097,7 @@ class Project(Logable):
     def select(
         self,
         cell_sets: list[dict],
-        calibration_marker: np.array | None = None,
+        calibration_marker: np.ndarray | None = None,
         segmentation_name: str = "seg_all_nucleus",
         name: str | None = None,
     ):
