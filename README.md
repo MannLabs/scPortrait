@@ -9,7 +9,7 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 Please refer to our [documentation](https://mannlabs.github.io/scPortrait/html/index.html) in particular:
 
-- [getting started](https://mannlabs.github.io/scPortrait/html/index.html)
+- [getting started](https://mannlabs.github.io/scPortrait/html/pages/quickstart.html#quickstart))
 - [example notebooks](https://mannlabs.github.io/scPortrait/html/pages/example_notebooks.html)
 
 ## Installation from Github
