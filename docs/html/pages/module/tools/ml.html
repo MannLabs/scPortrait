@@ -191,7 +191,23 @@
 <li class="toctree-l4"><a class="reference internal" href="../pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../pipeline.html#segmentation-workflows">segmentation workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline.html#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 </ul>
@@ -213,19 +229,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../io.html#images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io.html#module-scportrait.processing.images">images</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../io.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tools.html">tools</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="parsing.html">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="stitching.html">stitching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stitching.html">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="stitching.html#parameters">Parameters:</a></li>
+</ul>
+</li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">ml</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#module-scportrait.tools.ml.datasets">datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-scportrait.tools.ml.metrics">metrics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#models">models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#plmodels">plmodels</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#pretrained-models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-scportrait.tools.ml.transforms">transforms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
@@ -1111,8 +1130,27 @@ to training mode and gradients are enabled.</p>
 </dd></dl>
 
 </section>
-<section id="pretrained-models">
-<h2>pretrained_models<a class="headerlink" href="#pretrained-models" title="Link to this heading"></a></h2>
+<section id="module-scportrait.tools.ml.pretrained_models">
+<span id="pretrained-models"></span><h2>pretrained_models<a class="headerlink" href="#module-scportrait.tools.ml.pretrained_models" title="Link to this heading"></a></h2>
+<p>Collection of functions to load pretrained models to use in the scPortrait environment.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.tools.ml.pretrained_models.autophagy_classifier">
+<span class="sig-prename descclassname"><span class="pre">scportrait.tools.ml.pretrained_models.</span></span><span class="sig-name descname"><span class="pre">autophagy_classifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.ml.pretrained_models.autophagy_classifier" title="Link to this definition"></a></dt>
+<dd><p>Load binary autophagy classification model published as Model 2.1 in original SPARCS publication.</p>
+<p class="rubric">References</p>
+<p>Schmacke NA, Mädler SC, Wallmann G, Metousis A, Bérouti M, Harz H, Leonhardt H, Mann M, Hornung V.
+SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes.
+bioRxiv. 2023 Jun 1;542416. doi: 10.1101/2023.06.01.542416.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pretrained autophagy classification model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#scportrait.tools.ml.plmodels.MultilabelSupervisedModel" title="scportrait.tools.ml.plmodels.MultilabelSupervisedModel">MultilabelSupervisedModel</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-scportrait.tools.ml.transforms">
 <span id="transforms"></span><h2>transforms<a class="headerlink" href="#module-scportrait.tools.ml.transforms" title="Link to this heading"></a></h2>

@@ -192,7 +192,23 @@
 <li class="toctree-l4"><a class="reference internal" href="../pipeline.html#shardedsegmentation">ShardedSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../pipeline.html#segmentation-workflows">segmentation workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline.html#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../pipeline.html#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../pipeline.html#hdf5cellextraction">HDF5CellExtraction</a></li>
 </ul>
@@ -214,19 +230,22 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../io.html#images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io.html#module-scportrait.processing.images">images</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../io.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="reference internal" href="../tools.html">tools</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="parsing.html">parsing</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">stitching</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">stitching</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">Parameters:</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="ml.html">ml</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#models">models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#plmodels">plmodels</a></li>
-<li class="toctree-l4"><a class="reference internal" href="ml.html#pretrained-models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
@@ -267,9 +286,50 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
 
-  <section id="stitching">
-<h1>stitching<a class="headerlink" href="#stitching" title="Link to this heading"></a></h1>
+  <section id="module-scportrait.tools.stitch.Stitcher">
+<span id="stitching"></span><h1>stitching<a class="headerlink" href="#module-scportrait.tools.stitch.Stitcher" title="Link to this heading"></a></h1>
 <p>For parallel stitching with multiple threads, use the following class:</p>
+<p id="module-scportrait.tools.stitch.ParallelStitcher">Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.</p>
+<section id="parameters">
+<h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>input_dir<span class="classifier">str</span></dt><dd><p>Directory containing the input image tiles.</p>
+</dd>
+<dt>slidename<span class="classifier">str</span></dt><dd><p>Name of the slide.</p>
+</dd>
+<dt>outdir<span class="classifier">str</span></dt><dd><p>Output directory to save the stitched mosaic.</p>
+</dd>
+<dt>stitching_channel<span class="classifier">str</span></dt><dd><p>Name of the channel to be used for stitching.</p>
+</dd>
+<dt>pattern<span class="classifier">str</span></dt><dd><p>File pattern to match the image tiles.</p>
+</dd>
+<dt>overlap<span class="classifier">float, optional</span></dt><dd><p>Overlap between adjacent image tiles (default is 0.1).</p>
+</dd>
+<dt>max_shift<span class="classifier">float, optional</span></dt><dd><p>Maximum allowed shift during alignment (default is 30).</p>
+</dd>
+<dt>filter_sigma<span class="classifier">int, optional</span></dt><dd><p>Sigma value for Gaussian filter applied during alignment (default is 0).</p>
+</dd>
+<dt>do_intensity_rescale<span class="classifier">bool or “full_image”, optional</span></dt><dd><p>Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to “full_image” to rescale the entire image.</p>
+</dd>
+<dt>rescale_range<span class="classifier">tuple or dictionary, optional</span></dt><dd><p>If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaleing (default is (1, 99)). Alternatively
+a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.</p>
+</dd>
+<dt>channel_order<span class="classifier">list, optional</span></dt><dd><p>Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.</p>
+</dd>
+<dt>reader_type<span class="classifier">class, optional</span></dt><dd><p>Type of reader to use for reading image tiles (default is FilePatternReaderRescale).</p>
+</dd>
+<dt>orientation<span class="classifier">dict, optional</span></dt><dd><p>Dictionary specifiying which dimensions of the slide to flip (default is {‘flip_x’: False, ‘flip_y’: True}).</p>
+</dd>
+<dt>plot_QC<span class="classifier">bool, optional</span></dt><dd><p>Flag to indicate whether to plot quality control (QC) figures (default is True).</p>
+</dd>
+<dt>overwrite<span class="classifier">bool, optional</span></dt><dd><p>Flag to indicate whether to overwrite the output directory if it already exists (default is False).</p>
+</dd>
+<dt>cache<span class="classifier">str, optional</span></dt><dd><p>Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.</p>
+</dd>
+<dt>threads<span class="classifier">int, optional</span></dt><dd><p>Number of threads to use for parallel processing (default is 20).</p>
+</dd>
+</dl>
+</section>
 </section>
 
 
