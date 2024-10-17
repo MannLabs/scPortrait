@@ -26,6 +26,46 @@ from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAlign
 
 
 class Stitcher:
+    """
+    Class for stitching of image tiles to assemble a mosaic.
+
+    Parameters:
+    -----------
+    input_dir : str
+        Directory containing the input image tiles.
+    slidename : str
+        Name of the slide.
+    outdir : str
+        Output directory to save the stitched mosaic.
+    stitching_channel : str
+        Name of the channel to be used for stitching.
+    pattern : str
+        File pattern to match the image tiles.
+    overlap : float, optional
+        Overlap between adjacent image tiles (default is 0.1).
+    max_shift : float, optional
+        Maximum allowed shift during alignment (default is 30).
+    filter_sigma : int, optional
+        Sigma value for Gaussian filter applied during alignment (default is 0).
+    do_intensity_rescale : bool or "full_image", optional
+        Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
+    rescale_range : tuple or dictionary, optional
+        If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaleing (default is (1, 99)). Alternatively
+        a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
+    channel_order : list, optional
+        Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
+    reader_type : class, optional
+        Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
+    orientation : dict, optional
+        Dictionary specifiying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
+    plot_QC : bool, optional
+        Flag to indicate whether to plot quality control (QC) figures (default is True).
+    overwrite : bool, optional
+        Flag to indicate whether to overwrite the output directory if it already exists (default is False).
+    cache : str, optional
+        Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
+    """
+
     def __init__(
         self,
         input_dir: str,
