@@ -2,7 +2,7 @@
 parse
 ====================================
 
-Contains functions to parse imaging data aquired on an OperaPhenix or Operetta into a usable formats for downstream pipelines.
+Contains functions to parse imaging data aquired on an OperaPhenix or Operetta into usable formats for downstream pipelines.
 """
 
 import os
