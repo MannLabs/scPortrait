@@ -24,6 +24,37 @@ def _get_child_name(elem):
 
 
 class PhenixParser:
+    """
+    A class to parse and manage image data from Phenix experiments.
+
+    Parameters:
+    -----------
+    experiment_dir : str
+        The directory containing the experiment data.
+    export_symlinks : bool
+        Whether to use symbolic links for exported images.
+    flatfield_status : bool
+        Whether flatfield images were exported.
+    compress_rows : bool
+        Whether to compress rows in the parsed images.
+    compress_cols : bool
+        Whether to compress columns in the parsed images.
+    xml_path : str
+        The path to the XML file containing metadata.
+    image_dir : str
+        The directory containing the input images.
+    channel_lookup : pd.DataFrame
+        A DataFrame containing channel metadata.
+    metadata : pd.DataFrame or None
+        A DataFrame containing parsed image metadata.
+    black_image : np.ndarray
+        A black image used to replace missing images.
+    missing_images : list
+        A list of missing image filenames.
+    copyfunction : function
+        The function used to copy or link files.
+    """
+
     def __init__(
         self, experiment_dir, flatfield_exported=True, export_symlinks=True, compress_rows=False, compress_cols=False
     ) -> None:
