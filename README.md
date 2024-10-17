@@ -19,7 +19,7 @@ Check out the docs for more complete installation instructions. scPortrait curre
 To get started you can install via pip:
 
 ```
-pip install git+https://github.org/MannLabs/scPortrait
+pip install git+https://github.com/MannLabs/scPortrait
 ```
 
 ### Limitations
