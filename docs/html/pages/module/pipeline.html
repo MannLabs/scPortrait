@@ -155,7 +155,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tools/parsing/example_parsing_notebook.html">Example Parsing Notebook to rename phenix experiments</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a><ul>
@@ -191,23 +192,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#shardedsegmentation">ShardedSegmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#module-scportrait.pipeline.segmentation.workflows">segmentation workflows</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedWGASegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedDAPISegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose"><code class="docutils literal notranslate"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="docutils literal notranslate"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="#segmentation-workflows">segmentation workflows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#extraction">extraction</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#hdf5cellextraction">HDF5CellExtraction</a></li>
 </ul>
@@ -229,22 +214,19 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.images">images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="io.html#images">images</a></li>
 <li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html">tools</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tools/ml.html">ml</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.datasets">datasets</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.metrics">metrics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#models">models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#plmodels">plmodels</a></li>
-<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.pretrained_models">pretrained_models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/ml.html#pretrained-models">pretrained_models</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.transforms">transforms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tools/ml.html#module-scportrait.tools.ml.utils">utils</a></li>
 </ul>
@@ -293,450 +275,24 @@
 <p>Within scPortrait, all operations are centered around the concept of a <code class="docutils literal notranslate"><span class="pre">Project</span></code>. A <code class="docutils literal notranslate"><span class="pre">Project</span></code> is a python class which manages all of the scPortrait processing steps and is the central element through which all operations are performed. Each <code class="docutils literal notranslate"><span class="pre">Project</span></code> directly maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs. Depending on the structure of the data that is to be processed a different Project class is required. Please see <a class="reference internal" href="../pipeline/project.html#projects"><span class="std std-ref">here</span></a> for more information.</p>
 <section id="id1">
 <h3>Project<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.project.</span></span><span class="sig-name descname"><span class="pre">Project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraction_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.project.Project" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Logable</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.DEFAULT_IMAGE_DTYPE">
-<span class="sig-name descname"><span class="pre">DEFAULT_IMAGE_DTYPE</span></span><a class="headerlink" href="#scportrait.pipeline.project.Project.DEFAULT_IMAGE_DTYPE" title="Link to this definition"></a></dt>
-<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">uint16</span></code></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.DEFAULT_SEGMENTATION_DTYPE">
-<span class="sig-name descname"><span class="pre">DEFAULT_SEGMENTATION_DTYPE</span></span><a class="headerlink" href="#scportrait.pipeline.project.Project.DEFAULT_SEGMENTATION_DTYPE" title="Link to this definition"></a></dt>
-<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">uint32</span></code></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.DEFAULT_SINGLE_CELL_IMAGE_DTYPE">
-<span class="sig-name descname"><span class="pre">DEFAULT_SINGLE_CELL_IMAGE_DTYPE</span></span><a class="headerlink" href="#scportrait.pipeline.project.Project.DEFAULT_SINGLE_CELL_IMAGE_DTYPE" title="Link to this definition"></a></dt>
-<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">float16</span></code></p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.update_classification_f">
-<span class="sig-name descname"><span class="pre">update_classification_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classification_f</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#scportrait.pipeline.project.Project.update_classification_f" title="Link to this definition"></a></dt>
-<dd><p>Update the classification method chosen for the project without reinitializing the entire project.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>classification_f</strong> (<em>class</em>) – The classification method that should be used for the project.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.load_input_from_tif_files">
-<span class="sig-name descname"><span class="pre">load_input_from_tif_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[(0,</span> <span class="pre">-1),</span> <span class="pre">(0,</span> <span class="pre">-1)]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.project.Project.load_input_from_tif_files" title="Link to this definition"></a></dt>
-<dd><p>Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file_paths</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List containing paths to each channel like
-[“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
-Expects a list of file paths with length “input_channel” as
-defined in the config.yml.</p></li>
-<li><p><strong>crop</strong> (<em>List</em><em>[</em><em>Tuple</em><em>]</em><em>, </em><em>optional</em>) – When set, it can be used to crop the input image. The first
-element refers to the first dimension of the image and so on.
-For example use “[(0,1000),(0,2000)]” to crop the image to
-1000 px height and 2000 px width from the top left corner.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.load_input_from_sdata">
-<span class="sig-name descname"><span class="pre">load_input_from_sdata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sdata_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_image_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'input_image'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nucleus_segmentation_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cytosol_segmentation_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.project.Project.load_input_from_sdata" title="Link to this definition"></a></dt>
-<dd><p>Load input image from a spatialdata object.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.project.Project.select">
-<span class="sig-name descname"><span class="pre">select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_sets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_marker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'seg_all_nucleus'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.project.Project.select" title="Link to this definition"></a></dt>
-<dd><p>Select specified classes using the defined selection method.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 </section>
 <section id="segmentation">
 <h2>segmentation<a class="headerlink" href="#segmentation" title="Link to this heading"></a></h2>
 <section id="id2">
 <h3>Segmentation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.</span></span><span class="sig-name descname"><span class="pre">Segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nuc_seg_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cyto_seg_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_tmp_image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filehandler</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ProcessingStep</span></code></p>
-<p>Segmentation helper class used for creating segmentation workflows.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.maps">
-<span class="sig-name descname"><span class="pre">maps</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.maps" title="Link to this definition"></a></dt>
-<dd><p>Segmentation workflows based on the <a class="reference internal" href="#scportrait.pipeline.segmentation.Segmentation" title="scportrait.pipeline.segmentation.Segmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Segmentation</span></code></a> class can use maps for saving and loading checkpoints and perform. Maps can be numpy arrays</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict(str)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.DEFAULT_FILTER_ADDTIONAL_FILE">
-<span class="sig-name descname"><span class="pre">DEFAULT_FILTER_ADDTIONAL_FILE</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.DEFAULT_FILTER_ADDTIONAL_FILE" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default <code class="docutils literal notranslate"><span class="pre">filtered_classes.csv</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.PRINT_MAPS_ON_DEBUG">
-<span class="sig-name descname"><span class="pre">PRINT_MAPS_ON_DEBUG</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.PRINT_MAPS_ON_DEBUG" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool, default <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.identifier">
-<span class="sig-name descname"><span class="pre">identifier</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.identifier" title="Link to this definition"></a></dt>
-<dd><p>Only set if called by <a class="reference internal" href="#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a>. Unique index of the shard.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int, default <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.window">
-<span class="sig-name descname"><span class="pre">window</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.window" title="Link to this definition"></a></dt>
-<dd><p>Only set if called by <a class="reference internal" href="#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a>. Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use <code class="docutils literal notranslate"><span class="pre">[(0,1000),(0,2000)]</span></code> To crop the image to <cite>1000 px height</cite> and <cite>2000 px width</cite> from the top left corner.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list(tuple), default <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.input_path">
-<span class="sig-name descname"><span class="pre">input_path</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.input_path" title="Link to this definition"></a></dt>
-<dd><p>Only set if called by <a class="reference internal" href="#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a>. Location of the input hdf5 file. During sharded segmentation the <a class="reference internal" href="#scportrait.pipeline.segmentation.ShardedSegmentation" title="scportrait.pipeline.segmentation.ShardedSegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShardedSegmentation</span></code></a> derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str, default <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="c1"># two maps are initialized</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">maps</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;map0&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="s2">&quot;map1&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
-
-    <span class="c1"># its checked if the segmentation directory already contains these maps and they are then loaded. The index of the first map which has not been found is returned. It indicates the step where computation needs to resume</span>
-    <span class="n">current_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_maps_from_disk</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">current_step</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="c1"># do stuff and generate map0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_map</span><span class="p">(</span><span class="s2">&quot;map0&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">current_step</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="c1"># do stuff and generate map1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_map</span><span class="p">(</span><span class="s2">&quot;map1&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.save_map">
-<span class="sig-name descname"><span class="pre">save_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">map_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.save_map" title="Link to this definition"></a></dt>
-<dd><p>Saves newly computed map.</p>
-<dl class="simple">
-<dt>Args</dt><dd><p>map_name (str): name of the map to be saved, as defined in <code class="docutils literal notranslate"><span class="pre">self.maps</span></code>.</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># declare all intermediate maps</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">maps</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;myMap&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
-
-<span class="c1"># load intermediate maps if possible and get current processing step</span>
-<span class="n">current_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_maps_from_disk</span><span class="p">()</span>
-
-<span class="k">if</span> <span class="n">current_step</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-
-    <span class="c1"># do some computations</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">maps</span><span class="p">[</span><span class="s2">&quot;myMap&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myNumpyArray</span>
-
-    <span class="c1"># save map</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">save_map</span><span class="p">(</span><span class="s2">&quot;myMap&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.Segmentation.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.Segmentation.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 <section id="shardedsegmentation">
 <h3>ShardedSegmentation<a class="headerlink" href="#shardedsegmentation" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.ShardedSegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.</span></span><span class="sig-name descname"><span class="pre">ShardedSegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.ShardedSegmentation" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#scportrait.pipeline.segmentation.Segmentation" title="scportrait.pipeline.segmentation.segmentation.Segmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Segmentation</span></code></a></p>
-<p>To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.ShardedSegmentation.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.ShardedSegmentation.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the sharded segmentation method.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>This function is called automatically when a Segmentation Class is executed.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input_image</strong> (<em>np.array</em>) – Input image to be processed. The input image should be a numpy array of shape (C, H, W) where C is the number of channels, H is the height of the image and W is the width of the image.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.ShardedSegmentation.complete_segmentation">
-<span class="sig-name descname"><span class="pre">complete_segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.ShardedSegmentation.complete_segmentation" title="Link to this definition"></a></dt>
-<dd><p>Complete an already started sharded segmentation of the provided input image.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_image</strong> (<em>np.array</em>) – Input image to be processed. The input image should be a numpy array of shape (C, H, W) where C is the number of channels, H is the height of the image and W is the width of the image.</p></li>
-<li><p><strong>force_run</strong> (<em>bool</em>) – If set to True the segmentation will be run even if a completed segmentation is already found in the sdata object. Default is False.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 </section>
-<section id="module-scportrait.pipeline.segmentation.workflows">
-<span id="segmentation-workflows"></span><h2>segmentation workflows<a class="headerlink" href="#module-scportrait.pipeline.segmentation.workflows" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.WGASegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">WGASegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.WGASegmentation" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.WGASegmentation.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.WGASegmentation.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedWGASegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.WGASegmentation" title="scportrait.pipeline.segmentation.workflows.WGASegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">WGASegmentation</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.DAPISegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">DAPISegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentation" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.DAPISegmentation.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentation.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedDAPISegmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentation.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentation" title="scportrait.pipeline.segmentation.workflows.DAPISegmentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">DAPISegmentation</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">DAPISegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedDAPISegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedDAPISegmentationCellpose.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose" title="scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">DAPISegmentationCellpose</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">CytosolSegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedCytosolSegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationCellpose.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose" title="scportrait.pipeline.segmentation.workflows.CytosolSegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">CytosolSegmentationCellpose</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">ShardedCytosolSegmentationDownsamplingCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.ShardedCytosolSegmentationDownsamplingCellpose.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose" title="scportrait.pipeline.segmentation.workflows.CytosolSegmentationDownsamplingCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">CytosolSegmentationDownsamplingCellpose</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">CytosolOnlySegmentationCellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">Sharded_CytosolOnly_Cellpose_Segmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose" title="scportrait.pipeline.segmentation.workflows.CytosolOnlySegmentationCellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">CytosolOnlySegmentationCellpose</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose.process" title="Link to this definition"></a></dt>
-<dd><p>Process the input image with the segmentation method.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.segmentation.workflows.</span></span><span class="sig-name descname"><span class="pre">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
-<dt class="sig sig-object py" id="scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose.method" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose" title="scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose"><code class="xref py py-class docutils literal notranslate"><span class="pre">CytosolOnly_Segmentation_Downsampling_Cellpose</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="segmentation-workflows">
+<h2>segmentation workflows<a class="headerlink" href="#segmentation-workflows" title="Link to this heading"></a></h2>
 </section>
 <section id="extraction">
 <h2>extraction<a class="headerlink" href="#extraction" title="Link to this heading"></a></h2>
 <section id="hdf5cellextraction">
 <h3>HDF5CellExtraction<a class="headerlink" href="#hdf5cellextraction" title="Link to this heading"></a></h3>
-<dl class="py class">
-<dt class="sig sig-object py" id="scportrait.pipeline.extraction.HDF5CellExtraction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.pipeline.extraction.</span></span><span class="sig-name descname"><span class="pre">HDF5CellExtraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.extraction.HDF5CellExtraction" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ProcessingStep</span></code></p>
-<p>A class to extracts single cell images from a segmented scPortrait project and save the
-results to an HDF5 file.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="scportrait.pipeline.extraction.HDF5CellExtraction.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.extraction.HDF5CellExtraction.process" title="Link to this definition"></a></dt>
-<dd><p>Extracts single cell images from a segmented scPortrait project and saves the results to an HDF5 file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_segmentation_path</strong> (<em>str</em>) – Path of the segmentation HDF5 file. If this class is used as part of a project processing workflow, this argument will be provided automatically.</p></li>
-<li><p><strong>filtered_classes_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the filtered classes that should be used for extraction. Default is None. If not provided, will use the automatically generated paths.</p></li>
-</ul>
-</dd>
-</dl>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>If this class is used as part of a project processing workflow, all of the arguments will be provided by the <code class="docutils literal notranslate"><span class="pre">Project</span></code> class based on the previous segmentation.
-The Project class will automatically provide the most recent segmentation forward together with the supplied parameters.</p>
-</div>
-<p class="rubric">Examples</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># After project is initialized and input data has been loaded and segmented</span>
-<span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
-</pre></div>
-</div>
-<p class="rubric">Notes</p>
-<p>The following parameters are required in the config file when running this method:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">HDF5CellExtraction</span><span class="p">:</span>
-
-<span class="w">    </span><span class="nt">compression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
-
-<span class="w">    </span><span class="c1"># threads used in multithreading</span>
-<span class="w">    </span><span class="nt">threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
-
-<span class="w">    </span><span class="c1"># image size in pixels</span>
-<span class="w">    </span><span class="nt">image_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
-
-<span class="w">    </span><span class="c1"># directory where intermediate results should be saved</span>
-<span class="w">    </span><span class="nt">cache</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/mnt/temp/cache&quot;</span>
-
-<span class="w">    </span><span class="c1"># specs to define how HDF5 data should be chunked and saved</span>
-<span class="w">    </span><span class="nt">hdf5_rdcc_nbytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880000</span><span class="w"> </span><span class="c1"># 5GB 1024 * 1024 * 5000</span>
-<span class="w">    </span><span class="nt">hdf5_rdcc_w0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">    </span><span class="nt">hdf5_rdcc_nslots</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 </section>
 <section id="classification">
@@ -950,7 +506,7 @@ The extracted features are saved to a CSV file. The features are calculated on t
 This method class relies on the functionality of the pylmd library.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="scportrait.pipeline.selection.LMDSelection.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segmentation_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_sets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_marker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.selection.LMDSelection.process" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segmentation_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_sets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_marker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.pipeline.selection.LMDSelection.process" title="Link to this definition"></a></dt>
 <dd><p>Process function for selecting cells and generating their XML.
 Under the hood this method relies on the pylmd library and utilizies its <cite>SegmentationLoader</cite> Class.</p>
 <dl class="field-list simple">
@@ -964,23 +520,23 @@ Under the hood this method relies on the pylmd library and utilizies its <cite>S
 </dl>
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Calibration marker should be defined as (row, column).</span>
-<span class="n">marker_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="o">-</span><span class="mi">10</span><span class="p">])</span>
-<span class="n">marker_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="mi">1100</span><span class="p">])</span>
-<span class="n">marker_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1100</span><span class="p">,</span><span class="mi">505</span><span class="p">])</span>
+<span class="n">marker_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">])</span>
+<span class="n">marker_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1100</span><span class="p">])</span>
+<span class="n">marker_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1100</span><span class="p">,</span> <span class="mi">505</span><span class="p">])</span>
 
 <span class="c1"># A numpy Array of shape (3, 2) should be passed.</span>
 <span class="n">calibration_marker</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">marker_0</span><span class="p">,</span> <span class="n">marker_1</span><span class="p">,</span> <span class="n">marker_2</span><span class="p">])</span>
 
 
 <span class="c1"># Sets of cells can be defined by providing a name and a list of classes in a dictionary.</span>
-<span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]}]</span>
+<span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}]</span>
 
 <span class="c1"># Alternatively, a path to a csv file can be provided.</span>
 <span class="c1"># If a relative path is provided, it is accessed relativ to the projects base directory.</span>
 <span class="n">cells_to_select</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset2&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="s2">&quot;segmentation/class_subset.csv&quot;</span><span class="p">}]</span>
 
 <span class="c1"># If desired, wells can be passed with the individual sets.</span>
-<span class="n">cells_to_select</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset3&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;A1&quot;</span><span class="p">}]</span>
+<span class="n">cells_to_select</span> <span class="o">+=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset3&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span> <span class="s2">&quot;A1&quot;</span><span class="p">}]</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cells_to_select</span><span class="p">,</span> <span class="n">calibration_marker</span><span class="p">)</span>
 </pre></div>

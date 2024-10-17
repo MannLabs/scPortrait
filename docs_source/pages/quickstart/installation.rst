@@ -10,7 +10,7 @@ We recommended installing the library within a separate conda environment runnin
 
    conda create -n "scPortrait"
    conda activate scPortrait
-   pip install git+https://github.org/MannLabs/scPortrait
+   pip install git+https://github.com/MannLabs/scPortrait
 
 For utilizing the stitching capabilities of scPortrait, a working java installation is required. If not already installed, you can download the latest version of Java from the `official website <https://www.java.com/en/download/>`_ or install it via mamba or conda:
 
