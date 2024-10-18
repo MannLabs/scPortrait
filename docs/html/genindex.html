@@ -226,15 +226,36 @@
 <li class="toctree-l3"><a class="reference internal" href="pages/module/processing.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">io</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.io.daskmmap">memory mapped file handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.dask_array_from_path"><code class="docutils literal notranslate"><span class="pre">dask_array_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes_chunks"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes_chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_contigious"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_chunked"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_chunked()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_contigious"><code class="docutils literal notranslate"><span class="pre">load_hdf5_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_chunk"><code class="docutils literal notranslate"><span class="pre">load_hdf5_chunk()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.io.read">file readers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.read.read_ome_zarr"><code class="docutils literal notranslate"><span class="pre">read_ome_zarr()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/tools/ml.html">ml</a><ul>
@@ -320,6 +341,14 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.assemble_mosaic">assemble_mosaic() (scportrait.tools.stitch._stitch.ParallelStitcher method)</a>
+
+      <ul>
+        <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.assemble_mosaic">(scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.pretrained_models.autophagy_classifier">autophagy_classifier() (in module scportrait.tools.ml.pretrained_models)</a>
 </li>
   </ul></td>
@@ -328,21 +357,33 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes">calculate_chunk_sizes() (in module scportrait.io.daskmmap)</a>
+</li>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes_chunks">calculate_chunk_sizes_chunks() (in module scportrait.io.daskmmap)</a>
+</li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.classification.CellFeaturizer">CellFeaturizer (class in scportrait.pipeline.classification)</a>
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.ChannelReducer">ChannelReducer (class in scportrait.tools.ml.transforms)</a>
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.ChannelSelector">ChannelSelector (class in scportrait.tools.ml.transforms)</a>
 </li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.clear_cache">clear_cache() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.utils.combine_datasets_balanced">combine_datasets_balanced() (in module scportrait.tools.ml.utils)</a>
 </li>
-      <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation.complete_segmentation">complete_segmentation() (scportrait.pipeline.segmentation.ShardedSegmentation method)</a>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser">CombinedPhenixParser (class in scportrait.tools.parse._parse_phenix)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.ShardedSegmentation.complete_segmentation">complete_segmentation() (scportrait.pipeline.segmentation.ShardedSegmentation method)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#id1">configure_optimizers() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>, <a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.configure_optimizers">[1]</a>
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel.confusion_plot">confusion_plot() (scportrait.tools.ml.plmodels.MultilabelSupervisedModel method)</a>
+</li>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files">copy_files() (scportrait.tools.parse._parse_phenix.PhenixParser method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.create_cache">create_cache() (scportrait.tools.stitch._stitch.Stitcher method)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.CytosolOnly_Segmentation_Downsampling_Cellpose">CytosolOnly_Segmentation_Downsampling_Cellpose (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
@@ -361,6 +402,8 @@
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentation">DAPISegmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.DAPISegmentationCellpose">DAPISegmentationCellpose (class in scportrait.pipeline.segmentation.workflows)</a>
+</li>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.dask_array_from_path">dask_array_from_path() (in module scportrait.io.daskmmap)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.classification.MLClusterClassifier.DEFAULT_DATA_LOADER">DEFAULT_DATA_LOADER (scportrait.pipeline.classification.MLClusterClassifier attribute)</a>
 </li>
@@ -406,8 +449,12 @@
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.GaussianNoise">GaussianNoise (class in scportrait.tools.ml.transforms)</a>
 </li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail">generate_thumbnail() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.get_channel_info">get_channel_info() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.getitem">getitem() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 
       <ul>
@@ -440,8 +487,24 @@
         <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset.index_list">(scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset attribute)</a>
 </li>
       </ul></li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner">initialize_aligner() (scportrait.tools.stitch._stitch.ParallelStitcher method)</a>
+
+      <ul>
+        <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner">(scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic">initialize_mosaic() (scportrait.tools.stitch._stitch.ParallelStitcher method)</a>
+
+      <ul>
+        <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic">(scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      </ul></li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_outdir">initialize_outdir() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_reader">initialize_reader() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.input_path">input_path (scportrait.pipeline.segmentation.Segmentation attribute)</a>
 </li>
   </ul></td>
@@ -458,15 +521,19 @@
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset">LabelledHDF5SingleCellDataset (class in scportrait.tools.ml.datasets)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.len">len() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
 
       <ul>
         <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset.len">(scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.selection.LMDSelection">LMDSelection (class in scportrait.pipeline.selection)</a>
+</li>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_chunk">load_hdf5_chunk() (in module scportrait.io.daskmmap)</a>
+</li>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_contigious">load_hdf5_contigious() (in module scportrait.io.daskmmap)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.project.Project.load_input_from_sdata">load_input_from_sdata() (scportrait.pipeline.project.Project method)</a>
 </li>
@@ -508,17 +575,25 @@
       </ul></li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.classification.MLClusterClassifier">MLClusterClassifier (class in scportrait.pipeline.classification)</a>
 </li>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_chunked">mmap_dask_array_chunked() (in module scportrait.io.daskmmap)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_contigious">mmap_dask_array_contigious() (in module scportrait.io.daskmmap)</a>
+</li>
       <li>
     module
 
       <ul>
+        <li><a href="pages/module/io.html#module-scportrait.io.daskmmap">scportrait.io.daskmmap</a>
+</li>
+        <li><a href="pages/module/io.html#module-scportrait.io.read">scportrait.io.read</a>
+</li>
         <li><a href="pages/module/pipeline.html#module-scportrait.pipeline.segmentation.workflows">scportrait.pipeline.segmentation.workflows</a>
 </li>
-        <li><a href="pages/module/io.html#module-scportrait.processing.images">scportrait.processing.images</a>, <a href="pages/module/processing.html#module-scportrait.processing.images">[1]</a>
+        <li><a href="pages/module/processing.html#module-scportrait.processing.images">scportrait.processing.images</a>
 </li>
-        <li><a href="pages/module/io.html#module-scportrait.processing.masks">scportrait.processing.masks</a>, <a href="pages/module/processing.html#module-scportrait.processing.masks">[1]</a>
+        <li><a href="pages/module/processing.html#module-scportrait.processing.masks">scportrait.processing.masks</a>
 </li>
         <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.datasets">scportrait.tools.ml.datasets</a>
 </li>
@@ -530,11 +605,9 @@
 </li>
         <li><a href="pages/module/tools/ml.html#module-scportrait.tools.ml.utils">scportrait.tools.ml.utils</a>
 </li>
-        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse.PhenixParser">scportrait.tools.parse.PhenixParser</a>
+        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse._parse_phenix">scportrait.tools.parse._parse_phenix</a>
 </li>
-        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.ParallelStitcher">scportrait.tools.stitch.ParallelStitcher</a>
-</li>
-        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.Stitcher">scportrait.tools.stitch.Stitcher</a>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch._stitch">scportrait.tools.stitch._stitch</a>
 </li>
       </ul></li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.plmodels.MultilabelSupervisedModel">MultilabelSupervisedModel (class in scportrait.tools.ml.plmodels)</a>
@@ -565,6 +638,16 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher">ParallelStitcher (class in scportrait.tools.stitch._stitch)</a>
+</li>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse">parse() (scportrait.tools.parse._parse_phenix.PhenixParser method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.perform_alignment">perform_alignment() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser">PhenixParser (class in scportrait.tools.parse._parse_phenix)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.plot_qc">plot_qc() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.metrics.precision">precision() (in module scportrait.tools.ml.metrics)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.PRINT_MAPS_ON_DEBUG">PRINT_MAPS_ON_DEBUG (scportrait.pipeline.segmentation.Segmentation attribute)</a>
@@ -607,16 +690,20 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.transforms.RandomRotation">RandomRotation (class in scportrait.tools.ml.transforms)</a>
 </li>
+      <li><a href="pages/module/io.html#scportrait.io.read.read_ome_zarr">read_ome_zarr() (in module scportrait.io.read)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.metrics.recall">recall() (in module scportrait.tools.ml.metrics)</a>
 </li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.reorder_channels">reorder_channels() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_fake_id">return_fake_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 
       <ul>
         <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset.return_fake_id">(scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.return_id">return_id (scportrait.tools.ml.datasets.HDF5SingleCellDataset attribute)</a>
 
       <ul>
@@ -631,6 +718,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.save_map">save_map() (scportrait.pipeline.segmentation.Segmentation method)</a>
 </li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.save_positions">save_positions() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li>
+    scportrait.io.daskmmap
+
+      <ul>
+        <li><a href="pages/module/io.html#module-scportrait.io.daskmmap">module</a>
+</li>
+      </ul></li>
+      <li>
+    scportrait.io.read
+
+      <ul>
+        <li><a href="pages/module/io.html#module-scportrait.io.read">module</a>
+</li>
+      </ul></li>
       <li>
     scportrait.pipeline.segmentation.workflows
 
@@ -642,14 +745,14 @@
     scportrait.processing.images
 
       <ul>
-        <li><a href="pages/module/io.html#module-scportrait.processing.images">module</a>, <a href="pages/module/processing.html#module-scportrait.processing.images">[1]</a>
+        <li><a href="pages/module/processing.html#module-scportrait.processing.images">module</a>
 </li>
       </ul></li>
       <li>
     scportrait.processing.masks
 
       <ul>
-        <li><a href="pages/module/io.html#module-scportrait.processing.masks">module</a>, <a href="pages/module/processing.html#module-scportrait.processing.masks">[1]</a>
+        <li><a href="pages/module/processing.html#module-scportrait.processing.masks">module</a>
 </li>
       </ul></li>
       <li>
@@ -688,26 +791,19 @@
 </li>
       </ul></li>
       <li>
-    scportrait.tools.parse.PhenixParser
+    scportrait.tools.parse._parse_phenix
 
       <ul>
-        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse.PhenixParser">module</a>
+        <li><a href="pages/module/tools/parsing.html#module-scportrait.tools.parse._parse_phenix">module</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
-    scportrait.tools.stitch.ParallelStitcher
+    scportrait.tools.stitch._stitch
 
       <ul>
-        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.ParallelStitcher">module</a>
-</li>
-      </ul></li>
-      <li>
-    scportrait.tools.stitch.Stitcher
-
-      <ul>
-        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch.Stitcher">module</a>
+        <li><a href="pages/module/tools/stitching.html#module-scportrait.tools.stitch._stitch">module</a>
 </li>
       </ul></li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation">Segmentation (class in scportrait.pipeline.segmentation)</a>
@@ -720,6 +816,8 @@
         <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset.select_channel">(scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset attribute)</a>
 </li>
       </ul></li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.setup_rescaling">setup_rescaling() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Cellpose_Segmentation">Sharded_CytosolOnly_Cellpose_Segmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose">Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose (class in scportrait.pipeline.segmentation.workflows)</a>
@@ -736,6 +834,10 @@
 </li>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.ShardedWGASegmentation">ShardedWGASegmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints">sort_timepoints() (scportrait.tools.parse._parse_phenix.PhenixParser method)</a>
+</li>
+      <li><a href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells">sort_wells() (scportrait.tools.parse._parse_phenix.PhenixParser method)</a>
+</li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.utils.split_dataset_fractions">split_dataset_fractions() (in module scportrait.tools.ml.utils)</a>
 </li>
       <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.HDF5SingleCellDataset.stats">stats() (scportrait.tools.ml.datasets.HDF5SingleCellDataset method)</a>
@@ -744,6 +846,10 @@
         <li><a href="pages/module/tools/ml.html#scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset.stats">(scportrait.tools.ml.datasets.LabelledHDF5SingleCellDataset method)</a>
 </li>
       </ul></li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.stitch">stitch() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher">Stitcher (class in scportrait.tools.stitch._stitch)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -802,9 +908,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.workflows.WGASegmentation">WGASegmentation (class in scportrait.pipeline.segmentation.workflows)</a>
 </li>
+      <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.window">window (scportrait.pipeline.segmentation.Segmentation attribute)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr">write_ome_zarr() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="pages/module/pipeline.html#scportrait.pipeline.segmentation.Segmentation.window">window (scportrait.pipeline.segmentation.Segmentation attribute)</a>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata">write_spatialdata() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_thumbnail">write_thumbnail() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_tif">write_tif() (scportrait.tools.stitch._stitch.Stitcher method)</a>
+</li>
+      <li><a href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.write_tif_parallel">write_tif_parallel() (scportrait.tools.stitch._stitch.ParallelStitcher method)</a>
 </li>
   </ul></td>
 </tr></table>

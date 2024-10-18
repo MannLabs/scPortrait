@@ -1,13 +1,13 @@
 *******************
-processing
+io
 *******************
 
-images
-################
-.. automodule:: scportrait.processing.images
+memory mapped file handling
+---------------------------
+.. automodule:: scportrait.io.daskmmap
     :members:
 
-masks
-############
-.. automodule:: scportrait.processing.masks
+file readers
+------------
+.. automodule:: scportrait.io.read
     :members:

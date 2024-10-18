@@ -24,8 +24,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="parsing" href="tools/parsing.html" />
-    <link rel="prev" title="processing" href="io.html" />
+    <link rel="next" title="parse" href="tools/parsing.html" />
+    <link rel="prev" title="io" href="io.html" />
 </head>
 
 <body class="wy-body-for-nav">
@@ -229,15 +229,36 @@
 <li class="toctree-l3"><a class="reference internal" href="processing.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">io</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.io.daskmmap">memory mapped file handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.dask_array_from_path"><code class="docutils literal notranslate"><span class="pre">dask_array_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.calculate_chunk_sizes"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.calculate_chunk_sizes_chunks"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes_chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.mmap_dask_array_contigious"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.mmap_dask_array_chunked"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_chunked()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.load_hdf5_contigious"><code class="docutils literal notranslate"><span class="pre">load_hdf5_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.load_hdf5_chunk"><code class="docutils literal notranslate"><span class="pre">load_hdf5_chunk()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.io.read">file readers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.read.read_ome_zarr"><code class="docutils literal notranslate"><span class="pre">read_ome_zarr()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tools/ml.html">ml</a><ul>
@@ -289,9 +310,45 @@
 <h1>tools<a class="headerlink" href="#tools" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/parsing.html">parse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.create_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.create_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.clear_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.clear_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_outdir"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_outdir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.get_channel_info"><code class="docutils literal notranslate"><span class="pre">Stitcher.get_channel_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.setup_rescaling"><code class="docutils literal notranslate"><span class="pre">Stitcher.setup_rescaling()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.reorder_channels"><code class="docutils literal notranslate"><span class="pre">Stitcher.reorder_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_reader"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_reader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.save_positions"><code class="docutils literal notranslate"><span class="pre">Stitcher.save_positions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.generate_thumbnail()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.plot_qc"><code class="docutils literal notranslate"><span class="pre">Stitcher.plot_qc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.perform_alignment"><code class="docutils literal notranslate"><span class="pre">Stitcher.perform_alignment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.stitch"><code class="docutils literal notranslate"><span class="pre">Stitcher.stitch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_tif"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_tif()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_ome_zarr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_thumbnail()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_spatialdata()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.write_tif_parallel"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.write_tif_parallel()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools/ml.html">ml</a><ul>
@@ -395,8 +452,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="io.html" class="btn btn-neutral float-left" title="processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="tools/parsing.html" class="btn btn-neutral float-right" title="parsing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="io.html" class="btn btn-neutral float-left" title="io" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tools/parsing.html" class="btn btn-neutral float-right" title="parse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

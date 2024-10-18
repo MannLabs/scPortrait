@@ -230,15 +230,36 @@
 <li class="toctree-l3"><a class="reference internal" href="pages/module/processing.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">io</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.io.daskmmap">memory mapped file handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.dask_array_from_path"><code class="docutils literal notranslate"><span class="pre">dask_array_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.calculate_chunk_sizes_chunks"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes_chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_contigious"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.mmap_dask_array_chunked"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_chunked()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_contigious"><code class="docutils literal notranslate"><span class="pre">load_hdf5_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.daskmmap.load_hdf5_chunk"><code class="docutils literal notranslate"><span class="pre">load_hdf5_chunk()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/io.html#module-scportrait.io.read">file readers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/io.html#scportrait.io.read.read_ome_zarr"><code class="docutils literal notranslate"><span class="pre">read_ome_zarr()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pages/module/tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pages/module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="pages/module/tools/ml.html">ml</a><ul>
@@ -359,7 +380,7 @@ bioRxiv 2023.06.01.542416; doi: <a class="reference external" href="https://doi.
 <li class="toctree-l1"><a class="reference internal" href="pages/module.html">Module Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/pipeline.html">pipeline</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/processing.html">processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/module/io.html">io</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pages/module/tools.html">tools</a></li>
 </ul>
 </li>

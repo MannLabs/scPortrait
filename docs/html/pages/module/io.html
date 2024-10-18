@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>processing &mdash; scPortrait  documentation</title>
+  <title>io &mdash; scPortrait  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
@@ -229,15 +229,36 @@
 <li class="toctree-l3"><a class="reference internal" href="processing.html#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">io</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-scportrait.io.daskmmap">memory mapped file handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.dask_array_from_path"><code class="docutils literal notranslate"><span class="pre">dask_array_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.calculate_chunk_sizes"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.calculate_chunk_sizes_chunks"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes_chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.mmap_dask_array_contigious"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.mmap_dask_array_chunked"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_chunked()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.load_hdf5_contigious"><code class="docutils literal notranslate"><span class="pre">load_hdf5_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.daskmmap.load_hdf5_chunk"><code class="docutils literal notranslate"><span class="pre">load_hdf5_chunk()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-scportrait.io.read">file readers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.io.read.read_ome_zarr"><code class="docutils literal notranslate"><span class="pre">read_ome_zarr()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tools/ml.html">ml</a><ul>
@@ -275,7 +296,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../module.html">Module Documentation</a></li>
-      <li class="breadcrumb-item active">processing</li>
+      <li class="breadcrumb-item active">io</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/pages/module/io.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -285,13 +306,184 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
 
-  <section id="processing">
-<h1>processing<a class="headerlink" href="#processing" title="Link to this heading"></a></h1>
-<section id="module-scportrait.processing.images">
-<span id="images"></span><h2>images<a class="headerlink" href="#module-scportrait.processing.images" title="Link to this heading"></a></h2>
+  <section id="io">
+<h1>io<a class="headerlink" href="#io" title="Link to this heading"></a></h1>
+<section id="module-scportrait.io.daskmmap">
+<span id="memory-mapped-file-handling"></span><h2>memory mapped file handling<a class="headerlink" href="#module-scportrait.io.daskmmap" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.dask_array_from_path">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">dask_array_from_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'array'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.dask_array_from_path" title="Link to this definition"></a></dt>
+<dd><p>Create a Dask array from a HDF5 file, supporting both contiguous and chunked datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>str</em>) – Path pointing to the HDF5 file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask array representing the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dask.array.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.calculate_chunk_sizes">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">calculate_chunk_sizes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_size_gb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.calculate_chunk_sizes" title="Link to this definition"></a></dt>
+<dd><p>Calculate chunk sizes that result in chunks of approximately the target size in GB.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>tuple</em>) – Shape of the array.</p></li>
+<li><p><strong>dtype</strong> (<em>np.dtype</em>) – Data type of the array.</p></li>
+<li><p><strong>target_size_gb</strong> (<em>int</em>) – Target size of each chunk in gigabytes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calculated chunk sizes for the Dask array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.calculate_chunk_sizes_chunks">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">calculate_chunk_sizes_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">HDF5_chunk_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_size_gb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.calculate_chunk_sizes_chunks" title="Link to this definition"></a></dt>
+<dd><p>Calculate chunk sizes that result in chunks of approximately the target size in GB which are equal multiples of the existing chunk sizes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>tuple</em>) – Shape of the array.</p></li>
+<li><p><strong>dtype</strong> (<em>np.dtype</em>) – Data type of the array.</p></li>
+<li><p><strong>target_size_gb</strong> (<em>int</em>) – Target size of each chunk in gigabytes.</p></li>
+<li><p><strong>chunk_size</strong> (<em>tuple</em>) – Chunk sizes of the existing HDF5 data container.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calculated chunk sizes for the Dask array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.mmap_dask_array_contigious">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">mmap_dask_array_contigious</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(5,)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.mmap_dask_array_contigious" title="Link to this definition"></a></dt>
+<dd><p>Create a Dask array from raw binary data in <cite>filename</cite> by memory mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the raw binary data file.</p></li>
+<li><p><strong>shape</strong> (<em>tuple</em>) – Shape of the array.</p></li>
+<li><p><strong>dtype</strong> (<em>np.dtype</em>) – Data type of the array.</p></li>
+<li><p><strong>offset</strong> (<em>int</em><em>, </em><em>optional</em>) – Offset in bytes from the beginning of the file.</p></li>
+<li><p><strong>chunks</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Chunk sizes for the Dask array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask array that is memory-mapped to disk.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dask.array.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.mmap_dask_array_chunked">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">mmap_dask_array_chunked</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(5,)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.mmap_dask_array_chunked" title="Link to this definition"></a></dt>
+<dd><p>Create a Dask array from raw binary data in <cite>filename</cite> by memory mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the raw binary data file.</p></li>
+<li><p><strong>shape</strong> (<em>tuple</em>) – Shape of the array.</p></li>
+<li><p><strong>dtype</strong> (<em>np.dtype</em>) – Data type of the array.</p></li>
+<li><p><strong>offset</strong> (<em>int</em><em>, </em><em>optional</em>) – Offset in bytes from the beginning of the file.</p></li>
+<li><p><strong>chunks</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Chunk sizes for the Dask array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask array that is memory-mapped to disk.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dask.array.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.load_hdf5_contigious">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">load_hdf5_contigious</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.load_hdf5_contigious" title="Link to this definition"></a></dt>
+<dd><p>Memory map the given file with overall shape and dtype and return a slice specified by <cite>slices</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the raw binary data file.</p></li>
+<li><p><strong>shape</strong> (<em>tuple</em>) – Shape of the array.</p></li>
+<li><p><strong>dtype</strong> (<em>np.dtype</em>) – Data type of the array.</p></li>
+<li><p><strong>offset</strong> (<em>int</em>) – Offset in bytes from the beginning of the file.</p></li>
+<li><p><strong>slices</strong> (<em>tuple</em>) – Tuple of slices specifying the chunk to load.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sliced chunk from the memory-mapped array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.daskmmap.load_hdf5_chunk">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.daskmmap.</span></span><span class="sig-name descname"><span class="pre">load_hdf5_chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.daskmmap.load_hdf5_chunk" title="Link to this definition"></a></dt>
+<dd><p>Load a chunk of data from a chunked HDF5 dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – Path to the HDF5 file.</p></li>
+<li><p><strong>container_name</strong> (<em>str</em>) – Name of the dataset in the HDF5 file.</p></li>
+<li><p><strong>slices</strong> (<em>tuple</em>) – Tuple of slices specifying the chunk to load.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sliced chunk from the HDF5 dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="module-scportrait.processing.masks">
-<span id="masks"></span><h2>masks<a class="headerlink" href="#module-scportrait.processing.masks" title="Link to this heading"></a></h2>
+<section id="module-scportrait.io.read">
+<span id="file-readers"></span><h2>file readers<a class="headerlink" href="#module-scportrait.io.read" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scportrait.io.read.read_ome_zarr">
+<span class="sig-prename descclassname"><span class="pre">scportrait.io.read.</span></span><span class="sig-name descname"><span class="pre">read_ome_zarr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnification</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.io.read.read_ome_zarr" title="Link to this definition"></a></dt>
+<dd><p>Reads an OME-Zarr file from a given path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the OME-Zarr file.</p></li>
+<li><p><strong>magnification</strong> (<em>str</em>) – Magnification level to be read.</p></li>
+<li><p><strong>array</strong> (<em>None</em><em> or </em><em>np.array</em>) – If None, the image data is read into memory and returned. If not None, the image data is read into the supplied numpy array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>If array is None, the image data is read into memory and returned. Otherwise the provided variable is updated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array or None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 

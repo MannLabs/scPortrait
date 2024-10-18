@@ -24,7 +24,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="processing" href="io.html" />
+    <link rel="next" title="io" href="io.html" />
     <link rel="prev" title="pipeline" href="pipeline.html" />
 </head>
 
@@ -229,15 +229,36 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-scportrait.processing.masks">masks</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="io.html">processing</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.images">images</a></li>
-<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.processing.masks">masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">io</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.io.daskmmap">memory mapped file handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.dask_array_from_path"><code class="docutils literal notranslate"><span class="pre">dask_array_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.calculate_chunk_sizes"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.calculate_chunk_sizes_chunks"><code class="docutils literal notranslate"><span class="pre">calculate_chunk_sizes_chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.mmap_dask_array_contigious"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.mmap_dask_array_chunked"><code class="docutils literal notranslate"><span class="pre">mmap_dask_array_chunked()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.load_hdf5_contigious"><code class="docutils literal notranslate"><span class="pre">load_hdf5_contigious()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.daskmmap.load_hdf5_chunk"><code class="docutils literal notranslate"><span class="pre">load_hdf5_chunk()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="io.html#module-scportrait.io.read">file readers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="io.html#scportrait.io.read.read_ome_zarr"><code class="docutils literal notranslate"><span class="pre">read_ome_zarr()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parsing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tools/ml.html">ml</a><ul>
@@ -300,7 +321,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="pipeline.html" class="btn btn-neutral float-left" title="pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="io.html" class="btn btn-neutral float-right" title="processing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="io.html" class="btn btn-neutral float-right" title="io" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
