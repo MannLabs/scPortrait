@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>stitching &mdash; scPortrait  documentation</title>
+  <title>stitch &mdash; scPortrait  documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=5c2dde8a" />
@@ -256,9 +256,34 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">stitch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.create_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.create_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.clear_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.clear_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_outdir"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_outdir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.get_channel_info"><code class="docutils literal notranslate"><span class="pre">Stitcher.get_channel_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.setup_rescaling"><code class="docutils literal notranslate"><span class="pre">Stitcher.setup_rescaling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.reorder_channels"><code class="docutils literal notranslate"><span class="pre">Stitcher.reorder_channels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_reader"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_reader()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.save_positions"><code class="docutils literal notranslate"><span class="pre">Stitcher.save_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.generate_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.plot_qc"><code class="docutils literal notranslate"><span class="pre">Stitcher.plot_qc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.perform_alignment"><code class="docutils literal notranslate"><span class="pre">Stitcher.perform_alignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.stitch"><code class="docutils literal notranslate"><span class="pre">Stitcher.stitch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.write_tif"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_tif()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_ome_zarr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.write_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_spatialdata()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scportrait.tools.stitch._stitch.ParallelStitcher.write_tif_parallel"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.write_tif_parallel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="ml.html">ml</a><ul>
@@ -297,7 +322,7 @@
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../module.html">Module Documentation</a></li>
           <li class="breadcrumb-item"><a href="../tools.html">tools</a></li>
-      <li class="breadcrumb-item active">stitching</li>
+      <li class="breadcrumb-item active">stitch</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../_sources/pages/module/tools/stitching.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -307,14 +332,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
 
-  <section id="module-scportrait.tools.stitch._stitch">
-<span id="stitching"></span><h1>stitching<a class="headerlink" href="#module-scportrait.tools.stitch._stitch" title="Link to this heading"></a></h1>
+  <section id="stitch">
+<span id="module-scportrait.tools.stitch._stitch"></span><h1>stitch<a class="headerlink" href="#stitch" title="Link to this heading"></a></h1>
+<p>Contains functions to assemble tiled images into fullscale mosaics. Uses out-of-memory computation for the assembly of larger than memory image mosaics.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="scportrait.tools.stitch._stitch.Stitcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.tools.stitch._stitch.</span></span><span class="sig-name descname"><span class="pre">Stitcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slidename:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outdir:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stitching_channel:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_sigma:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_intensity_rescale:</span> <span class="pre">bool</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale_range:</span> <span class="pre">tuple</span> <span class="pre">=</span> <span class="pre">(1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">99)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_order:</span> <span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_type=&lt;class</span> <span class="pre">'scportrait.tools.stitch._utils.filereaders.FilePatternReaderRescale'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation:</span> <span class="pre">dict</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_QC:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher" title="Link to this definition"></a></dt>
 <dd><p>Class for stitching of image tiles to assemble a mosaic.</p>
 <section id="parameters">
-<h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<h1>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h1>
 <dl class="simple">
 <dt>input_dir<span class="classifier">str</span></dt><dd><p>Directory containing the input image tiles.</p>
 </dd>
@@ -403,7 +430,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">generate_thumbnail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail" title="Link to this definition"></a></dt>
 <dd><p>Generate a thumbnail of the stitched mosaic.</p>
 <section id="id1">
-<h3>Parameters:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<h2>Parameters:<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>scale<span class="classifier">float, optional</span></dt><dd><p>Scale factor for the thumbnail (default is 0.05).</p>
 </dd>
@@ -416,7 +443,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">initialize_aligner</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner" title="Link to this definition"></a></dt>
 <dd><p>Initialize the aligner for aligning the image tiles.</p>
 <section id="returns">
-<h3>Returns:<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<h2>Returns:<a class="headerlink" href="#returns" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>aligner<span class="classifier">EdgeAligner</span></dt><dd><p>Initialized EdgeAligner object.</p>
 </dd>
@@ -441,7 +468,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">initialize_mosaic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic" title="Link to this definition"></a></dt>
 <dd><p>Initialize the mosaic object for assembling the image tiles.</p>
 <section id="id2">
-<h3>Returns:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<h2>Returns:<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>mosaic<span class="classifier">Mosaic</span></dt><dd><p>Initialized Mosaic object.</p>
 </dd>
@@ -466,7 +493,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">write_tif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">export_xml</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.write_tif" title="Link to this definition"></a></dt>
 <dd><p>Write the assembled mosaic as TIFF files.</p>
 <section id="id3">
-<h3>Parameters:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<h2>Parameters:<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>export_xml<span class="classifier">bool, optional</span></dt><dd><p>Flag to indicate whether to export an XML file for the TIFF files (default is True). This XML file is compatible with loading the generarted TIFF files into BIAS.</p>
 </dd>
@@ -479,7 +506,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">write_ome_zarr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">downscaling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_downscaling_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1,</span> <span class="pre">1024,</span> <span class="pre">1024)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr" title="Link to this definition"></a></dt>
 <dd><p>Write the assembled mosaic as an OME-Zarr file.</p>
 <section id="id4">
-<h3>Parameters:<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<h2>Parameters:<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>downscaling_size<span class="classifier">int, optional</span></dt><dd><p>Downscaling factor for generating lower resolution layers (default is 4).</p>
 </dd>
@@ -502,7 +529,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">write_spatialdata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata" title="Link to this definition"></a></dt>
 <dd><p>Write the assembled mosaic as a SpatialData object.</p>
 <section id="id5">
-<h3>Parameters:<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<h2>Parameters:<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>scale_factors<span class="classifier">list, optional</span></dt><dd><p>List of scale factors for the generated SpatialData object (default is [2, 4, 8]).
 The scale factors are used to generate downsampled versions of the image for faster visualization at lower resolutions.</p>
@@ -519,7 +546,7 @@ The scale factors are used to generate downsampled versions of the image for fas
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scportrait.tools.stitch._stitch.</span></span><span class="sig-name descname"><span class="pre">ParallelStitcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slidename:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outdir:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stitching_channel:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shift:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_sigma:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_intensity_rescale:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale_range:</span> <span class="pre">tuple</span> <span class="pre">=</span> <span class="pre">(1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">99)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_QC:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WGAchannel:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_order:</span> <span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_type=&lt;class</span> <span class="pre">'scportrait.tools.stitch._utils.filereaders.FilePatternReaderRescale'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.ParallelStitcher" title="Link to this definition"></a></dt>
 <dd><p>Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.</p>
 <section id="id6">
-<h2>Parameters:<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<h1>Parameters:<a class="headerlink" href="#id6" title="Link to this heading"></a></h1>
 <dl class="simple">
 <dt>input_dir<span class="classifier">str</span></dt><dd><p>Directory containing the input image tiles.</p>
 </dd>
@@ -562,7 +589,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">initialize_aligner</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner" title="Link to this definition"></a></dt>
 <dd><p>Initialize the aligner for aligning the image tiles.</p>
 <section id="id7">
-<h3>Returns:<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<h2>Returns:<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>aligner<span class="classifier">ParallelEdgeAligner</span></dt><dd><p>Initialized ParallelEdgeAligner object.</p>
 </dd>
@@ -575,7 +602,7 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 <span class="sig-name descname"><span class="pre">initialize_mosaic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic" title="Link to this definition"></a></dt>
 <dd><p>Initialize the mosaic object for assembling the image tiles.</p>
 <section id="id8">
-<h3>Returns:<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<h2>Returns:<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
 <dl class="simple">
 <dt>mosaic<span class="classifier">Mosaic</span></dt><dd><p>Initialized Mosaic object.</p>
 </dd>
@@ -603,7 +630,6 @@ a dictionary can be passed with the channel names as keys and the percentiles as
 </section>
 </dd></dl>
 
-</section>
 
 
            </div>

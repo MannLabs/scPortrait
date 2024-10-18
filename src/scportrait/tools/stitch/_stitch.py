@@ -1,3 +1,10 @@
+"""
+stitch
+=======
+
+Contains functions to assemble tiled images into fullscale mosaics. Uses out-of-memory computation for the assembly of larger than memory image mosaics.
+"""
+
 import os
 import shutil
 import sys
