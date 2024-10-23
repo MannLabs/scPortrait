@@ -1035,7 +1035,7 @@ class ShardedSegmentation(Segmentation):
             "finished saving segmentation results to ome.zarr from sharded segmentation."
         )
 
-        # self.cleanup_shards(sharding_plan)
+        self.cleanup_shards(sharding_plan)
 
     def initializer_function(self, gpu_id_list):
         current_process().gpu_id_list = gpu_id_list
