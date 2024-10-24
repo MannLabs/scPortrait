@@ -732,13 +732,17 @@ class CombinedPhenixParser(PhenixParser):
         # get phenix directories that need to be comined together
         phenix_dirs = os.listdir(input_path)
 
-        # order phenix directories accoding to creation data
-        # Define a regular expression pattern to match the date and time
+        # only get the phenix dirs that match the pattern of a phenix experiment (ie they contain a time stamp)
         pattern = r"\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}"
+        phenix_dirs = [x for x in phenix_dirs if re.search(pattern, x)]
 
         # Extract the date and time information from each file name
         dates_times = [
-            re.search(pattern, file_name).group() for file_name in phenix_dirs
+            re.search(pattern, file_name).group(0)
+            for file_name in phenix_dirs
+            if re.search(
+                pattern, file_name
+            )  # Ensure it matched before accessing .group()
         ]
 
         # Sort the file names based on the extracted date and time information
