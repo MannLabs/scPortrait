@@ -364,6 +364,12 @@ class PhenixParser:
         y_range = np.unique(metadata.Y_pos)
         x_range = np.unique(metadata.X_pos)
 
+        # check to ensure that no y_range or x_range value is missing
+        _y_range = [int(x) for x in y_range]
+        y_range = [str(x).zfill(3) for x in np.arange(min(_y_range), max(_y_range) + 1)]
+        _x_range = [int(x) for x in x_range]
+        x_range = [str(x).zfill(3) for x in np.arange(min(_x_range), max(_x_range) + 1)]
+
         # this will not catch missing tiles were an entire row or column is missing
         missing_tiles = []
         print("Checking for missing images...")
@@ -372,8 +378,24 @@ class PhenixParser:
             _df = metadata[metadata.Timepoint == timepoint]
             for row in rows:
                 __df = _df[_df.Row == row]
+                if __df.empty:
+                    Warning(f"Entire row {row} is missing for timepoint {timepoint}.")
+                    for well in wells:
+                        missing_tiles = missing_tiles + _generate_missing_file_names(
+                            x_range, y_range, timepoint, row, well, channels, zstacks
+                        )
+
                 for well in wells:
                     ___df = __df[__df.Well == well]
+
+                    if ___df.empty:
+                        Warning(
+                            f"Entire well {well} is missing for timepoint {timepoint}."
+                        )
+                        missing_tiles = missing_tiles + _generate_missing_file_names(
+                            x_range, y_range, timepoint, row, well, channels, zstacks
+                        )
+                        continue
 
                     for x_pos in x_range:
                         _check = ___df[___df.X_pos == x_pos]
