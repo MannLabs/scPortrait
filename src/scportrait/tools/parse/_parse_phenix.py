@@ -237,6 +237,12 @@ class PhenixParser:
 
         # define path where to find raw image files
         df["source"] = self.image_dir
+        df["filename"] = df["filename"].astype(
+            str
+        )  # ensure this is a string otherwise it can cause issues later on
+        df["date"] = df["date"].astype(str)
+        df["time"] = df["time"].astype(str)
+        df["Channel"] = df["Channel"].astype(str)
 
         return df
 
