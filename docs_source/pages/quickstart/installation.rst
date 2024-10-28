@@ -22,4 +22,4 @@ If you wish to utilize the accelerated stitching backend you need to install the
 
 .. code::
 
-   conda install -c conda-forge graph-tool
+   conda install -c conda-forge graph-tool==2.68
