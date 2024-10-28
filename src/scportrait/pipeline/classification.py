@@ -224,7 +224,7 @@ class _ClassificationBase(ProcessingStep):
             try:
                 used_memory = torch.mps.driver_allocated_memory() + torch.mps.driver_allocated_memory()
                 used_memory = used_memory / 1024**2  # Convert bytes to MiB
-                return {"MPS": f"{memory_usage} MiB"}
+                return {"MPS": f"{used_memory} MiB"}
             except (RuntimeError, ValueError) as e:
                 print("Error:", e)
                 return None
