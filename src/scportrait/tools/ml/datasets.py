@@ -55,9 +55,9 @@ class _HDF5SingleCellDataset(Dataset):
         self.return_fake_id = return_fake_id
         self.max_level = max_level
 
-        assert (
-            self.return_id != self.return_fake_id
-        ), "Exactly one of return_id or return_fake_id should be set to True, not both or neither."
+        assert not (
+            self.return_id and self.return_fake_id
+        ), "Both return_id and return_fake_id cannot be True at the same time."
 
         # ensure index list is long enough for all directories
         if index_list is None:
