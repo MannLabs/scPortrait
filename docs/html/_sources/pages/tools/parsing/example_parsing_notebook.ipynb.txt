@@ -16,7 +16,8 @@
    "outputs": [],
    "source": [
     "import os\n",
-    "os.environ['JAVA_HOME'] = \"/Users/sophia/mambaforge/envs/scPortrait/lib/jvm\"\n",
+    "\n",
+    "os.environ[\"JAVA_HOME\"] = \"/Users/sophia/mambaforge/envs/scPortrait/lib/jvm\"\n",
     "from scportrait.tools.parse import PhenixParser"
    ]
   },
@@ -27,7 +28,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "input_dir = \"path/to/phenix/experiment\" #do not need to go to the image directory, the main directory is sufficient"
+    "input_dir = \"path/to/phenix/experiment\"  # do not need to go to the image directory, the main directory is sufficient"
    ]
   },
   {

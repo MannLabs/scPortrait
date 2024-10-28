@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example Parsing Notebook to rename phenix experiments &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../../_static/fonts.css?v=5583d106" />
@@ -342,7 +342,8 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
 <span class="kn">from</span> <span class="nn">scportrait.tools.parse</span> <span class="kn">import</span> <span class="n">PhenixParser</span>
 </pre></div>
 </div>
@@ -351,7 +352,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/phenix/experiment&quot;</span> <span class="c1">#do not need to go to the image directory, the main directory is sufficient</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/phenix/experiment&quot;</span>  <span class="c1"># do not need to go to the image directory, the main directory is sufficient</span>
 </pre></div>
 </div>
 </div>

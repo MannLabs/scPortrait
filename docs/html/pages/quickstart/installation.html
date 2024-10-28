@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Installation &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
@@ -334,18 +334,25 @@
 
   <section id="installation">
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>We recommended installing the library within a separate conda environment running Python 3.10 or 3.11, python 3.12 is currently <strong>not</strong> supported.</p>
+<p>We recommended installing the library within a separate conda environment running Python 3.10 or 3.11. Python 3.12 is currently <strong>not</strong> supported.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="s2">&quot;scPortrait&quot;</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">scPortrait</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">MannLabs</span><span class="o">/</span><span class="n">scPortrait</span>
 </pre></div>
 </div>
 <p>For utilizing the stitching capabilities of scPortrait, a working java installation is required. If not already installed, you can download the latest version of Java from the <a class="reference external" href="https://www.java.com/en/download/">official website</a> or install it via mamba or conda:</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Java needs to be installed before installing scPortrait. Otherwise when trying to access the stitching capabilities of scPortrait, an error will be raised that Java is not found at the indicated path.</p>
+</div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">openjdk</span>
 </pre></div>
 </div>
 <p>If you wish to utilize the accelerated stitching backend you need to install the <a class="reference external" href="https://graph-tool.skewed.de">graph-tool library</a>. This library is not available via pip and needs to be installed seperately via conda.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">graph</span><span class="o">-</span><span class="n">tool</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">graph</span><span class="o">-</span><span class="n">tool</span><span class="o">==</span><span class="mf">2.68</span>
+</pre></div>
+</div>
+<p>To install the latest release of scPortrait:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">MannLabs</span><span class="o">/</span><span class="n">scPortrait</span>
 </pre></div>
 </div>
 </section>

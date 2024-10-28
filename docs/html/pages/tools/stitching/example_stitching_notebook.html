@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example Stitching Notebook &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../../_static/fonts.css?v=5583d106" />
@@ -342,10 +342,12 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/Users/sophia/mambaforge/envs/scPortrait/lib/jvm&quot;</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">scportrait.tools.stitch</span> <span class="kn">import</span> <span class="n">Stitcher</span><span class="p">,</span> <span class="n">ParallelStitcher</span>
+
 <span class="kn">from</span> <span class="nn">scportrait.data._datasets</span> <span class="kn">import</span> <span class="n">dataset_stitching_example</span>
+<span class="kn">from</span> <span class="nn">scportrait.tools.stitch</span> <span class="kn">import</span> <span class="n">ParallelStitcher</span><span class="p">,</span> <span class="n">Stitcher</span>
 </pre></div>
 </div>
 </div>
@@ -370,25 +372,29 @@
 <span class="n">slidename</span> <span class="o">=</span> <span class="s2">&quot;stitching_test&quot;</span>
 <span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;stitching_example&quot;</span><span class="p">,</span> <span class="s2">&quot;example_projects/stitching&quot;</span><span class="p">),</span> <span class="n">slidename</span><span class="p">)</span>
 
-<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
-<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
-<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
-<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specifz the timepoint you wish to stitch</span>
+<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># specify the row of the well you want to stitch</span>
+<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># specifc the well number you wish to stitch</span>
+<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span>
+    <span class="mi">3</span>
+<span class="p">)</span>  <span class="c1"># specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
+<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># specifz the timepoint you wish to stitch</span>
 
 <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Timepoint</span><span class="si">{</span><span class="n">timepoint</span><span class="si">}</span><span class="s2">_Row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">_Well</span><span class="si">{</span><span class="n">well</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="s2">channel</span><span class="se">}}</span><span class="s2">_zstack</span><span class="si">{</span><span class="n">zstack_value</span><span class="si">}</span><span class="s2">_r</span><span class="se">{{</span><span class="s2">row:03</span><span class="se">}}</span><span class="s2">_c</span><span class="se">{{</span><span class="s2">col:03</span><span class="se">}}</span><span class="s2">.tif&quot;</span>
 
-<span class="c1">#initialize stitcher</span>
-<span class="n">stitcher</span> <span class="o">=</span> <span class="n">Stitcher</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">input_dir</span><span class="p">),</span>
-                    <span class="n">slidename</span><span class="p">,</span>
-                    <span class="n">outdir</span><span class="p">,</span>
-                    <span class="n">pattern</span> <span class="o">=</span>  <span class="n">pattern</span><span class="p">,</span>
-                    <span class="n">stitching_channel</span> <span class="o">=</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
-                    <span class="n">overlap</span><span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">max_shift</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-                    <span class="n">filter_sigma</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="n">rescale_range</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
-                    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<br/></pre></div>
+<span class="c1"># initialize stitcher</span>
+<span class="n">stitcher</span> <span class="o">=</span> <span class="n">Stitcher</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">input_dir</span><span class="p">),</span>
+    <span class="n">slidename</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="p">,</span>
+    <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+    <span class="n">stitching_channel</span><span class="o">=</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">max_shift</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">filter_sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">rescale_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -422,7 +428,7 @@ Output directory created at:  /Users/sophia/Documents/GitHub/scPortrait/scportra
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stitcher</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -447,7 +453,7 @@ Output directory created at:  /Users/sophia/Documents/GitHub/scPortrait/scportra
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alterantively it can be saved to a tif file</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># alterantively it can be saved to a tif file</span>
 <span class="n">stitcher</span><span class="o">.</span><span class="n">write_thumbnail</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -592,7 +598,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/sc
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
 <span class="n">stitcher</span><span class="o">.</span><span class="n">assembled_mosaic</span>
 </pre></div>
 </div>
@@ -700,7 +706,7 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/sc
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir</span><span class="si">}</span><span class="s2">/stitching_test_Alexa488.tif&quot;</span><span class="p">))</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
@@ -752,26 +758,30 @@ created tempmmap array for assembled mosaic at /Users/sophia/Documents/GitHub/sc
 <span class="n">outdir_parallel</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;stitching_example&quot;</span><span class="p">,</span> <span class="s2">&quot;example_projects/stitching&quot;</span><span class="p">),</span> <span class="n">slidename</span><span class="p">)</span>
 
 
-<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specify the row of the well you want to stitch</span>
-<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#specifc the well number you wish to stitch</span>
-<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
-<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1">#specifz the timepoint you wish to stitch</span>
+<span class="n">row</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># specify the row of the well you want to stitch</span>
+<span class="n">well</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># specifc the well number you wish to stitch</span>
+<span class="n">zstack_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span>
+    <span class="mi">3</span>
+<span class="p">)</span>  <span class="c1"># specify the zstack you want to stitch. for multiple zstacks please make a loop and iterate through each of them.</span>
+<span class="n">timepoint</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># specifz the timepoint you wish to stitch</span>
 
 <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Timepoint</span><span class="si">{</span><span class="n">timepoint</span><span class="si">}</span><span class="s2">_Row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">_Well</span><span class="si">{</span><span class="n">well</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="s2">channel</span><span class="se">}}</span><span class="s2">_zstack</span><span class="si">{</span><span class="n">zstack_value</span><span class="si">}</span><span class="s2">_r</span><span class="se">{{</span><span class="s2">row:03</span><span class="se">}}</span><span class="s2">_c</span><span class="se">{{</span><span class="s2">col:03</span><span class="se">}}</span><span class="s2">.tif&quot;</span>
 
-<span class="c1">#initialize stitcher</span>
-<span class="n">stitcher</span> <span class="o">=</span> <span class="n">ParallelStitcher</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span>
-                    <span class="n">slidename</span><span class="p">,</span>
-                    <span class="n">outdir_parallel</span><span class="p">,</span>
-                    <span class="n">pattern</span> <span class="o">=</span>  <span class="n">pattern</span><span class="p">,</span>
-                    <span class="n">stitching_channel</span> <span class="o">=</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
-                    <span class="n">overlap</span><span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">max_shift</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-                    <span class="n">filter_sigma</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="n">rescale_range</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
-                    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">threads</span> <span class="o">=</span> <span class="mi">12</span><span class="p">)</span>
-<br/></pre></div>
+<span class="c1"># initialize stitcher</span>
+<span class="n">stitcher</span> <span class="o">=</span> <span class="n">ParallelStitcher</span><span class="p">(</span>
+    <span class="n">input_dir</span><span class="p">,</span>
+    <span class="n">slidename</span><span class="p">,</span>
+    <span class="n">outdir_parallel</span><span class="p">,</span>
+    <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+    <span class="n">stitching_channel</span><span class="o">=</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">max_shift</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">filter_sigma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">rescale_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Alexa488&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;DAPI&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">99</span><span class="p">)},</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">threads</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -805,7 +815,7 @@ Output directory created at:  /Users/sophia/Documents/GitHub/scPortrait/scportra
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># thumbnail is saved in the stitcher object and can be accessed via stitcher.thumbnail</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">stitcher</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -830,7 +840,7 @@ Output directory created at:  /Users/sophia/Documents/GitHub/scPortrait/scportra
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alterantively it can be saved to a tif file</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># alterantively it can be saved to a tif file</span>
 <span class="n">stitcher</span><span class="o">.</span><span class="n">write_thumbnail</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -930,7 +940,7 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># the stitched image is saved in the stitcher object and can be accessed via stitcher.assembled_mosaic</span>
 <span class="n">stitcher</span><span class="o">.</span><span class="n">assembled_mosaic</span>
 </pre></div>
 </div>
@@ -1028,8 +1038,8 @@ assembling mosaic: 100%|██████████| 3/3 [00:01&lt;00:00,  2.
 
 <span class="n">stitcher</span><span class="o">.</span><span class="n">write_tif</span><span class="p">(</span><span class="n">export_xml</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="c1">#alternatively the stitched images can also be written out to tifs in a multi-threaded format</span>
-<span class="c1">#speedups here are limited by write speed to disk, the number of threads is limited by the number of channels available</span>
+<span class="c1"># alternatively the stitched images can also be written out to tifs in a multi-threaded format</span>
+<span class="c1"># speedups here are limited by write speed to disk, the number of threads is limited by the number of channels available</span>
 <span class="n">stitcher</span><span class="o">.</span><span class="n">write_tif_parallel</span><span class="p">(</span><span class="n">export_xml</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">stitcher</span><span class="o">.</span><span class="n">write_ome_zarr</span><span class="p">()</span>
@@ -1055,7 +1065,7 @@ writing tif files: 100%|██████████| 3/3 [00:00&lt;00:00, 204
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imread</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outdir_parallel</span><span class="si">}</span><span class="s2">/stitching_test_parallel_Alexa488.tif&quot;</span><span class="p">))</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 

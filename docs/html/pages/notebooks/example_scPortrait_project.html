@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>A walk through the scPortrait Ecosystem &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
@@ -349,16 +349,17 @@ instructions for the isolation of selected individual cells by laser microdissec
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">h5py</span>
 
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.classification</span> <span class="kn">import</span> <span class="n">MLClusterClassifier</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">Project</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
-<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
-<span class="kn">from</span> <span class="nn">scportrait.pipeline.classification</span> <span class="kn">import</span> <span class="n">MLClusterClassifier</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.selection</span> <span class="kn">import</span> <span class="n">LMDSelection</span>
 </pre></div>
 </div>
@@ -390,17 +391,18 @@ instructions for the isolation of selected individual cells by laser microdissec
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;../../../example_data/example_1/project&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project_location</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_1/project&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
-                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_1/config_example1.yml&quot;</span><span class="p">,</span>
-                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
-                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
-                  <span class="n">classification_f</span><span class="o">=</span><span class="n">MLClusterClassifier</span><span class="p">,</span>
-                  <span class="n">selection_f</span><span class="o">=</span><span class="n">LMDSelection</span>
-                  <span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_1/config_example1.yml&quot;</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+    <span class="n">classification_f</span><span class="o">=</span><span class="n">MLClusterClassifier</span><span class="p">,</span>
+    <span class="n">selection_f</span><span class="o">=</span><span class="n">LMDSelection</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -446,9 +448,11 @@ Updating project config file.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">images</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
 </pre></div>
@@ -477,9 +481,11 @@ Updating project config file.
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tifffile</span> <span class="kn">import</span> <span class="n">imread</span>
 
-<span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+<span class="n">images</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch1.tif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch2.tif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;../../../example_data/example_1/input_images/Ch3.tif&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 <span class="n">image_arrays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">images</span><span class="p">])</span>
 
@@ -1001,17 +1007,17 @@ Attributes:
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize input images as example</span>
 <span class="c1"># it is not recommended to execute this block with large input images as it will compute for some time</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">));</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;nuclear stain: Hoechst 33342&quot;</span><span class="p">)</span>
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;cellmembrane stain: Lck-mNeon&quot;</span><span class="p">)</span>
 
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">input_image</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Stain of interest 1: mcherry tagged LC3B&quot;</span><span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
@@ -1029,7 +1035,7 @@ Attributes:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#alternatively you can also visualize the input images as well as all other objects saved in spatialdata object</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># alternatively you can also visualize the input images as well as all other objects saved in spatialdata object</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">view_sdata</span><span class="p">()</span>
 </pre></div>
@@ -1270,7 +1276,7 @@ True True
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_cytosol&quot;</span><span class="p">])</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1306,7 +1312,7 @@ True True
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">][</span><span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">][</span><span class="mi">230</span><span class="p">:</span><span class="mi">250</span><span class="p">,</span> <span class="mi">945</span><span class="p">:</span><span class="mi">955</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">compute</span><span class="p">())</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1591,7 +1597,9 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.4.0. T
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv&quot;</span><span class="p">,</span> <span class="n">index_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/classification/complete_Autophagy_15h_classifier2_1/inference_forward.csv&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 <span class="n">results</span><span class="o">.</span><span class="n">result_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_0</span><span class="p">)</span>
 <span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">)</span>
 
@@ -1717,9 +1725,9 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.4.0. T
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="mi">100</span><span class="p">);</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Prob(Unstim)&quot;</span><span class="p">);</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Classification Score&quot;</span><span class="p">);</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Prob(Unstim)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Classification Score&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Count&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -1745,7 +1753,7 @@ Lightning automatically upgraded your loaded checkpoint from v1.5.5 to v2.4.0. T
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cell_ids_bin1</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&gt;=</span> <span class="mf">0.99999</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <span class="n">cell_ids_bin2</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="o">.</span><span class="n">result_1</span> <span class="o">&lt;=</span> <span class="mf">0.9</span><span class="p">]</span><span class="o">.</span><span class="n">cell_id</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of cells to excise:&quot;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of cells to excise:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -1762,9 +1770,10 @@ number of cells to excise: 177
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;A1&quot;</span><span class="p">},</span>
-                   <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin2&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span><span class="s2">&quot;B1&quot;</span><span class="p">},</span>
-                   <span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cells_to_select</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin1&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin1</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span> <span class="s2">&quot;A1&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bin2&quot;</span><span class="p">,</span> <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell_ids_bin2</span><span class="p">),</span> <span class="s2">&quot;well&quot;</span><span class="p">:</span> <span class="s2">&quot;B1&quot;</span><span class="p">},</span>
+<span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -1817,7 +1826,7 @@ number of cells to excise: 177
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cells_to_select</span><span class="p">,</span> <span class="n">calibration_marker</span><span class="p">,</span> <span class="n">segmentation_name</span> <span class="o">=</span> <span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cells_to_select</span><span class="p">,</span> <span class="n">calibration_marker</span><span class="p">,</span> <span class="n">segmentation_name</span><span class="o">=</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

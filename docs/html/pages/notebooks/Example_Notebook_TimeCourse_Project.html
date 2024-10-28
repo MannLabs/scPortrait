@@ -5,7 +5,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example Notebook Running scPortrait on datasets with multiple images &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
@@ -340,17 +340,18 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">h5py</span>
 
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">TimecourseHDF5CellExtraction</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">TimecourseProject</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span>
-<span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">TimecourseHDF5CellExtraction</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <section id="Some-Helper-Functions-for-visualization-of-results">
@@ -361,8 +362,8 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.processing.preprocessing</span> <span class="kn">import</span> <span class="n">percentile_normalization</span>
 
-<span class="k">def</span> <span class="nf">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="n">channel_to_show</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">seg_mask_to_show</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">selection</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_fig</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 
+<span class="k">def</span> <span class="nf">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">seg_mask_to_show</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_fig</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="n">seg_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_path</span><span class="si">}</span><span class="s2">/segmentation/input_segmentation.h5&quot;</span>
     <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">seg_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
         <span class="n">segmentation</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;segmentation&quot;</span><span class="p">)</span>
@@ -376,21 +377,22 @@
             <span class="n">image</span> <span class="o">=</span> <span class="n">channels</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
 
             <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">percentile_normalization</span><span class="p">(</span><span class="n">image</span><span class="p">),</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s2">&quot;Greys_r&quot;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s2">&quot;jet&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">percentile_normalization</span><span class="p">(</span><span class="n">image</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys_r&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;jet&quot;</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">return_fig</span><span class="p">:</span>
-            <span class="k">return</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fig</span>
 
-<span class="k">def</span> <span class="nf">visualize_single_cells</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">visualize_single_cells</span><span class="p">(</span><span class="n">project_path</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
     <span class="n">cells_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_path</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span>
 
     <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">cells_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
         <span class="n">cells</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
         <span class="n">n_channels</span> <span class="o">=</span> <span class="n">cells</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_channels</span><span class="o">*</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">*</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="n">n_channels</span> <span class="o">*</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">*</span> <span class="mi">1</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
             <span class="n">image</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -468,15 +470,17 @@ TimecourseHDF5CellExtraction:
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#initialize project</span>
-<span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;../../../example_data/example_5/project&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize project</span>
+<span class="n">project_location</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_5/project&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">TimecourseProject</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span>
-                             <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_5/config_example5.yml&quot;</span><span class="p">,</span>
-                             <span class="n">segmentation_f</span><span class="o">=</span><span class="n">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span><span class="p">,</span>
-                             <span class="n">extraction_f</span> <span class="o">=</span> <span class="n">TimecourseHDF5CellExtraction</span><span class="p">,</span>
-                             <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                             <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">TimecourseProject</span><span class="p">(</span>
+    <span class="n">project_location</span><span class="p">,</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_5/config_example5.yml&quot;</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">Multithreaded_Cytosol_Cellpose_TimecourseSegmentation</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">TimecourseHDF5CellExtraction</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -523,13 +527,15 @@ modifying config
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#%%timeit -n 1</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># %%timeit -n 1</span>
 <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;Alexa488&quot;</span><span class="p">,</span> <span class="s2">&quot;mCherry&quot;</span><span class="p">]</span>
-<span class="n">timepoints</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Timepoint&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
+<span class="n">timepoints</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Timepoint&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
 <span class="n">input_dir</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_5/input_images&quot;</span>
 <span class="n">plate_layout</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_5/plate_layout.tsv&quot;</span>
 
-<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_files</span><span class="p">(</span><span class="n">input_dir</span> <span class="o">=</span> <span class="n">input_dir</span><span class="p">,</span>  <span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span><span class="p">,</span>  <span class="n">timepoints</span> <span class="o">=</span> <span class="n">timepoints</span><span class="p">,</span> <span class="n">plate_layout</span> <span class="o">=</span> <span class="n">plate_layout</span><span class="p">,</span> <span class="n">overwrite</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">project</span><span class="o">.</span><span class="n">load_input_from_files</span><span class="p">(</span>
+    <span class="n">input_dir</span><span class="o">=</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="n">channels</span><span class="p">,</span> <span class="n">timepoints</span><span class="o">=</span><span class="n">timepoints</span><span class="p">,</span> <span class="n">plate_layout</span><span class="o">=</span><span class="n">plate_layout</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -635,11 +641,11 @@ All segmentations are done.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">seg_mask_to_show</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seg_mask_to_show</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">seg_mask_to_show</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plot_seg_overlay_timecourse</span><span class="p">(</span><span class="n">project_location</span><span class="p">,</span> <span class="n">channel_to_show</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seg_mask_to_show</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -711,7 +717,7 @@ All segmentations are done.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span><span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;label_names&quot;</span><span class="p">)[:])</span>
@@ -737,9 +743,8 @@ All segmentations are done.
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># single cell index contains two columns, the first is the index position in the hdf5 datacontainer, the second is the cell id</span>
 
-<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span><span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
-
-    <span class="c1">#print(hf[&quot;single_cell_index&quot;][0:10])</span>
+<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+    <span class="c1"># print(hf[&quot;single_cell_index&quot;][0:10])</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s2">&quot;single_cell_index&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -760,8 +765,7 @@ All segmentations are done.
 <span class="c1"># in the first two columns but adds additional columns with labelling information, the column names for</span>
 <span class="c1"># the labelling information is contained in label_names</span>
 
-<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span><span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
-
+<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s2">&quot;label_names&quot;</span><span class="p">][:])</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s2">&quot;single_cell_index_labelled&quot;</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
 </pre></div>
