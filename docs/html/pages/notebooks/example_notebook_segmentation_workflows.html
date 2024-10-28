@@ -5,13 +5,14 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Example Notebook showcasing the different segmentation workflows &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
 
 
+    <link rel="shortcut icon" href="../../_static/favicon.png"/>
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -250,9 +251,43 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.create_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.create_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.clear_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.clear_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_outdir"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_outdir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.get_channel_info"><code class="docutils literal notranslate"><span class="pre">Stitcher.get_channel_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.setup_rescaling"><code class="docutils literal notranslate"><span class="pre">Stitcher.setup_rescaling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.reorder_channels"><code class="docutils literal notranslate"><span class="pre">Stitcher.reorder_channels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_reader"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_reader()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.save_positions"><code class="docutils literal notranslate"><span class="pre">Stitcher.save_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.generate_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.plot_qc"><code class="docutils literal notranslate"><span class="pre">Stitcher.plot_qc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.perform_alignment"><code class="docutils literal notranslate"><span class="pre">Stitcher.perform_alignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.stitch"><code class="docutils literal notranslate"><span class="pre">Stitcher.stitch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_tif"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_tif()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_ome_zarr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_spatialdata()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.write_tif_parallel"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.write_tif_parallel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/tools/ml.html">ml</a><ul>
@@ -303,32 +338,46 @@
   <section id="Example-Notebook-showcasing-the-different-segmentation-workflows">
 <h1>Example Notebook showcasing the different segmentation workflows<a class="headerlink" href="#Example-Notebook-showcasing-the-different-segmentation-workflows" title="Link to this heading"></a></h1>
 <p>This notebook walks you through the different segmentation workflows currently implemented in scPortrait using the same input example. Each segmentation workflow needs to be implemented in a seperate scPortrait project as the segmentation mask is the starting point for all further downstream steps.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
 <span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">tifffile</span>
 
-<span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span> <span class="nn">scportrait.data._datasets</span> <span class="kn">import</span> <span class="n">dataset_3</span>
 <span class="kn">from</span> <span class="nn">scportrait.pipeline.extraction</span> <span class="kn">import</span> <span class="n">HDF5CellExtraction</span>
+<span class="kn">from</span> <span class="nn">scportrait.pipeline.project</span> <span class="kn">import</span> <span class="n">Project</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#define input images</span>
-<span class="n">project_directory</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/segmentation_workflows&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define input images</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">dataset_3</span><span class="p">()</span>
+<span class="n">images</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/Ch1.tif&quot;</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/Ch2.tif&quot;</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/Ch3.tif&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
-<span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;../../../example_data/example_3/input_images/Ch1.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_3/input_images/Ch2.tif&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;../../../example_data/example_3/input_images/Ch3.tif&quot;</span><span class="p">]</span>
+<span class="n">project_directory</span> <span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/segmentation_workflows&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -339,8 +388,9 @@
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># visualize input images as example</span>
 <span class="c1"># it is not recommended to execute this block with large input images as it will compute for some time</span>
 
-<span class="c1">#read input image to visualize as an example</span>
+<span class="c1"># read input image to visualize as an example</span>
 <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">tifffile</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">img</span><span class="p">)</span> <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">images</span><span class="p">])</span>
+
 
 <span class="k">def</span> <span class="nf">colorize</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">clip_percentile</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -349,7 +399,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Check that we do just have a 2D image</span>
     <span class="k">if</span> <span class="n">im</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;This function expects a single-channel image!&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This function expects a single-channel image!&quot;</span><span class="p">)</span>
 
     <span class="c1"># Rescale the image according to how we want to display it</span>
     <span class="n">im_scaled</span> <span class="o">=</span> <span class="n">im</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">clip_percentile</span><span class="p">)</span>
@@ -363,9 +413,12 @@
     <span class="n">color</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">color</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">im_scaled</span> <span class="o">*</span> <span class="n">color</span>
 
-<span class="k">def</span> <span class="nf">generate_composite</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">colors</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">generate_composite</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
     <span class="n">colorized</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">image</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">colors</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">image</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">image</span> <span class="o">=</span> <span class="n">colorize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
         <span class="n">colorized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
@@ -375,24 +428,25 @@
             <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
 
     <span class="n">image</span> <span class="o">=</span> <span class="n">colorized</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">colorized</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="n">image</span> <span class="o">+=</span> <span class="n">colorized</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">colorized</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">image</span> <span class="o">+=</span> <span class="n">colorized</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
-    <span class="k">return</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_img</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
     <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Channel </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="c1">#also plot and visualize input image</span>
+<span class="c1"># also plot and visualize input image</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">generate_composite</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
 <span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">);</span>
-<span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Composite image&quot;</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Composite image&quot;</span><span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -448,51 +502,51 @@ filter_masks_size: True
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">WGASegmentation</span>
 
 <span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_directory</span><span class="si">}</span><span class="s2">/WGASegmentation&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
-                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
-                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
-                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
-                  <span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">WGASegmentation</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Updating project config file.
 <span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
-         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_3/segmentation_workflows/WGASegmentation</span>
-         <span class="ansi-magenta-fg">/</span><span class="ansi-magenta-intense-fg">sparcs.sdata</span>
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:106: UserWarning: There is already a directory in the location path
-  warnings.warn(&#34;There is already a directory in the location path&#34;)
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_3/segmentation_workflows/WGASegmentation/</span><span class="ansi-magenta-intense-fg">sc</span>
+         <span class="ansi-magenta-intense-fg">portrait.sdata</span>
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
 <span class="n">project</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -505,8 +559,10 @@ Channels shape:  (2, 399, 399)
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f445824384474dd6b5bc50749738dff3", "version_major": 2, "version_minor": 0}</script></div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Processing cell batches: 100%|██████████| 1/1 [00:00&lt;00:00, 12.15it/s]
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -519,10 +575,10 @@ multiprocessing done.
 <section id="Segmentation-Results">
 <h3>Segmentation Results<a class="headerlink" href="#Segmentation-Results" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
@@ -545,7 +601,7 @@ multiprocessing done.
 <section id="Extraction-Results">
 <h3>Extraction Results<a class="headerlink" href="#Extraction-Results" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -553,7 +609,7 @@ multiprocessing done.
     <span class="n">_images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
 
     <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nucleus mask&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol mask&quot;</span><span class="p">,</span> <span class="s2">&quot;nucleus&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol&quot;</span><span class="p">,</span> <span class="s2">&quot;additional channel&quot;</span><span class="p">]</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
@@ -564,15 +620,14 @@ multiprocessing done.
             <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span> <span class="o">=</span> <span class="mi">25</span><span class="p">)</span>
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
-
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
     <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -615,47 +670,39 @@ multiprocessing done.
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentation</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentation</span>
 
 <span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_directory</span><span class="si">}</span><span class="s2">/DAPISegmentation&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
-                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
-                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">DAPISegmentation</span><span class="p">,</span>
-                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
-                  <span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">DAPISegmentation</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Updating project config file.
 <span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
-         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_3/segmentation_workflows/DAPISegmentatio</span>
-         <span class="ansi-magenta-fg">n/</span><span class="ansi-magenta-intense-fg">sparcs.sdata</span>
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:106: UserWarning: There is already a directory in the location path
-  warnings.warn(&#34;There is already a directory in the location path&#34;)
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_3/segmentation_workflows/DAPISegmentation/</span><span class="ansi-magenta-intense-fg">s</span>
+         <span class="ansi-magenta-intense-fg">cportrait.sdata</span>
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -666,16 +713,10 @@ Updating project config file.
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-(3, 399, 399)
+Processing cell batches: 100%|██████████| 1/1 [00:00&lt;00:00, 14.31it/s]
 </pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f37b77b46b014e14ae28852c6d53ad2b", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -688,10 +729,10 @@ multiprocessing done.
 <section id="id1">
 <h3>Segmentation Results<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 <span class="n">axs</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
 <span class="n">axs</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 <span class="n">axs</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
@@ -718,7 +759,7 @@ multiprocessing done.
     <span class="n">_images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
 
     <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nucleus mask&quot;</span><span class="p">,</span> <span class="s2">&quot;duplicated nucleus mask&quot;</span><span class="p">,</span> <span class="s2">&quot;nucleus&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol&quot;</span><span class="p">,</span> <span class="s2">&quot;additional channel&quot;</span><span class="p">]</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
@@ -729,15 +770,14 @@ multiprocessing done.
             <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span> <span class="o">=</span> <span class="mi">25</span><span class="p">)</span>
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
-
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
     <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -779,64 +819,39 @@ multiprocessing done.
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">CytosolSegmentationCellpose</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">CytosolSegmentationCellpose</span>
 
 <span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_directory</span><span class="si">}</span><span class="s2">/CytosolSegmentationCellpose&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
-                  <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
-                  <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                  <span class="n">segmentation_f</span><span class="o">=</span><span class="n">CytosolSegmentationCellpose</span><span class="p">,</span>
-                  <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
-                  <span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">CytosolSegmentationCellpose</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Updating project config file.
 <span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
-         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/SPARCSspatial/example_data/example_3/segmentation_workflows/CytosolSegmenta</span>
-         <span class="ansi-magenta-fg">tionCellpose/</span><span class="ansi-magenta-intense-fg">sparcs.sdata</span>
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:106: UserWarning: There is already a directory in the location path
-  warnings.warn(&#34;There is already a directory in the location path&#34;)
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_3/segmentation_workflows/CytosolSegmentatio</span>
+         <span class="ansi-magenta-fg">nCellpose/</span><span class="ansi-magenta-intense-fg">scportrait.sdata</span>
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">cyto_seg_status</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-True
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -844,47 +859,45 @@ True
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/cellpose/resnet_torch.py:276: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don&#39;t have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(filename, map_location=device)
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/cellpose/dynamics.py:189: RuntimeWarning: invalid value encountered in divide
+  mu /= (1e-60 + (mu**2).sum(axis=0)**0.5)
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/cellpose/resnet_torch.py:276: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don&#39;t have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(filename, map_location=device)
+Processing cell batches: 100%|██████████| 1/1 [00:00&lt;00:00, 11.98it/s]
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[5], line 2</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> project<span style="color: rgb(98,98,98)">.</span>segment()
-<span class="ansi-green-fg">----&gt; 2</span> <span class="ansi-yellow-bg">project</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">extract</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:1120</span>, in <span class="ansi-cyan-fg">Project.extract</span><span class="ansi-blue-fg">(self, partial, n_cells, overwrite)</span>
-<span class="ansi-green-intense-fg ansi-bold">   1117</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_check_sdata_status()
-<span class="ansi-green-intense-fg ansi-bold">   1119</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>nuc_seg_status <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>cyto_seg_status:
-<span class="ansi-green-fg">-&gt; 1120</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
-<span class="ansi-green-intense-fg ansi-bold">   1121</span>         <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">No nucleus or cytosol segmentation loaded. Please load a segmentation first.</span><span style="color: rgb(175,0,0)">&#34;</span>
-<span class="ansi-green-intense-fg ansi-bold">   1122</span>     )
-<span class="ansi-green-intense-fg ansi-bold">   1124</span> <span style="color: rgb(95,135,135)"># setup overwrite if specified in call</span>
-<span class="ansi-green-intense-fg ansi-bold">   1125</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> overwrite <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
-
-<span class="ansi-red-fg">ValueError</span>: No nucleus or cytosol segmentation loaded. Please load a segmentation first.
+multiprocessing done.
 </pre></div></div>
 </div>
 <section id="id3">
 <h3>Segmentation Results<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
-    <span class="n">segmentation</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
 
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Cytosol Segmentation Mask&quot;</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="p">[</span><span class="s2">&quot;seg_all_cytosol&quot;</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Cytosol Segmentation Mask&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -892,14 +905,14 @@ File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_23_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_23_0.png" />
+<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_22_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_22_0.png" />
 </div>
 </div>
 </section>
 <section id="id4">
 <h3>Extraction Results<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -907,7 +920,7 @@ File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait
     <span class="n">_images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
 
     <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nucleus mask&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol mask&quot;</span><span class="p">,</span> <span class="s2">&quot;nucleus&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol&quot;</span><span class="p">,</span> <span class="s2">&quot;additional channel&quot;</span><span class="p">]</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
@@ -918,15 +931,14 @@ File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait
             <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span> <span class="o">=</span> <span class="mi">25</span><span class="p">)</span>
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
-
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
     <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -936,7 +948,7 @@ File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_25_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_25_0.png" />
+<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_24_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_24_0.png" />
 </div>
 </div>
 </section>
@@ -964,44 +976,39 @@ File <span class="ansi-green-fg">~/Documents/GitHub/SPARCSspatial/src/scportrait
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentationCellpose</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scportrait.pipeline.segmentation.workflows</span> <span class="kn">import</span> <span class="n">DAPISegmentationCellpose</span>
 
 <span class="n">project_location</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_directory</span><span class="si">}</span><span class="s2">/DAPISegmentationCellpose&quot;</span>
 
-<span class="n">project</span> <span class="o">=</span> <span class="n">SpatialProject</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
-                         <span class="n">config_path</span><span class="o">=</span> <span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
-                         <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                         <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                         <span class="n">segmentation_f</span><span class="o">=</span><span class="n">DAPISegmentationCellpose</span><span class="p">,</span>
-                         <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
-                        <span class="p">)</span>
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">project_location</span><span class="p">),</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;../../../example_data/example_3/config_example3.yml&quot;</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">segmentation_f</span><span class="o">=</span><span class="n">DAPISegmentationCellpose</span><span class="p">,</span>
+    <span class="n">extraction_f</span><span class="o">=</span><span class="n">HDF5CellExtraction</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">project</span><span class="o">.</span><span class="n">load_input_from_tif_files</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-modifying config
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/Users/sophia/Documents/GitHub/SPARCSspatial/src/scportrait/pipeline/project.py:154: UserWarning: There is already a directory in the location path
-  warnings.warn(&#34;There is already a directory in the location path&#34;)
+Updating project config file.
+<span class="ansi-blue-fg">INFO    </span> The Zarr backing store has been changed from <span class="ansi-magenta-fg">None</span> the new file path:
+         <span class="ansi-magenta-fg">/Users/sophia/Documents/GitHub/scPortrait/example_data/example_3/segmentation_workflows/DAPISegmentationCe</span>
+         <span class="ansi-magenta-fg">llpose/</span><span class="ansi-magenta-intense-fg">scportrait.sdata</span>
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">segment</span><span class="p">()</span>
@@ -1012,8 +1019,14 @@ modifying config
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f02b54629d0b4a089060079e2a2badfd", "version_major": 2, "version_minor": 0}</script></div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/cellpose/resnet_torch.py:276: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don&#39;t have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(filename, map_location=device)
+/Users/sophia/mambaforge/envs/scPortrait/lib/python3.10/site-packages/cellpose/dynamics.py:189: RuntimeWarning: invalid value encountered in divide
+  mu /= (1e-60 + (mu**2).sum(axis=0)**0.5)
+Processing cell batches: 100%|██████████| 1/1 [00:00&lt;00:00, 14.69it/s]
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -1026,21 +1039,16 @@ multiprocessing done.
 <section id="id5">
 <h3>Segmentation Results<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/segmentation/segmentation.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
-    <span class="n">segmentation</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">));</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">sdata</span><span class="p">[</span><span class="s2">&quot;seg_all_nucleus&quot;</span><span class="p">])</span>
+<span class="n">axs</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Nucleus Segmentation Mask&quot;</span><span class="p">)</span>
 
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">segmentation</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Cytosol Segmentation Mask&quot;</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1048,14 +1056,14 @@ multiprocessing done.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_30_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_30_0.png" />
+<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_29_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_29_0.png" />
 </div>
 </div>
 </section>
 <section id="id6">
 <h3>Extraction Results<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_location</span><span class="si">}</span><span class="s2">/extraction/data/single_cells.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
@@ -1063,7 +1071,7 @@ multiprocessing done.
     <span class="n">images</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;single_cell_data&quot;</span><span class="p">)</span>
 
     <span class="n">n_cells</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_cells</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n_cells</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nucleus mask&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol mask&quot;</span><span class="p">,</span> <span class="s2">&quot;nucleus&quot;</span><span class="p">,</span> <span class="s2">&quot;cytosol&quot;</span><span class="p">,</span> <span class="s2">&quot;additional channel&quot;</span><span class="p">]</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cells</span><span class="p">):</span>
@@ -1074,15 +1082,14 @@ multiprocessing done.
             <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">_img</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span> <span class="o">=</span> <span class="mi">25</span><span class="p">)</span>
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cell </span><span class="si">{</span><span class="n">cell_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
-
+                <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
     <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
@@ -1092,7 +1099,7 @@ multiprocessing done.
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_32_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_32_0.png" />
+<img alt="../../_images/pages_notebooks_example_notebook_segmentation_workflows_31_0.png" src="../../_images/pages_notebooks_example_notebook_segmentation_workflows_31_0.png" />
 </div>
 </div>
 </section>
