@@ -14,7 +14,7 @@ Please refer to our [documentation](https://mannlabs.github.io/scPortrait/html/i
 
 ## Installation from Github
 
-Check out the docs for more complete installation instructions. scPortrait currently supports python 3.10 and 3.11.
+Check out the docs for more [complete installation instructions](https://mannlabs.github.io/scPortrait/html/pages/quickstart/installation.html). scPortrait currently supports python 3.10 and 3.11.
 
 To get started you can install via pip:
 
