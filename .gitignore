@@ -8,6 +8,9 @@ config_test.yml
 segmentation_workflows/
 scportrait_data/
 
+#remove built documentation files (not to be tracked in Repo)
+_build/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
