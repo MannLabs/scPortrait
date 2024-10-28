@@ -37,6 +37,6 @@ jobs:
           pip install sphinx sphinx-rtd-theme==2.0.0 sphinx-autodoc-typehints sphinx-argparse nbsphinx renku-sphinx-theme
       - name: Generate Documentation
         run: |
-          cd docs_source
+          cd docs
           make clean
           make html
