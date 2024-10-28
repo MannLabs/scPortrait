@@ -63,3 +63,5 @@ html_static_path = ["html/_static"]
 autodoc_default_options = {
     "member-order": "bysource",
 }
+
+html_favicon = "favicon.png"
