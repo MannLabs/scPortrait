@@ -237,9 +237,7 @@ class PhenixParser:
 
         # define path where to find raw image files
         df["source"] = self.image_dir
-        df["filename"] = df["filename"].astype(
-            str
-        )  # ensure this is a string otherwise it can cause issues later on
+        df["filename"] = df["filename"].astype(str)  # ensure this is a string otherwise it can cause issues later on
         df["date"] = df["date"].astype(str)
         df["time"] = df["time"].astype(str)
         df["Channel"] = df["Channel"].astype(str)
@@ -389,9 +387,7 @@ class PhenixParser:
                     ___df = __df[__df.Well == well]
 
                     if ___df.empty:
-                        Warning(
-                            f"Entire well {well} is missing for timepoint {timepoint}."
-                        )
+                        Warning(f"Entire well {well} is missing for timepoint {timepoint}.")
                         missing_tiles = missing_tiles + _generate_missing_file_names(
                             x_range, y_range, timepoint, row, well, channels, zstacks
                         )
