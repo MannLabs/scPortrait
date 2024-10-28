@@ -5,12 +5,13 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spatialdata &mdash; scPortrait  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=5c2dde8a" />
       <link rel="stylesheet" type="text/css" href="../../_static/fonts.css?v=5583d106" />
 
 
+    <link rel="shortcut icon" href="../../_static/favicon.png"/>
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -247,9 +248,43 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../module/tools.html">tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parsing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitching</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#parameters">Parameters:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html">parse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser"><code class="docutils literal notranslate"><span class="pre">PhenixParser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.copy_files"><code class="docutils literal notranslate"><span class="pre">PhenixParser.copy_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.parse"><code class="docutils literal notranslate"><span class="pre">PhenixParser.parse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_wells"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_wells()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.PhenixParser.sort_timepoints"><code class="docutils literal notranslate"><span class="pre">PhenixParser.sort_timepoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/parsing.html#scportrait.tools.parse._parse_phenix.CombinedPhenixParser"><code class="docutils literal notranslate"><span class="pre">CombinedPhenixParser</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html">stitch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher"><code class="docutils literal notranslate"><span class="pre">Stitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.create_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.create_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.clear_cache"><code class="docutils literal notranslate"><span class="pre">Stitcher.clear_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_outdir"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_outdir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.get_channel_info"><code class="docutils literal notranslate"><span class="pre">Stitcher.get_channel_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.setup_rescaling"><code class="docutils literal notranslate"><span class="pre">Stitcher.setup_rescaling()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.reorder_channels"><code class="docutils literal notranslate"><span class="pre">Stitcher.reorder_channels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_reader"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_reader()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.save_positions"><code class="docutils literal notranslate"><span class="pre">Stitcher.save_positions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.generate_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.generate_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.plot_qc"><code class="docutils literal notranslate"><span class="pre">Stitcher.plot_qc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.perform_alignment"><code class="docutils literal notranslate"><span class="pre">Stitcher.perform_alignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">Stitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.stitch"><code class="docutils literal notranslate"><span class="pre">Stitcher.stitch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_tif"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_tif()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_ome_zarr"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_ome_zarr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_thumbnail"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.Stitcher.write_spatialdata"><code class="docutils literal notranslate"><span class="pre">Stitcher.write_spatialdata()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_aligner"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_aligner()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.initialize_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.initialize_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.assemble_mosaic"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.assemble_mosaic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../module/tools/stitching.html#scportrait.tools.stitch._stitch.ParallelStitcher.write_tif_parallel"><code class="docutils literal notranslate"><span class="pre">ParallelStitcher.write_tif_parallel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../module/tools/ml.html">ml</a><ul>
