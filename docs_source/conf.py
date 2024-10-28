@@ -54,6 +54,9 @@ html_theme_options = {
     "navigation_depth": 4,
 }
 
+html_logo = "_images/scPortrait_logo_light.svg"
+html_title = "scPortrait"
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
