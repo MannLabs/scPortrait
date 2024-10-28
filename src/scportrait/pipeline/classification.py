@@ -224,7 +224,7 @@ class _ClassificationBase(ProcessingStep):
             try:
                 used_memory = torch.mps.driver_allocated_memory() + torch.mps.driver_allocated_memory()
                 used_memory = used_memory / 1024**2  # Convert bytes to MiB
-                return {"MPS": f"{memory_usage} MiB"}
+                return {"MPS": f"{used_memory} MiB"}
             except (RuntimeError, ValueError) as e:
                 print("Error:", e)
                 return None
@@ -423,9 +423,8 @@ class _ClassificationBase(ProcessingStep):
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = dataset_class(
-                [extraction_dir],
-                [0],
-                "/",
+                dir_list=[extraction_dir],
+                dir_labels=[0],
                 transform=t,
                 return_id=True,
                 select_channel=self.channel_classification,
@@ -1221,7 +1220,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
-            self.project._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
+            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
 
         if self.project.cyto_seg_status:
             # save cytosol segmentation
@@ -1255,7 +1254,7 @@ class _cellFeaturizerBase(_ClassificationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
-            self.project._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
+            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
 
 
 class CellFeaturizer(_cellFeaturizerBase):
