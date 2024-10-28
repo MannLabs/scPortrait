@@ -20,7 +20,7 @@ For utilizing the stitching capabilities of scPortrait, a working java installat
 
    conda install -c conda-forge openjdk
 
-If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed seperately via conda.
+If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed separately via conda.
 
 .. code::
 
