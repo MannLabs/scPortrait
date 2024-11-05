@@ -52,11 +52,10 @@ html_theme_options = {
     "collapse_navigation": False,
     "sticky_navigation": True,
     "navigation_depth": 4,
+    "logo_only": True
 }
 
-html_logo = "_images/scPortrait_logo_light.svg"
 html_title = "scPortrait"
-
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -68,3 +67,4 @@ autodoc_default_options = {
 }
 
 html_favicon = "favicon.png"
+html_logo = "_static/scPortrait_logo_light.svg"
