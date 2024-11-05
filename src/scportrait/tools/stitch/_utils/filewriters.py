@@ -164,6 +164,8 @@ def write_xml(image_paths: list[str], channels: list[str], slidename: str, outdi
                         text(channel)
         with tag("images"):
             for i, image_path in enumerate(image_paths):
+                # truncate image_path to only include the filename
+                image_path = os.path.basename(image_path)
                 with tag("image", url=str(image_path)):
                     with tag("channel"):
                         text(str(i + 1))
