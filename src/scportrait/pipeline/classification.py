@@ -566,7 +566,7 @@ class _ClassificationBase(ProcessingStep):
                 instance_key="instance_id",
             )
 
-            self.project._write_table_object_sdata(
+            self.filehandler._write_table_object_sdata(
                 table,
                 f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}",
                 overwrite=self.overwrite_run_path,
@@ -590,7 +590,7 @@ class _ClassificationBase(ProcessingStep):
                 instance_key="instance_id",
             )
 
-            self.project._write_table_object_sdata(
+            self.filehandler._write_table_object_sdata(
                 table,
                 f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}",
                 overwrite=self.overwrite_run_path,
