@@ -552,7 +552,9 @@ class _ClassificationBase(ProcessingStep):
             # save nucleus segmentation
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["instance_id"] = obs_indices
+            obs["instance_id"] = obs_indices.astype(
+                int
+            )  # this needs to be int otherwise data will not be loaded correctly
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
@@ -564,7 +566,7 @@ class _ClassificationBase(ProcessingStep):
                 instance_key="instance_id",
             )
 
-            self.project._write_table_object_sdata(
+            self.filehandler._write_table_object_sdata(
                 table,
                 f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}",
                 overwrite=self.overwrite_run_path,
@@ -574,7 +576,9 @@ class _ClassificationBase(ProcessingStep):
             # save cytoplasm segmentation
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["instance_id"] = obs_indices
+            obs["instance_id"] = obs_indices.astype(
+                int
+            )  # this needs to be int otherwise data will not be loaded correctly
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
@@ -586,7 +590,7 @@ class _ClassificationBase(ProcessingStep):
                 instance_key="instance_id",
             )
 
-            self.project._write_table_object_sdata(
+            self.filehandler._write_table_object_sdata(
                 table,
                 f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}",
                 overwrite=self.overwrite_run_path,
@@ -1200,7 +1204,7 @@ class _cellFeaturizerBase(_ClassificationBase):
 
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["instance_id"] = obs_indices
+            obs["instance_id"] = obs_indices.astype(int)
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
@@ -1236,7 +1240,7 @@ class _cellFeaturizerBase(_ClassificationBase):
 
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["instance_id"] = obs_indices
+            obs["instance_id"] = obs_indices.astype(int)
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 

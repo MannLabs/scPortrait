@@ -933,7 +933,7 @@ class Project(Logable):
 
                         table = remap_region_annotation_table(table, region_name=region_name)
 
-                        self._write_table_object_sdata(table, new_table_name)
+                        self.filehandler._write_table_object_sdata(table, new_table_name)
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
@@ -955,7 +955,7 @@ class Project(Logable):
                         new_table_name = f"annot_{region_name}_{table_name}"
 
                         table = remap_region_annotation_table(table, region_name=region_name)
-                        self._write_table_object_sdata(table, new_table_name)
+                        self.filehandler._write_table_object_sdata(table, new_table_name)
 
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
