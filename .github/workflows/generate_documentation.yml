@@ -34,7 +34,7 @@ jobs:
       - name: Install Sphinx and additional dependences
         run: |
           sudo apt install pandoc
-          pip install sphinx sphinx-rtd-theme==2.0.0 sphinx-autodoc-typehints sphinx-argparse nbsphinx renku-sphinx-theme
+          pip install sphinx sphinx-rtd-theme==2.0.0 sphinx-autodoc-typehints sphinx-argparse nbsphinx sphinx-book-theme
       - name: Generate Documentation
         run: |
           cd docs_source
