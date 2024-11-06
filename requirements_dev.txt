@@ -43,7 +43,7 @@ sphinx
 sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
-renku-sphinx-theme
+sphinx-book-theme
 #for testing
 pytest
 # development
