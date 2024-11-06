@@ -54,9 +54,9 @@ html_theme_options = {
     "navigation_depth": 4,
     "logo_only": True,
     "logo": {
-      "image_light": "_static/scPortrait_logo_light.svg",
-      "image_dark": "_static/scPortrait_logo_dark.svg",
-   },
+        "image_light": "_static/scPortrait_logo_light.svg",
+        "image_dark": "_static/scPortrait_logo_dark.svg",
+    },
 }
 
 html_title = "scPortrait"
