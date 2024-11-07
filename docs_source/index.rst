@@ -39,15 +39,15 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: scPortrait Ecosystem
+   :caption: Ecosystem
 
    pages/quickstart/
    pages/pipeline/
-   pages/example_notebooks
+   pages/tutorials
 
 .. toctree::
    :maxdepth: 2
-   :caption: scPortrait tools
+   :caption: Tools
 
    pages/tools/parsing/parsing
    pages/tools/stitching/stitching

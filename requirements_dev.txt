@@ -44,6 +44,7 @@ sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
 sphinx-book-theme
+sphinx-design
 #for testing
 pytest
 # development

@@ -1,5 +1,5 @@
-Example Notebooks
-=================
+Tutorials
+=========
 
 Basic scPortrait Project
 ------------------------

@@ -11,20 +11,25 @@ We recommended installing the library within a separate conda environment runnin
    conda create -n "scPortrait"
    conda activate scPortrait
 
-For utilizing the stitching capabilities of scPortrait, a working java installation is required. If not already installed, you can download the latest version of Java from the `official website <https://www.java.com/en/download/>`_ or install it via mamba or conda:
 
-.. Important::
-   Java needs to be installed before installing scPortrait. Otherwise when trying to access the stitching capabilities of scPortrait, an error will be raised that Java is not found at the indicated path.
+.. dropdown:: Optional: Installing the stitching capabilities of scPortrait
+   :chevron: down-up
 
-.. code::
+   The stitching capabilities of scPortrait require a working Java installation. If not already installed, you can download the latest version of Java from the `official website <https://www.java.com/en/download/>`_ or install it via mamba or conda:
 
-   conda install -c conda-forge openjdk
+   .. Important::
 
-If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed separately via conda.
+      Java needs to be installed before installing scPortrait. Otherwise when trying to access the stitching capabilities of scPortrait, an error will be raised that Java is not found at the indicated path.
 
-.. code::
+   .. code::
 
-   conda install -c conda-forge graph-tool==2.68
+      conda install -c conda-forge openjdk
+
+   If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed separately via conda.
+
+   .. code::
+
+      conda install -c conda-forge graph-tool==2.68
 
 To install the latest release of scPortrait:
 

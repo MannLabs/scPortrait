@@ -26,7 +26,14 @@ author = "Sophia Mädler and Niklas Schmacke"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinxarg.ext", "sphinx_rtd_theme", "nbsphinx"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinxarg.ext",
+    "sphinx_rtd_theme",
+    "nbsphinx",
+    "sphinx_design",
+]
 exclude_patterns = ["**.ipynb_checkpoints"]
 
 
@@ -50,9 +57,9 @@ html_theme = "sphinx_book_theme"
 
 html_theme_options = {
     "collapse_navigation": False,
-    "sticky_navigation": True,
+    # "sticky_navigation": True,
     "navigation_depth": 4,
-    "logo_only": True,
+    # "logo_only": True,
     "logo": {
         "image_light": "_static/scPortrait_logo_light.svg",
         "image_dark": "_static/scPortrait_logo_dark.svg",
