@@ -30,11 +30,10 @@ jobs:
           conda env update --file .github/additional_files/environment.yml --name base
       - name: Install package
         run: |
-          pip install ./
+          pip install ."[dev]"/
       - name: Install Sphinx and additional dependences
         run: |
           sudo apt install pandoc
-          pip install sphinx sphinx-rtd-theme==2.0.0 sphinx-autodoc-typehints sphinx-argparse nbsphinx sphinx-book-theme
       - name: Generate Documentation
         run: |
           cd docs_source
