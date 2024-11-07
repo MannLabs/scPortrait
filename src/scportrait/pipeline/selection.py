@@ -2,7 +2,11 @@ from scportrait.pipeline.base import ProcessingStep
 import os
 import numpy as np
 import h5py
+import pickle
 from lmd.lib import SegmentationLoader
+from lmd.segmentation import _create_coord_index
+
+import pandas as pd
 from alphabase.io import tempmmap
 
 
@@ -134,12 +138,38 @@ class LMDSelection(ProcessingStep):
 
         # create memory mapped temporary array for saving the segmentation
         c, x, y = hdf_labels.shape
+
         segmentation = tempmmap.array(
             shape=(x, y), dtype=hdf_labels.dtype, tmp_dir_abs_path=self._tmp_dir_path
         )
         segmentation = hdf_labels[self.config["segmentation_channel"], :, :]
 
         self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
+
+        # pre-calculate the coordinate lookup table and save to file for quick reloading
+        if not os.path.exists(f"{self.directory}/coordinate_lookup.pkl"):
+            self.log("Calculating coordinate lookup table.")
+            # read classes
+            classes = pd.read_csv(
+                f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
+                header=None,
+            )[0].tolist()
+            coord_lookup = _create_coord_index(segmentation, classes=classes)
+            with open(f"{self.directory}/coordinate_lookup.pkl", "wb") as f:
+                pickle.dump(coord_lookup, f)
+            self.log("Coordinate lookup table saved to file for reloading.")
+        else:
+            self.log("Loading coordinate lookup table from precomputed file.")
+            coord_lookup = pickle.load(
+                open(f"{self.directory}/coordinate_lookup.pkl", "rb")
+            )
+
+        # read classes
+        classes = pd.read_csv(
+            f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
+            header=None,
+        )[0].tolist()
+        coord_lookup = _create_coord_index(segmentation, classes=classes)
 
         sl = SegmentationLoader(
             config=self.config,
