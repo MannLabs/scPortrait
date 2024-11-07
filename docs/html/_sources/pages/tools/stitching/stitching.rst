@@ -1,4 +1,4 @@
-stitching
+Stitching
 =========
 
 Example notebook showing how to use the stitching module.

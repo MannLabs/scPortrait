@@ -9,5 +9,5 @@ This section will give you a brief overview of the scPortrait ecosystem, introdu
    :maxdepth: 2
 
    quickstart/installation
-   quickstart/computational_workflow
+   quickstart/introduction
    notebooks/example_scPortrait_project.ipynb

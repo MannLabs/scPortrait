@@ -1,4 +1,4 @@
-parsing
+Parsing
 =======
 
 Example notebook showing the use of the parsing module.

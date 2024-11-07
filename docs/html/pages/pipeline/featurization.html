@@ -32,6 +32,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
 
   <!-- So that users can add custom icons -->
   <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
@@ -45,6 +46,7 @@
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'pages/pipeline/featurization';</script>
     <link rel="icon" href="../../_static/favicon.png"/>
@@ -147,38 +149,38 @@
 </button></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">scPortrait Ecosystem</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Ecosystem</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="../quickstart.html">Quickstart</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart/installation.html">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../quickstart/computational_workflow.html">scPortrait workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart/introduction.html">Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../notebooks/example_scPortrait_project.html">A walk through the scPortrait Ecosystem</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../pipeline.html">scPortrait Workflow</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="project.html">scPortrait Projects</a></li>
 <li class="toctree-l2"><a class="reference internal" href="config.html">Config Files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spatialdata.html">spatialdata</a></li>
-<li class="toctree-l2"><a class="reference internal" href="stitching.html">stitching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spatialdata.html">SpatialData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stitching.html">Stitching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="segmentation.html">Segmentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extraction.html">Extraction</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Featurization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="selection.html">Selection</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../example_notebooks.html">Example Notebooks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../notebooks/example_scPortrait_project.html">A walk through the scPortrait Ecosystem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html">Example Notebook showcasing the different segmentation workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks/example_notebook_segmentation_workflows.html">Different segmentation workflows</a></li>
 </ul>
 </details></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">scPortrait tools</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tools</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tools/parsing/parsing.html">parsing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tools/parsing/parsing.html">Parsing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../tools/parsing/example_parsing_notebook.html">Example Parsing Notebook to rename phenix experiments</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tools/stitching/stitching.html">stitching</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tools/stitching/stitching.html">Stitching</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../tools/stitching/example_stitching_notebook.html">Example Stitching Notebook</a></li>
 </ul>
 </details></li>
