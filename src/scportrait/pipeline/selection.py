@@ -153,6 +153,9 @@ class LMDSelection(ProcessingStep):
                 f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
                 header=None,
             )[0].tolist()
+            classes = np.array(
+                classes, dtype=np.uint32
+            )  # conver to array with correct dtype for execution of numba function
             self.log(
                 f"Classes loaded from file {self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv"
             )
