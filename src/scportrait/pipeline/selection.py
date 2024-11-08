@@ -144,41 +144,51 @@ class LMDSelection(ProcessingStep):
         )
         segmentation = hdf_labels[self.config["segmentation_channel"], :, :]
 
-        self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
-
         # pre-calculate the coordinate lookup table and save to file for quick reloading
         if not os.path.exists(f"{self.directory}/coordinate_lookup.pkl"):
             self.log("Calculating coordinate lookup table.")
+
             # read classes
             classes = pd.read_csv(
                 f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
                 header=None,
             )[0].tolist()
-            self.log("Loading classes from file.")
+            self.log(
+                f"Classes loaded from file {self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv"
+            )
+
             coord_lookup = _create_coord_index(segmentation, classes=classes)
+
+            # save to pickle file for easy reloading
             with open(f"{self.directory}/coordinate_lookup.pkl", "wb") as f:
                 pickle.dump(coord_lookup, f)
-            self.log("Coordinate lookup table saved to file for reloading.")
+            self.log(
+                "Coordinate lookup table saved to {self.directory}/coordinate_lookup.pkl for reloading."
+            )
+
         else:
             self.log("Loading coordinate lookup table from precomputed file.")
             coord_lookup = pickle.load(
                 open(f"{self.directory}/coordinate_lookup.pkl", "rb")
             )
 
-        # read classes
-        classes = pd.read_csv(
-            f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
-            header=None,
-        )[0].tolist()
-        coord_lookup = _create_coord_index(segmentation, classes=classes)
+        # define orientation transform
+        self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
 
+        # pass results to SegmentationLoader
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
 
-        shape_collection = sl(segmentation, cell_sets, calibration_marker)
+        shape_collection = sl(
+            segmentation,
+            cell_sets,
+            calibration_marker,
+            coords_lookup=coord_lookup,
+            classes=classes,
+        )
 
         if self.debug:
             shape_collection.plot(calibration=True)
@@ -194,6 +204,6 @@ class LMDSelection(ProcessingStep):
         savepath = os.path.join(self.directory, savename)
         shape_collection.save(savepath)
 
-        del segmentation
+        del segmentation, coord_lookup, shape_collection
 
         self.log(f"Saved output at {savepath}")
