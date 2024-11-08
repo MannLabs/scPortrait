@@ -8,7 +8,7 @@ We recommended installing the library within a separate conda environment runnin
 
 .. code::
 
-   conda create -n "scPortrait"
+   conda create -n "scPortrait" python=3.11
    conda activate scPortrait
 
 
