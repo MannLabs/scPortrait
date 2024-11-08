@@ -154,6 +154,7 @@ class LMDSelection(ProcessingStep):
                 f"{self.project_location}/{self.DEFAULT_SEGMENTATION_DIR_NAME}/classes.csv",
                 header=None,
             )[0].tolist()
+            self.log("Loading classes from file.")
             coord_lookup = _create_coord_index(segmentation, classes=classes)
             with open(f"{self.directory}/coordinate_lookup.pkl", "wb") as f:
                 pickle.dump(coord_lookup, f)
