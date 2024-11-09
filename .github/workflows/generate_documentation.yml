@@ -50,7 +50,7 @@ jobs:
           #conda env update --file .github/additional_files/environment.yml --name base
       - name: Generate Documentation
         run: |
-          cd docs_source
+          cd docs
           make clean
           make html
       - name: Upload artifact
