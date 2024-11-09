@@ -32,7 +32,7 @@ bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
 Contributing
 ============
 
-We are excited for people to adapt and extend scPortrait to their needs. If you are interested in contributing to scPortrait, please reach out to the developers or open a pull request on our github repository.
+We are excited for people to adapt and extend scPortrait to their needs. If you are interested in contributing to scPortrait, please reach out to the developers or open a pull request on our `GitHub repository <https://github.com/MannLabs/scPortrait>`_.
 
 Documentation
 ==============
