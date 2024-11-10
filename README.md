@@ -7,16 +7,16 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 ## Getting started
 
-Please refer to our [documentation](https://mannlabs.github.io/scPortrait/) in particular:
+Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in particular:
 
-- [getting started](https://mannlabs.github.io/scPortrait/pages/quickstart.html#quickstart)
-- [example notebooks](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
+- [Getting started](https://mannlabs.github.io/scPortrait/pages/quickstart.html#quickstart)
+- [Tutorials](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
 
 ## Installation from Github
 
-Check out the docs for more [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/quickstart/installation.html). scPortrait currently supports python 3.10 and 3.11.
+Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/quickstart/installation.html). scPortrait currently supports Python 3.10 and 3.11.
 
-To get started you can install via pip:
+To get started you can install scPortrait via pip:
 
 ```
 pip install git+https://github.com/MannLabs/scPortrait
@@ -24,7 +24,7 @@ pip install git+https://github.com/MannLabs/scPortrait
 
 ### Limitations
 
-Currently the scPortrait framework is being developed using Linux and macOS and only provides limited Windows support. Please refer to this [git issue](https://github.com/MannLabs/scPortrait/issues/28) for more information.
+Currently the scPortrait framework is being developed using Linux and macOS, and only provides limited Windows support. Please refer to this [GitHub issue](https://github.com/MannLabs/scPortrait/issues/28) for more information.
 
 ## Citing our Work
 
