@@ -7,7 +7,7 @@ scPortrait is a toolkit to analyse single-cell image datasets. This Python imple
 
 scPortrait, is a computational framework for transforming raw microscopy images into single cell image datasets that can directly be used for training deep learning models. scPortrait solves several challenges that come with scaling image operations to millions of cells. A typical scPortrait workflow consists of import of microscopy images, stitching, segmentation of single cells, generation of signle-cell image datasets (extraction) and the description of cellular phenotypes (featurization), often by learning a cellular representation space. The scPortrait computational workflow is designed to be modular and flexible.
 
-.. image:: images/scPortrait_workflow_steps_with_explaination.png
+.. image:: images/scportrait_workflow_steps_with_explaination.png
     :width: 100%
     :align: center
     :alt: scPortrait Workflow Steps: Segmentation, Extraction, Classification and Selection
