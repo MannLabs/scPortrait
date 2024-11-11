@@ -52,7 +52,7 @@ class BatchAccumulatedMetricsCallback(Callback):
         preds_1d = (probs_1d >= 0.5).astype(int)
         labels = self.train_actual_labels.numpy()
 
-        f1 = f1_score(y_true=labels, y_pred=preds_1d)
+        f1 = f1_score(y_true=labels, y_pred=preds_1d, zero_division=0)
         self.log("f1_score/train_accumulated", f1, sync_dist=True)
 
     def on_validation_epoch_start(self, trainer, pl_module):
@@ -76,7 +76,7 @@ class BatchAccumulatedMetricsCallback(Callback):
         preds_1d = (probs_1d >= 0.5).astype(int)
         labels = self.val_actual_labels.numpy()
 
-        f1 = f1_score(y_true=labels, y_pred=preds_1d)
+        f1 = f1_score(y_true=labels, y_pred=preds_1d, zero_division=0)
         self.log("f1_score/val_accumulated", f1, sync_dist=True)
 
         # calculate precision-recall curve
@@ -151,7 +151,7 @@ class BatchAccumulatedMetricsCallback(Callback):
         preds_1d = (probs_1d >= 0.5).astype(int)
         labels = self.test_actual_labels.numpy()
 
-        f1 = f1_score(y_true=labels, y_pred=preds_1d)
+        f1 = f1_score(y_true=labels, y_pred=preds_1d, zero_division=0)
         self.log("f1_score/test_accumulated", f1, sync_dist=True)
 
         # calculate precision-recall curve
