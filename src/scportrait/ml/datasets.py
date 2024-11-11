@@ -57,6 +57,7 @@ class _HDF5SingleCellDataset(Dataset):
         self.transform = transform
         self.return_id = return_id
         self.return_fake_id = return_fake_id
+        self.max_level = max_level
 
         assert (
             not self.return_id and self.return_fake_id
@@ -291,7 +292,7 @@ class _HDF5SingleCellDataset(Dataset):
             current_index_list = self.index_list[i]
 
             # get current label
-            self._get_dataset_label(i)
+            # self._get_dataset_label(i) hasnt been implemented yet
 
             # check if "directory" is a path to specific hdf5
             filetype = directory.split(".")[-1]
@@ -469,7 +470,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.bulk_labels = dir_labels
         self.read_labels_from_dataset = False
 
-        self._add_all_dataset(read_label_from_dataset=self.read_labels_from_dataset)
+        self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
         self.stats()
 
 
