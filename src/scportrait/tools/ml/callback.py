@@ -117,7 +117,7 @@ class BatchAccumulatedMetricsCallback(Callback):
     def on_test_epoch_end(self, trainer, pl_module):
         # calculate f1-score
         probabilities = self.test_probabilities.numpy()
-        probs_1d = probabilities[:, 1]  # only get the predictionssfor the true-class
+        probs_1d = probabilities[:, 1]  # only get the predictions for the true-class
         preds_1d = (probs_1d >= 0.5).astype(int)
         labels = self.test_actual_labels.numpy()
 
