@@ -4,7 +4,7 @@
 Introduction
 ************
 
-.. image:: ../images/scPortrait_workflow_steps.png
+.. image:: images/scportrait_workflow_steps.png
    :width: 100%
    :align: center
    :alt: scPortrait workflow steps: Segmentation, Extraction, Classification, Selection
@@ -37,13 +37,13 @@ Segmentation
 
 The cell segmentation process in scPortrait is split into two parts: **nuclear segmentation**, which identifies nuclei in the input image, and **cytoplasmic segmentation**, which identifies cytosols. Depending on the dataset and/or application it is possible that only one of the two segmentation types is required. In this case, the segmentation process can be configured to only perform a nuclear or a cytoplasmic segmentation.
 
-.. |pic1| image:: ../images/input_image.png
+.. |pic1| image:: images/input_image.png
    :width: 100%
 
-.. |pic2| image:: ../images/nucleus_mask.png
+.. |pic2| image:: images/nucleus_mask.png
    :width: 100%
 
-.. |pic3| image:: ../images/cytosol_mask.png
+.. |pic3| image:: images/cytosol_mask.png
    :width: 100%
 
 +-----------------------+-----------------------+-----------------------+
@@ -56,10 +56,10 @@ During the segmentation process, a mask is generated which maps the pixels of th
 
 If we zoomed in on the corner of the segmentation mask of a nucleus, the segmentation mask (a numpy array) would look like this:
 
-.. |pic4| image:: ../images/nucleus_mask_excerpt.png
+.. |pic4| image:: images/nucleus_mask_excerpt.png
    :width: 100%
 
-.. |pic5| image:: ../images/nucleus_mask_numeric.png
+.. |pic5| image:: images/nucleus_mask_numeric.png
    :width: 100%
 
 +-----------------------+-----------------------+
@@ -77,7 +77,7 @@ Extraction
 
 The scPortrait framework is built around the idea of generating standardized single-cell image datasets. A scPortrait single cell image dataset consists of a collection of images for each cell, containing both the segmentation masks and imaging channels of that particular cell. Aggregated across all cells in a scPortrait dataset, these image collections are saved as ``HDF5``, a container file format that enables the retrieval of individual cells without loading the entire dataset. These ``HDF5`` datasets are created during the extraction step.
 
-.. image:: ../images/single_cell_dataset.png
+.. image:: images/single_cell_dataset.png
    :width: 100%
    :align: center
    :alt: scPortrait single cell image dataset example
