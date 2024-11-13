@@ -16,7 +16,7 @@ Check out the installation instructions :ref:`here<installation>`. You can valid
 Getting Started
 ===============
 
-You can check out our :ref:`quickstart<quickstart>` guide to get started with scPortrait. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
+You can check out our :ref:`introduction<introduction>` to get started with scPortrait. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
 
 Citing our Work
 ================
@@ -41,7 +41,8 @@ Documentation
    :maxdepth: 2
    :caption: Ecosystem
 
-   pages/quickstart/
+   pages/installation/
+   pages/introduction/
    pages/pipeline/
    pages/tutorials
 
