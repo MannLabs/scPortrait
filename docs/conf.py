@@ -33,6 +33,7 @@ extensions = [
     "sphinx_rtd_theme",
     "nbsphinx",
     "sphinx_design",
+    "sphinx_copybutton",
 ]
 exclude_patterns = ["**.ipynb_checkpoints"]
 
