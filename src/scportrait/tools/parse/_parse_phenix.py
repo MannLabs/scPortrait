@@ -6,10 +6,12 @@ Contains functions to parse imaging data aquired on an OperaPhenix or Operetta i
 """
 
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -115,43 +117,42 @@ class PhenixParser:
             os.makedirs(getattr(self, f"outdir_{name}"))
 
     def get_channel_metadata(self, xml_path) -> pd.DataFrame:
-        """Parse channel metadata from Index.ref.xml without using grep"""
+        """Parse channel metadata from Index.ref.xml"""
         index_file = xml_path
-        
+
         # Read and parse the XML file
-        with open(index_file, 'r') as f:
+        with open(index_file) as f:
             content = f.read()
-        
-        # Use regex to mimic grep behavior exactly
-        pattern = r'<ChannelName>.*?</ChannelName>|<ChannelID>.*?</ChannelID>'
+
+        # Use regex to detect pattern
+        pattern = r"<ChannelName>.*?</ChannelName>|<ChannelID>.*?</ChannelID>"
         results = re.findall(pattern, content, re.MULTILINE)
         results = [x.strip() for x in results]
-        
-        # Extract channel IDs and names exactly as in original
+
+        # Extract channel IDs and names
         channel_ids = [x.split(">")[1].split("<")[0] for x in results if x.startswith("<ChannelID")]
         channel_names = [
-            x.split(">")[1].split("<")[0].replace(" ", "") 
-            for x in results if x.startswith("<ChannelName")
+            x.split(">")[1].split("<")[0].replace(" ", "") for x in results if x.startswith("<ChannelName")
         ]
-        
-        # Process exactly as in original
+
+        # Process
         channel_ids = list(set(channel_ids))
         channel_ids.sort()
-        channel_names = channel_names[0:len(channel_ids)]
-        
-        # Create DataFrame exactly as in original
+        channel_names = channel_names[0 : len(channel_ids)]
+
+        # Create DataFrame
         lookup = pd.DataFrame({"id": list(channel_ids), "label": list(channel_names)})
-        
+
         print("Experiment contains the following image channels: ")
         print(lookup, "\n")
-        
+
         # Save lookup file to csv
         lookup.to_csv(f"{self.experiment_dir}/channel_lookuptable.csv")
         print(f"Channel Lookup table saved to file at {self.experiment_dir}/channel_lookuptable.csv\n")
-        
-        # Set channel names as in original
+
+        # Set channel names
         self.channel_names = channel_names
-        
+
         return lookup
 
     def read_phenix_xml(self, xml_path):
@@ -443,7 +444,7 @@ class PhenixParser:
         if "missing_images" not in self.__dict__:
             self.check_for_missing_files()
 
-        # initialize output directory if not alreadt done
+        # initialize output directory if not already done
         if "outdir_parsed_images" not in self.__dict__:
             self.define_outdir(name="parsed_images")
 
@@ -458,40 +459,50 @@ class PhenixParser:
             )
 
     def define_copy_functions(self):
-        # define function for copying depending on if symlinks should be used or not
+        """Define function for copying depending on if symlinks should be used or not"""
         if self.export_symlinks:
 
             def copyfunction(input, output):
                 try:
-                    os.symlink(input, output)
+                    if platform.system() == "Windows":
+                        print(
+                            "Windows detected as platform. Symlinks cannot be used on Windows. Using hard links instead."
+                        )
+                        # On Windows, use hard links when symlinks are requested
+                        if not os.path.exists(output):
+                            os.link(input, output)
+                    else:
+                        # Unix symlink behavior
+                        os.symlink(input, output)
                 except OSError as e:
                     print("Error: ", e)
                     return ()
         else:
 
             def copyfunction(input, output):
-                shutil.copyfile(input, output)
+                try:
+                    # Create destination directory if it doesn't exist
+                    os.makedirs(os.path.dirname(output), exist_ok=True)
+                    shutil.copyfile(input, output)
+                except OSError as e:
+                    print("Error: ", e)
+                    return ()
 
         self.copyfunction = copyfunction
 
     def copy_files(self, metadata):
         """
         Copy files from the source directory to the output directory. The new file names are defined in the metadata.
-
         Parameters
         ----------
-
         metadata : pd.DataFrame
             Expected columns are: filename, new_file_name, source, dest
-
         Returns
         -------
         None
-
         """
         print("Starting copy process...")
         self.define_copy_functions()
-
         # actually perform the copy process
         for old, new, source, dest in tqdm(
             zip(
@@ -507,7 +518,6 @@ class PhenixParser:
             # define old and new paths for copy process
             old_path = os.path.join(source, old)
             new_path = os.path.join(dest, new)
-
             # check if old path exists
             if os.path.exists(old_path):
                 self.copyfunction(old_path, new_path)
