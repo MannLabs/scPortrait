@@ -12,6 +12,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -114,32 +115,43 @@ class PhenixParser:
             os.makedirs(getattr(self, f"outdir_{name}"))
 
     def get_channel_metadata(self, xml_path) -> pd.DataFrame:
+        """Parse channel metadata from Index.ref.xml without using grep"""
         index_file = xml_path
-
-        # get channel names and ids and generate a lookup table
-        cmd = """grep -E -m 20 '<ChannelName>|<ChannelID>' '""" + index_file + """'"""
-        results = subprocess.check_output(cmd, shell=True).decode("utf-8").strip().split("\r\n")
-
+        
+        # Read and parse the XML file
+        with open(index_file, 'r') as f:
+            content = f.read()
+        
+        # Use regex to mimic grep behavior exactly
+        pattern = r'<ChannelName>.*?</ChannelName>|<ChannelID>.*?</ChannelID>'
+        results = re.findall(pattern, content, re.MULTILINE)
         results = [x.strip() for x in results]
+        
+        # Extract channel IDs and names exactly as in original
         channel_ids = [x.split(">")[1].split("<")[0] for x in results if x.startswith("<ChannelID")]
         channel_names = [
-            x.split(">")[1].split("<")[0].replace(" ", "") for x in results if x.startswith("<ChannelName")
+            x.split(">")[1].split("<")[0].replace(" ", "") 
+            for x in results if x.startswith("<ChannelName")
         ]
-
+        
+        # Process exactly as in original
         channel_ids = list(set(channel_ids))
         channel_ids.sort()
-        channel_names = channel_names[0 : len(channel_ids)]
-
+        channel_names = channel_names[0:len(channel_ids)]
+        
+        # Create DataFrame exactly as in original
         lookup = pd.DataFrame({"id": list(channel_ids), "label": list(channel_names)})
-
+        
         print("Experiment contains the following image channels: ")
         print(lookup, "\n")
-
-        # save lookup file to csv
+        
+        # Save lookup file to csv
         lookup.to_csv(f"{self.experiment_dir}/channel_lookuptable.csv")
         print(f"Channel Lookup table saved to file at {self.experiment_dir}/channel_lookuptable.csv\n")
-
+        
+        # Set channel names as in original
         self.channel_names = channel_names
+        
         return lookup
 
     def read_phenix_xml(self, xml_path):
