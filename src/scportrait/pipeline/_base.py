@@ -4,7 +4,6 @@ import platform
 import shutil
 import sys
 import tempfile
-import warnings
 from datetime import datetime
 
 import numpy as np
@@ -12,8 +11,7 @@ import torch
 
 
 class Logable:
-    """
-    Object which can create log entries.
+    """Create log entries.
 
     Args:
         debug (bool, default ``False``): When set to ``True`` log entries will be printed to the console.
