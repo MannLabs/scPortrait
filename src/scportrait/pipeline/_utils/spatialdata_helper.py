@@ -37,7 +37,7 @@ def check_memory(item: xarray.DataArray) -> bool:
 
 
 def generate_region_annotation_lookuptable(sdata: SpatialData) -> dict[str, list[tuple[str, TableModel]]]:
-    """Generate lookup table for region annotations.
+    """Generate a lookup table for the region annotation tables contained in a SpatialData object ordered according to the region they annotate.
 
     Args:
         sdata: SpatialData object to process
@@ -75,7 +75,7 @@ def remap_region_annotation_table(table: TableModel, region_name: str) -> TableM
     table.obs["region"] = table.obs["region"].astype("category")
 
     if "spatialdata_attrs" in table.uns:
-        del table.uns["spatialdata_attrs"]
+        del table.uns["spatialdata_attrs"]  # remove the spatialdata attributes so that the table can be re-written
 
     return TableModel.parse(table, region_key="region", region=region_name, instance_key="cell_id")
 

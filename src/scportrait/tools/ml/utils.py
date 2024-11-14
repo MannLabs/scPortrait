@@ -38,7 +38,7 @@ def combine_datasets_balanced(
     elements = [len(el) for el in list_of_datasets]
     rows = np.arange(len(list_of_datasets))
 
-    # create dataset fraction array
+    # create dataset fraction array of len(list_of_datasets)
     mat = csr_matrix((elements, (rows, class_labels))).toarray()
     cells_per_class = np.sum(mat, axis=0)
     normalized = mat / cells_per_class
@@ -168,9 +168,7 @@ def split_dataset_fractions(
         else:
             residual_size = len(dataset) - train_size - test_size - val_size
             if residual_size < 0:
-                raise ValueError(
-                    f"Dataset with length {len(dataset)} is too small to be split into " f"requested sizes"
-                )
+                raise ValueError(f"Dataset with length {len(dataset)} is too small to be split into requested sizes")
 
             if seed is not None:
                 gen = torch.Generator()

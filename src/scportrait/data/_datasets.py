@@ -8,7 +8,7 @@ def dataset_1() -> Path:
     """Download and extract the example dataset 1 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_1_images"
@@ -25,7 +25,7 @@ def dataset_2() -> Path:
     """Download and extract the example dataset 2 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_2_images"
@@ -42,7 +42,7 @@ def dataset_3() -> Path:
     """Download and extract the example dataset 3 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_3_images"
@@ -59,7 +59,7 @@ def dataset_4() -> Path:
     """Download and extract the example dataset 4 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_4_images"
@@ -76,7 +76,7 @@ def dataset_5() -> Path:
     """Download and extract the example dataset 5 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_5_images"
@@ -93,7 +93,7 @@ def dataset_6() -> Path:
     """Download and extract the example dataset 6 images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "example_6_images"
@@ -110,7 +110,7 @@ def dataset_stitching_example() -> Path:
     """Download and extract the example dataset for stitching images.
 
     Returns:
-        Path: Path to the downloaded and extracted images.
+        Path to the downloaded and extracted images.
     """
     data_dir = Path(get_data_dir())
     save_path = data_dir / "stitching_example"
