@@ -13,6 +13,8 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
+import platform
+import tempfile
 
 import numpy as np
 import pandas as pd
@@ -458,40 +460,44 @@ class PhenixParser:
             )
 
     def define_copy_functions(self):
-        # define function for copying depending on if symlinks should be used or not
+        """Define function for copying depending on if symlinks should be used or not"""
         if self.export_symlinks:
-
             def copyfunction(input, output):
                 try:
-                    os.symlink(input, output)
+                    if platform.system() == 'Windows':
+                        # On Windows, use hard links when symlinks are requested
+                        if not os.path.exists(output):
+                            os.link(input, output)
+                    else:
+                        # Original Unix symlink behavior
+                        os.symlink(input, output)
                 except OSError as e:
                     print("Error: ", e)
                     return ()
         else:
-
             def copyfunction(input, output):
-                shutil.copyfile(input, output)
-
+                try:
+                    # Create destination directory if it doesn't exist
+                    os.makedirs(os.path.dirname(output), exist_ok=True)
+                    shutil.copyfile(input, output)
+                except OSError as e:
+                    print("Error: ", e)
+                    return ()
         self.copyfunction = copyfunction
 
     def copy_files(self, metadata):
         """
         Copy files from the source directory to the output directory. The new file names are defined in the metadata.
-
         Parameters
         ----------
-
         metadata : pd.DataFrame
             Expected columns are: filename, new_file_name, source, dest
-
         Returns
         -------
         None
-
         """
         print("Starting copy process...")
         self.define_copy_functions()
-
         # actually perform the copy process
         for old, new, source, dest in tqdm(
             zip(
@@ -507,7 +513,6 @@ class PhenixParser:
             # define old and new paths for copy process
             old_path = os.path.join(source, old)
             new_path = os.path.join(dest, new)
-
             # check if old path exists
             if os.path.exists(old_path):
                 self.copyfunction(old_path, new_path)
