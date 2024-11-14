@@ -1,3 +1,7 @@
+"""Utility functions for handling SpatialData objects and operations."""
+
+from typing import TypeAlias, Union
+
 import datatree
 import numpy as np
 import pandas as pd
@@ -8,37 +12,42 @@ from spatialdata import SpatialData, get_centroids
 from spatialdata._core.operations.transform import transform
 from spatialdata.models import PointsModel, TableModel
 from spatialdata.transformations.operations import get_transformation
+from spatialdata.transformations.transformations import BaseTransformation
 
 from scportrait.pipeline._utils.segmentation import numba_mask_centroid
 
+# Type aliases
+DataElement: TypeAlias = datatree.DataTree | xarray.DataArray
+ChunkSize: TypeAlias = tuple[int, ...]
+ChunkSizes: TypeAlias = list[tuple[int, ...]]
 
-def check_memory(item):
-    """
-    Check the memory usage of the given if it were completely loaded into memory using .compute().
+
+def check_memory(item: xarray.DataArray) -> bool:
+    """Check if item can fit in available memory.
+
+    Args:
+        item: Array to check memory requirements for
+
+    Returns:
+        Whether item can fit in memory
     """
     array_size = item.nbytes
     available_memory = psutil.virtual_memory().available
-
     return array_size < available_memory
 
 
-def generate_region_annotation_lookuptable(sdata: SpatialData) -> dict:
-    """Generate a lookup table for the region annotation tables contained in a SpatialData object ordered according to the region they annotate.
+def generate_region_annotation_lookuptable(sdata: SpatialData) -> dict[str, list[tuple[str, TableModel]]]:
+    """Generate lookup table for region annotations.
 
-    Parameters
-    ----------
-    sdata : SpatialData
-        The SpatialData object to generate the lookup table from.
+    Args:
+        sdata: SpatialData object to process
 
-    Returns
-    -------
-    dict
-        A dictionary where the keys are the region names and the values are lists of tuples where each tuple contains the table name and the TableModel object.
+    Returns:
+        Mapping of region names to list of (table_name, table) tuples
     """
-
     table_names = list(sdata.tables.keys())
+    region_lookup: dict[str, list[tuple[str, TableModel]]] = {}
 
-    region_lookup = {}
     for table_name in table_names:
         table = sdata.tables[table_name]
         region = table.uns["spatialdata_attrs"]["region"]
@@ -52,181 +61,142 @@ def generate_region_annotation_lookuptable(sdata: SpatialData) -> dict:
 
 
 def remap_region_annotation_table(table: TableModel, region_name: str) -> TableModel:
-    """Produce an identical region annotation table that is mapped to a new region name.
+    """Remap region annotation table to new region name.
 
-    Parameters
-    ----------
-    table : TableModel
-        The region annotation table to remap.
-    region_name : str
-        The new region name to remap the table to.
+    Args:
+        table: Region annotation table to remap
+        region_name: New region name
 
-    Returns
-    -------
-    TableModel
-        The region annotation table mapped to the new region name.
+    Returns:
+        Remapped table
     """
-
     table = table.copy()
     table.obs["region"] = region_name
     table.obs["region"] = table.obs["region"].astype("category")
 
     if "spatialdata_attrs" in table.uns:
-        del table.uns["spatialdata_attrs"]  # remove the spatialdata attributes so that the table can be re-written
+        del table.uns["spatialdata_attrs"]
 
-    table = TableModel.parse(table, region_key="region", region=region_name, instance_key="cell_id")
-    return table
+    return TableModel.parse(table, region_key="region", region=region_name, instance_key="cell_id")
 
 
-def get_chunk_size(element: datatree.DataTree | xarray.DataArray) -> tuple | list[tuple]:
-    """Get the chunk size of the image data.
+def get_chunk_size(element: DataElement) -> ChunkSize | ChunkSizes:
+    """Get chunk size of image data.
 
-    Parameters
-    ----------
-    element : datatree.DataTree or xarray.DataArray
-        The element to get the chunk size from. If a DataTree, then the chunk size of the first scale will be returned. If a DataArray, then the chunk size of the image data will be returned.
+    Args:
+        element: Element to get chunk size from
 
-    Returns
-    -------
-    tuple or [tuple]
-        The chunk size of the image data. If a multiscale image was provided then a list of chunk sizes will be returned.
+    Returns:
+        Chunk size(s) of the image data
+
+    Raises:
+        ValueError: If element type is not supported
     """
-
     if isinstance(element, xarray.DataArray):
         if len(element.shape) == 2:
             y, x = element.chunksizes.values()
-            if len(y) > 1 or isinstance(y, tuple):
-                y = y[0]
-            if len(x) > 1 or isinstance(x, tuple):
-                x = x[0]
-            y, x = np.array([y, x]).flatten()
-            chunksize = (y, x)
-
+            y = y[0] if isinstance(y, tuple | list) or len(y) > 1 else y
+            x = x[0] if isinstance(x, tuple | list) or len(x) > 1 else x
+            return (int(y), int(x))
         elif len(element.shape) == 3:
             c, y, x = element.chunksizes.values()
-            if len(y) > 1 or isinstance(y, tuple):
-                y = y[0]
-            if len(x) > 1 or isinstance(x, tuple):
-                x = x[0]
-            if len(c) > 1 or isinstance(c, tuple):
-                c = c[0]
-            c, y, x = np.array([c, y, x]).flatten()
-            chunksize = (c, y, x)  # type: ignore
-        return chunksize
+            c = c[0] if isinstance(c, tuple | list) or len(c) > 1 else c
+            y = y[0] if isinstance(y, tuple | list) or len(y) > 1 else y
+            x = x[0] if isinstance(x, tuple | list) or len(x) > 1 else x
+            return (int(c), int(y), int(x))
 
     elif isinstance(element, datatree.DataTree):
-        scales = list(element.keys())
-        chunk_sizes = []
-
-        for scale in scales:
+        chunk_sizes: ChunkSizes = []
+        for scale in element:
             if len(element[scale]["image"].shape) == 2:
                 y, x = element[scale].chunksizes.values()
-                if len(y) > 1:
-                    y = y[0]
-                if len(x) > 1:
-                    x = x[0]
-                y, x = np.array([y, x]).flatten()
-                chunksize = (y, x)
-
+                y = y[0] if len(y) > 1 else y
+                x = x[0] if len(x) > 1 else x
+                chunk_sizes.append((int(y), int(x)))
             elif len(element[scale]["image"].shape) == 3:
                 c, y, x = element[scale].chunksizes.values()
-                if len(y) > 1:
-                    y = y[0]
-                if len(x) > 1:
-                    x = x[0]
-                if len(c) > 1:
-                    c = c[0]
-                c, y, x = np.array([c, y, x]).flatten()
-                chunksize = (c, y, x)  # type: ignore
-                chunk_sizes.append(chunksize)
-
+                c = c[0] if len(c) > 1 else c
+                y = y[0] if len(y) > 1 else y
+                x = x[0] if len(x) > 1 else x
+                chunk_sizes.append((int(c), int(y), int(x)))
         return chunk_sizes
-    else:
-        raise ValueError(f"element must be a datatree.DataTree or xarray.DataArray  but found {type(element)} instead")
+
+    raise ValueError(f"Element must be DataTree or DataArray, found {type(element)}")
 
 
-def rechunk_image(
-    element: datatree.DataTree | xarray.DataArray, chunk_size: tuple
-) -> datatree.DataTree | xarray.DataArray:
+def rechunk_image(element: DataElement, chunk_size: ChunkSize) -> DataElement:
+    """Rechunk image data to desired chunk size.
+
+    Args:
+        element: Element to rechunk
+        chunk_size: Desired chunk dimensions
+
+    Returns:
+        Rechunked element
+
+    Raises:
+        ValueError: If element type is not supported
     """
-    Rechunk the image data to the desired chunksize. This is useful for ensuring that the data is chunked in a regular manner.
-
-    Parameters
-    ----------
-    element : datatree.DataTree or xarray.DataArray
-        The element to rechunk. If a DataTree, then all the scales will be rechunked. If a DataArray, then only the image data will be rechunked.
-    chunk_size : tuple
-        The desired chunk size. The chunk size should be a tuple of integers.
-
-    Returns
-    -------
-    datatree.DataTree or xarray.DataArray
-        The rechunked element.
-    """
-
     if isinstance(element, xarray.DataArray):
         element["image"].data = element["image"].data.rechunk(chunk_size)
         return element
-
     elif isinstance(element, datatree.DataTree):
-        scales = list(element.keys())
-
-        for scale in scales:
+        for scale in element:
             element[scale]["image"].data = element[scale]["image"].data.rechunk(chunk_size)
-
         return element
-    else:
-        raise ValueError(f"element must be a datatree.DataTree or xarray.DataArray  but found {type(element)} instead")
+    raise ValueError(f"Element must be DataTree or DataArray, found {type(element)}")
 
 
 def make_centers_object(
-    centers: np.ndarray,
-    ids: list,
-    transformation: str,
-    coordinate_system="global",
-):
-    """
-    Create a spatialdata PointsModel object from the provided centers and ids.
+    centers: np.ndarray, ids: list[int], transformation: BaseTransformation, coordinate_system: str = "global"
+) -> PointsModel:
+    """Create PointsModel from centers and IDs.
+
+    Args:
+        centers: Array of center coordinates
+        ids: List of point IDs
+        transformation: Transformation to apply
+        coordinate_system: Coordinate system name
+
+    Returns:
+        Points model containing the centers
     """
     coordinates = pd.DataFrame(centers, columns=["y", "x"], index=ids)
     centroids = PointsModel.parse(coordinates, transformations={coordinate_system: transformation})
-    centroids = transform(centroids, to_coordinate_system=coordinate_system)
-
-    return centroids
+    return transform(centroids, to_coordinate_system=coordinate_system)
 
 
-def calculate_centroids(mask, coordinate_system="global"):
+def calculate_centroids(mask: xarray.DataArray, coordinate_system: str = "global") -> PointsModel:
+    """Calculate centroids of labeled regions.
+
+    Args:
+        mask: Labeled mask
+        coordinate_system: Coordinate system name
+
+    Returns:
+        Points model containing centroids
+    """
     transform = get_transformation(mask, coordinate_system)
 
     if check_memory(mask):
         centers, _, _ids = numba_mask_centroid(mask.values)
-        centroids = make_centers_object(centers, _ids, transform, coordinate_system=coordinate_system)
-    else:
-        print("Array larger than available memory, using dask-delayed calculation of centers.")
-        centroids = get_centroids(mask, coordinate_system)
+        return make_centers_object(centers, _ids, transform, coordinate_system)
 
-    return centroids
+    print("Array larger than memory, using dask-delayed calculation.")
+    return get_centroids(mask, coordinate_system)
 
 
-def get_unique_cell_ids(data, remove_background=True):
-    """Get the unique cell ids from the segmentation mask.
+def get_unique_cell_ids(data: xarray.DataArray, remove_background: bool = True) -> set[int]:
+    """Get unique cell IDs from segmentation mask.
 
-    Parameters
-    ----------
-    data : xarray.DataArray
-        The segmentation mask data.
-    remove_background : bool, optional
-        Whether to remove the background class from the unique cell ids (default: True).
+    Args:
+        data: Segmentation mask
+        remove_background: Whether to remove background (0) label
 
-    Returns
-    -------
-    set
-        The unique cell ids.
+    Returns:
+        Set of unique cell IDs
     """
-
     cell_ids = set(DaskUnique(data.data).compute())
-
     if remove_background:
-        cell_ids = cell_ids - {0}  # remove background class
-
+        cell_ids = cell_ids - {0}
     return cell_ids

@@ -54,9 +54,9 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         self.debug = debug
         self.overwrite = overwrite
 
-        self.input_image_status = None
-        self.segmentation_status = None
-        self.centers_status = None
+        self.input_image_status: bool | None = None
+        self.segmentation_status: bool | None = None
+        self.centers_status: bool | None = None
 
     def _check_memory(self, item) -> bool:
         """Check if item can fit in available memory.
@@ -77,7 +77,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         Creates directory in cache location specified in config or current working directory.
         """
         if self.cache is not None:
-            path = os.path.join(self.config["cache"], f"{self.__class__.__name__}_")
+            path = os.path.join(self.directory["cache"], f"{self.__class__.__name__}_")  # type: ignore
         else:
             path = os.path.join(os.getcwd(), f"{self.__class__.__name__}_")
 
@@ -338,10 +338,10 @@ class convert_SPARCSproject_to_spatialdata(Logable):
                 _ids = cPickle.load(input_file)
             centroids = self._make_centers_object(centers, _ids, transform, coordinate_system=coordinate_system)
         else:
-            if self.segementation_status:
+            if self.segmentation_status:
                 self.log("No centers found in project. Recalculating based on the provided segmentation mask.")
 
-                if self.check_memory(mask):
+                if self._check_memory(mask):
                     self.log("Calculating centers using numba This should be quick.")
                     centers, _, _ids = numba_mask_centroid(mask.values)
                     centroids = self._make_centers_object(centers, _ids, transform, coordinate_system=coordinate_system)

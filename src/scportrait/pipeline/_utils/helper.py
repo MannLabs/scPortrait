@@ -1,6 +1,7 @@
 from typing import TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def flatten(nested_list: list[list[T]]) -> list[T]:
     """Flatten a list of lists into a single list.

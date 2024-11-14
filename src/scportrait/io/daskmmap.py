@@ -77,8 +77,8 @@ def calculate_chunk_sizes_chunks(
     target_size_bytes = target_size_gb * 1024**3
     total_elements_per_chunk = target_size_bytes // element_size
 
-    HDF5_chunk_size = list(HDF5_chunk_size)
-    chunk_sizes = HDF5_chunk_size.copy()
+    HDF5_chunk_size = list(HDF5_chunk_size)  # type: ignore
+    chunk_sizes = HDF5_chunk_size.copy()  # type: ignore
 
     while np.prod(chunk_sizes) < total_elements_per_chunk:
         for i in range(len(chunk_sizes)):
@@ -209,4 +209,4 @@ def load_hdf5_chunk(file_path: str, container_name: str, slices: tuple[slice, ..
         The sliced chunk from the HDF5 dataset
     """
     with h5py.File(file_path, "r") as f:
-        data = f[container_name][slices]
+        f[container_name][slices]
