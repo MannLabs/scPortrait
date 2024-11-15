@@ -55,6 +55,12 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: Code Examples
+
+   auto_examples/code_snippets/index
+
+.. toctree::
+   :maxdepth: 2
    :includehidden:
    :caption: Module API
 
