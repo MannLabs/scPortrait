@@ -46,6 +46,8 @@ nbsphinx
 sphinx-book-theme
 sphinx-design
 sphinx-copybutton
+sphinx-gallery
+
 #for testing
 pytest
 # development
