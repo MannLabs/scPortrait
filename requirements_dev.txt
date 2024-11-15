@@ -43,6 +43,7 @@ sphinx
 sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
+nbsphinx-link
 sphinx-book-theme
 sphinx-design
 sphinx-copybutton

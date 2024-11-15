@@ -23,6 +23,7 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
+		rm -rf $(SOURCEDIR)/auto_examples
 		rm -rf $(BUILDDIR)/html/*
 		rm -rf $(BUILDDIR)/latex/*
 		rm -rf $(BUILDDIR)/doctrees/*

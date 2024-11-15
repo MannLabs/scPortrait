@@ -34,6 +34,7 @@ extensions = [
     "sphinxarg.ext",
     "sphinx_rtd_theme",
     "nbsphinx",
+    "nbsphinx_link",
     "sphinx_design",
     "sphinx_copybutton",
     "sphinx_gallery.gen_gallery"
@@ -92,8 +93,8 @@ html_favicon = "favicon.png"
 html_logo = "_static/scPortrait_logo_light.svg"
 
 #set up sphinx gallery
-sg_examples_dir = ["../examples/code_snippets"]
-sg_gallery_dir = ["auto_examples/code_snippets"]
+sg_examples_dir = ["../examples/code_snippets",]
+sg_gallery_dir = ["auto_examples/code_snippets",]
 
 sphinx_gallery_conf = {
     "doc_module": "scportrait",

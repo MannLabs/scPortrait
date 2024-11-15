@@ -58,6 +58,7 @@ Documentation
    :caption: Code Examples
 
    auto_examples/code_snippets/index
+   pages/example_notebooks.ipynb
 
 .. toctree::
    :maxdepth: 2
