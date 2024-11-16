@@ -458,7 +458,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
             for classification_result in classification_results:
                 self.write_classification_result_to_spatialdata(classification_result)
 
-        # add multiscale
         self.add_multiscale_segmentation()
+
         self.clear_temp_dir()
         self.log("Finished transferring SPARCS project to spatialdata object.")
