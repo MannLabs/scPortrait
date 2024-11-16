@@ -209,4 +209,5 @@ def load_hdf5_chunk(file_path: str, container_name: str, slices: tuple[slice, ..
         The sliced chunk from the HDF5 dataset
     """
     with h5py.File(file_path, "r") as f:
-        f[container_name][slices]
+        data = f[container_name][slices]
+    return data

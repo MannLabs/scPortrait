@@ -104,7 +104,6 @@ class spLabels2DModel(Labels2DModel):
         if classes is not None:
             for d in data:
                 data[d].attrs["cell_ids"] = classes
-        else:
-            for d in data:
-                data[d] = self._get_cell_ids(data[d])
+        for d in data:
+            data[d] = self._get_cell_ids(data[d])
         return data

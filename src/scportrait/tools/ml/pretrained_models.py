@@ -14,7 +14,7 @@ def load_multilabelSupervised(
     hparam_path: str | Path,
     model_type: str,
     eval: bool = True,
-    device: Literal["cuda", "cpu"] = "cuda",
+    device: Literal["cpu", "cuda", "mps"] = "cuda",
 ) -> MultilabelSupervisedModel:
     """Load a pretrained model uploaded to the github repository.
 
