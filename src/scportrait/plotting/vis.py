@@ -157,3 +157,65 @@ def plot_segmentation_mask(
     plt.imshow(segmentation, alpha=alpha, cmap=cmap_masks)
     plt.axis("off")
     return fig
+
+def colorize(im: np.ndarray,
+             color: tuple[int, ...] = (1, 0, 0),
+             clip_percentile: float =0.0):
+    """
+    Helper function to create an RGB image from a single-channel image using a
+    specific color.
+
+    Args:
+        im (np.ndarray): A single-channel image.
+        color (tuple[int, ...], optional): The color to use for the image. Defaults to (1, 0, 0).
+        clip_percentile (float, optional): The percentile to clip the image at. Defaults to 0.0.
+
+    Returns:
+        np.ndarray: The colorized image.
+    """
+    # Check that we do just have a 2D image
+    if im.ndim > 2 and im.shape[2] != 1:
+        raise ValueError("This function expects a single-channel image!")
+
+    # Rescale the image according to how we want to display it
+    im_scaled = im.astype(np.float32) - np.percentile(im, clip_percentile)
+    im_scaled = im_scaled / np.percentile(im_scaled, 100 - clip_percentile)
+    im_scaled = np.clip(im_scaled, 0, 1)
+
+    # Need to make sure we have a channels dimension for the multiplication to work
+    im_scaled = np.atleast_3d(im_scaled)
+
+    # Reshape the color (here, we assume channels last)
+    color = np.asarray(color).reshape((1, 1, -1))
+    return im_scaled * color
+
+def generate_composite(images: np.ndarray,
+                       colors: list[tuple[int, ...]] = None,
+                       plot: bool =False):
+    """Create a composite image from a multi-channel image for visualization.
+
+    Args:
+        images (np.ndarray): A multi-channel image to be combined.
+        colors (list[tuple[int, ...]], optional): A list of colors to use for each channel. Defaults to None.
+        plot (bool, optional): Whether to plot the composite image. Defaults to False.
+
+    Returns:
+        np.ndarray: The composite image.
+    """
+    if colors is None:
+        colors = [(0, 0, 1), (0, 1, 0), (1, 0, 0), (1, 0, 1)]
+    colorized = []
+    for image, color in zip(images, colors, strict=False):
+        image = colorize(image, color, 0.0)
+        colorized.append(image)
+
+    if plot:
+        for i in colorized:
+            plt.figure()
+            plt.imshow(i)
+
+    image = colorized[0]
+    for i in range(len(colorized) - 1):
+        image += colorized[i + 1]
+
+    return np.clip(image, 0, 1)
