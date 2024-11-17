@@ -12,10 +12,13 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath("../src/scportrait"))
 
+
 def setup(app):
-    app.add_css_file('_static/hide_links.css') 
+    app.add_css_file("_static/hide_links.css")
+
 
 # -- Project information -----------------------------------------------------
 
@@ -37,7 +40,7 @@ extensions = [
     "nbsphinx_link",
     "sphinx_design",
     "sphinx_copybutton",
-    "sphinx_gallery.gen_gallery"
+    "sphinx_gallery.gen_gallery",
 ]
 exclude_patterns = ["**.ipynb_checkpoints"]
 
@@ -47,15 +50,16 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build",
-                    "Thumbs.db",
-                    ".DS_Store",
-                    #ignore automatically generated files by sphinx-gallery
-                    "auto_examples/**.ipynb",
-                    "auto_examples/**.json",
-                    "auto_examples/**.py",
-                    "auto_examples/**.md5",
-                    ]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    # ignore automatically generated files by sphinx-gallery
+    "auto_examples/**.ipynb",
+    "auto_examples/**.json",
+    "auto_examples/**.py",
+    "auto_examples/**.md5",
+]
 
 # autodoc_mock_imports = []
 autodoc_mock_imports = []  # type: ignore
@@ -92,9 +96,13 @@ autodoc_default_options = {
 html_favicon = "favicon.png"
 html_logo = "_static/scPortrait_logo_light.svg"
 
-#set up sphinx gallery
-sg_examples_dir = ["../examples/code_snippets",]
-sg_gallery_dir = ["auto_examples/code_snippets",]
+# set up sphinx gallery
+sg_examples_dir = [
+    "../examples/code_snippets",
+]
+sg_gallery_dir = [
+    "auto_examples/code_snippets",
+]
 
 sphinx_gallery_conf = {
     "doc_module": "scportrait",

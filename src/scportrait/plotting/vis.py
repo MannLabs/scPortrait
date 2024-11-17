@@ -158,9 +158,8 @@ def plot_segmentation_mask(
     plt.axis("off")
     return fig
 
-def colorize(im: np.ndarray,
-             color: tuple[int, ...] = (1, 0, 0),
-             clip_percentile: float =0.0):
+
+def colorize(im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile: float = 0.0):
     """
     Helper function to create an RGB image from a single-channel image using a
     specific color.
@@ -189,9 +188,8 @@ def colorize(im: np.ndarray,
     color = np.asarray(color).reshape((1, 1, -1))
     return im_scaled * color
 
-def generate_composite(images: np.ndarray,
-                       colors: list[tuple[int, ...]] = None,
-                       plot: bool =False):
+
+def generate_composite(images: np.ndarray, colors: list[tuple[int, ...]] = None, plot: bool = False):
     """Create a composite image from a multi-channel image for visualization.
 
     Args:
