@@ -329,7 +329,20 @@ class Stitcher:
         self.thumbnail = thumbnail.make_thumbnail(self.reader, channel=self.stitching_channel_id, scale=scale)
 
         # rescale thumbnail to 0-1 range
-        self.thumbnail = rescale_image(self.thumbnail, self.rescale_range[self.stitching_channel])
+        # if all channels should be rescaled to the same range, initialize dictionary with all channels
+        if type(self.rescale_range) is tuple:
+            rescale_range = {k: self.rescale_range for k in self.channel_names}
+            rescale = True
+        elif type(self.rescale_range) is dict:
+            rescale_range = self.rescale_range[self.stitching_channel]
+            rescale = True
+        else:
+            if not self.do_intensity_rescale:
+                rescale = False #turn off rescaling
+
+        # rescale generated thumbnail
+        if rescale:
+            self.thumbnail = rescale_image(self.thumbnail, rescale_range)
 
     def initialize_aligner(self):
         """
