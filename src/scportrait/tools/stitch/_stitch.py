@@ -338,7 +338,7 @@ class Stitcher:
             rescale = True
         else:
             if not self.do_intensity_rescale:
-                rescale = False #turn off rescaling
+                rescale = False  # turn off rescaling
 
         # rescale generated thumbnail
         if rescale:
