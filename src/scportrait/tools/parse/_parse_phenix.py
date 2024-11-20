@@ -84,7 +84,12 @@ class PhenixParser:
         if self.flatfield_status:
             index_file = os.path.join(self.experiment_dir, "Images", "Index.ref.xml")
         else:
-            index_file = os.path.join(self.experiment_dir, "Index.idx.xml")
+            if os.path.isfile(os.path.join(self.experiment_dir, "Index.idx.xml")):
+                index_file = os.path.join(self.experiment_dir, "Index.idx.xml")
+            if os.path.isfile(os.path.join(self.experiment_dir, "Images", "Index.idx.xml")):
+                index_file = os.path.join(self.experiment_dir, "Images", "Index.idx.xml")
+            else:
+                sys.exit("Can not find index file in the experiment directory.")
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
@@ -283,7 +288,7 @@ class PhenixParser:
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
-                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[0]
+                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[-1]
 
         if self.compress_cols:
             for i, well in enumerate(wells):
