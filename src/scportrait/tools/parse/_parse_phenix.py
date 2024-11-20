@@ -288,7 +288,7 @@ class PhenixParser:
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
-                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[0]
+                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[-1]
 
         if self.compress_cols:
             for i, well in enumerate(wells):
