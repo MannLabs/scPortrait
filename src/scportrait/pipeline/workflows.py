@@ -545,6 +545,7 @@ class _BaseSegmentation(Segmentation):
 
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
+            self.mask_matching_filtering_threshold = 0.95
 
     def _perform_mask_matching_filtering(
         self,
