@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import warnings
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -465,8 +466,9 @@ class PhenixParser:
             def copyfunction(input, output):
                 try:
                     if platform.system() == "Windows":
-                        print(
-                            "Windows detected as platform. Symlinks cannot be used on Windows. Using hard links instead."
+                        warnings.warn(
+                            "\n\nWindows detected as platform. Symlinks cannot be used on Windows. Using hard links instead.\n\n",
+                            stacklevel=2,
                         )
                         # On Windows, use hard links when symlinks are requested
                         if not os.path.exists(output):
