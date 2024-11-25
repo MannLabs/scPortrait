@@ -1,3 +1,4 @@
 {
-    "path": "../../examples/notebooks/example_projects/example_2/processing_notebook.ipynb"
+    "path": "../../examples/notebooks/example_projects/example_2/processing_notebook.ipynb",
+    "extra-media": ["../../examples/notebooks/example_projects/example_2/config_cellpose.yml"]
 }
