@@ -1041,6 +1041,7 @@ class WGASegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             image = input_image[0]
             self._nucleus_segmentation(image, debug=self.debug)
@@ -1050,6 +1051,8 @@ class WGASegmentation(_ClassicalSegmentation):
             if isinstance(image, xarray.DataArray):
                 image = image.data.compute()
             self._cytosol_segmentation(image, debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         if self.debug:
             self._visualize_final_masks()
@@ -1111,8 +1114,11 @@ class DAPISegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             self._nucleus_segmentation(input_image[0], debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()
@@ -1323,8 +1329,10 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
@@ -1481,8 +1489,10 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize segmentation classes ensuring that background is removed
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
@@ -1562,8 +1572,10 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
@@ -1772,7 +1784,10 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             ),
         }
 
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
