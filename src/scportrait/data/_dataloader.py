@@ -12,6 +12,27 @@ import requests
 from filelock import FileLock
 from tqdm import tqdm
 
+def _get_data_dir():
+    """
+    Helper Function to get path to data that was packaged with scPortrait
+
+    Returns
+    -------
+        str: path to data directory
+    """
+
+    def find_root_by_file(marker_file, current_path):
+        for parent in current_path.parents:
+            if (parent / marker_file).exists():
+                return parent
+        return None
+
+    src_code_dir = find_root_by_file("README.md", Path(__file__))
+    data_dir = os.path.join(src_code_dir, "scportrait_data")
+    data_dir = os.path.abspath(data_dir)
+
+    return data_dir
+
 def _download(
     url: str,
     archive_format: Literal["zip", "tar", "tar.gz", "tgz"] = None,

@@ -2,8 +2,7 @@ import os
 from pathlib import Path
 
 from scportrait.data._dataloader import _download
-from scportrait.ml.pretrained_models import _get_data_dir
-
+from scportrait.data._dataloader import _get_data_dir
 
 def dataset_1():
     """
