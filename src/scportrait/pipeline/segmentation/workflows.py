@@ -1008,7 +1008,7 @@ class WGASegmentation(_ClassicalSegmentation):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
@@ -1079,7 +1079,7 @@ class DAPISegmentation(_ClassicalSegmentation):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
@@ -1301,7 +1301,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model, diameter, masks])
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
         # check that the correct level of input image is used
         self._transform_input_image(input_image)
 
@@ -1454,7 +1454,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         self._clear_cache(vars_to_delete=[masks_nucleus, masks_cytosol])
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
         # ensure the correct level is selected for the input image
         input_image = self._transform_input_image(input_image)
 
@@ -1521,7 +1521,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
         # ensure the correct level is selected for the input image
         self._transform_input_image(input_image)
 
@@ -1741,7 +1741,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         return segmentation
 
-    def process(self, input_image) -> None:
+    def _execute_segmentation(self, input_image) -> None:
         # ensure the correct level is selected for the input image
         self._transform_input_image(input_image)
 
