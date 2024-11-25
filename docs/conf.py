@@ -34,6 +34,7 @@ author = "Sophia Mädler and Niklas Schmacke"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.doctest",
     "sphinxarg.ext",
     "sphinx_rtd_theme",
     "nbsphinx",
