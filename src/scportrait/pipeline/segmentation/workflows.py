@@ -38,8 +38,11 @@ class _BaseSegmentation(Segmentation):
         super().__init__(*args, **kwargs)
 
     def _transform_input_image(self, input_image):
+        start_transform = timeit.default_timer()
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data
+        stop_transform = timeit.default_timer()
+        self.transform_time = stop_transform - start_transform
         return input_image
 
     def return_empty_mask(self, input_image):
@@ -1646,10 +1649,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         total_time_start = timeit.default_timer()
 
         # transform input image
-        start_transform = timeit.default_timer()
         self._transform_input_image(input_image)
-        stop_transform = timeit.default_timer()
-        self.transform_time = stop_transform - start_transform
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
