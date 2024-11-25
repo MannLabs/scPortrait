@@ -119,3 +119,6 @@ sphinx_gallery_conf = {
     "download_all_examples": False,
     "promote_jupyter_magic": True,
 }
+
+#turn off execution of notebooks during build of docs
+nbsphinx_execute = 'never'
