@@ -53,6 +53,10 @@ jobs:
           sudo apt install pandoc
           pip install ."[dev]"/
           #conda env update --file .github/additional_files/environment.yml --name base
+      - uses: Mushus/checkout-submodule@v1
+        with:
+          basePath: .
+          submodulePath: ./examples/notebooks
       - name: Generate Documentation
         run: |
           cd docs
