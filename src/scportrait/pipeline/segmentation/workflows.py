@@ -1306,7 +1306,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
 
     def _execute_segmentation(self, input_image):
         # check that the correct level of input image is used
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check that the image is of the correct dtype
         self._check_input_image_dtype(input_image)
@@ -1526,7 +1526,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
     def _execute_segmentation(self, input_image):
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1649,7 +1649,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         total_time_start = timeit.default_timer()
 
         # transform input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1743,7 +1743,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
     def _execute_segmentation(self, input_image) -> None:
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
