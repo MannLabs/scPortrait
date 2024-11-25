@@ -6,6 +6,7 @@ development.ipynb
 config_test.yml
 segmentation_workflows/
 scportrait_data/
+docs/auto_examples/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
