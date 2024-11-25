@@ -120,5 +120,5 @@ sphinx_gallery_conf = {
     "promote_jupyter_magic": True,
 }
 
-#turn off execution of notebooks during build of docs
-nbsphinx_execute = 'never'
+# turn off execution of notebooks during build of docs
+nbsphinx_execute = "never"
