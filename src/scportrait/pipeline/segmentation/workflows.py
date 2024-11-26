@@ -1318,7 +1318,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # check that the correct level of input image is used
         input_image = self._transform_input_image(input_image)
 
-        # check that the image is of the correct dtype
         self._check_input_image_dtype(input_image)
 
         # only get the first cannel for segmentation (does not use excess space on the GPU this way)
