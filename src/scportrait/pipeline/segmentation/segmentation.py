@@ -118,9 +118,10 @@ class Segmentation(ProcessingStep):
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
         self._tmp_image_path = _tmp_image_path
+        self.processes_per_GPU = None
+        self.n_processes = 1
 
     def _check_gpu_status(self):
-        # check if cuda GPU is available
         if torch.cuda.is_available():
             self.use_GPU = True
             self.device = "cuda"

@@ -38,8 +38,11 @@ class _BaseSegmentation(Segmentation):
         super().__init__(*args, **kwargs)
 
     def _transform_input_image(self, input_image):
+        start_transform = timeit.default_timer()
         if isinstance(input_image, xarray.DataArray):
             input_image = input_image.data
+        stop_transform = timeit.default_timer()
+        self.transform_time = stop_transform - start_transform
         return input_image
 
     def return_empty_mask(self, input_image):
@@ -1008,7 +1011,8 @@ class WGASegmentation(_ClassicalSegmentation):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
@@ -1038,6 +1042,7 @@ class WGASegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             image = input_image[0]
             self._nucleus_segmentation(image, debug=self.debug)
@@ -1047,6 +1052,8 @@ class WGASegmentation(_ClassicalSegmentation):
             if isinstance(image, xarray.DataArray):
                 image = image.data.compute()
             self._cytosol_segmentation(image, debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         if self.debug:
             self._visualize_final_masks()
@@ -1056,8 +1063,8 @@ class WGASegmentation(_ClassicalSegmentation):
 
         print("Channels shape: ", segmentation.shape)
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
-        return results
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedWGASegmentation(ShardedSegmentation):
@@ -1079,7 +1086,8 @@ class DAPISegmentation(_ClassicalSegmentation):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
@@ -1108,14 +1116,17 @@ class DAPISegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             self._nucleus_segmentation(input_image[0], debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
-        return results
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedDAPISegmentation(ShardedSegmentation):
@@ -1301,11 +1312,12 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model, diameter, masks])
 
-    def process(self, input_image):
-        # check that the correct level of input image is used
-        self._transform_input_image(input_image)
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
 
-        # check that the image is of the correct dtype
+        # check that the correct level of input image is used
+        input_image = self._transform_input_image(input_image)
+
         self._check_input_image_dtype(input_image)
 
         # only get the first cannel for segmentation (does not use excess space on the GPU this way)
@@ -1320,14 +1332,17 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1454,7 +1469,9 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         self._clear_cache(vars_to_delete=[masks_nucleus, masks_cytosol])
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
         input_image = self._transform_input_image(input_image)
 
@@ -1478,8 +1495,10 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize segmentation classes ensuring that background is removed
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
@@ -1489,6 +1508,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
@@ -1521,9 +1541,11 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1559,8 +1581,10 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
         all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
@@ -1569,6 +1593,7 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
 
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
@@ -1646,10 +1671,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         total_time_start = timeit.default_timer()
 
         # transform input image
-        start_transform = timeit.default_timer()
-        self._transform_input_image(input_image)
-        stop_transform = timeit.default_timer()
-        self.transform_time = stop_transform - start_transform
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1741,9 +1763,11 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         return segmentation
 
-    def process(self, input_image) -> None:
+    def _execute_segmentation(self, input_image) -> None:
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
@@ -1772,7 +1796,10 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             ),
         }
 
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
         all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
@@ -1780,8 +1807,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         segmentation = self._finalize_segmentation_results()  # type: ignore
 
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
-
-        return None
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose(ShardedSegmentation):
