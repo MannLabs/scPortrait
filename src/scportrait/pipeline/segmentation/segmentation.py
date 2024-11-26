@@ -122,7 +122,6 @@ class Segmentation(ProcessingStep):
         self.n_processes = 1
 
     def _check_gpu_status(self):
-        # check if cuda GPU is available
         if torch.cuda.is_available():
             self.use_GPU = True
             self.device = "cuda"
