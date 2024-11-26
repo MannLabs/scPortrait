@@ -119,7 +119,7 @@ class Segmentation(ProcessingStep):
         self.cyto_seg_name = cyto_seg_name
         self._tmp_image_path = _tmp_image_path
         self.processes_per_GPU = None
-        self.n_processes = 1 #default value that shoudl work for all processes
+        self.n_processes = 1  # default value that shoudl work for all processes
 
     def _check_gpu_status(self):
         # check if cuda GPU is available

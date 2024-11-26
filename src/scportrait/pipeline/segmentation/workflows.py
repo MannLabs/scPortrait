@@ -1063,7 +1063,7 @@ class WGASegmentation(_ClassicalSegmentation):
 
         print("Channels shape: ", segmentation.shape)
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self.total_time = timeit.default_timer() - total_time_start
 
 
@@ -1125,7 +1125,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self.total_time = timeit.default_timer() - total_time_start
 
 
