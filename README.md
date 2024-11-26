@@ -28,7 +28,7 @@ Currently the scPortrait framework is being developed using Linux and macOS, and
 
 ## Citing our Work
 
-scPortrait was created by Sophia Mädler and Niklas Schmacke in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann), [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab) in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
+scPortrait was created by Sophia Mädler, Niklas Schmacke and Georg Wallmann in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann), [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab) in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
 
 If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1):
 
