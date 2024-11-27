@@ -9,12 +9,12 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in particular:
 
-- [Getting started](https://mannlabs.github.io/scPortrait/pages/quickstart.html#quickstart)
+- [Introduction](https://mannlabs.github.io/scPortrait/pages/introduction.html)
 - [Tutorials](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
 
 ## Installation from Github
 
-Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/quickstart/installation.html). scPortrait currently supports Python 3.10 and 3.11.
+Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.10 and 3.11.
 
 To get started you can install scPortrait via pip:
 
