@@ -16,7 +16,9 @@ import pandas as pd
 
 import io
 from contextlib import redirect_stdout
-
+from alphabase.io import tempmmap
+from pathlib import Path
+from typing import Union
 
 class MLClusterClassifier(ProcessingStep):
     """
@@ -41,6 +43,11 @@ class MLClusterClassifier(ProcessingStep):
     """
 
     CLEAN_LOG = True
+    PRETRAINED_MODELS = ["autophagy_classifier1.0",
+                         "autophagy_classifier2.0",
+                         "autophagy_classifier2.1"
+                        ]  
+    CLASSIFIER_ARCHITECTURES = ["VGG1", "VGG2", "VGG1_old", "VGG2_old"]
 
     def __init__(
         self,
@@ -103,19 +110,19 @@ class MLClusterClassifier(ProcessingStep):
                     self.directory,
                     str(self.current_run)
                     + "_"
-                    + self.config["screen_label"]
+                    + self.config["inference_label"]
                     + "_"
                     + self.filtered_dataset,
                 )
             else:
                 self.run_path = os.path.join(
                     self.directory,
-                    str(self.current_run) + "_" + self.config["screen_label"],
+                    str(self.current_run) + "_" + self.config["inference_label"],
                 )
         else:
             self.run_path = os.path.join(
                 self.directory,
-                str(self.current_run) + "_" + self.config["screen_label"],
+                str(self.current_run) + "_" + self.config["inference_label"],
             )  # to ensure that you can tell by directory name what is being classified
 
         if not os.path.isdir(self.run_path):
@@ -131,14 +138,101 @@ class MLClusterClassifier(ProcessingStep):
         except ValueError:
             return False
 
+    def _get_config_parameters(self):
+        
+        if "pretrained_model" in self.config.keys():
+            self.pretrained_model = self.config["pretrained_model"]
+        else:
+            self.pretrained_model = False
+            
+        self.network_dir = self.config["network"]
+        
+        if self.pretrained_model:
+            assert self.network_dir in self.PRETRAINED_MODELS, f"the specified Pretrained model {self.networkdir} not available in scPortrait. Please choose one of the following available models: {self.PRETRAINED_MODELS}"
+        else:
+            assert os.path.exists(self.network_dir), f"the specified network checkpoint {self.network_dir} does not exist"
+
+        if "hparams_file" in self.config.keys():
+            self.hparams_file = self.config["hparams_file"]
+        else:
+            hparam_path = Path(self.network_dir).parent / "hparams.yaml"
+            if os.path.exists(hparam_path):
+                self.hparams_file = hparam_path
+            else:
+                raise ValueError("no hparams file specified in config and could not be dynamically found based on checkpoint path.")
+
+        self.channel_classification = self.config["channel_classification"]
+        #if multiple channels are selected ensure that they are converted to the proper format for passing to the pytorch dataset
+        
+        if isinstance(self.channel_classification, str):
+            self.channel_classification = [int(x) for x in self.channel_classification.split(":")]
+        else:
+            assert isinstance(self.channel_classification, int), f"channel_classification should be an integer or a string of integers separated by colons. Provided value: {self.channel_classification}"
+            self.channel_classification = [self.channel_classification]
+
+        self.dataloader_worker_number = self.config["dataloader_worker_number"]
+        self.batch_size = self.config["batch_size"]
+        self.inference_device = self.config["inference_device"]
+        self.inference_label = self.config["inference_label"]
+        
+        self.classifier_architecture = self.config["classifier_architecture"]
+        assert self.classifier_architecture in self.CLASSIFIER_ARCHITECTURES, f"provided Classifier architecture {self.classifier_architecture} not implemented in scPortrait. Choose one of the following: {self.CLASSIFIER_ARCHITECTURES}"
+
+    def _load_model(self):
+
+        if self.pretrained_model:
+            if self.network_dir == "autophagy_classifier1.0":
+                from scportrait.ml.pretrained_models import autophagy_classifier1_0
+                model = autophagy_classifier1_0(device=self.config["inference_device"])
+            
+            elif self.network_dir == "autophagy_classifier2.0":
+                from scportrait.ml.pretrained_models import autophagy_classifier2_0
+                model = autophagy_classifier2_0(device=self.config["inference_device"])
+            
+            elif self.network_dir == "autophagy_classifier2.1":
+                from scportrait.ml.pretrained_models import autophagy_classifier2_1
+                model = autophagy_classifier2_1(device=self.config["inference_device"])
+            else:
+                sys.exit("incorrect specification for pretrained model.")
+        
+        else:
+            self.log("loading model from the following checkpoint file: {self.network_dir}")
+            self.log("loading model with the following hparams file: {self.hparams_file}")
+
+            model = MultilabelSupervisedModel.load_from_checkpoint(
+                self.network_dir,
+                hparams_file=self.hparam_path,
+                type=self.classifier_architecture,
+                map_location=self.inference_device,
+            )
+        
+        model = model.eval()
+        model.to(self.inference_device)
+        
+        return(model)
+
+    def _load_dataset(self):
+
+        # transforms like noise, random rotations, channel selection are still hardcoded
+        t = transforms.Compose(
+            [ChannelSelector(self.channel_classification)]
+        )
+
+        self.log(f"loading cells from {self.extraction_dir}")
+        self.dataset = self.dataset_type([self.extraction_dir], 
+                                        [0], 
+                                        transform=t, 
+                                        return_id=True
+                                        )
+
+        self.dataset_size = len(self.dataset) #save length of dataset for reaccess during inference
+        self.log(f"Processing dataset with {self.dataset_size} cells")
+
     def __call__(
         self,
         extraction_dir,
-        accessory,
-        size=0,
-        partial=False,
-        project_dataloader=HDF5SingleCellDataset,
-        accessory_dataloader=HDF5SingleCellDataset,
+        partial: Union[int, bool] = False,
+        dataset_type = HDF5SingleCellDataset,
     ):
         """
         Perform classification on the provided HDF5 dataset.
@@ -148,15 +242,10 @@ class MLClusterClassifier(ProcessingStep):
         extraction_dir : str
             Directory containing the extracted HDF5 files from the project. If this class is used as part of
             a project processing workflow, this argument will be provided automatically.
-        accessory : list
-            List containing accessory datasets on which inference should be performed in addition to the cells
-            contained within the current project.
-        size : int, optional
-            How many cells should be selected for inference. Default is 0, which means all cells are selected.
-        project_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the project dataset. Default is HDF5SingleCellDataset.
-        accessory_dataloader : HDF5SingleCellDataset, optional
-            Dataloader for the accessory datasets. Default is HDF5SingleCellDataset.
+        partial: Union[int, bool], optional
+            Flag to run on a filtered subset of the data specified in the config file. Default is False.
+        dataset_type : HDF5SingleCellDataset, optional
+            Pytorch Dataset to use for loading the dataset. Default is HDF5SingleCellDataset.
 
         Returns
         -------
@@ -172,12 +261,7 @@ class MLClusterClassifier(ProcessingStep):
         Examples
         --------
         .. code-block:: python
-
-            # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
-            # Leave empty if you only want to infer on all extracted cells in the current project
-
-            accessory = ([], [], [])
-            project.classify(accessory=accessory)
+            project.classify()
 
         Notes
         -----
@@ -186,29 +270,27 @@ class MLClusterClassifier(ProcessingStep):
         .. code-block:: yaml
 
             MLClusterClassifier:
-                # Channel number on which the classification should be performed
+                # Channel index on which the classification should be performed
                 channel_classification: 4
 
-                # Number of threads to use for dataloader
-                threads: 24
-                dataloader_worker_number: 24
+                #boolean value indicating if a pretrained model availble in scPortrait should be used
+                pretrained: False
 
-                # Batch size to pass to GPU
-                batch_size: 900
-
-                # Path to PyTorch checkpoint that should be used for inference
+                # Path to PyTorch checkpoint that should be used for inference or name of the pretrained model
                 network: "path/to/model/"
 
                 # Classifier architecture implemented in scPortrait
                 # Choose one of VGG1, VGG2, VGG1_old, VGG2_old
                 classifier_architecture: "VGG2_old"
 
-                # If more than one checkpoint is provided in the network directory, which checkpoint should be chosen
-                # Should either be "max" or a numeric value indicating the epoch number
-                epoch: "max"
+                # Number of threads to use for dataloader
+                dataloader_worker_number: 24
 
-                # Name of the classifier used for saving the classification results to a directory
-                screen_label: "Autophagy_15h_classifier1"
+                # Batch size to pass to GPU
+                batch_size: 900
+
+                # Name under which the resulting CSV file will be saved
+                inference_label: "Autophagy_15h_classifier1"
 
                 # List of which inference methods should be performed
                 # Available: "forward" and "encoder"
@@ -221,151 +303,30 @@ class MLClusterClassifier(ProcessingStep):
                 inference_device: "cuda"
         """
 
-        # is called with the path to the segmented image
-        # Size: number of datapoints of the project dataset considered
-        # ===== Dataloaders =====
-        # should be HDF5SingleCellDataset for .h5 datasets
-        # project_dataloader: dataloader for the project dataset
-        # accessory_dataloader: dataloader for the accesssory datasets
+        self.create_temp_dir() #setup directory for memory mapped temp file generation using alphabase.io
+        self._get_config_parameters()
+        
+        self.extraction_dir = extraction_dir
+        self.dataset_type = dataset_type
 
         self.log("Started classification")
         self.log(f"starting with run {self.current_run}")
         self.log(self.config)
 
-        accessory_sizes, accessory_labels, accessory_paths = accessory
+        model = self._load_model()
 
-        self.log(f"{len(accessory_sizes)} different accessory datasets specified")
+        if partial is not False:
+            self.log(f"Running partial classification on {partial} randomly selected cells.")
+            self.dataset = torch.utils.data.random_split(self.dataset, [partial, self.dataset_size - partial])[0]
+            self.dataset_size = partial
 
-        # Load model and parameters
-        network_dir = self.config["network"]
-
-        if network_dir in [
-            "autophagy_classifier1.0",
-            "autophagy_classifier2.0",
-            "autophagy_classifier2.1",
-        ]:
-            if network_dir == "autophagy_classifier1.0":
-                from scportrait.ml.pretrained_models import autophagy_classifier1_0
-
-                model = autophagy_classifier1_0(device=self.config["inference_device"])
-            elif network_dir == "autophagy_classifier2.0":
-                from scportrait.ml.pretrained_models import autophagy_classifier2_0
-
-                model = autophagy_classifier2_0(device=self.config["inference_device"])
-            elif network_dir == "autophagy_classifier2.1":
-                from scportrait.ml.pretrained_models import autophagy_classifier2_1
-
-                model = autophagy_classifier2_1(device=self.config["inference_device"])
-            else:
-                sys.exit("incorrect specification for pretrained model.")
-        else:
-            checkpoint_path = os.path.join(network_dir, "checkpoints")
-            self.log(f"Checkpoints being read from path: {checkpoint_path}")
-            checkpoints = [
-                name
-                for name in os.listdir(checkpoint_path)
-                if os.path.isfile(os.path.join(checkpoint_path, name))
-            ]
-            checkpoints = [
-                x for x in checkpoints if x.endswith(".ckpt")
-            ]  # ensure we only have actualy checkpoint files
-            checkpoints.sort()
-
-            if len(checkpoints) < 1:
-                raise ValueError(
-                    f"No model parameters found at: {self.config['network']}"
-                )
-
-            # ensure that the most recent version is used if more than one is saved
-            if len(checkpoints) > 1:
-                # get max epoch number
-                epochs = [int(x.split("epoch=")[1].split("-")[0]) for x in checkpoints]
-                if self.config["epoch"] == "max":
-                    max_value = max(epochs)
-                    max_index = epochs.index(max_value)
-                    self.log(f"Maximum epoch number found {max_value}")
-
-                    # get checkpoint with the max epoch number
-                    latest_checkpoint_path = os.path.join(
-                        checkpoint_path, checkpoints[max_index]
-                    )
-                elif isinstance(self.config["epoch"], int):
-                    _index = epochs.index(self.config["epoch"])
-                    self.log(f"Using epoch number {self.config['epoch']}")
-
-                    # get checkpoint with the max epoch number
-                    latest_checkpoint_path = os.path.join(
-                        checkpoint_path, checkpoints[_index]
-                    )
-
-            else:
-                latest_checkpoint_path = os.path.join(checkpoint_path, checkpoints[0])
-
-            # add log message to ensure that it is always 100% transparent which classifier is being used
-            self.log(
-                f"Using the following classifier checkpoint: {latest_checkpoint_path}"
-            )
-            hparam_path = os.path.join(network_dir, "hparams.yaml")
-
-            model = MultilabelSupervisedModel.load_from_checkpoint(
-                latest_checkpoint_path,
-                hparams_file=hparam_path,
-                type=self.config["classifier_architecture"],
-                map_location=self.config["inference_device"],
-            )
-
-        model.eval()
-        model.to(self.config["inference_device"])
-
-        self.log(f"model parameters loaded from {self.config['network']}")
-
-        # generate project dataset dataloader
-        # transforms like noise, random rotations, channel selection are still hardcoded
-        t = transforms.Compose(
-            [ChannelSelector([self.config["channel_classification"]])]
-        )
-
-        self.log(f"loading {extraction_dir}")
-
-        # redirect stdout to capture dataset size
-        f = io.StringIO()
-        with redirect_stdout(f):
-            dataset = HDF5SingleCellDataset(
-                [extraction_dir], [0], "/", transform=t, return_id=True
-            )
-
-            if size == 0:
-                size = len(dataset)
-            residual = len(dataset) - size
-            dataset, _ = torch.utils.data.random_split(dataset, [size, residual])
-
-        # Load accessory dataset
-        for i in range(len(accessory_sizes)):
-            self.log(f"loading {accessory_paths[i]}")
-            with redirect_stdout(f):
-                local_dataset = HDF5SingleCellDataset(
-                    [accessory_paths[i]], [i + 1], "/", transform=t, return_fake_id=True
-                )
-
-            if len(local_dataset) > accessory_sizes[i]:
-                residual = len(local_dataset) - accessory_sizes[i]
-                local_dataset, _ = torch.utils.data.random_split(
-                    local_dataset, [accessory_sizes[i], residual]
-                )
-
-            dataset = torch.utils.data.ConcatDataset([dataset, local_dataset])
-
-        # log stdout
-        out = f.getvalue()
-        self.log(out)
-
-        # classify samples
         dataloader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.config["batch_size"],
-            num_workers=self.config["dataloader_worker_number"],
-            shuffle=True,
+            self.dataset,
+            batch_size=self.batch_size,
+            num_workers=self.dataloader_worker_number,
+            shuffle=False,
         )
+
         if hasattr(self.config, "log_transform"):
             self.log(f"log transform: {self.config['log_transform']}")
 
@@ -377,7 +338,13 @@ class MLClusterClassifier(ProcessingStep):
             if encoder == "encoder":
                 self.inference(dataloader, model.network.encoder, partial=partial)
 
-    def inference(self, dataloader, model_fun, partial=False):
+        #ensure all intermediate results are cleared after processing
+        self.clear_temp_dir()
+
+    def inference(self, 
+                  dataloader, 
+                  model_fun, 
+                  partial=False):
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
 
@@ -385,37 +352,57 @@ class MLClusterClassifier(ProcessingStep):
         self.log(
             f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference"
         )
+        
         with torch.no_grad():
+            ix = 0
+            batch_size = self.batch_size
+
             x, label, class_id = next(data_iter)
             r = model_fun(x.to(self.config["inference_device"]))
             result = r.cpu().detach()
 
+            #initialize an empty memory mapped array for saving results into
+            _, n_features = result.shape
+
+            shape_features = (self.dataset_size, n_features)
+            shape_labels = (self.dataset_size, 1)
+            
+            features_path = tempmmap.create_empty_mmap(shape_features, dtype = np.float32)
+            cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype = np.int64)
+            
+            features = tempmmap.mmap_array_from_path(features_path)
+            cell_ids = tempmmap.mmap_array_from_path(cell_ids_path)
+
+            #save the results for each batch into the memory mapped array at the specified indices
+            features[ix:(ix+batch_size)] = result.numpy()
+            cell_ids[ix:(ix+batch_size)] = class_id.numpy()
+
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
-                x, _label, id = next(data_iter)
+                x, label, id = next(data_iter)
 
                 r = model_fun(x.to(self.config["inference_device"]))
-                result = torch.cat((result, r.cpu().detach()), 0)
-                label = torch.cat((label, _label), 0)
-                class_id = torch.cat((class_id, id), 0)
+                result = r
 
-        result = result.detach().numpy()
+                #save the results for each batch into the memory mapped array at the specified indices
+                features[ix:(ix+batch_size)] = r.cpu().detach().numpy()
+                cell_ids[ix:(ix+batch_size)] = label.numpy()
 
         if hasattr(self.config, "log_transform"):
             if self.config["log_transform"]:
                 sigma = 1e-9
-                result = np.log(result + sigma)
+                features = np.log(features + sigma)
 
         label = label.numpy()
         class_id = class_id.numpy()
 
         # save inferred activations / predictions
-        result_labels = [f"result_{i}" for i in range(result.shape[1])]
+        result_labels = [f"result_{i}" for i in range(features.shape[1])]
 
-        dataframe = pd.DataFrame(data=result, columns=result_labels)
+        dataframe = pd.DataFrame(data=features, columns=result_labels)
         dataframe["label"] = label
-        dataframe["cell_id"] = class_id.astype("int")
+        dataframe["cell_id"] = cell_ids.astype("int")
 
         self.log("finished processing")
 
@@ -427,6 +414,7 @@ class MLClusterClassifier(ProcessingStep):
             path = os.path.join(
                 self.run_path, f"dimension_reduction_{model_fun.__name__}.csv"
             )
+        
         dataframe.to_csv(path)
 
 
