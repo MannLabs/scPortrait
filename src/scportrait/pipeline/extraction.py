@@ -91,6 +91,9 @@ class HDF5CellExtraction(ProcessingStep):
         # set developer debug mode for super detailed output
         self.deep_debug = False
 
+        #initialize default values
+        self.extraction_data_directory = None
+
         # check for windows operating system and if so set threads to 1
         if platform.system() == "Windows":
             Warning(
@@ -202,6 +205,8 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
     def _get_output_path(self):
+        if self.extraction_data_directory is None:
+            self._setup_output()
         return self.extraction_data_directory
 
     def _setup_output(self, folder_name=None):
