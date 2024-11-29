@@ -201,7 +201,7 @@ class MLClusterClassifier(ProcessingStep):
 
             model = MultilabelSupervisedModel.load_from_checkpoint(
                 self.network_dir,
-                hparams_file=self.hparam_path,
+                hparams_file=self.hparams_file,
                 type=self.classifier_architecture,
                 map_location=self.inference_device,
             )
