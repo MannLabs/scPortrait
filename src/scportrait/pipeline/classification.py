@@ -219,7 +219,7 @@ class MLClusterClassifier(ProcessingStep):
         )
 
         self.log(f"loading cells from {self.extraction_dir}")
-        self.dataset = self.dataset_type([self.extraction_dir], 
+        self.dataset = self.dataset_type([f"{self.extraction_dir}/single_cells.h5"], 
                                         [0], 
                                         transform=t, 
                                         return_id=True
