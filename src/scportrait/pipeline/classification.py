@@ -152,6 +152,12 @@ class MLClusterClassifier(ProcessingStep):
         else:
             self.encoders = ["forward"]
 
+        if "resize" in self.config.keys():
+            self.resize = True
+            self.resize_value = self.config["resize"]
+        else:
+            self.resize = False
+
         assert "network" in self.config.keys(), "no network checkpoint specified in config file"
         assert "channel_classification" in self.config.keys(), "no channel_classification specified in config file"
         assert "dataloader_worker_number" in self.config.keys(), "no dataloader_worker_number specified in config file"
@@ -231,9 +237,17 @@ class MLClusterClassifier(ProcessingStep):
     def _load_dataset(self):
 
         # transforms like noise, random rotations, channel selection are still hardcoded
-        t = transforms.Compose(
-            [ChannelSelector(self.channel_classification)]
-        )
+        if self.resize:
+            t = transforms.Compose(
+                [
+                    ChannelSelector(self.channel_classification),
+                    transforms.Resize((self.resize_value, self.resize_value), antialias=True),
+                ]
+            )
+        else:
+            t = transforms.Compose(
+                [ChannelSelector(self.channel_classification)]
+            )
 
         self.log(f"loading cells from {self.extraction_dir}")
         self.dataset = self.dataset_type([f"{self.extraction_dir}/single_cells.h5"], 
