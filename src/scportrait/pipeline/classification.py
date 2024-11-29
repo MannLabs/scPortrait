@@ -140,11 +140,26 @@ class MLClusterClassifier(ProcessingStep):
 
     def _get_config_parameters(self):
         
+        #define base values if values are not specified in the config file
+        #for those values that are essential raise warning if they are missing
         if "pretrained_model" in self.config.keys():
             self.pretrained_model = self.config["pretrained_model"]
         else:
             self.pretrained_model = False
+        
+        if "encoders" in self.config.keys():
+            self.encoders = self.config["encoders"]
+        else:
+            self.encoders = ["forward"]
 
+        assert "network" in self.config.keys(), "no network checkpoint specified in config file"
+        assert "channel_classification" in self.config.keys(), "no channel_classification specified in config file"
+        assert "dataloader_worker_number" in self.config.keys(), "no dataloader_worker_number specified in config file"
+        assert "batch_size" in self.config.keys(), "no batch_size specified in config file"
+        assert "inference_device" in self.config.keys(), "no inference_device specified in config file"
+        assert "inference_label" in self.config.keys(), "no inference_label specified in config file"
+        assert "classifier_architecture" in self.config.keys(), "no classifier_architecture specified in config file"
+        
         self.network_dir = self.config["network"]
         
         if self.pretrained_model:
@@ -177,6 +192,8 @@ class MLClusterClassifier(ProcessingStep):
         
         self.classifier_architecture = self.config["classifier_architecture"]
         assert self.classifier_architecture in self.CLASSIFIER_ARCHITECTURES, f"provided Classifier architecture {self.classifier_architecture} not implemented in scPortrait. Choose one of the following: {self.CLASSIFIER_ARCHITECTURES}"
+
+
 
     def _load_model(self):
 
