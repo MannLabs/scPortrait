@@ -159,7 +159,7 @@ class MLClusterClassifier(ProcessingStep):
         assert "inference_device" in self.config.keys(), "no inference_device specified in config file"
         assert "inference_label" in self.config.keys(), "no inference_label specified in config file"
         assert "classifier_architecture" in self.config.keys(), "no classifier_architecture specified in config file"
-        
+
         self.network_dir = self.config["network"]
         
         if self.pretrained_model:
@@ -346,9 +346,7 @@ class MLClusterClassifier(ProcessingStep):
         if hasattr(self.config, "log_transform"):
             self.log(f"log transform: {self.config['log_transform']}")
 
-        # extract which inferences to make from config file
-        encoders = self.config["encoders"]
-        for encoder in encoders:
+        for encoder in self.encoders:
             if encoder == "forward":
                 self.inference(dataloader, model.network.forward, partial=partial)
             if encoder == "encoder":
