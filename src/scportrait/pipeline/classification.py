@@ -404,18 +404,20 @@ class MLClusterClassifier(ProcessingStep):
             #save the results for each batch into the memory mapped array at the specified indices
             features[ix:(ix+batch_size)] = result.numpy()
             cell_ids[ix:(ix+batch_size)] = class_id.unsqueeze(1)
-
+            ix += batch_size
+            
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
                 x, label, id = next(data_iter)
 
                 r = model_fun(x.to(self.config["inference_device"]))
-                result = r
 
                 #save the results for each batch into the memory mapped array at the specified indices
-                features[ix:(ix+batch_size)] = r.cpu().detach().numpy()
-                cell_ids[ix:(ix+batch_size)] = label.unsqueeze(1)
+                features[ix:(ix+r.shape[0])] = r.cpu().detach().numpy()
+                cell_ids[ix:(ix+r.shape[0])] = label.unsqueeze(1)
+                
+                ix += r.shape[0]
 
         if hasattr(self.config, "log_transform"):
             if self.config["log_transform"]:
