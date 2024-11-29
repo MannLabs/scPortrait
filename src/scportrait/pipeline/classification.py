@@ -219,8 +219,8 @@ class MLClusterClassifier(ProcessingStep):
                 sys.exit("incorrect specification for pretrained model.")
         
         else:
-            self.log("loading model from the following checkpoint file: {self.network_dir}")
-            self.log("loading model with the following hparams file: {self.hparams_file}")
+            self.log(f"loading model from the following checkpoint file: {self.network_dir}")
+            self.log(f"loading model with the following hparams file: {self.hparams_file}")
 
             model = MultilabelSupervisedModel.load_from_checkpoint(
                 self.network_dir,
