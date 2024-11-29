@@ -403,7 +403,7 @@ class MLClusterClassifier(ProcessingStep):
 
             #save the results for each batch into the memory mapped array at the specified indices
             features[ix:(ix+batch_size)] = result.numpy()
-            cell_ids[ix:(ix+batch_size)] = class_id.numpy()
+            cell_ids[ix:(ix+batch_size)] = class_id.numpy().unsqueeze(1)
 
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
@@ -415,7 +415,7 @@ class MLClusterClassifier(ProcessingStep):
 
                 #save the results for each batch into the memory mapped array at the specified indices
                 features[ix:(ix+batch_size)] = r.cpu().detach().numpy()
-                cell_ids[ix:(ix+batch_size)] = label.numpy()
+                cell_ids[ix:(ix+batch_size)] = label.numpy().unsqueeze(1)
 
         if hasattr(self.config, "log_transform"):
             if self.config["log_transform"]:
