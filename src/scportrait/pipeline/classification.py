@@ -314,11 +314,10 @@ class MLClusterClassifier(ProcessingStep):
         self.log(self.config)
 
         model = self._load_model()
+        self._load_dataset()
 
-        if partial is not False:
-            self.log(f"Running partial classification on {partial} randomly selected cells.")
-            self.dataset = torch.utils.data.random_split(self.dataset, [partial, self.dataset_size - partial])[0]
-            self.dataset_size = partial
+        if partial is True:
+            self.log("Running partial classification on selected cells.")
 
         dataloader = torch.utils.data.DataLoader(
             self.dataset,
