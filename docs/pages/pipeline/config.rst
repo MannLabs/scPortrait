@@ -40,11 +40,11 @@ The configuration file is a ``.yml`` file which specifies all of the parameters 
         hdf5_rdcc_w0: 1
         hdf5_rdcc_nslots: 50000
     CellFeaturizer:
-        channel_classification: 4
+        channel_selection: 4
         batch_size: 900
-        dataloader_worker: 0 #needs to be 0 if using cpu
+        dataloader_worker_number: 0 #needs to be 0 if using cpu
         inference_device: "cpu"
-        screen_label: "Ch3_Featurization"
+        label: "Ch3_Featurization"
     LMDSelection:
         processes: 20
         segmentation_channel: 0
