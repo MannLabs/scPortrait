@@ -46,19 +46,19 @@ HDF5CellExtraction
     :show-inheritance:
 
 
-classification
-##############
+Featurization
+#############
 
 MLClusterClassifier
 ===================
-.. autoclass:: scportrait.pipeline.classification.MLClusterClassifier
+.. autoclass:: scportrait.pipeline.featurization.MLClusterClassifier
     :members:
 
     .. automethod:: __call__
 
 CellFeaturizer
 ==============
-.. autoclass:: scportrait.pipeline.classification.CellFeaturizer
+.. autoclass:: scportrait.pipeline.featurization.CellFeaturizer
     :members:
 
     .. automethod:: __call__

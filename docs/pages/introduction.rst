@@ -16,7 +16,7 @@ The scPortrait workflow consists of up to 5 steps:
 
   3. :ref:`Extraction <quickstart_extraction>`: The segmentation masks are applied to extract single-cell images for all cells in the input images. Images of individual cells are rescaled to [0, 1] per channel.
 
-  4. :ref:`Featurization <quickstart_featurization>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is classified using the specified classification method. Multiple classification runs can be performed on the same dataset using different classification methods.
+  4. :ref:`Featurization <quickstart_featurization>`: The image-based phenotype of each individual cell in the extracted single-cell dataset is featurized using the specified featurization method. Multiple featurization runs can be performed on the same dataset using different methods.
 
   5. :ref:`Selection <quickstart_selection>`: Cutting instructions for the isolation of selected individual cells by laser microdissection are generated. The cutting shapes are written to an ``.xml`` file which can be loaded on a leica LMD microscope for automated cell excision.
 
@@ -92,7 +92,7 @@ The size in px of the output images can be set in the ``config.yml`` file and ty
 Featurization
 ==============
 
-During featurization, the extracted single cell images are passed to a phenotype analysis method that either calculates a set of features for each cell or directly assigns a class label to each cell. This analysis method will need to be adapted to each use case. For example, in our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we describe a deep learning-based binary image classifier that identifies individual cells defective in a biological process called "autophagy". Multiple classification runs can be performed on the same dataset so that different classification approaches can be used in parallel.
+During featurization, the extracted single cell images are passed to a phenotype analysis method that either generates a set of features for each cell or directly assigns a class label. This analysis method will need to be adapted to each use case. For example, in our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we describe a deep learning-based binary image classifier that identifies individual cells defective in a biological process called "autophagy". Multiple featurization runs can be performed on the same dataset so that different featurization approaches can be used in parallel.
 
 .. _quickstart_selection:
 
