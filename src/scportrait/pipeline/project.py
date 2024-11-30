@@ -33,7 +33,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     remap_region_annotation_table,
 )
 
-
+from typing import Literal
 class Project(Logable):
     CLEAN_LOG = True
 
@@ -1036,11 +1036,11 @@ class Project(Logable):
         self.extraction_f(partial=partial, n_cells=n_cells)
         self._check_sdata_status()
 
-    def classify(
+    def featurize(
         self,
-        n_cells=0,
-        data_type="complete",
-        partial_seed=None,
+        n_cells: int = 0,
+        data_type: Literal["complete", "partial", "filtered"] ="complete",
+        partial_seed: None | int = None,
         overwrite: bool | None = None,
     ):
         if self.featurization_f is None:
