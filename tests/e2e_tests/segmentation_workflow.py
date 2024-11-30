@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 
 from scportrait.pipeline._utils.segmentation import numba_mask_centroid
-from scportrait.pipeline.classification import CellFeaturizer
+from scportrait.pipeline.featurization import CellFeaturizer
 from scportrait.pipeline.extraction import HDF5CellExtraction
 from scportrait.pipeline.project import Project
-from scportrait.pipeline.segmentation_workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
+from scportrait.pipeline.segmentation.workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
 
 if __name__ == "__main__":
     print(os.getcwd())
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         debug=True,
         segmentation_f=CytosolSegmentationCellpose,
         extraction_f=HDF5CellExtraction,
-        classification_f=CellFeaturizer,
+        featurization_f=CellFeaturizer,
     )
 
     images = [
