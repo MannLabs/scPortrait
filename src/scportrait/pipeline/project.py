@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import warnings
 from time import time
+from typing import Literal
 
 import dask.array as darray
 import datatree
@@ -33,7 +34,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     remap_region_annotation_table,
 )
 
-from typing import Literal
+
 class Project(Logable):
     CLEAN_LOG = True
 
@@ -1039,7 +1040,7 @@ class Project(Logable):
     def featurize(
         self,
         n_cells: int = 0,
-        data_type: Literal["complete", "partial", "filtered"] ="complete",
+        data_type: Literal["complete", "partial", "filtered"] = "complete",
         partial_seed: None | int = None,
         overwrite: bool | None = None,
     ):

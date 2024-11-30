@@ -17,6 +17,7 @@ from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import HDF5SingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
+
 class _FeaturizationBase(ProcessingStep):
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",

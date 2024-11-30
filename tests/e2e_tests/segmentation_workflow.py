@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 from scportrait.pipeline._utils.segmentation import numba_mask_centroid
-from scportrait.pipeline.featurization import CellFeaturizer
 from scportrait.pipeline.extraction import HDF5CellExtraction
+from scportrait.pipeline.featurization import CellFeaturizer
 from scportrait.pipeline.project import Project
 from scportrait.pipeline.segmentation.workflows import CytosolSegmentationCellpose, ShardedCytosolSegmentationCellpose
 
