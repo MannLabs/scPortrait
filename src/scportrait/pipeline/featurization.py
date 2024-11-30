@@ -26,6 +26,7 @@ class _FeaturizationBase(ProcessingStep):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._check_config()
 
         self.label = self.config["label"]
         self.num_workers = self.config["dataloader_worker_number"]
@@ -43,6 +44,13 @@ class _FeaturizationBase(ProcessingStep):
 
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
+
+    def _check_config(self):
+        """Check if all required parameters are present in the config file."""
+        
+        assert "label" in self.config.keys(), "No label specified in config file."
+        assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
+        assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
 
     def _setup_output(self):
         """Helper function to generate the output directory for the classification results."""
