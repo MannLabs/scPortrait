@@ -1,6 +1,6 @@
 import numpy as np
 
-from scportrait.pipeline.filter_segmentation import (
+from scportrait.pipeline.mask_filtering.filter_segmentation import (
     SegmentationFilter,
     TiledSegmentationFilter,
 )
