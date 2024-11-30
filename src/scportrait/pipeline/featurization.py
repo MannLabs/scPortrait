@@ -18,7 +18,7 @@ from scportrait.tools.ml.datasets import HDF5SingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
-class _ClassificationBase(ProcessingStep):
+class _FeaturizationBase(ProcessingStep):
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",
     ]
@@ -652,7 +652,7 @@ class _ClassificationBase(ProcessingStep):
 ###############################################
 
 
-class MLClusterClassifier(_ClassificationBase):
+class MLClusterClassifier(_FeaturizationBase):
     """
     Class for classifying single cells using a pre-trained machine learning model.
 
@@ -895,7 +895,7 @@ class MLClusterClassifier(_ClassificationBase):
             self._post_processing_cleanup()
 
 
-class EnsembleClassifier(_ClassificationBase):
+class EnsembleClassifier(_FeaturizationBase):
     """
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
@@ -1038,7 +1038,7 @@ class EnsembleClassifier(_ClassificationBase):
 
 
 ####### CellFeaturization based on Classic Featurecalculation #######
-class _cellFeaturizerBase(_ClassificationBase):
+class _cellFeaturizerBase(_FeaturizationBase):
     CLEAN_LOG = True
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
