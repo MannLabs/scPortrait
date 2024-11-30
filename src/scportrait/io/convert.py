@@ -77,7 +77,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         Creates directory in cache location specified in config or current working directory.
         """
         if self.cache is not None:
-            path = os.path.join(self.directory["cache"], f"{self.__class__.__name__}_")  # type: ignore
+            path = os.path.join(self.cache, f"{self.__class__.__name__}_")  # type: ignore
         else:
             path = os.path.join(os.getcwd(), f"{self.__class__.__name__}_")
 
