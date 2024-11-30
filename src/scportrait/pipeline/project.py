@@ -56,7 +56,7 @@ class Project(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
-    DEFAULT_CLASSIFICATION_DIR_NAME = "featurization"
+    DEFAULT_FEATURIZATION_DIR_NAME = "featurization"
 
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
@@ -70,7 +70,7 @@ class Project(Logable):
         config_path,
         segmentation_f=None,
         extraction_f=None,
-        classification_f=None,
+        featurization_f=None,
         selection_f=None,
         overwrite=False,
         debug=False,
@@ -90,7 +90,7 @@ class Project(Logable):
 
         self.segmentation_f = segmentation_f
         self.extraction_f = extraction_f
-        self.classification_f = classification_f
+        self.featurization_f = featurization_f
         self.selection_f = selection_f
 
         if self.CLEAN_LOG:
@@ -121,8 +121,8 @@ class Project(Logable):
         # === setup extraction ===
         self._setup_extraction_f(extraction_f)
 
-        # === setup classification ===
-        self._setup_classification_f(classification_f)
+        # === setup featurization ===
+        self._setup_featurization_f(featurization_f)
 
         # ==== setup selection ===
         self._setup_selection(selection_f)
@@ -218,18 +218,18 @@ class Project(Logable):
                 filehandler=self.filehandler,
             )
 
-    def _setup_classification_f(self, classification_f):
-        if classification_f is not None:
-            if classification_f.__name__ not in self.config:
-                raise ValueError(f"Config for {classification_f.__name__} is missing from the config file")
+    def _setup_featurization_f(self, featurization_f):
+        if featurization_f is not None:
+            if featurization_f.__name__ not in self.config:
+                raise ValueError(f"Config for {featurization_f.__name__} is missing from the config file")
 
-            classification_directory = os.path.join(self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME)
+            featurization_directory = os.path.join(self.project_location, self.DEFAULT_FEATURIZATION_DIR_NAME)
 
-            self.classification_directory = classification_directory
+            self.featurization_directory = featurization_directory
 
-            self.classification_f = classification_f(
-                self.config[classification_f.__name__],
-                self.classification_directory,
+            self.featurization_f = featurization_f(
+                self.config[featurization_f.__name__],
+                self.featurization_directory,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
@@ -256,17 +256,17 @@ class Project(Logable):
                 filehandler=self.filehandler,
             )
 
-    def update_classification_f(self, classification_f) -> None:
-        """Update the classification method chosen for the project without reinitializing the entire project.
+    def update_featurization_f(self, featurization_f) -> None:
+        """Update the featurization method chosen for the project without reinitializing the entire project.
 
         Parameters
         ----------
-        classification_f : class
-            The classification method that should be used for the project.
+        featurization_f : class
+            The featurization method that should be used for the project.
 
         """
-        self.log(f"Replacing current classification method {self.classification_f.__class__} with {classification_f}")
-        self._setup_classification_f(classification_f)
+        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
+        self._setup_featurization_f(featurization_f)
 
     ##### General small helper functions ####
 
@@ -1043,8 +1043,8 @@ class Project(Logable):
         partial_seed=None,
         overwrite: bool | None = None,
     ):
-        if self.classification_f is None:
-            raise ValueError("No classification method defined")
+        if self.featurization_f is None:
+            raise ValueError("No featurization method defined")
 
         self._check_sdata_status()
 
@@ -1084,13 +1084,13 @@ class Project(Logable):
 
         # setup overwrite if specified in call
         if overwrite is not None:
-            self.classification_f.overwrite_run_path = overwrite
+            self.featurization_f.overwrite_run_path = overwrite
 
         # update the number of masks that are available in the segmentation object
-        self.classification_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
-        self.classification_f.data_type = data_type
+        self.featurization_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
+        self.featurization_f.data_type = data_type
 
-        self.classification_f(cells_path, size=n_cells)
+        self.featurization_f(cells_path, size=n_cells)
 
         self._check_sdata_status()
 
@@ -1137,7 +1137,7 @@ class Project(Logable):
 #     location_path : str
 #         Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
 #     config_path : str, optional, default ""
-#         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+#         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_FEATURIZATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
 #     debug : bool, default False
 #         When set to True debug outputs will be printed where applicable.
 #     overwrite : bool, default False
@@ -1146,8 +1146,8 @@ class Project(Logable):
 #         Class containing segmentation workflow.
 #     extraction_f : Class, default None
 #         Class containing extraction workflow.
-#     classification_f : Class, default None
-#         Class containing classification workflow.
+#     featurization_f : Class, default None
+#         Class containing featurization workflow.
 #     selection_f : Class, default None
 #         Class containing selection workflow.
 
@@ -1161,9 +1161,9 @@ class Project(Logable):
 #         Default foldername for the segmentation process.
 #     DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
 #         Default foldername for the extraction process.
-#     DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-#         Default foldername for the classification process.
-#     DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+#     DEFAULT_FEATURIZATION_DIR_NAME : str, default "selection"
+#         Default foldername for the featurization process.
+#     DEFAULT_SELECTION_DIR_NAME : str, default "featurization"
 #         Default foldername for the selection process.
 #     """
 
