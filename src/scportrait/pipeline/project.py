@@ -56,7 +56,7 @@ class Project(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+    DEFAULT_CLASSIFICATION_DIR_NAME = "featurization"
 
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
