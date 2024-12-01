@@ -250,7 +250,9 @@ class sdata_filehandler(Logable):
         centroids_object = self._get_centers(_sdata, segmentation_label)
         self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
 
-    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str | Path, image: np.typing.NDArray[Any] | None = None) -> str:
+    def _load_input_image_to_memmap(
+        self, tmp_dir_abs_path: str | Path, image: np.typing.NDArray[Any] | None = None
+    ) -> str:
         """Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
 
         Loading happens in a chunked manner to avoid memory issues.
