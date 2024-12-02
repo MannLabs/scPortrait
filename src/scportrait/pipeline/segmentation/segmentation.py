@@ -205,11 +205,11 @@ class Segmentation(ProcessingStep):
                 "Filtering has been performed during segmentation. Nucleus and Cytosol IDs match. No additional steps are required."
             )
 
-    def _load_input_image(self) -> daskArray:
+    def _load_input_image(self) -> np.ndarray:
         """Loads the input image from the sdatafile.
 
         Returns:
-            daskArray: Input image as a daskArray
+            np.ndarray: Input image as a np.ndarray.
         """
         start = timeit.default_timer()
         input_image = tempmmap.mmap_array_from_path(self._tmp_image_path)
