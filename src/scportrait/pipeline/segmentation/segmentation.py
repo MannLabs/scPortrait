@@ -97,8 +97,10 @@ class Segmentation(ProcessingStep):
             filehandler=filehandler,
         )
 
-        if self.CLEAN_LOG:
-            self._clean_log_file()
+        if self.directory is not None:
+        #only clean directory if a proper directoy is passed
+            if self.CLEAN_LOG:
+                self._clean_log_file()
 
         # if _tmp_seg is passed as an argument execute this following code (this only applies to some cases)
         if "_tmp_seg_path" in kwargs.keys():
