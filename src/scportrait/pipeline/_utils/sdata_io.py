@@ -143,6 +143,7 @@ class sdata_filehandler(Logable):
 
         return input_image
 
+    ## write elements to sdata object
     def _write_segmentation_object_sdata(
         self,
         segmentation_object: spLabels2DModel,
@@ -219,7 +220,6 @@ class sdata_filehandler(Logable):
         _sdata.write_element(points_name, overwrite=True)
 
         self.log(f"Points {points_name} written to sdata object.")
-
 
     def _write_table_object_sdata(self, table: TableModel, table_name: str, overwrite: bool = False) -> None:
         """Write table object to SpatialData.
