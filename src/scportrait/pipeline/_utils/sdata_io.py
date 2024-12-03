@@ -10,7 +10,7 @@ import numpy as np
 import xarray
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
-from spatialdata.models import PointsModel
+from spatialdata.models import PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -219,6 +219,25 @@ class sdata_filehandler(Logable):
         _sdata.write_element(points_name, overwrite=True)
 
         self.log(f"Points {points_name} written to sdata object.")
+
+
+    def _write_table_object_sdata(self, table: TableModel, table_name: str, overwrite: bool = False) -> None:
+        """Write table object to SpatialData.
+
+        Args:
+            table: Table object to write
+            table_name: Name for the table object
+            overwrite: Whether to overwrite existing data
+        """
+        _sdata = self._read_sdata()
+
+        if overwrite:
+            self._force_delete_object(_sdata, table_name, "tables")
+
+        _sdata.tables[table_name] = table
+        _sdata.write_element(table_name, overwrite=True)
+
+        self.log(f"Table {table_name} written to sdata object.")
 
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
