@@ -106,4 +106,3 @@ cd docs
 [pre-commit]: https://pre-commit.com/
 [sphinx]: https://www.sphinx-doc.org/en/master/
 [sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
-
