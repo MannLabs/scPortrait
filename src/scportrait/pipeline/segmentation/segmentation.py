@@ -98,7 +98,7 @@ class Segmentation(ProcessingStep):
         )
 
         if self.directory is not None:
-        #only clean directory if a proper directoy is passed
+            # only clean directory if a proper directoy is passed
             if self.CLEAN_LOG:
                 self._clean_log_file()
 
@@ -391,7 +391,9 @@ class Segmentation(ProcessingStep):
         input_image = self._select_relevant_channels(input_image)
 
         # select the part of the image that is relevant for this shard
-        input_image = input_image[:, self.window[0], self.window[1]]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
+        input_image = input_image[
+            :, self.window[0], self.window[1]
+        ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
         self.input_image = input_image  # track for potential plotting of intermediate results
 
         if self.deep_debug:
@@ -498,18 +500,19 @@ class ShardedSegmentation(Segmentation):
         if not hasattr(self, "method"):
             raise AttributeError("No Segmentation method defined, please set attribute ``method``")
 
-        #initialize a dummy instance of the segmentation method to determine which channels need to be loaded for segmentation
-        test_method = self.method(self.config,
-                                    directory=None,
-                                    _tmp_image_path=None,
-                                    nuc_seg_name=self.nuc_seg_name,
-                                    cyto_seg_name=self.cyto_seg_name,
-                                    filehandler=self.filehandler,
-                                    project=None,
-                                    project_location=None,
-                                    debug=self.debug,
-                                    overwrite=self.overwrite,
-                                  )
+        # initialize a dummy instance of the segmentation method to determine which channels need to be loaded for segmentation
+        test_method = self.method(
+            self.config,
+            directory=None,
+            _tmp_image_path=None,
+            nuc_seg_name=self.nuc_seg_name,
+            cyto_seg_name=self.cyto_seg_name,
+            filehandler=self.filehandler,
+            project=None,
+            project_location=None,
+            debug=self.debug,
+            overwrite=self.overwrite,
+        )
         self.segmentation_channels = test_method.segmentation_channels
 
     def _calculate_sharding_plan(self, image_size) -> list:

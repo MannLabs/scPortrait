@@ -32,7 +32,6 @@ from scportrait.plotting._utils import _custom_cmap
 from scportrait.processing.images._image_processing import downsample_img, percentile_normalization
 from scportrait.processing.masks.mask_filtering import MatchNucleusCytosolIds, SizeFilter
 
-from typing import List
 
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
@@ -48,8 +47,12 @@ class _BaseSegmentation(Segmentation):
         # check if channels that should be maximum intensity projected and combined are defined in the config
         if "combine_cytosol_channels" in self.config.keys():
             self.combine_cytosol_channels = self.config["combine_cytosol_channels"]
-            assert isinstance(self.combine_cytosol_channels, list), "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
-            assert len(self.combine_cytosol_channels) > 1, "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
+            assert isinstance(
+                self.combine_cytosol_channels, list
+            ), "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_cytosol_channels) > 1
+            ), "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
             self.maximum_project_cytosol = True
         else:
             self.combine_cytosol_channels = None
@@ -57,8 +60,12 @@ class _BaseSegmentation(Segmentation):
 
         if "combine_nucleus_channels" in self.config.keys():
             self.combine_nucleus_channels = self.config["combine_nucleus_channels"]
-            assert isinstance(self.combine_nucleus_channels, list), "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
-            assert len(self.combine_nucleus_channels) > 1, "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
+            assert isinstance(
+                self.combine_nucleus_channels, list
+            ), "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_nucleus_channels) > 1
+            ), "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
             self.maximum_project_nucleus = True
         else:
             self.combine_nucleus_channels = None
@@ -87,22 +94,25 @@ class _BaseSegmentation(Segmentation):
 
             self.segmentation_channels.extend(self.cytosol_segmentation_channel)
 
-        #remove any duplicate entries and sort according to order
+        # remove any duplicate entries and sort according to order
         self.segmentation_channels = list(set(self.segmentation_channels))
 
-        #check validity of resulting list of segmentation channels
+        # check validity of resulting list of segmentation channels
         assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
-        assert len(self.segmentation_channels) >= self.N_INPUT_CHANNELS, f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
+        assert (
+            len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
+        ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
 
         if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
-            assert self.maximum_project_nucleus or self.maximum_project_cytosol, "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+            assert (
+                self.maximum_project_nucleus or self.maximum_project_cytosol
+            ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
 
     def _remap_maximum_intensity_projection_channels(self):
-        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset
-        """
+        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
         if self.maximum_project_nucleus:
             self.original_combine_nucleus_channels = self.combine_nucleus_channels
-            self.combine_nucleus_channels =  [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
+            self.combine_nucleus_channels = [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
         if self.maximum_project_cytosol:
             self.original_combine_cytosol_channels = self.combine_cytosol_channels
             self.combine_cytosol_channels = [self.segmentation_channels.index(x) for x in self.combine_cytosol_channels]
@@ -114,10 +124,12 @@ class _BaseSegmentation(Segmentation):
             input_image = input_image.data.compute()
 
         values = []
-        #check if any channels need to be transformed
+        # check if any channels need to be transformed
         if "nuclei" in self.MASK_NAMES:
             if self.maximum_project_nucleus:
-                self.log(f"For nucleus segmentation using the maximum intensity projection of channels {self.original_combine_nucleus_channels}.")
+                self.log(
+                    f"For nucleus segmentation using the maximum intensity projection of channels {self.original_combine_nucleus_channels}."
+                )
                 nucleus_channel = self._maximum_project_channels(input_image, self.combine_nucleus_channels)
                 nucleus_channel = nucleus_channel.squeeze()
             else:
@@ -125,9 +137,10 @@ class _BaseSegmentation(Segmentation):
             values.append(nucleus_channel)
 
         if "cytosol" in self.MASK_NAMES:
-
             if self.maximum_project_cytosol:
-                self.log(f"For cytosol segmentation using the maximum intensity projection of channels {self.original_combine_cytosol_channels}.")
+                self.log(
+                    f"For cytosol segmentation using the maximum intensity projection of channels {self.original_combine_cytosol_channels}."
+                )
                 cytosol_channel = self._maximum_project_channels(input_image, self.combine_cytosol_channels)
                 cytosol_channel = cytosol_channel.squeeze()
             else:
@@ -136,7 +149,9 @@ class _BaseSegmentation(Segmentation):
 
         input_image = np.array(values)
 
-        assert input_image.shape[0] == self.N_INPUT_CHANNELS, f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
+        assert (
+            input_image.shape[0] == self.N_INPUT_CHANNELS
+        ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
 
         stop_transform = timeit.default_timer()
         self.transform_time = stop_transform - start_transform
@@ -361,11 +376,11 @@ class _BaseSegmentation(Segmentation):
 
     #### Image Processing #####
 
-    def _maximum_project_channels(self, input_image: np.array, channel_ids: List[int]) -> np.array:
+    def _maximum_project_channels(self, input_image: np.array, channel_ids: list[int]) -> np.array:
         """add multiple channels together to generate a new channel for segmentation using maximum intensity projection"""
 
         dtype = input_image.dtype
-        new_channel = np.zeros_like(input_image[0], dtype = dtype)
+        new_channel = np.zeros_like(input_image[0], dtype=dtype)
 
         for channel_id in channel_ids:
             new_channel = np.maximum(new_channel, input_image[channel_id])
@@ -1383,7 +1398,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1481,7 +1495,6 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         self._check_for_mask_matching_filtering()
 
     def cellpose_segmentation(self, input_image):
-
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1723,7 +1736,6 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-
         self._setup_processing()
         self._clear_cache()
 
