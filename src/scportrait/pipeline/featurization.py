@@ -380,6 +380,7 @@ class _FeaturizationBase(ProcessingStep):
         model_type: str | None = None,
     ):
         model = self._load_model(ckpt_path, hparams_path, model_type)
+        model.eval()
         self._assign_model(model)
 
     ### Functions regarding dataloading and transforms ####
