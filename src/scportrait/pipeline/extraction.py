@@ -72,7 +72,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.threads = self.config["threads"]
         self.image_size = self.config["image_size"]
 
-        #optional parameters with default values that can be overridden by the values in the config file
+        # optional parameters with default values that can be overridden by the values in the config file
 
         ## parameters for image extraction
         if "normalize_output" in self.config:
@@ -136,9 +136,9 @@ class HDF5CellExtraction(ProcessingStep):
         #     self.hdf5_rdcc_nslots = 50000
 
     def _setup_normalization(self):
-
         if self.normalization:
             if self.normalization_range is None:
+
                 def norm_function(img):
                     return percentile_normalization(img)
             else:
@@ -148,6 +148,7 @@ class HDF5CellExtraction(ProcessingStep):
                     return percentile_normalization(img, lower, upper)
 
         elif not self.normalization:
+
             def norm_function(img):
                 img = (
                     img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max

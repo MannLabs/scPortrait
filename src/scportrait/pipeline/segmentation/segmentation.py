@@ -532,7 +532,7 @@ class ShardedSegmentation(Segmentation):
     def _check_config(self):
         super()._check_config()
 
-        #required config parameters for a sharded segmentation
+        # required config parameters for a sharded segmentation
         assert "shard_size" in self.config.keys(), "No shard size specified in config."
         assert "overlap_px" in self.config.keys(), "No overlap specified in config."
         assert "threads" in self.config.keys(), "No threads specified in config."

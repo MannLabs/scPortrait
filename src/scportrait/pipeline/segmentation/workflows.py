@@ -1258,6 +1258,7 @@ class ShardedDAPISegmentation(ShardedSegmentation):
 
 ##### CELLPOSE BASED SEGMENTATION METHODS #####
 
+
 class _CellposeSegmentation(_BaseSegmentation):
     def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
         """
