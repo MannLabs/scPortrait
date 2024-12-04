@@ -64,6 +64,7 @@ class ParallelEdgeAligner(EdgeAligner):
         # set flavor to graph-tool if available
         try:
             from graph_tool import Graph as gtGraph
+
             self.flavor = "graph-tool"
         except ImportError:
             Warning(
