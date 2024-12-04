@@ -51,6 +51,7 @@ class _FeaturizationBase(ProcessingStep):
         assert "label" in self.config.keys(), "No label specified in config file."
         assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
         assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
+        assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
 
     def _setup_output(self):
         """Helper function to generate the output directory for the featurization results."""
@@ -380,6 +381,7 @@ class _FeaturizationBase(ProcessingStep):
         model_type: str | None = None,
     ):
         model = self._load_model(ckpt_path, hparams_path, model_type)
+        model.eval()
         self._assign_model(model)
 
     ### Functions regarding dataloading and transforms ####

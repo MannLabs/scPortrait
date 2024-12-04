@@ -738,13 +738,6 @@ class Project(Logable):
         # check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_sdata_object()
 
-        if not len(file_paths) == self.config["input_channels"]:
-            raise ValueError(
-                "Expected {} image paths because this number of input_channels is specified in the config, but received {} instead.".format(
-                    self.config["input_channels"], len(file_paths)
-                )
-            )
-
         # save channel names
         if channel_names is None:
             channel_names = extract_unique_parts(file_paths)
