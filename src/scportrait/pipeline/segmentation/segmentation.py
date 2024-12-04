@@ -127,6 +127,13 @@ class Segmentation(ProcessingStep):
 
     def _check_config(self):
         """Check if the configuration is valid."""
+
+        # optional config parameters that can be overridden through the config file
+        if "chunk_size" in self.config.keys():
+            self.chunk_size = self.config["chunk_size"]
+        else:
+            self.chunk_size = 50
+
         if "match_masks" in self.config.keys():
             self.match_masks = self.config["match_masks"]
         else:
@@ -278,7 +285,7 @@ class Segmentation(ProcessingStep):
         hf.create_dataset(
             self.DEFAULT_MASK_NAME,
             data=labels,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+            chunks=(1, self.chunk_size, self.chunk_size),
         )
 
         hf.close()
