@@ -115,7 +115,7 @@ class HDF5CellExtraction(ProcessingStep):
         if "compression" in self.config:
             self.compression = self.config["compression"]
         else:
-            self.config["compression"] = True
+            self.compression = True
 
         ## Deprecated parameters since we no longer directly read from HDF5
         ## Preservering here in case we see better performance by adjusting this behaviour in how we read data from memmapped arrays
