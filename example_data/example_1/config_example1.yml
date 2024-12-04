@@ -129,11 +129,10 @@ HDF5CellExtraction:
 MLClusterClassifier:
     batch_size: 900
     inference_device: "cpu"
-    dataloader_worker_number: 10 #needs to be 0 if using cpu
-    network: "autophagy_classifier2.1"
+    dataloader_worker_number: 0 #needs to be 0 if using cpu
+    network: "autophagy_classifier"
     label: "Autophagy_15h_classifier2_1"
-    encoders: ["forward"]
-    channel_classification: 4
+    channel_selection: 4
 CellFeaturizer:
     batch_size: 900
     dataloader_worker_number: 0 #needs to be 0 if using cpu
