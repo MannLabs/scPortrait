@@ -37,6 +37,8 @@ class HDF5CellExtraction(ProcessingStep):
         if self.CLEAN_LOG:
             self._clean_log_file()
 
+        self._check_config()
+
         # setup base extraction workflow
         self._get_compression_type()
 
@@ -50,16 +52,29 @@ class HDF5CellExtraction(ProcessingStep):
         # check for windows operating system and if so set threads to 1
         if platform.system() == "Windows":
             Warning("Windows detected. Multithreading not supported on windows so setting threads to 1.")
-            self.config["threads"] = 1
+            self.threads = 1
 
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
-        self.compression_type = "lzf" if self.config["compression"] else None
+        self.compression_type = "lzf" if self.compression else None
         return self.compression_type
 
-    def _get_normalization(self):
+    def _check_config(self):
+        """Load parameters from config file and check for required parameters."""
+
+        # check for required parameters
+        assert "threads" in self.config, "Number of threads must be specified in the config file."
+        assert "image_size" in self.config, "Image size must be specified in the config file."
+        assert "cache" in self.config, "Cache directory must be specified in the config file."
+
+        self.threads = self.config["threads"]
+        self.image_size = self.config["image_size"]
+
+        #optional parameters with default values that can be overridden by the values in the config file
+
+        ## parameters for image extraction
         if "normalize_output" in self.config:
             normalize = self.config["normalize_output"]
 
@@ -96,9 +111,34 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             self.normalization_range = None
 
+        ## parameters for HDF5 file creates
+        if "compression" in self.config:
+            self.compression = self.config["compression"]
+        else:
+            self.config["compression"] = True
+
+        ## Deprecated parameters since we no longer directly read from HDF5
+        ## Preservering here in case we see better performance by adjusting this behaviour in how we read data from memmapped arrays
+
+        # if "hdf5_rdcc_nbytes" in self.config:
+        #     self.hdf5_rdcc_nbytes = self.config["hdf5_rdcc_nbytes"]
+        # else:
+        #     self.hdf5_rdcc_nbytes = 5242880000 # 5gb 1024 * 1024 * 5000
+
+        # if "hdf5_rdcc_w0" in self.config:
+        #     self.hdf5_rdcc_w0 = self.config["hdf5_rdcc_w0"]
+        # else:
+        #     self.hdf5_rdcc_w0 = 1
+
+        # if "hdf5_rdcc_nslots" in self.config:
+        #     self.hdf5_rdcc_nslots = self.config["hdf5_rdcc_nslots"]
+        # else:
+        #     self.hdf5_rdcc_nslots = 50000
+
+    def _setup_normalization(self):
+
         if self.normalization:
             if self.normalization_range is None:
-
                 def norm_function(img):
                     return percentile_normalization(img)
             else:
@@ -108,7 +148,6 @@ class HDF5CellExtraction(ProcessingStep):
                     return percentile_normalization(img, lower, upper)
 
         elif not self.normalization:
-
             def norm_function(img):
                 img = (
                     img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
@@ -157,8 +196,8 @@ class HDF5CellExtraction(ProcessingStep):
         single_cell_data_shape = (
             self.num_classes,
             (self.n_masks + self.n_image_channels),
-            self.config["image_size"],
-            self.config["image_size"],
+            self.image_size,
+            self.image_size,
         )
 
         # generate container for single_cell_data
@@ -192,7 +231,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.n_output_channels = self.n_image_channels + self.n_masks
 
         # get size of images to extract
-        self.extracted_image_size = self.config["image_size"]
+        self.extracted_image_size = self.image_size
         self.width_extraction = (
             self.extracted_image_size // 2
         )  # half of the extracted image size (this is what needs to be added on either side of the center)
@@ -353,16 +392,16 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             max_batch_size = max_batch_size
 
-        theoretical_max = np.ceil(len(args) / self.config["threads"])
+        theoretical_max = np.ceil(len(args) / self.threads)
         batch_size = np.int64(min(max_batch_size, theoretical_max))
 
         self.batch_size = np.int64(max(min_batch_size, batch_size))
         self.log(f"Using batch size of {self.batch_size} for multiprocessing.")
 
         # dynamically adjust the number of threads to ensure that we dont initiate more threads than we have arguments
-        self.threads = np.int64(min(self.config["threads"], np.ceil(len(args) / self.batch_size)))
+        self.threads = np.int64(min(self.threads, np.ceil(len(args) / self.batch_size)))
 
-        if self.threads != self.config["threads"]:
+        if self.threads != self.threads:
             self.log(f"Reducing number of threads to {self.threads} to match number of cell batches to process.")
 
         return [args[i : i + self.batch_size] for i in range(0, len(args), self.batch_size)]
@@ -557,7 +596,7 @@ class HDF5CellExtraction(ProcessingStep):
                 return None
 
     def _extract_classes_multi(self, px_centers, arg_list):
-        self._get_normalization()
+        self._setup_normalization()
 
         self.seg_masks = mmap_array_from_path(self.path_seg_masks)
         self.image_data = mmap_array_from_path(self.path_image_data)
@@ -633,7 +672,7 @@ class HDF5CellExtraction(ProcessingStep):
             single_cell_data = hf.create_dataset(
                 "single_cell_data",
                 shape=(len(keep_index), c, x, y),
-                chunks=(1, 1, self.config["image_size"], self.config["image_size"]),
+                chunks=(1, 1, self.image_size, self.image_size),
                 compression=self.compression_type,
                 dtype=np.float16,
             )
@@ -726,7 +765,7 @@ class HDF5CellExtraction(ProcessingStep):
                 "Number of classes extracted": [self.num_classes],
                 "Number of masks used for extraction": [self.n_masks],
                 "Size of extracted images": [self.extracted_image_size],
-                "Number of threads used": [self.config["threads"]],
+                "Number of threads used": [self.threads],
                 "Mini_batch size": [self.batch_size],
                 "Total extraction time": [total_time],
                 "Time taken to set up extraction": [time_setup],
@@ -775,9 +814,6 @@ class HDF5CellExtraction(ProcessingStep):
         .. code-block:: yaml
 
             HDF5CellExtraction:
-
-                compression: True
-
                 # threads used in multithreading
                 threads: 80
 
@@ -786,11 +822,6 @@ class HDF5CellExtraction(ProcessingStep):
 
                 # directory where intermediate results should be saved
                 cache: "/mnt/temp/cache"
-
-                # specs to define how HDF5 data should be chunked and saved
-                hdf5_rdcc_nbytes: 5242880000 # 5GB 1024 * 1024 * 5000
-                hdf5_rdcc_w0: 1
-                hdf5_rdcc_nslots: 50000
         """
 
         total_time_start = timeit.default_timer()
@@ -840,7 +871,7 @@ class HDF5CellExtraction(ProcessingStep):
         # actually perform single-cell image extraction
         start_extraction = timeit.default_timer()
 
-        if self.config["threads"] <= 1:
+        if self.threads <= 1:
             # set up for single-threaded processing
             self._get_normalization()
             self.seg_masks = mmap_array_from_path(self.path_seg_masks)
