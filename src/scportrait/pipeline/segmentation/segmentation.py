@@ -102,6 +102,8 @@ class Segmentation(ProcessingStep):
             if self.CLEAN_LOG:
                 self._clean_log_file()
 
+        self._check_config()
+
         # if _tmp_seg is passed as an argument execute this following code (this only applies to some cases)
         if "_tmp_seg_path" in kwargs.keys():
             self._tmp_seg_path = kwargs["_tmp_seg_path"]
@@ -122,6 +124,18 @@ class Segmentation(ProcessingStep):
         self._tmp_image_path = _tmp_image_path
         self.processes_per_GPU = None
         self.n_processes = 1
+
+    def _check_config(self):
+        """Check if the configuration is valid."""
+        if "match_masks" in self.config.keys():
+            self.match_masks = self.config["match_masks"]
+        else:
+            self.match_masks = True
+
+        if "filtering_threshold_mask_matching" in self.config.keys():
+            self.filtering_threshold_mask_matching = self.config["filtering_threshold_mask_matching"]
+        else:
+            self.filtering_threshold_mask_matching = 0.95
 
     def _check_gpu_status(self):
         if torch.cuda.is_available():
@@ -514,6 +528,14 @@ class ShardedSegmentation(Segmentation):
             overwrite=self.overwrite,
         )
         self.segmentation_channels = test_method.segmentation_channels
+
+    def _check_config(self):
+        super()._check_config()
+
+        #required config parameters for a sharded segmentation
+        assert "shard_size" in self.config.keys(), "No shard size specified in config."
+        assert "overlap_px" in self.config.keys(), "No overlap specified in config."
+        assert "threads" in self.config.keys(), "No threads specified in config."
 
     def _calculate_sharding_plan(self, image_size) -> list:
         """Calculate the sharding plan for the given input image size."""

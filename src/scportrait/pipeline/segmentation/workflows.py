@@ -36,11 +36,10 @@ from scportrait.processing.masks.mask_filtering import MatchNucleusCytosolIds, S
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._check_config_file()
-
+        self._setup_channel_selection()
         self.nGPUs = None
 
-    def _check_config_file(self):
+    def _setup_channel_selection(self):
         self._setup_maximum_intensity_projection()
         self._define_channels_to_extract_for_segmentation()
         self._remap_maximum_intensity_projection_channels()
@@ -1258,7 +1257,6 @@ class ShardedDAPISegmentation(ShardedSegmentation):
 
 
 ##### CELLPOSE BASED SEGMENTATION METHODS #####
-
 
 class _CellposeSegmentation(_BaseSegmentation):
     def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
