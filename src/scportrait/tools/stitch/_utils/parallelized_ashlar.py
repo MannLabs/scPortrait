@@ -64,13 +64,9 @@ class ParallelEdgeAligner(EdgeAligner):
         # set flavor to graph-tool if available
         try:
             from graph_tool import Graph as gtGraph
-
             self.flavor = "graph-tool"
         except ImportError:
             Warning(
-                "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
-            )
-            print(
                 "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
             )
             self.flavor = "networkx"
@@ -245,8 +241,10 @@ class ParallelEdgeAligner(EdgeAligner):
 
     def build_spanning_tree(self):
         if self.flavor == "graph-tool":
+            print("using graph-tool to build spanning tree")
             self._build_spanning_tree_gt()
         if self.flavor == "networkx":
+            print("using networkx to build spanning tree")
             self._build_spanning_tree_nxg()
 
     def _calculate_positions_gt(self):
