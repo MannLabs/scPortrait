@@ -38,6 +38,8 @@ class _BaseSegmentation(Segmentation):
         super().__init__(*args, **kwargs)
         self._check_config_file()
 
+        self.nGPUs = None
+
     def _check_config_file(self):
         self._setup_maximum_intensity_projection()
         self._define_channels_to_extract_for_segmentation()
