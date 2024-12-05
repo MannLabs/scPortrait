@@ -72,10 +72,6 @@ git push --tags
 
 to publish the created tag on GitHub.
 
-### Building and publishing the package on PyPI
-
-TBD
-
 ## Writing documentation
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
@@ -89,13 +85,6 @@ on how to write documentation.
 ### Tutorials with jupyter notebooks
 
 TBD
-
-#### Building the docs locally
-
-```bash
-cd docs
-# TBD
-```
 
 <!-- Links -->
 
