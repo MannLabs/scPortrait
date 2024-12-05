@@ -7,7 +7,6 @@ from time import time
 from typing import Literal
 
 import dask.array as darray
-import datatree
 import numpy as np
 import psutil
 import xarray
@@ -382,7 +381,7 @@ class Project(Logable):
             self.centers_status = self.filehandler.centers_status
 
             if self.input_image_status:
-                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
+                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
                     self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
                 elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
                     self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
