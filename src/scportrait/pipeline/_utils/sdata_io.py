@@ -10,7 +10,7 @@ import numpy as np
 import xarray
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
-from spatialdata.models import PointsModel
+from spatialdata.models import PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -143,6 +143,7 @@ class sdata_filehandler(Logable):
 
         return input_image
 
+    ## write elements to sdata object
     def _write_segmentation_object_sdata(
         self,
         segmentation_object: spLabels2DModel,
@@ -220,6 +221,24 @@ class sdata_filehandler(Logable):
 
         self.log(f"Points {points_name} written to sdata object.")
 
+    def _write_table_object_sdata(self, table: TableModel, table_name: str, overwrite: bool = False) -> None:
+        """Write table object to SpatialData.
+
+        Args:
+            table: Table object to write
+            table_name: Name for the table object
+            overwrite: Whether to overwrite existing data
+        """
+        _sdata = self._read_sdata()
+
+        if overwrite:
+            self._force_delete_object(_sdata, table_name, "tables")
+
+        _sdata.tables[table_name] = table
+        _sdata.write_element(table_name, overwrite=True)
+
+        self.log(f"Table {table_name} written to sdata object.")
+
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
 
@@ -250,7 +269,9 @@ class sdata_filehandler(Logable):
         centroids_object = self._get_centers(_sdata, segmentation_label)
         self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
 
-    def _load_input_image_to_memmap(self, tmp_dir_abs_path: str | Path, image: np.NDArray[Any] | None = None) -> str:
+    def _load_input_image_to_memmap(
+        self, tmp_dir_abs_path: str | Path, image: np.typing.NDArray[Any] | None = None
+    ) -> str:
         """Helper function to load the input image from sdata to memory mapped temp arrays for faster access.
 
         Loading happens in a chunked manner to avoid memory issues.
