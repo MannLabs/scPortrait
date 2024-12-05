@@ -16,9 +16,6 @@ from alphabase.io.tempmmap import (
     mmap_array_from_path,
     redefine_temp_location,
 )
-from ashlar import thumbnail
-from ashlar.reg import EdgeAligner, Mosaic
-from ashlar.scripts.ashlar import process_axis_flip
 from tqdm import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
@@ -131,6 +128,8 @@ class Stitcher:
         cache : str, optional
             Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
         """
+        self._lazy_imports()
+
         if orientation is None:
             orientation = {"flip_x": False, "flip_y": True}
         self.input_dir = input_dir
@@ -165,6 +164,19 @@ class Stitcher:
         self.cache = cache
 
         self.initialize_outdir()
+
+    def _lazy_imports(self):
+        """
+        Import necessary packages for stitching.
+        """
+        from ashlar import thumbnail
+        from ashlar.reg import EdgeAligner, Mosaic
+        from ashlar.scripts.ashlar import process_axis_flip
+
+        self.ashlar_thumbnail = thumbnail
+        self.ashlar_EdgeAligner = EdgeAligner
+        self.ashlar_Mosaic = Mosaic
+        self.ashlar_process_axis_flip = process_axis_flip
 
     def __exit__(self):
         self.clear_cache()
@@ -295,7 +307,7 @@ class Stitcher:
             self.reader = self.reader_type(self.input_dir, rescale_range=self.rescale_range)
 
         # setup correct orientation of slide (this depends on microscope used to generate the data)
-        process_axis_flip(
+        self.ashlar_process_axis_flip(
             self.reader,
             flip_x=self.orientation["flip_x"],
             flip_y=self.orientation["flip_y"],
@@ -326,7 +338,9 @@ class Stitcher:
             Scale factor for the thumbnail (default is 0.05).
         """
         self.initialize_reader()
-        self.thumbnail = thumbnail.make_thumbnail(self.reader, channel=self.stitching_channel_id, scale=scale)
+        self.thumbnail = self.ashlar_thumbnail.make_thumbnail(
+            self.reader, channel=self.stitching_channel_id, scale=scale
+        )
 
         # rescale thumbnail to 0-1 range
         # if all channels should be rescaled to the same range, initialize dictionary with all channels
@@ -353,7 +367,7 @@ class Stitcher:
         aligner : EdgeAligner
             Initialized EdgeAligner object.
         """
-        aligner = EdgeAligner(
+        aligner = self.ashlar_EdgeAligner(
             self.reader,
             channel=self.stitching_channel_id,
             filter_sigma=self.filter_sigma,
@@ -400,7 +414,7 @@ class Stitcher:
         mosaic : Mosaic
             Initialized Mosaic object.
         """
-        mosaic = Mosaic(
+        mosaic = self.ashlar_Mosaic(
             self.aligner,
             self.aligner.mosaic_shape,
             verbose=True,
