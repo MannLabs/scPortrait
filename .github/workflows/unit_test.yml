@@ -10,11 +10,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pip cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
@@ -28,11 +23,12 @@ jobs:
           conda env update --file .github/additional_files/environment.yml --name base
       - name: Install package
         run: |
-          pip install .
+          pip install uv
+          uv pip install --system .
 
       - name: Install pre-commit
         run: |
-          pip install pre-commit
+          uv pip install --system pre-commit
       - name: Run pre-commit checks
         run: |
           pre-commit install
@@ -40,5 +36,5 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pip install pytest
+          uv pip install --system pytest
           pytest

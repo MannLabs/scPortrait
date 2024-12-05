@@ -18,7 +18,7 @@ from scportrait.tools.ml.datasets import HDF5SingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
-class _ClassificationBase(ProcessingStep):
+class _FeaturizationBase(ProcessingStep):
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",
     ]
@@ -26,6 +26,7 @@ class _ClassificationBase(ProcessingStep):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._check_config()
 
         self.label = self.config["label"]
         self.num_workers = self.config["dataloader_worker_number"]
@@ -36,7 +37,7 @@ class _ClassificationBase(ProcessingStep):
         self.transforms = None
         self.expected_imagesize = None
 
-        self._setup_channel_classification()
+        self._setup_channel_selection()
 
         # setup deep debugging
         self.deep_debug = False
@@ -44,10 +45,17 @@ class _ClassificationBase(ProcessingStep):
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
-    def _setup_output(self):
-        """Helper function to generate the output directory for the classification results."""
+    def _check_config(self):
+        """Check if all required parameters are present in the config file."""
 
-        # Create classification directory
+        assert "label" in self.config.keys(), "No label specified in config file."
+        assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
+        assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
+        assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
+
+    def _setup_output(self):
+        """Helper function to generate the output directory for the featurization results."""
+
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
@@ -55,21 +63,21 @@ class _ClassificationBase(ProcessingStep):
 
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
-            self.log(f"Created new directory for classification results: {self.run_path}")
+            self.log(f"Created new directory for featurization results: {self.run_path}")
         else:
             if self.overwrite:
-                self.log("Overwrite flag is set, deleting existing directory for classification results.")
+                self.log("Overwrite flag is set, deleting existing directory for featurization results.")
                 shutil.rmtree(self.run_path)
                 os.makedirs(self.run_path)
-                self.log(f"Created new directory for classification results: {self.run_path}")
+                self.log(f"Created new directory for featurization results: {self.run_path}")
             elif self.overwrite_run_path:
-                self.log("Overwrite flag is set, deleting existing directory for classification results.")
+                self.log("Overwrite flag is set, deleting existing directory for featurization results.")
                 shutil.rmtree(self.run_path)
                 os.makedirs(self.run_path)
-                self.log(f"Created new directory for classification results: {self.run_path}")
+                self.log(f"Created new directory for featurization results: {self.run_path}")
             else:
                 raise ValueError(
-                    f"Directory for classification results already exists at {self.run_path}. Please set the overwrite flag to True if you wish to overwrite the existing directory."
+                    f"Directory for featurization results already exists at {self.run_path}. Please set the overwrite flag to True if you wish to overwrite the existing directory."
                 )
 
     def _setup_log_transform(self):
@@ -78,11 +86,11 @@ class _ClassificationBase(ProcessingStep):
         else:
             self.log_transform = False  # default value
 
-    def _setup_channel_classification(self):
-        if "channel_classification" in self.config.keys():
-            self.channel_classification = self.config["channel_classification"]
+    def _setup_channel_selection(self):
+        if "channel_selection" in self.config.keys():
+            self.channel_selection = self.config["channel_selection"]
         else:
-            self.channel_classification = None
+            self.channel_selection = None
 
     def _detect_automatic_inference_device(self):
         """Automatically detect the best inference device available on the system."""
@@ -98,7 +106,7 @@ class _ClassificationBase(ProcessingStep):
 
     def _setup_inference_device(self):
         """
-        Configure the classification run to use the specified inference device.
+        Configure the featurization run to use the specified inference device.
         If no device is specified, the device is automatically detected.
         """
 
@@ -159,7 +167,7 @@ class _ClassificationBase(ProcessingStep):
             self.log(f"Automatically configured inferece device to {self.inference_device}")
 
     def _general_setup(self):
-        """Helper function to execute all setup functions that are common to all classification steps."""
+        """Helper function to execute all setup functions that are common to all featurization steps."""
 
         self._setup_output()
         self._setup_log_transform()
@@ -195,7 +203,7 @@ class _ClassificationBase(ProcessingStep):
                 self.define_model_class(self.DEFAULT_MODEL_CLASS)  # default model class
         else:
             self.log(
-                f"Model class already defined as {self.model_class} will not overwrite. If this behaviour was unintended please set the model class to none by executing 'project.classification_f.model_class = None'"
+                f"Model class already defined as {self.model_class} will not overwrite. If this behaviour was unintended please set the model class to none by executing 'project.featurization_f.model_class = None'"
             )
 
         if "model_type" in self.config.keys():
@@ -235,7 +243,7 @@ class _ClassificationBase(ProcessingStep):
     ### Functions for model loading and setup
 
     def _assign_model(self, model):
-        self.log("Model assigned to classification function.")
+        self.log("Model assigned to featurization function.")
         self.model = model
 
         # check if the hparams specify an expected image size
@@ -247,7 +255,6 @@ class _ClassificationBase(ProcessingStep):
             model_class = eval(model_class)  # convert string to class by evaluating it
 
         # check that it is a valid model class
-
         if force_load:
             if not issubclass(model_class, pl.LightningModule):
                 Warning(
@@ -374,6 +381,7 @@ class _ClassificationBase(ProcessingStep):
         model_type: str | None = None,
     ):
         model = self._load_model(ckpt_path, hparams_path, model_type)
+        model.eval()
         self._assign_model(model)
 
     ### Functions regarding dataloading and transforms ####
@@ -427,7 +435,7 @@ class _ClassificationBase(ProcessingStep):
                 dir_labels=[0],
                 transform=t,
                 return_id=True,
-                select_channel=self.channel_classification,
+                select_channel=self.channel_selection,
             )
 
         if size > 0:
@@ -633,7 +641,7 @@ class _ClassificationBase(ProcessingStep):
         # reset to init values to ensure that subsequent runs are not affected by previous runs
         self.model_class = None
         self.transforms = None
-        self.channel_classification = None
+        self.channel_selection = None
         self.model = None
 
         self._clear_cache()
@@ -652,7 +660,7 @@ class _ClassificationBase(ProcessingStep):
 ###############################################
 
 
-class MLClusterClassifier(_ClassificationBase):
+class MLClusterClassifier(_FeaturizationBase):
     """
     Class for classifying single cells using a pre-trained machine learning model.
 
@@ -761,7 +769,7 @@ class MLClusterClassifier(_ClassificationBase):
     def _setup_transforms(self) -> None:
         if self.transforms is not None:
             self.log(
-                "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.classification_f.transforms = None'"
+                "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.featurization_f.transforms = None'"
             )
             return
 
@@ -828,7 +836,7 @@ class MLClusterClassifier(_ClassificationBase):
 
             MLClusterClassifier:
                 # Channel number on which the classification should be performed
-                channel_classification: 4
+                channel_selection: 4
 
                 # Number of threads to use for dataloader
                 dataloader_worker_number: 24
@@ -895,7 +903,7 @@ class MLClusterClassifier(_ClassificationBase):
             self._post_processing_cleanup()
 
 
-class EnsembleClassifier(_ClassificationBase):
+class EnsembleClassifier(_FeaturizationBase):
     """
     This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
     """
@@ -986,7 +994,7 @@ class EnsembleClassifier(_ClassificationBase):
 
                 EnsembleClassifier:
                     # channel number on which the classification should be performed
-                    channel_classification: 4
+                    channel_selection: 4
 
                     #number of threads to use for dataloader
                     dataloader_worker_number: 24
@@ -1038,7 +1046,7 @@ class EnsembleClassifier(_ClassificationBase):
 
 
 ####### CellFeaturization based on Classic Featurecalculation #######
-class _cellFeaturizerBase(_ClassificationBase):
+class _cellFeaturizerBase(_FeaturizationBase):
     CLEAN_LOG = True
     DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
@@ -1219,8 +1227,8 @@ class _cellFeaturizerBase(_ClassificationBase):
             # define name to save table under
             self.label.replace("CellFeaturizer_", "")  # remove class name from label to ensure we dont have duplicates
 
-            if self.channel_classification is not None:
-                table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[0]}"
+            if self.channel_selection is not None:
+                table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[0]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
@@ -1253,8 +1261,8 @@ class _cellFeaturizerBase(_ClassificationBase):
             )
 
             # define name to save table under
-            if self.channel_classification is not None:
-                table_name = f"{self.__class__.__name__ }_{self.config['channel_classification']}_{self.MASK_NAMES[1]}"
+            if self.channel_selection is not None:
+                table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[1]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
@@ -1284,7 +1292,7 @@ class CellFeaturizer(_cellFeaturizerBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.channel_classification = None  # ensure that all images are passed to the function
+        self.channel_selection = None  # ensure that all images are passed to the function
 
     def _setup(self):
         self._general_setup()
@@ -1328,7 +1336,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
             CellFeaturizer:
                 # Channel number on which the featurization should be performed
-                channel_classification: 4
+                channel_selection: 4
 
                 # Number of threads to use for dataloader
                 dataloader_worker_number: 0 # needs to be 0 if using CPU
@@ -1395,9 +1403,9 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
 
     def _setup_channel_selection(self):
         if self.n_masks == 2:
-            self.channel_classification = [0, 1, self.channel_classification]
+            self.channel_selection = [0, 1, self.channel_selection]
         if self.n_masks == 1:
-            self.channel_classification = [0, self.channel_classification]
+            self.channel_selection = [0, self.channel_selection]
         return
 
     def _setup(self):
@@ -1407,7 +1415,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         self._get_channel_specs()
 
     def process(self, extraction_dir, size=0):
-        self.log(f"Started CellFeaturization of selected channel {self.channel_classification}.")
+        self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
         self._setup()
@@ -1420,7 +1428,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         )
 
         # generate column names
-        channel_name = self.channel_names[self.channel_classification[-1] - self.n_masks]
+        channel_name = self.channel_names[self.channel_selection[-1] - self.n_masks]
         self._generate_column_names(n_masks=self.n_masks, n_channels=1, channel_names=[channel_name])
 
         # define inference function

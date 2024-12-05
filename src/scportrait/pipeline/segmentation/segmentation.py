@@ -97,8 +97,12 @@ class Segmentation(ProcessingStep):
             filehandler=filehandler,
         )
 
-        if self.CLEAN_LOG:
-            self._clean_log_file()
+        if self.directory is not None:
+            # only clean directory if a proper directoy is passed
+            if self.CLEAN_LOG:
+                self._clean_log_file()
+
+        self._check_config()
 
         # if _tmp_seg is passed as an argument execute this following code (this only applies to some cases)
         if "_tmp_seg_path" in kwargs.keys():
@@ -120,6 +124,25 @@ class Segmentation(ProcessingStep):
         self._tmp_image_path = _tmp_image_path
         self.processes_per_GPU = None
         self.n_processes = 1
+
+    def _check_config(self):
+        """Check if the configuration is valid."""
+
+        # optional config parameters that can be overridden through the config file
+        if "chunk_size" in self.config.keys():
+            self.chunk_size = self.config["chunk_size"]
+        else:
+            self.chunk_size = 50
+
+        if "match_masks" in self.config.keys():
+            self.match_masks = self.config["match_masks"]
+        else:
+            self.match_masks = True
+
+        if "filtering_threshold_mask_matching" in self.config.keys():
+            self.filtering_threshold_mask_matching = self.config["filtering_threshold_mask_matching"]
+        else:
+            self.filtering_threshold_mask_matching = 0.95
 
     def _check_gpu_status(self):
         if torch.cuda.is_available():
@@ -205,16 +228,30 @@ class Segmentation(ProcessingStep):
                 "Filtering has been performed during segmentation. Nucleus and Cytosol IDs match. No additional steps are required."
             )
 
-    def _load_input_image(self) -> daskArray:
+    def _load_input_image(self) -> np.ndarray:
         """Loads the input image from the sdatafile.
 
         Returns:
-            daskArray: Input image as a daskArray
+            np.ndarray: Input image as a np.ndarray.
         """
         start = timeit.default_timer()
         input_image = tempmmap.mmap_array_from_path(self._tmp_image_path)
         self.log(f"Time taken to load input image: {timeit.default_timer() - start}")
         return input_image
+
+    def _select_relevant_channels(self, input_image):
+        """transform image dtype and select segmentation channels
+
+        The relevant channels for subsequent segmentation are determined by the channel ID's saved
+        in `self.segmentation_channels`.
+
+        Args:
+            input_image (np.ndarray): Input image as a np.ndarray.
+
+        Returns:
+            np.ndarray: Transformed input image.
+        """
+        return input_image[self.segmentation_channels]
 
     def _transform_input_image(self, input_image):
         if isinstance(input_image, xarray.DataArray):
@@ -248,7 +285,7 @@ class Segmentation(ProcessingStep):
         hf.create_dataset(
             self.DEFAULT_MASK_NAME,
             data=labels,
-            chunks=(1, self.config["chunk_size"], self.config["chunk_size"]),
+            chunks=(1, self.chunk_size, self.chunk_size),
         )
 
         hf.close()
@@ -372,10 +409,11 @@ class Segmentation(ProcessingStep):
         self.log(f"Beginning Segmentation of Shard with the slicing {self.window}")
 
         input_image = self._load_input_image()
+        input_image = self._select_relevant_channels(input_image)
 
         # select the part of the image that is relevant for this shard
         input_image = input_image[
-            :2, self.window[0], self.window[1]
+            :, self.window[0], self.window[1]
         ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
         self.input_image = input_image  # track for potential plotting of intermediate results
 
@@ -461,7 +499,7 @@ class Segmentation(ProcessingStep):
     def process(self, input_image):
         """Process the input image with the segmentation method."""
         image_size = input_image.shape
-
+        input_image = self._select_relevant_channels(input_image)
         self._execute_segmentation(input_image)
 
         self._save_benchmarking_times(
@@ -482,6 +520,29 @@ class ShardedSegmentation(Segmentation):
 
         if not hasattr(self, "method"):
             raise AttributeError("No Segmentation method defined, please set attribute ``method``")
+
+        # initialize a dummy instance of the segmentation method to determine which channels need to be loaded for segmentation
+        test_method = self.method(
+            self.config,
+            directory=None,
+            _tmp_image_path=None,
+            nuc_seg_name=self.nuc_seg_name,
+            cyto_seg_name=self.cyto_seg_name,
+            filehandler=self.filehandler,
+            project=None,
+            project_location=None,
+            debug=self.debug,
+            overwrite=self.overwrite,
+        )
+        self.segmentation_channels = test_method.segmentation_channels
+
+    def _check_config(self):
+        super()._check_config()
+
+        # required config parameters for a sharded segmentation
+        assert "shard_size" in self.config.keys(), "No shard size specified in config."
+        assert "overlap_px" in self.config.keys(), "No overlap specified in config."
+        assert "threads" in self.config.keys(), "No threads specified in config."
 
     def _calculate_sharding_plan(self, image_size) -> list:
         """Calculate the sharding plan for the given input image size."""
@@ -679,8 +740,9 @@ class ShardedSegmentation(Segmentation):
                 window = window_local
 
             local_hf = h5py.File(local_output, "r")
-            local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)
+            local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)[:]
 
+            print(type(local_hdf_labels))
             shifted_map, edge_labels = shift_labels(
                 local_hdf_labels,
                 class_id_shift,
@@ -887,16 +949,19 @@ class ShardedSegmentation(Segmentation):
 
         start_transform = timeit.default_timer()
 
-        # get proper level of input image
+        # get proper level and shape of input image
+
         input_image = self._transform_input_image(input_image)
+        input_image = self._select_relevant_channels(input_image)
+
         transform_time = timeit.default_timer() - start_transform
 
         self.input_image_path = self.filehandler._load_input_image_to_memmap(
             image=input_image, tmp_dir_abs_path=self._tmp_dir_path
         )
         self._clear_cache(vars_to_delete=[input_image])
-
         input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+
         self.log("Mapped input image to memory-mapped array.")
 
         self.image_size = input_image.shape[1:]
@@ -1011,6 +1076,8 @@ class ShardedSegmentation(Segmentation):
 
         # get input image size
         input_image = self._transform_input_image(input_image)
+        input_image = self._select_relevant_channels(input_image)
+
         self.input_image_path = self.filehandler._load_input_image_to_memmap(
             image=input_image, tmp_dir_abs_path=self._tmp_dir_path
         )

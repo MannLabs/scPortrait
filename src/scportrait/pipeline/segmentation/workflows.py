@@ -36,11 +36,124 @@ from scportrait.processing.masks.mask_filtering import MatchNucleusCytosolIds, S
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._setup_channel_selection()
+        self.nGPUs = None
+
+    def _setup_channel_selection(self):
+        self._setup_maximum_intensity_projection()
+        self._define_channels_to_extract_for_segmentation()
+        self._remap_maximum_intensity_projection_channels()
+
+    def _setup_maximum_intensity_projection(self):
+        # check if channels that should be maximum intensity projected and combined are defined in the config
+        if "combine_cytosol_channels" in self.config.keys():
+            self.combine_cytosol_channels = self.config["combine_cytosol_channels"]
+            assert isinstance(
+                self.combine_cytosol_channels, list
+            ), "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_cytosol_channels) > 1
+            ), "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
+            self.maximum_project_cytosol = True
+        else:
+            self.combine_cytosol_channels = None
+            self.maximum_project_cytosol = False
+
+        if "combine_nucleus_channels" in self.config.keys():
+            self.combine_nucleus_channels = self.config["combine_nucleus_channels"]
+            assert isinstance(
+                self.combine_nucleus_channels, list
+            ), "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_nucleus_channels) > 1
+            ), "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
+            self.maximum_project_nucleus = True
+        else:
+            self.combine_nucleus_channels = None
+            self.maximum_project_nucleus = False
+
+    def _define_channels_to_extract_for_segmentation(self):
+        self.segmentation_channels = []
+
+        if "nuclei" in self.MASK_NAMES:
+            if "segmentation_channels_nuclei" in self.config.keys():
+                self.nucleus_segmentation_channel = self.config["segmentation_channels_nuclei"]
+            elif "combine_nucleus_channels" in self.config.keys():
+                self.nucleus_segmentation_channel = self.combine_nucleus_channels
+            else:
+                self.nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
+
+            self.segmentation_channels.extend(self.nucleus_segmentation_channel)
+
+        if "cytosol" in self.MASK_NAMES:
+            if "segmentation_channels_cytosol" in self.config.keys():
+                self.cytosol_segmentation_channel = self.config["segmentation_channels_cytosol"]
+            elif "combine_cytosol_channels" in self.config.keys():
+                self.cytosol_segmentation_channel = self.combine_cytosol_channels
+            else:
+                self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
+
+            self.segmentation_channels.extend(self.cytosol_segmentation_channel)
+
+        # remove any duplicate entries and sort according to order
+        self.segmentation_channels = list(set(self.segmentation_channels))
+
+        # check validity of resulting list of segmentation channels
+        assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
+        assert (
+            len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
+        ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
+
+        if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
+            assert (
+                self.maximum_project_nucleus or self.maximum_project_cytosol
+            ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+
+    def _remap_maximum_intensity_projection_channels(self):
+        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
+        if self.maximum_project_nucleus:
+            self.original_combine_nucleus_channels = self.combine_nucleus_channels
+            self.combine_nucleus_channels = [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
+        if self.maximum_project_cytosol:
+            self.original_combine_cytosol_channels = self.combine_cytosol_channels
+            self.combine_cytosol_channels = [self.segmentation_channels.index(x) for x in self.combine_cytosol_channels]
 
     def _transform_input_image(self, input_image):
         start_transform = timeit.default_timer()
+
         if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data
+            input_image = input_image.data.compute()
+
+        values = []
+        # check if any channels need to be transformed
+        if "nuclei" in self.MASK_NAMES:
+            if self.maximum_project_nucleus:
+                self.log(
+                    f"For nucleus segmentation using the maximum intensity projection of channels {self.original_combine_nucleus_channels}."
+                )
+                nucleus_channel = self._maximum_project_channels(input_image, self.combine_nucleus_channels)
+                nucleus_channel = nucleus_channel.squeeze()
+            else:
+                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS].squeeze()
+            values.append(nucleus_channel)
+
+        if "cytosol" in self.MASK_NAMES:
+            if self.maximum_project_cytosol:
+                self.log(
+                    f"For cytosol segmentation using the maximum intensity projection of channels {self.original_combine_cytosol_channels}."
+                )
+                cytosol_channel = self._maximum_project_channels(input_image, self.combine_cytosol_channels)
+                cytosol_channel = cytosol_channel.squeeze()
+            else:
+                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS].squeeze()
+            values.append(cytosol_channel)
+
+        input_image = np.array(values)
+
+        assert (
+            input_image.shape[0] == self.N_INPUT_CHANNELS
+        ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
+
         stop_transform = timeit.default_timer()
         self.transform_time = stop_transform - start_transform
         return input_image
@@ -263,6 +376,17 @@ class _BaseSegmentation(Segmentation):
         return mask
 
     #### Image Processing #####
+
+    def _maximum_project_channels(self, input_image: np.array, channel_ids: list[int]) -> np.array:
+        """add multiple channels together to generate a new channel for segmentation using maximum intensity projection"""
+
+        dtype = input_image.dtype
+        new_channel = np.zeros_like(input_image[0], dtype=dtype)
+
+        for channel_id in channel_ids:
+            new_channel = np.maximum(new_channel, input_image[channel_id])
+
+        return new_channel
 
     def _normalize_image(
         self,
@@ -999,7 +1123,10 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
 class WGASegmentation(_ClassicalSegmentation):
     N_MASKS = 2
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["nuclei", "cytosol"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [1]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1018,9 +1145,7 @@ class WGASegmentation(_ClassicalSegmentation):
         # intialize maps for storing intermediate results
         self.maps = {}
 
-        # save input image
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
+        input_image = self._transform_input_image(input_image)
 
         self.maps["input_image"] = input_image
 
@@ -1049,8 +1174,6 @@ class WGASegmentation(_ClassicalSegmentation):
 
         if self.segment_cytosol:
             image = self.maps["input_image"][1]
-            if isinstance(image, xarray.DataArray):
-                image = image.data.compute()
             self._cytosol_segmentation(image, debug=self.debug)
         stop_segmentation = timeit.default_timer()
         self.segmentation_time = stop_segmentation - start_segmentation
@@ -1076,7 +1199,9 @@ class ShardedWGASegmentation(ShardedSegmentation):
 
 class DAPISegmentation(_ClassicalSegmentation):
     N_MASKS = 1
+    N_INPUT_CHANNELS = 1
     MASK_NAMES = ["nuclei"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1093,9 +1218,7 @@ class DAPISegmentation(_ClassicalSegmentation):
         # intialize maps for storing intermediate results
         self.maps = {}
 
-        # save input image
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
+        input_image = self._transform_input_image(input_image)
         self.maps["input_image"] = input_image.copy()
 
         # normalize input
@@ -1254,7 +1377,9 @@ class _CellposeSegmentation(_BaseSegmentation):
 
 class DAPISegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 1
+    N_INPUT_CHANNELS = 1
     MASK_NAMES = ["nuclei"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1274,10 +1399,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-        # ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1320,9 +1441,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
 
         self._check_input_image_dtype(input_image)
 
-        # only get the first cannel for segmentation (does not use excess space on the GPU this way)
-        input_image = input_image[:1, :, :]
-
         # initialize location to save masks to
         self.maps = {
             "nucleus_segmentation": tempmmap.array(
@@ -1351,7 +1469,10 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
 
 class CytosolSegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 2
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["nuclei", "cytosol"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [1]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1375,10 +1496,6 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         self._check_for_mask_matching_filtering()
 
     def cellpose_segmentation(self, input_image):
-        # ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1477,9 +1594,6 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
-
-        # only get the first two input image channels to perform segmentation to optimize memory usage on the GPU
-        input_image = input_image[:2, :, :]
 
         # initialize location to save masks to
         self.maps = {
@@ -1602,7 +1716,9 @@ class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
 
 class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 1
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["cytosol"]
+    DEFAULT_CYTOSOL_IDS = [0, 1]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1621,10 +1737,6 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-        # ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-
         self._setup_processing()
         self._clear_cache()
 
@@ -1675,11 +1787,6 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
-
-        # only get the first two channels for segmentation (does not use excess space on the GPU this way)
-        input_image = input_image[
-            :2, :, :
-        ]  # we still need both even though its cytosol only because the cytosol models optionally also take the nucleus channel for additional information
 
         # initialize location to save masks to
         self.maps = {

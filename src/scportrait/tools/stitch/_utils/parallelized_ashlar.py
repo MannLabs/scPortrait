@@ -70,9 +70,6 @@ class ParallelEdgeAligner(EdgeAligner):
             Warning(
                 "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
             )
-            print(
-                "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
-            )
             self.flavor = "networkx"
 
     def compute_threshold(self):
@@ -245,8 +242,10 @@ class ParallelEdgeAligner(EdgeAligner):
 
     def build_spanning_tree(self):
         if self.flavor == "graph-tool":
+            print("using graph-tool to build spanning tree")
             self._build_spanning_tree_gt()
         if self.flavor == "networkx":
+            print("using networkx to build spanning tree")
             self._build_spanning_tree_nxg()
 
     def _calculate_positions_gt(self):
