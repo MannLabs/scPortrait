@@ -2,7 +2,6 @@
 
 from typing import TypeAlias, Union
 
-import datatree
 import numpy as np
 import pandas as pd
 import psutil
@@ -17,7 +16,7 @@ from spatialdata.transformations.transformations import BaseTransformation
 from scportrait.pipeline._utils.segmentation import numba_mask_centroid
 
 # Type aliases
-DataElement: TypeAlias = datatree.DataTree | xarray.DataArray
+DataElement: TypeAlias = xarray.DataTree | xarray.DataArray
 ChunkSize: TypeAlias = tuple[int, ...]
 ChunkSizes: TypeAlias = list[tuple[int, ...]]
 
@@ -105,7 +104,7 @@ def get_chunk_size(element: DataElement) -> ChunkSize | ChunkSizes:
             x = x[0] if isinstance(x, tuple | list) or len(x) > 1 else x
             return (int(c), int(y), int(x))
 
-    elif isinstance(element, datatree.DataTree):
+    elif isinstance(element, xarray.DataTree):
         chunk_sizes: ChunkSizes = []
         for scale in element:
             if len(element[scale]["image"].shape) == 2:
@@ -140,7 +139,7 @@ def rechunk_image(element: DataElement, chunk_size: ChunkSize) -> DataElement:
     if isinstance(element, xarray.DataArray):
         element["image"].data = element["image"].data.rechunk(chunk_size)
         return element
-    elif isinstance(element, datatree.DataTree):
+    elif isinstance(element, xarray.DataTree):
         for scale in element:
             element[scale]["image"].data = element[scale]["image"].data.rechunk(chunk_size)
         return element

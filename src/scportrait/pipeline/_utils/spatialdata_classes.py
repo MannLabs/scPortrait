@@ -4,10 +4,9 @@ from functools import singledispatchmethod
 from typing import Any
 
 from dask.array import unique as DaskUnique
-from datatree import DataTree
 from spatialdata.models import C, Labels2DModel, X, Y, Z, get_axes_names
 from spatialdata.transformations.transformations import BaseTransformation
-from xarray import DataArray
+from xarray import DataArray, DataTree
 from xarray_schema.components import (
     AttrSchema,
     AttrsSchema,

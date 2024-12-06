@@ -18,8 +18,7 @@ shapely
 rasterio
 imagesize
 imagecodecs
-xarray
-xarray-datatree
+xarray>=2024.10.0
 opencv-python
 scikit-image>=0.22.0
 scikit-fmm
