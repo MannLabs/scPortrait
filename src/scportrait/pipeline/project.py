@@ -628,7 +628,11 @@ class Project(Logable):
         return path_input_image
 
     #### Functions to load input data ####
-    def load_input_from_array(self, array: np.ndarray, channel_names: list[str] = None, overwrite=None):
+    def load_input_from_array(self,
+                              array: np.ndarray,
+                              channel_names: list[str] = None,
+                              overwrite:bool|None = None,
+                              remap: list[int] = None) -> None:
         # check if an input image was already loaded if so throw error if overwrite = False
 
         # setup overwrite
@@ -648,6 +652,10 @@ class Project(Logable):
 
         # ensure the array is a dask array
         image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE)
+
+        if remap is not None:
+            image = image[remap]
+            self.channel_names = [self.channel_names[i] for i in remap]
 
         # write to sdata object
         self._write_image_sdata(
