@@ -633,6 +633,40 @@ class Project(Logable):
                               channel_names: list[str] = None,
                               overwrite:bool|None = None,
                               remap: list[int] = None) -> None:
+        """Load input image from a numpy array.
+
+        In the array the channels should be specified in the following order: nucleus, cytosol other channels.
+
+        Args:
+            array (np.ndarray): Input image as a numpy array.
+            channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
+                This transform is also applied to the channel names.
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from tif files and attach them to an scportrait project::
+
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project",
+                                  config_path = "path/to/config.yml",
+                                  overwrite = True,
+                                  debug = False)
+                array = np.random.rand(3, 1000, 1000)
+                channel_names = ["cytosol", "nucleus", "other_channel"]
+                project.load_input_from_array(array,
+                                              channel_names=channel_names,
+                                              remap = [1, 0, 2])
+
+        """
         # check if an input image was already loaded if so throw error if overwrite = False
 
         # setup overwrite
@@ -671,29 +705,56 @@ class Project(Logable):
 
     def load_input_from_tif_files(
         self,
-        file_paths,
-        channel_names=None,
-        crop=None,
-        overwrite=None,
-        remap=None,
-        cache=None,
+        file_paths: list[str],
+        channel_names:list[str] = None,
+        crop: tuple[int] | None =None,
+        overwrite: bool|None = None,
+        remap: list[int] = None,
+        cache: str | None = None,
     ):
         """
         Load input image from a list of files. The channels need to be specified in the following order: nucleus, cytosol other channels.
 
-        Parameters
-        ----------
-        file_paths : List[str]
-            List containing paths to each channel like
-            [“path1/img.tiff”, “path2/img.tiff”, “path3/img.tiff”].
-            Expects a list of file paths with length “input_channel” as
-            defined in the config.yml.
+        Args:
+            file_paths: List containing paths to each channel tiff file, like
+                ``["path1/img.tiff", "path2/img.tiff", "path3/img.tiff"]``
+            channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
+            crop (None, List[Tuple], optional): When set, it can be used to crop the input image.
+                The first element refers to the first dimension of the image and so on.
+                For example use ``[(0,1000),(0,2000)]`` to crop the image to 1000 px height and 2000 px width from the top left corner.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
+                This transform is also applied to the channel names.
+            cache: path to a directory where the temporary files should be stored. Default is ``None`` then the current working directory will be used.
 
-        crop : List[Tuple], optional
-            When set, it can be used to crop the input image. The first
-            element refers to the first dimension of the image and so on.
-            For example use “[(0,1000),(0,2000)]” to crop the image to
-            1000 px height and 2000 px width from the top left corner.
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from tif files and attach them to an scportrait project::
+
+                from scportrait.data._datasets import dataset_3
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project",
+                                  config_path = "path/to/config.yml",
+                                  overwrite = True,
+                                  debug = False)
+                path = dataset_3()
+                image_paths = [
+                    f"{path}/Ch2.tif",
+                    f"{path}/Ch1.tif",
+                    f"{path}/Ch3.tif",
+                ]
+                channel_names = ["cytosol", "nucleus", "other_channel"]
+                project.load_input_from_tif_files(image_paths,
+                                                  channel_names=channel_names,
+                                                  remap = [1, 0, 2])
 
         """
 
@@ -758,6 +819,7 @@ class Project(Logable):
 
         if cache is None:
             cache = os.getcwd()
+
         self._create_temp_dir(cache)
 
         for i, channel_path in enumerate(file_paths):
@@ -810,7 +872,40 @@ class Project(Logable):
         # to the image which was written to disk
         self._check_sdata_status()
 
-    def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
+    def load_input_from_omezarr(self,
+                                ome_zarr_path: str,
+                                overwrite:None|bool = None,
+                                channel_names: None|list[str] = None,
+                                remap: list[int] = None,) -> None:
+        """Load input image from an ome-zarr file.
+
+        Args:
+            ome_zarr_path: Path to the ome-zarr file.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
+                This transform is also applied to the channel names.
+
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from an ome-zarr file and attach them to an scportrait project::
+
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project",
+                                  config_path = "path/to/config.yml",
+                                  overwrite = True,
+                                  debug = False)
+                ome_zarr_path = "path/to/ome.zarr"
+                project.load_input_from_omezarr(ome_zarr_path,
+                                              remap = [1, 0, 2])
+        """
         # setup overwrite
         original_overwrite = self.overwrite
         if overwrite is not None:
