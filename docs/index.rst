@@ -63,8 +63,11 @@ Documentation
    pages/example_notebooks.ipynb
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :includehidden:
    :caption: Module API
 
-   pages/module
+   pages/module/pipeline
+   pages/module/processing
+   pages/module/io
+   pages/module/tools

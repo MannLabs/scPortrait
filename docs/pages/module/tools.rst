@@ -3,7 +3,7 @@ tools
 *******************
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    tools/parsing
    tools/stitching

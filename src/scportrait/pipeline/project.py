@@ -1,3 +1,15 @@
+"""
+project
+=======
+
+Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages
+all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly
+maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs.
+Depending on the structure of the data that is to be processed a different Project class is required.
+
+Please see :ref:`here <projects>` for more information.
+"""
+
 import os
 import re
 import shutil
