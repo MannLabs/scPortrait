@@ -452,7 +452,7 @@ class Stitcher:
         self._perform_alignment()
         self._generate_mosaic()
 
-    def write_tif(self, export_xml:bool =True) -> None:
+    def write_tif(self, export_xml: bool = True) -> None:
         """
         Write the assembled mosaic as TIFF files.
 
@@ -513,8 +513,8 @@ class Stitcher:
         Write the assembled mosaic as a SpatialData object.
 
         Args:
-            scale_factors (list, optional): List of scale factors for the generated SpatialData object. 
-                Default is [2, 4, 8]. The scale factors are used to generate downsampled versions of the 
+            scale_factors (list, optional): List of scale factors for the generated SpatialData object.
+                Default is [2, 4, 8]. The scale factors are used to generate downsampled versions of the
                 image for faster visualization at lower resolutions.
         """
         if scale_factors is None:
@@ -554,6 +554,7 @@ class ParallelStitcher(Stitcher):
         cache (str, optional): Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
         threads (int, optional): Number of threads to use for parallel processing (default is 20).
     """
+
     def __init__(
         self,
         input_dir: str,
