@@ -1084,6 +1084,9 @@ class Project(Logable):
         self.sdata = self.filehandler.get_sdata()  # update
 
     def complete_segmentation(self, overwrite: bool | None = None):
+        """If a sharded Segmentation was run but individual tiles failed to segment properly, this method can be called to repeat the segmentation on the failed tiles only.
+        Already calculated segmentation masks will not be recalculated.
+        """
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
