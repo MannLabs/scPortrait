@@ -163,7 +163,7 @@ class Stitcher:
         self.channel_order = channel_order
         self.cache = cache
 
-        self.initialize_outdir()
+        self._initialize_outdir()
 
     def _lazy_imports(self):
         """
@@ -179,12 +179,12 @@ class Stitcher:
         self.ashlar_process_axis_flip = process_axis_flip
 
     def __exit__(self):
-        self.clear_cache()
+        self._clear_cache()
 
     def __del__(self):
         self.clear_cache()
 
-    def create_cache(self):
+    def _create_cache(self):
         """
         Create a temporary cache directory for storing intermediate files during stitching.
         """
@@ -195,7 +195,7 @@ class Stitcher:
 
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
-    def clear_cache(self):
+    def _clear_cache(self):
         """
         Clear the temporary cache directory.
         """
@@ -203,7 +203,7 @@ class Stitcher:
             if os.path.exists(self.TEMP_DIR_NAME):
                 shutil.rmtree(self.TEMP_DIR_NAME)
 
-    def initialize_outdir(self):
+    def _initialize_outdir(self):
         """
         Initialize the output directory for saving the stitched mosaic.
         """
@@ -220,7 +220,7 @@ class Stitcher:
                     f"Output directory at {self.outdir} already exists. Set overwrite to True to overwrite the directory."
                 )
 
-    def get_channel_info(self):
+    def _get_channel_info(self):
         """
         Get information about the channels in the image tiles.
         """
@@ -231,7 +231,7 @@ class Stitcher:
         self.stitching_channel_id = list(self.channel_lookup.values()).index(self.stitching_channel)
         self.n_channels = len(self.channels)
 
-    def setup_rescaling(self):
+    def _setup_rescaling(self):
         """
         Setup image rescaling based on the specified rescale_range.
         """
@@ -276,7 +276,7 @@ class Stitcher:
             self.reader.do_rescale = False
             self.reader.rescale_range = None
 
-    def reorder_channels(self):
+    def _reorder_channels(self):
         """
         Reorder the channels in the mosaic based on the specified channel_order.
         """
@@ -292,7 +292,7 @@ class Stitcher:
 
             self.channels = channels
 
-    def initialize_reader(self):
+    def _initialize_reader(self):
         """
         Initialize the reader for reading image tiles.
         """
@@ -314,8 +314,8 @@ class Stitcher:
         )
 
         # setup rescaling
-        self.get_channel_info()
-        self.setup_rescaling()
+        self._get_channel_info()
+        self._setup_rescaling()
 
     def save_positions(self):
         """
@@ -337,7 +337,7 @@ class Stitcher:
         scale : float, optional
             Scale factor for the thumbnail (default is 0.05).
         """
-        self.initialize_reader()
+        self._initialize_reader()
         self.thumbnail = self.ashlar_thumbnail.make_thumbnail(
             self.reader, channel=self.stitching_channel_id, scale=scale
         )
@@ -358,7 +358,7 @@ class Stitcher:
         if rescale:
             self.thumbnail = rescale_image(self.thumbnail, rescale_range)
 
-    def initialize_aligner(self):
+    def _initialize_aligner(self):
         """
         Initialize the aligner for aligning the image tiles.
 
@@ -384,15 +384,15 @@ class Stitcher:
         plot_edge_scatter(self.aligner, self.outdir)
         plot_edge_quality(self.aligner, self.outdir)
 
-    def perform_alignment(self):
+    def _perform_alignment(self):
         """
         Perform alignment of the image tiles.
         """
         # intitialize reader for getting individual image tiles
-        self.initialize_reader()
+        self._initialize_reader()
 
         print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
-        self.aligner = self.initialize_aligner()
+        self.aligner = self._initialize_aligner()
         self.aligner.run()
 
         if self.plot_QC:
@@ -405,7 +405,7 @@ class Stitcher:
 
         print("Alignment complete.")
 
-    def initialize_mosaic(self):
+    def _initialize_mosaic(self):
         """
         Initialize the mosaic object for assembling the image tiles.
 
@@ -422,7 +422,7 @@ class Stitcher:
         )
         return mosaic
 
-    def assemble_mosaic(self):
+    def _assemble_mosaic(self):
         """
         Assemble the image tiles into a mosaic.
         """
@@ -434,7 +434,7 @@ class Stitcher:
         # initialize tempmmap array to save assemled mosaic to
         # if no cache is specified the tempmmap will be created in the outdir
 
-        self.create_cache()
+        self._create_cache()
 
         # create empty mmap array to store assembled mosaic
         hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
@@ -458,24 +458,24 @@ class Stitcher:
         # convery to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
-    def generate_mosaic(self):
+    def _generate_mosaic(self):
         # reorder channels
-        self.reorder_channels()
+        self._reorder_channels()
 
-        self.mosaic = self.initialize_mosaic()
+        self.mosaic = self._initialize_mosaic()
 
         # ensure dtype is set correctly
         self.mosaic.dtype = np.uint16
-        self.assemble_mosaic()
+        self._assemble_mosaic()
 
     def stitch(self):
         """
-        Perform the stitching process.
+        Generate the stitched mosaic.
         """
-        self.perform_alignment()
-        self.generate_mosaic()
+        self._perform_alignment()
+        self._generate_mosaic()
 
-    def write_tif(self, export_xml=True):
+    def write_tif(self, export_xml:bool =True) -> None:
         """
         Write the assembled mosaic as TIFF files.
 
@@ -653,7 +653,7 @@ class ParallelStitcher(Stitcher):
 
         self.threads = threads
 
-    def initialize_aligner(self):
+    def _initialize_aligner(self):
         """
         Initialize the aligner for aligning the image tiles.
 
@@ -673,13 +673,13 @@ class ParallelStitcher(Stitcher):
         )
         return aligner
 
-    def initialize_mosaic(self):
+    def _initialize_mosaic(self):
         mosaic = ParallelMosaic(
             self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
         )
         return mosaic
 
-    def assemble_channel(self, args):
+    def _assemble_channel(self, args):
         hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
         out = mmap_array_from_path(hdf5_path)
@@ -690,14 +690,14 @@ class ParallelStitcher(Stitcher):
             print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
             out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
 
-    def assemble_mosaic(self):
+    def _assemble_mosaic(self):
         # get dimensions of assembled final mosaic
         x, y = self.mosaic.shape
         shape = (self.n_channels, x, y)
 
         print(f"assembling mosaic with shape {shape}")
 
-        self.create_cache()
+        self._create_cache()
 
         hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
@@ -721,7 +721,7 @@ class ParallelStitcher(Stitcher):
         workers = np.min([self.threads, self.n_channels])
         print(f"assembling channels with {workers} workers")
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            list(tqdm(executor.map(self.assemble_channel, args), **tqdm_args))
+            list(tqdm(executor.map(self._assemble_channel, args), **tqdm_args))
 
         # conver to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
