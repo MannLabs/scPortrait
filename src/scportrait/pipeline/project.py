@@ -642,10 +642,7 @@ class Project(Logable):
         if channel_names is None:
             channel_names = [f"channel_{i}" for i in range(array.shape[0])]
 
-        if len(channel_names) != array.shape[0]:
-            raise ValueError(
-                "Number of channel names does not match number of input images. Please provide a channel name for each input image."
-            )
+        assert len(channel_names) == array.shape[0], "Number of channel names does not match number of input images."
 
         self.channel_names = channel_names
 
@@ -741,10 +738,7 @@ class Project(Logable):
         if channel_names is None:
             channel_names = extract_unique_parts(file_paths)
 
-        if len(channel_names) != len(file_paths):
-            raise ValueError(
-                "Number of channel names does not match number of input images. Please provide a channel name for each input image."
-            )
+        assert len(channel_names) == len(file_paths), "Number of channel names does not match number of input images."
 
         self.channel_names = channel_names
 
