@@ -746,6 +746,7 @@ class Project(Logable):
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
         if remap is not None:
             file_paths = file_paths[remap]
+            self.channel_names = [self.channel_names[i] for i in remap]
 
         if cache is None:
             cache = os.getcwd()
