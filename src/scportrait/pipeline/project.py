@@ -628,11 +628,9 @@ class Project(Logable):
         return path_input_image
 
     #### Functions to load input data ####
-    def load_input_from_array(self,
-                              array: np.ndarray,
-                              channel_names: list[str] = None,
-                              overwrite:bool|None = None,
-                              remap: list[int] = None) -> None:
+    def load_input_from_array(
+        self, array: np.ndarray, channel_names: list[str] = None, overwrite: bool | None = None, remap: list[int] = None
+    ) -> None:
         """Load input image from a numpy array.
 
         In the array the channels should be specified in the following order: nucleus, cytosol other channels.
@@ -656,15 +654,10 @@ class Project(Logable):
 
                 from scportrait.pipeline.project import Project
 
-                project = Project("path/to/project",
-                                  config_path = "path/to/config.yml",
-                                  overwrite = True,
-                                  debug = False)
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
                 array = np.random.rand(3, 1000, 1000)
                 channel_names = ["cytosol", "nucleus", "other_channel"]
-                project.load_input_from_array(array,
-                                              channel_names=channel_names,
-                                              remap = [1, 0, 2])
+                project.load_input_from_array(array, channel_names=channel_names, remap=[1, 0, 2])
 
         """
         # check if an input image was already loaded if so throw error if overwrite = False
@@ -706,9 +699,9 @@ class Project(Logable):
     def load_input_from_tif_files(
         self,
         file_paths: list[str],
-        channel_names:list[str] = None,
-        crop: tuple[int] | None =None,
-        overwrite: bool|None = None,
+        channel_names: list[str] = None,
+        crop: list[tuple[int, int]] | None = None,
+        overwrite: bool | None = None,
         remap: list[int] = None,
         cache: str | None = None,
     ):
@@ -741,10 +734,7 @@ class Project(Logable):
                 from scportrait.data._datasets import dataset_3
                 from scportrait.pipeline.project import Project
 
-                project = Project("path/to/project",
-                                  config_path = "path/to/config.yml",
-                                  overwrite = True,
-                                  debug = False)
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
                 path = dataset_3()
                 image_paths = [
                     f"{path}/Ch2.tif",
@@ -752,9 +742,7 @@ class Project(Logable):
                     f"{path}/Ch3.tif",
                 ]
                 channel_names = ["cytosol", "nucleus", "other_channel"]
-                project.load_input_from_tif_files(image_paths,
-                                                  channel_names=channel_names,
-                                                  remap = [1, 0, 2])
+                project.load_input_from_tif_files(image_paths, channel_names=channel_names, remap=[1, 0, 2])
 
         """
 
@@ -814,7 +802,7 @@ class Project(Logable):
         # remap can be used to shuffle the order, for example [1, 0, 2] to invert the first two channels
         # default order that is expected: Nucleus channel, cell membrane channel, other channels
         if remap is not None:
-            file_paths = file_paths[remap]
+            file_paths = [file_paths[i] for i in remap]
             self.channel_names = [self.channel_names[i] for i in remap]
 
         if cache is None:
@@ -872,11 +860,13 @@ class Project(Logable):
         # to the image which was written to disk
         self._check_sdata_status()
 
-    def load_input_from_omezarr(self,
-                                ome_zarr_path: str,
-                                overwrite:None|bool = None,
-                                channel_names: None|list[str] = None,
-                                remap: list[int] = None,) -> None:
+    def load_input_from_omezarr(
+        self,
+        ome_zarr_path: str,
+        overwrite: None | bool = None,
+        channel_names: None | list[str] = None,
+        remap: list[int] = None,
+    ) -> None:
         """Load input image from an ome-zarr file.
 
         Args:
@@ -898,13 +888,9 @@ class Project(Logable):
 
                 from scportrait.pipeline.project import Project
 
-                project = Project("path/to/project",
-                                  config_path = "path/to/config.yml",
-                                  overwrite = True,
-                                  debug = False)
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
                 ome_zarr_path = "path/to/ome.zarr"
-                project.load_input_from_omezarr(ome_zarr_path,
-                                              remap = [1, 0, 2])
+                project.load_input_from_omezarr(ome_zarr_path, remap=[1, 0, 2])
         """
         # setup overwrite
         original_overwrite = self.overwrite
