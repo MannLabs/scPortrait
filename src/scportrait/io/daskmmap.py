@@ -1,3 +1,6 @@
+import warnings
+
+warnings.filterwarnings("ignore", message=".*`dataframe.query-planning`.*")
 import dask
 import dask.array as da
 import h5py
