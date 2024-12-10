@@ -147,7 +147,7 @@ class Stitcher:
 
         self._initialize_outdir()
 
-        #initialize variables to default values
+        # initialize variables to default values
         self.reader = None
 
     def _lazy_imports(self):
