@@ -167,7 +167,7 @@ class Stitcher:
         self._clear_cache()
 
     def __del__(self):
-        self.clear_cache()
+        self._clear_cache()
 
     def _create_cache(self):
         """
