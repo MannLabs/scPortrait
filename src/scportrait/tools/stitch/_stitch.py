@@ -147,6 +147,9 @@ class Stitcher:
 
         self._initialize_outdir()
 
+        #initialize variables to default values
+        self.reader = None
+
     def _lazy_imports(self):
         """
         Import necessary packages for stitching.
@@ -212,6 +215,19 @@ class Stitcher:
         self.channels = list(self.reader.metadata.channel_map.keys())
         self.stitching_channel_id = list(self.channel_lookup.values()).index(self.stitching_channel)
         self.n_channels = len(self.channels)
+
+    def get_stitching_information(self):
+        """Print information about the configuration of the stitching process."""
+        if self.reader is None:
+            self._initialize_reader()
+        self._get_channel_info()
+
+        print("Tile positions will be calculated based on channel:", self.stitching_channel)
+        print("Channel Names:", self.channel_names)
+        print("Overlap of image tiles:", self.overlap)
+        print("Max Shift value:", self.max_shift)
+        print("Filter Sigma value:", self.filter_sigma)
+        print("Output will be written to:", self.outdir)
 
     def _setup_rescaling(self):
         """
