@@ -26,7 +26,7 @@ class MLClusterClassifier(ProcessingStep):
 
     This class takes a pre-trained model and uses it to classify single cells,
     using the model's forward function or encoder function, depending on the
-    user's choice. The classification results are saved to a CSV file.
+    user's choice. The featurization results are saved to a CSV file.
 
     Attributes
     ----------
@@ -159,7 +159,7 @@ class MLClusterClassifier(ProcessingStep):
             self.resize = False
 
         assert "network" in self.config.keys(), "no network checkpoint specified in config file"
-        assert "channel_classification" in self.config.keys(), "no channel_classification specified in config file"
+        assert "channel_selection" in self.config.keys(), "no channel_selection specified in config file"
         assert "dataloader_worker_number" in self.config.keys(), "no dataloader_worker_number specified in config file"
         assert "batch_size" in self.config.keys(), "no batch_size specified in config file"
         assert "inference_device" in self.config.keys(), "no inference_device specified in config file"
@@ -182,14 +182,14 @@ class MLClusterClassifier(ProcessingStep):
             else:
                 raise ValueError("no hparams file specified in config and could not be dynamically found based on checkpoint path.")
 
-        self.channel_classification = self.config["channel_classification"]
+        self.channel_selection= self.config["channel_selection"]
         #if multiple channels are selected ensure that they are converted to the proper format for passing to the pytorch dataset
         
-        if isinstance(self.channel_classification, str):
-            self.channel_classification = [int(x) for x in self.channel_classification.split(":")]
+        if isinstance(self.channel_selection, str):
+            self.channel_selection = [int(x) for x in self.channel_selection.split(":")]
         else:
-            assert isinstance(self.channel_classification, int), f"channel_classification should be an integer or a string of integers separated by colons. Provided value: {self.channel_classification}"
-            self.channel_classification = [self.channel_classification]
+            assert isinstance(self.channel_selection, int), f"channel_selection should be an integer or a string of integers separated by colons. Provided value: {self.channel_selection}"
+            self.channel_selection = [self.channel_selection]
 
         self.dataloader_worker_number = self.config["dataloader_worker_number"]
         self.batch_size = self.config["batch_size"]
@@ -205,15 +205,15 @@ class MLClusterClassifier(ProcessingStep):
 
         if self.pretrained_model:
             if self.network_dir == "autophagy_classifier1.0":
-                from scportrait.ml.pretrained_models import autophagy_classifier1_0
+                from scportrait.tools.ml.pretrained_models import autophagy_classifier1_0
                 model = autophagy_classifier1_0(device=self.config["inference_device"])
             
             elif self.network_dir == "autophagy_classifier2.0":
-                from scportrait.ml.pretrained_models import autophagy_classifier2_0
+                from scportrait.tools.ml.pretrained_models import autophagy_classifier2_0
                 model = autophagy_classifier2_0(device=self.config["inference_device"])
             
             elif self.network_dir == "autophagy_classifier2.1":
-                from scportrait.ml.pretrained_models import autophagy_classifier2_1
+                from scportrait.tools.ml.pretrained_models import autophagy_classifier2_1
                 model = autophagy_classifier2_1(device=self.config["inference_device"])
             else:
                 sys.exit("incorrect specification for pretrained model.")
@@ -240,13 +240,13 @@ class MLClusterClassifier(ProcessingStep):
         if self.resize:
             t = transforms.Compose(
                 [
-                    ChannelSelector(self.channel_classification),
+                    ChannelSelector(self.channel_selection),
                     transforms.Resize((self.resize_value, self.resize_value), antialias=True),
                 ]
             )
         else:
             t = transforms.Compose(
-                [ChannelSelector(self.channel_classification)]
+                [ChannelSelector(self.channel_selection)]
             )
 
         self.log(f"loading cells from {self.extraction_dir}")
@@ -266,7 +266,7 @@ class MLClusterClassifier(ProcessingStep):
         dataset_type = HDF5SingleCellDataset,
     ):
         """
-        Perform classification on the provided HDF5 dataset.
+        Perform featurization on the provided HDF5 dataset.
 
         Parameters
         ----------
@@ -302,7 +302,7 @@ class MLClusterClassifier(ProcessingStep):
 
             MLClusterClassifier:
                 # Channel index on which the classification should be performed
-                channel_classification: 4
+                channel_selection: 4
 
                 #boolean value indicating if a pretrained model availble in scPortrait should be used
                 pretrained: False
@@ -461,7 +461,7 @@ class EnsembleClassifier(ProcessingStep):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory, exist_ok=True)
 
-        self.ensemble_name = self.config["classification_label"]
+        self.ensemble_name = self.config["label"]
 
         # generate directory where results should be saved
         self.directory = os.path.join(self.directory, self.ensemble_name)
@@ -497,7 +497,7 @@ class EnsembleClassifier(ProcessingStep):
                 "/",
                 transform=t,
                 return_id=True,
-                select_channel=self.config["channel_classification"],
+                select_channel=self.config["channel_selection"],
             )
 
         # generate dataloader
@@ -634,7 +634,7 @@ class EnsembleClassifier(ProcessingStep):
 
                 EnsembleClassifier:
                     # channel number on which the classification should be performed
-                    channel_classification: 4
+                    channel_selection: 4
 
                     #number of threads to use for dataloader
                     dataloader_worker_number: 24
@@ -651,7 +651,7 @@ class EnsembleClassifier(ProcessingStep):
                     input_image_px: 128
 
                     #label under which the results will be saved
-                    classification_label: "Autophagy_15h_classifier1"
+                    label: "Autophagy_15h_classifier1"
 
                     # on which device inference should be performed
                     # for speed should be "cuda"

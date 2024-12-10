@@ -53,8 +53,8 @@ class Project(Logable):
         Class containing segmentation workflow.
     extraction_f : Class, default None
         Class containing extraction workflow.
-    classification_f : Class, default None
-        Class containing classification workflow.
+    featurization_f : Class, default None
+        Class containing featurization workflow.
     selection_f : Class, default None
         Class containing selection workflow.
 
@@ -66,9 +66,9 @@ class Project(Logable):
         Default foldername for the segmentation process.
     DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
         Default foldername for the extraction process.
-    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-        Default foldername for the classification process.
-    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "featurization"
+        Default foldername for the featurization process.
+    DEFAULT_SELECTION_DIR_NAME : str, default "selection"
         Default foldername for the selection process.
 
     """
@@ -96,7 +96,7 @@ class Project(Logable):
     DEFAULT_DATA_FILE = "single_cells.h5"
 
     # classification
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+    DEFAULT_CLASSIFICATION_DIR_NAME = "featurization"
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
     # dtypes
@@ -127,7 +127,7 @@ class Project(Logable):
         segmentation_f=None,
         segmentation_filtering_f=None,
         extraction_f=None,
-        classification_f=None,
+        featurization_f=None,
         selection_f=None,
         **kwargs,
     ):
@@ -140,7 +140,7 @@ class Project(Logable):
         self.segmentation_f = segmentation_f
         self.segmentation_filtering_f = segmentation_filtering_f
         self.extraction_f = extraction_f
-        self.classification_f = classification_f
+        self.featurization_f = featurization_f
         self.selection_f = selection_f
 
         # PIL limit used to protect from large image attacks
@@ -257,29 +257,29 @@ class Project(Logable):
         else:
             self.extraction_f = None
 
-        # === setup classification ===
-        if classification_f is not None:
-            if classification_f.__name__ not in self.config:
+        # === setup featurization ===
+        if featurization_f is not None:
+            if featurization_f.__name__ not in self.config:
                 raise ValueError(
-                    f"Config for {classification_f.__name__} is missing from the config file"
+                    f"Config for {featurization_f.__name__} is missing from the config file"
                 )
 
-            classification_directory = os.path.join(
+            featurization_directory = os.path.join(
                 self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
             )
 
-            self.classification_directory = classification_directory
+            self.featurization_directory = featurization_directory
 
-            self.classification_f = classification_f(
-                self.config[classification_f.__name__],
-                self.classification_directory,
+            self.featurization_f = featurization_f(
+                self.config[featurization_f.__name__],
+                self.featurization_directory,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 intermediate_output=self.intermediate_output,
             )
         else:
-            self.classification_f = None
+            self.featurization_f = None
 
         # === setup selection ===
         if selection_f is not None:
@@ -825,9 +825,9 @@ class Project(Logable):
         if results is not None:
             return results
 
-    def classify(self, partial=False, *args, **kwargs):
+    def featurize(self, partial=False, *args, **kwargs):
         """
-        Classify extracted single cells with the defined classification method.
+        Classify extracted single cells with the defined featurization method.
         """
 
         if hasattr(self, "filtered_dataset"):
@@ -845,7 +845,7 @@ class Project(Logable):
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
 
-        self.classification_f(input_extraction, partial=partial, *args, **kwargs)
+        self.featurization_f(input_extraction, partial=partial, *args, **kwargs)
 
     def select(self, *args, **kwargs):
         """
@@ -929,8 +929,8 @@ class TimecourseProject(Project):
         Class containing segmentation workflow.
     extraction_f : Class, default None
         Class containing extraction workflow.
-    classification_f : Class, default None
-        Class containing classification workflow.
+    featurization_f : Class, default None
+        Class containing featurization workflow.
     selection_f : Class, default None
         Class containing selection workflow.
 
@@ -944,9 +944,9 @@ class TimecourseProject(Project):
         Default foldername for the segmentation process.
     DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
         Default foldername for the extraction process.
-    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-        Default foldername for the classification process.
-    DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+    DEFAULT_CLASSIFICATION_DIR_NAME : str, default "featurization"
+        Default foldername for the featurization process.
+    DEFAULT_SELECTION_DIR_NAME : str, default "selection"
         Default foldername for the selection process.
     """
 
