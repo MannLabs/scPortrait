@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from scportrait.ml.models import _VGG1, _VGG2, VGG1, VGG2, CAEBase, VGG2_regression
+from scportrait.tools.ml.models import _VGG1, _VGG2, VGG1, VGG2, CAEBase, VGG2_regression
 
 
 class MultilabelSupervisedModel(pl.LightningModule):
