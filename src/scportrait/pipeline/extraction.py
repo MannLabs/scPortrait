@@ -23,10 +23,6 @@ from scportrait.processing.utils import flatten
 from scportrait.processing.preprocessing import percentile_normalization
 from scportrait.pipeline.base import ProcessingStep
 
-
-# to perform garbage collection
-
-
 class HDF5CellExtraction(ProcessingStep):
     """
     A class to extracts single cell images from a segmented SPARCSpy project and save the
@@ -43,6 +39,7 @@ class HDF5CellExtraction(ProcessingStep):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._check_config()
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
@@ -100,6 +97,78 @@ class HDF5CellExtraction(ProcessingStep):
                 "Windows detected. Multithreading not supported on windows so setting threads to 1."
             )
             self.config["threads"] = 1
+    def _check_config(self):
+        """Load parameters from config file and check for required parameters."""
+
+        # check for required parameters
+        assert "threads" in self.config, "Number of threads must be specified in the config file."
+        assert "image_size" in self.config, "Image size must be specified in the config file."
+        assert "cache" in self.config, "Cache directory must be specified in the config file."
+
+        self.threads = self.config["threads"]
+        self.image_size = self.config["image_size"]
+
+        # optional parameters with default values that can be overridden by the values in the config file
+        ## parameters for image extraction
+        if "normalize_output" in self.config:
+            normalize = self.config["normalize_output"]
+
+            # check that is a valid value
+            assert normalize in [
+                True,
+                False,
+                None,
+                "None",
+            ], "Normalization must be one of the following values [True, False, None, 'None']"
+
+            # convert to boolean
+            if normalize == "None":
+                normalize = False
+            if normalize is None:
+                normalize = False
+
+            self.normalization = normalize
+
+        else:
+            self.normalization = True  # default value
+        
+        if "normalization_range" in self.config:
+            normalization_range = self.config["normalization_range"]
+
+            if normalization_range == "None":
+                normalization_range = None
+
+            if normalization_range is not None:
+                assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
+
+            self.normalization_range = normalization_range
+
+        else:
+            self.normalization_range = None
+
+        ## parameters for HDF5 file creates
+        if "compression" in self.config:
+            self.compression = self.config["compression"]
+        else:
+            self.compression = True
+        
+        # Deprecated parameters since we no longer directly read from HDF5
+        # Preservering here in case we see better performance by adjusting this behaviour in how we read data from memmapped arrays
+
+        if "hdf5_rdcc_nbytes" in self.config:
+            self.hdf5_rdcc_nbytes = self.config["hdf5_rdcc_nbytes"]
+        else:
+            self.hdf5_rdcc_nbytes = 5242880000 # 5gb 1024 * 1024 * 5000
+
+        if "hdf5_rdcc_w0" in self.config:
+            self.hdf5_rdcc_w0 = self.config["hdf5_rdcc_w0"]
+        else:
+            self.hdf5_rdcc_w0 = 1
+
+        if "hdf5_rdcc_nslots" in self.config:
+            self.hdf5_rdcc_nslots = self.config["hdf5_rdcc_nslots"]
+        else:
+            self.hdf5_rdcc_nslots = 50000
 
     def _get_compression_type(self):
         self.compression_type = "lzf" if self.config["compression"] else None
@@ -114,64 +183,21 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.remap = [int(el.strip()) for el in char_list]
 
-    def _get_normalization(self):
-        # get normalization parameters
-        if "normalize_output" in self.config:
-            normalize = self.config["normalize_output"]
-
-            # check that is a valid value
-            assert (
-                normalize in [True, False, None, "None"]
-            ), "Normalization must be one of the following values [True, False, None, 'None']"
-
-            # convert to boolean
-            if normalize == "None":
-                normalize = False
-            if normalize is None:
-                normalize = False
-
-            self.normalization = normalize
-        else:
-            self.normalization = True  # default value
-
-        # setup normalization range
-        if "normalization_range" in self.config:
-            normalization_range = self.config["normalization_range"]
-
-            if normalization_range == "None":
-                normalization_range = None
-
-            if normalization_range is not None:
-                assert isinstance(
-                    normalization_range, tuple
-                ), "Normalization range must be a tuple."
-
-            self.normalization_range = normalization_range
-
-        else:
-            self.normalization_range = None
-
-        # get functions for normalization
+    def _setup_normalization(self):
         if self.normalization:
             if self.normalization_range is None:
 
-                def norm_function(
-                    img: np.array, lower: float = None, upper: float = None
-                ) -> np.array:
+                def norm_function(img):
                     return percentile_normalization(img)
             else:
                 lower, upper = self.normalization_range
 
-                def norm_function(
-                    img: np.array, lower: float = lower, upper: float = upper
-                ) -> np.array:
+                def norm_function(img, lower=lower, upper=upper):  # type: ignore
                     return percentile_normalization(img, lower, upper)
 
         elif not self.normalization:
 
-            def norm_function(
-                img: np.array, lower: float = None, upper: float = None
-            ) -> np.array:
+            def norm_function(img):
                 img = (
                     img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
                 )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
@@ -825,7 +851,7 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _extract_classes_multi(self, input_segmentation_path, px_centers, arg_list):
         # setup normalization functions
-        self._get_normalization()
+        self._setup_normalization()
 
         # connect to temporary storage for saving results
         self._tmp_single_cell_index = mmap_array_from_path(
@@ -995,7 +1021,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         if self.config["threads"] <= 1:
             # set up for single-threaded processing
-            self._get_normalization()
+            self._setup_normalization()
 
             # connect to temporary storage for saving results
             self._tmp_single_cell_index = mmap_array_from_path(
@@ -1085,6 +1111,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._check_config()
 
     def _setup_extraction(self):
         if self.partial_processing:
@@ -1358,7 +1385,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         self.log(
             f"Starting single-cell image extraction of {self.num_classes} cells..."
         )
-        self._get_normalization()
+        self._setup_normalization()
 
         # reconnect to memory mapped temp arrays
         self._tmp_single_cell_index = mmap_array_from_path(
