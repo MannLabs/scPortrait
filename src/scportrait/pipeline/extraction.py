@@ -97,6 +97,7 @@ class HDF5CellExtraction(ProcessingStep):
                 "Windows detected. Multithreading not supported on windows so setting threads to 1."
             )
             self.config["threads"] = 1
+    
     def _check_config(self):
         """Load parameters from config file and check for required parameters."""
 
@@ -734,9 +735,9 @@ class HDF5CellExtraction(ProcessingStep):
         with h5py.File(
             input_segmentation_path,
             "r",
-            rdcc_nbytes=self.config["hdf5_rdcc_nbytes"],
-            rdcc_w0=self.config["hdf5_rdcc_w0"],
-            rdcc_nslots=self.config["hdf5_rdcc_nslots"],
+            rdcc_nbytes=self.hdf5_rdcc_nbytes,
+            rdcc_w0=self.hdf5_rdcc_w0,
+            rdcc_nslots=self.hdf5_rdcc_nslots,
         ) as input_hdf:
             hdf_channels = input_hdf.get(self.channel_label)
             hdf_labels = input_hdf.get(self.segmentation_label)
