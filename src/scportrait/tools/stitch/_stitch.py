@@ -499,10 +499,11 @@ class Stitcher:
             None
         """
         filepath = os.path.join(self.outdir, f"{self.slidename}.ome.zarr")
+
         write_ome_zarr(
             filepath,
             self.assembled_mosaic,
-            self.channels,
+            self.channel_names,
             self.slidename,
             overwrite=self.overwrite,
             downscaling_size=downscaling_size,
