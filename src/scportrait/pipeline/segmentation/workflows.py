@@ -1,45 +1,161 @@
+import multiprocessing
 import os
 import sys
 import time
 import timeit
-from typing import Tuple, Union, List
-import multiprocessing
 
-import xarray
-import numpy as np
 import matplotlib.pyplot as plt
-from alphabase.io import tempmmap
-from skfmm import travel_time as skfmm_travel_time
-from skimage.filters import median
-from skimage.segmentation import watershed
-from skimage.color import label2rgb
-from skimage.morphology import binary_erosion, disk, dilation, erosion
+import numpy as np
 import torch
+import xarray
+from alphabase.io import tempmmap
 from cellpose import models
+from skfmm import travel_time as skfmm_travel_time
+from skimage.color import label2rgb
+from skimage.filters import median
+from skimage.morphology import binary_erosion, dilation, disk, erosion
+from skimage.segmentation import watershed
 
-from scportrait.plotting._utils import _custom_cmap
-from scportrait.processing.images._image_processing import percentile_normalization, downsample_img
-from scportrait.processing.masks.mask_filtering import SizeFilter, MatchNucleusCytosolIds
 from scportrait.pipeline._utils.segmentation import (
-    segment_local_threshold,
-    segment_global_threshold,
-    numba_mask_centroid,
     contact_filter,
     global_otsu,
+    numba_mask_centroid,
     remove_edge_labels,
+    segment_global_threshold,
+    segment_local_threshold,
 )
 from scportrait.pipeline.segmentation.segmentation import (
     Segmentation,
     ShardedSegmentation,
 )
+from scportrait.plotting._utils import _custom_cmap
+from scportrait.processing.images._image_processing import downsample_img, percentile_normalization
+from scportrait.processing.masks.mask_filtering import MatchNucleusCytosolIds, SizeFilter
+
 
 class _BaseSegmentation(Segmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._setup_channel_selection()
+        self.nGPUs = None
+
+    def _setup_channel_selection(self):
+        self._setup_maximum_intensity_projection()
+        self._define_channels_to_extract_for_segmentation()
+        self._remap_maximum_intensity_projection_channels()
+
+    def _setup_maximum_intensity_projection(self):
+        # check if channels that should be maximum intensity projected and combined are defined in the config
+        if "combine_cytosol_channels" in self.config.keys():
+            self.combine_cytosol_channels = self.config["combine_cytosol_channels"]
+            assert isinstance(
+                self.combine_cytosol_channels, list
+            ), "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_cytosol_channels) > 1
+            ), "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
+            self.maximum_project_cytosol = True
+        else:
+            self.combine_cytosol_channels = None
+            self.maximum_project_cytosol = False
+
+        if "combine_nucleus_channels" in self.config.keys():
+            self.combine_nucleus_channels = self.config["combine_nucleus_channels"]
+            assert isinstance(
+                self.combine_nucleus_channels, list
+            ), "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
+            assert (
+                len(self.combine_nucleus_channels) > 1
+            ), "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
+            self.maximum_project_nucleus = True
+        else:
+            self.combine_nucleus_channels = None
+            self.maximum_project_nucleus = False
+
+    def _define_channels_to_extract_for_segmentation(self):
+        self.segmentation_channels = []
+
+        if "nuclei" in self.MASK_NAMES:
+            if "segmentation_channels_nuclei" in self.config.keys():
+                self.nucleus_segmentation_channel = self.config["segmentation_channels_nuclei"]
+            elif "combine_nucleus_channels" in self.config.keys():
+                self.nucleus_segmentation_channel = self.combine_nucleus_channels
+            else:
+                self.nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
+
+            self.segmentation_channels.extend(self.nucleus_segmentation_channel)
+
+        if "cytosol" in self.MASK_NAMES:
+            if "segmentation_channels_cytosol" in self.config.keys():
+                self.cytosol_segmentation_channel = self.config["segmentation_channels_cytosol"]
+            elif "combine_cytosol_channels" in self.config.keys():
+                self.cytosol_segmentation_channel = self.combine_cytosol_channels
+            else:
+                self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
+
+            self.segmentation_channels.extend(self.cytosol_segmentation_channel)
+
+        # remove any duplicate entries and sort according to order
+        self.segmentation_channels = list(set(self.segmentation_channels))
+
+        # check validity of resulting list of segmentation channels
+        assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
+        assert (
+            len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
+        ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
+
+        if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
+            assert (
+                self.maximum_project_nucleus or self.maximum_project_cytosol
+            ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+
+    def _remap_maximum_intensity_projection_channels(self):
+        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
+        if self.maximum_project_nucleus:
+            self.original_combine_nucleus_channels = self.combine_nucleus_channels
+            self.combine_nucleus_channels = [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
+        if self.maximum_project_cytosol:
+            self.original_combine_cytosol_channels = self.combine_cytosol_channels
+            self.combine_cytosol_channels = [self.segmentation_channels.index(x) for x in self.combine_cytosol_channels]
 
     def _transform_input_image(self, input_image):
+        start_transform = timeit.default_timer()
+
         if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data
+            input_image = input_image.data.compute()
+
+        values = []
+        # check if any channels need to be transformed
+        if "nuclei" in self.MASK_NAMES:
+            if self.maximum_project_nucleus:
+                self.log(
+                    f"For nucleus segmentation using the maximum intensity projection of channels {self.original_combine_nucleus_channels}."
+                )
+                nucleus_channel = self._maximum_project_channels(input_image, self.combine_nucleus_channels)
+                nucleus_channel = nucleus_channel.squeeze()
+            else:
+                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS].squeeze()
+            values.append(nucleus_channel)
+
+        if "cytosol" in self.MASK_NAMES:
+            if self.maximum_project_cytosol:
+                self.log(
+                    f"For cytosol segmentation using the maximum intensity projection of channels {self.original_combine_cytosol_channels}."
+                )
+                cytosol_channel = self._maximum_project_channels(input_image, self.combine_cytosol_channels)
+                cytosol_channel = cytosol_channel.squeeze()
+            else:
+                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS].squeeze()
+            values.append(cytosol_channel)
+
+        input_image = np.array(values)
+
+        assert (
+            input_image.shape[0] == self.N_INPUT_CHANNELS
+        ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
+
+        stop_transform = timeit.default_timer()
+        self.transform_time = stop_transform - start_transform
         return input_image
 
     def return_empty_mask(self, input_image):
@@ -253,21 +369,30 @@ class _BaseSegmentation(Segmentation):
         # check that mask has the correct shape and matches to input image
 
         if len(mask.shape) == 2:
-            assert (mask.shape[0] == self.original_image_size[1]) and (
-                mask.shape[1] == self.original_image_size[2])
+            assert (mask.shape[0] == self.original_image_size[1]) and (mask.shape[1] == self.original_image_size[2])
         elif len(mask.shape) == 3:
-            assert (mask.shape[1] == self.original_image_size[1]) and (
-                mask.shape[2] == self.original_image_size[2])
+            assert (mask.shape[1] == self.original_image_size[1]) and (mask.shape[2] == self.original_image_size[2])
 
         return mask
 
     #### Image Processing #####
 
+    def _maximum_project_channels(self, input_image: np.array, channel_ids: list[int]) -> np.array:
+        """add multiple channels together to generate a new channel for segmentation using maximum intensity projection"""
+
+        dtype = input_image.dtype
+        new_channel = np.zeros_like(input_image[0], dtype=dtype)
+
+        for channel_id in channel_ids:
+            new_channel = np.maximum(new_channel, input_image[channel_id])
+
+        return new_channel
+
     def _normalize_image(
         self,
         input_image: np.array,
-        lower: Union[float, dict],
-        upper: Union[float, dict],
+        lower: float | dict,
+        upper: float | dict,
         debug: bool = False,
     ) -> np.array:
         # check that both are specified as the same type
@@ -283,11 +408,9 @@ class _BaseSegmentation(Segmentation):
 
             for i in range(input_image.shape[0]):
                 _lower = lower[i]
-                _upper = upper[i]
+                _upper = upper[i]  # type: ignore
 
-                norm_image.append(
-                    percentile_normalization(input_image[i], _lower, _upper)
-                )
+                norm_image.append(percentile_normalization(input_image[i], _lower, _upper))
 
             norm_image = np.array(norm_image)
 
@@ -312,9 +435,7 @@ class _BaseSegmentation(Segmentation):
 
         return norm_image
 
-    def _median_correct_image(
-        self, input_image, median_filter_size: int, debug: bool = False
-    ):
+    def _median_correct_image(self, input_image, median_filter_size: int, debug: bool = False):
         self.log("Performing median filtering on input image")
 
         for i in range(input_image.shape[0]):
@@ -345,12 +466,14 @@ class _BaseSegmentation(Segmentation):
     ##### Filtering Functions #####
 
     # 1. Size Filtering
-    def _check_for_size_filtering(self, mask_types=["nucleus", "cytosol"]) -> None:
+    def _check_for_size_filtering(self, mask_types=None) -> None:
         """
         Check if size filtering should be performed on the masks.
         If size filtering is turned on, the thresholds for filtering are loaded from the config file.
         """
 
+        if mask_types is None:
+            mask_types = ["nucleus", "cytosol"]
         if "filter_masks_size" in self.config.keys():
             self.filter_size = self.config["filter_masks_size"]
         else:
@@ -360,18 +483,13 @@ class _BaseSegmentation(Segmentation):
         # load parameters for cellsize filtering
         if self.filter_size:
             for mask_type in mask_types:
-                thresholds, confidence_interval = self._get_params_cellsize_filtering(
-                    type=mask_type
-                )
+                thresholds, confidence_interval = self._get_params_cellsize_filtering(type=mask_type)
 
-                #save attributes for use later
+                # save attributes for use later
                 setattr(self, f"{mask_type}_thresholds", thresholds)
                 setattr(self, f"{mask_type}_confidence_interval", confidence_interval)
 
-    def _get_params_cellsize_filtering(
-        self, type
-        ) -> Tuple[Union[Tuple[float], None], Union[float, None]]:
-        
+    def _get_params_cellsize_filtering(self, type) -> tuple[tuple[float] | None, float | None]:
         absolute_filter_status = False
 
         if "min_size" in self.config[f"{type}_segmentation"].keys():
@@ -388,20 +506,16 @@ class _BaseSegmentation(Segmentation):
 
         if absolute_filter_status:
             thresholds = [min_size, max_size]
-            return (thresholds, None)
+            return (thresholds, None)  # type: ignore
         else:
             thresholds = None
 
             # get confidence intervals to automatically calculate thresholds
             if "confidence_interval" in self.config[f"{type}_segmentation"].keys():
-                confidence_interval = self.config[f"{type}_segmentation"][
-                    "confidence_interval"
-                ]
+                confidence_interval = self.config[f"{type}_segmentation"]["confidence_interval"]
             else:
                 # get default value
-                self.log(
-                    f"No confidence interval specified for {type} mask filtering, using default value of 0.95"
-                )
+                self.log(f"No confidence interval specified for {type} mask filtering, using default value of 0.95")
                 confidence_interval = 0.95
 
             return (thresholds, confidence_interval)
@@ -409,13 +523,13 @@ class _BaseSegmentation(Segmentation):
     def _perform_size_filtering(
         self,
         mask: np.array,
-        thresholds: Union[Tuple[float], None],
+        thresholds: tuple[float] | None,
         confidence_interval: float,
         mask_name: str,
         log: bool = True,
         debug: bool = False,
         input_image: np.array = None,
-        ) -> np.array:
+    ) -> np.array:
         """
         Remove elements from mask based on a size filter.
 
@@ -427,9 +541,7 @@ class _BaseSegmentation(Segmentation):
         start_time = time.time()
 
         if thresholds is not None:
-            self.log(
-                f"Performing filtering of {mask_name} with specified thresholds {thresholds} from config file."
-            )
+            self.log(f"Performing filtering of {mask_name} with specified thresholds {thresholds} from config file.")
         else:
             self.log(
                 f"Automatically calculating thresholds for filtering of {mask_name} based on a fitted normal distribution with a confidence interval of {confidence_interval * 100}%."
@@ -450,33 +562,37 @@ class _BaseSegmentation(Segmentation):
         )
 
         if self.debug:
-            
-            #get visualization of the filtering results (2 = filtered, 1 = keep, 0 = background)
-            mask = filter.visualize_filtering_results(
-                plot_fig=False, return_maps=True
-            )
+            # get visualization of the filtering results (2 = filtered, 1 = keep, 0 = background)
+            mask = filter.visualize_filtering_results(plot_fig=False, return_maps=True)
 
             if not self.is_shard:
                 if self.save_filter_results:
-
                     if len(mask.shape) == 2:
-                        #add results to sdata object
-                        self.filehandler._write_segmentation_sdata(mask, segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
+                        # add results to sdata object
+                        self.filehandler._write_segmentation_sdata(
+                            mask,
+                            segmentation_label=f"debugging_seg_size_filter_results_{mask_name}",
+                            classes=filter.ids,
+                        )
                     else:
-                        self.filehandler._write_segmentation_sdata(mask[0], segmentation_label = f"debugging_seg_size_filter_results_{mask_name}", classes = filter.ids)
-                    #then this does not need to be plotted as it can be visualized from there
+                        self.filehandler._write_segmentation_sdata(
+                            mask[0],
+                            segmentation_label=f"debugging_seg_size_filter_results_{mask_name}",
+                            classes=filter.ids,
+                        )
+                    # then this does not need to be plotted as it can be visualized from there
                     plot_results = False
                 else:
                     plot_results = True
             else:
                 plot_results = True
-            
+
             if plot_results:
                 # get input image for visualization
                 if input_image is None:
                     if "input_image" in self.__dict__.keys():
                         input_image = self.input_image
-                
+
                 if input_image is not None:
                     if len(input_image.shape) == 2:
                         image_map = input_image
@@ -485,9 +601,9 @@ class _BaseSegmentation(Segmentation):
                             image_map = input_image[0]
                         elif mask_name == "cytosol":
                             image_map = input_image[1]
-                    
+
                     cmap, norm = _custom_cmap()
-                    
+
                     fig, axs = plt.subplots(1, 1, figsize=(10, 10))
                     axs.imshow(image_map, cmap="gray")
                     axs.imshow(mask, cmap=cmap, norm=norm)
@@ -499,15 +615,11 @@ class _BaseSegmentation(Segmentation):
                     self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
 
             # clearup memory
-            self._clear_cache(
-                vars_to_delete=[mask, plot_results]
-            )
+            self._clear_cache(vars_to_delete=[mask, plot_results])
 
         end_time = time.time()
 
-        self.log(
-            f"Total time to perform {mask_name} size filtering: {end_time - start_time} seconds"
-        )
+        self.log(f"Total time to perform {mask_name} size filtering: {end_time - start_time} seconds")
 
         return filtered_mask
 
@@ -519,18 +631,14 @@ class _BaseSegmentation(Segmentation):
         if "match_masks" in self.config.keys():
             self.filter_match_masks = self.config["match_masks"]
             if "filtering_threshold_mask_matching" in self.config.keys():
-                self.mask_matching_filtering_threshold = self.config[
-                    "filtering_threshold_mask_matching"
-                ]
+                self.mask_matching_filtering_threshold = self.config["filtering_threshold_mask_matching"]
             else:
                 self.mask_matching_filtering_threshold = 0.95  # set default parameter
 
         else:
             # add deprecation warning for old config setup
             if "filter_status" in self.config.keys():
-                Warning(
-                    "filter_status is deprecated, please use match_masks instead Will not perform filtering."
-                )
+                Warning("filter_status is deprecated, please use match_masks instead Will not perform filtering.")
 
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
@@ -542,7 +650,7 @@ class _BaseSegmentation(Segmentation):
         filtering_threshold: float,
         debug: bool = False,
         input_image: np.array = None,
-        ) -> Tuple[np.array, np.array]:
+    ) -> tuple[np.array, np.array]:
         """
         Match the nuclei and cytosol masks to ensure that the same cells are present in both masks.
 
@@ -558,42 +666,41 @@ class _BaseSegmentation(Segmentation):
 
         # perform filtering to remove cytosols which do not have a corresponding nucleus
         filter = MatchNucleusCytosolIds(filtering_threshold=filtering_threshold)
-        masks_nucleus, masks_cytosol = filter.filter(
-            nucleus_mask=nucleus_mask, cytosol_mask=cytosol_mask
-        )
+        masks_nucleus, masks_cytosol = filter.filter(nucleus_mask=nucleus_mask, cytosol_mask=cytosol_mask)
 
         self.log(
             f"Removed {len(filter.nuclei_discard_list)} nuclei and {len(filter.cytosol_discard_list)} cytosols due to filtering."
         )
-        self.log(
-            f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain."
-        )
+        self.log(f"After filtering, {len(filter.nucleus_lookup_dict)} matching nuclei and cytosol masks remain.")
 
         if debug:
+            mask_nuc, mask_cyto = filter.visualize_filtering_results(plot_fig=False, return_maps=True)
 
-            mask_nuc, mask_cyto = filter.visualize_filtering_results(plot_fig = False, return_maps = True)
-            
-            #check if image should be added to sdata or plotted and saved
+            # check if image should be added to sdata or plotted and saved
             if not self.is_shard:
                 if self.save_filter_results:
-                    #add filtering results to sdata object
-                    self.filehandler._write_segmentation_sdata(mask_nuc[0], segmentation_label = "debugging_seg_match_mask_results_nucleus", classes = None)
-                    self.filehandler._write_segmentation_sdata(mask_cyto[0], segmentation_label = "debugging_seg_match_mask_result_cytosol", classes = None)
+                    # add filtering results to sdata object
+                    self.filehandler._write_segmentation_sdata(
+                        mask_nuc[0], segmentation_label="debugging_seg_match_mask_results_nucleus", classes=None
+                    )
+                    self.filehandler._write_segmentation_sdata(
+                        mask_cyto[0], segmentation_label="debugging_seg_match_mask_result_cytosol", classes=None
+                    )
 
-                    #then no plotting needs to be performed as the results can be viewed in the sdata object
+                    # then no plotting needs to be performed as the results can be viewed in the sdata object
                     plot_results = False
                 else:
                     plot_results = True
             else:
                 plot_results = True
 
-            if plot_results: 
+            if plot_results:
                 if input_image is not None:
                     if "input_image" in self.__dict__.keys():
                         input_image = self.input_image
 
                 if input_image is not None:
-                    #convert input image from uint16 to uint8
+                    # convert input image from uint16 to uint8
                     input_image = (input_image / 256).astype(np.uint8)
 
                     cmap, norm = _custom_cmap()
@@ -601,33 +708,28 @@ class _BaseSegmentation(Segmentation):
                     fig, axs = plt.subplots(1, 2, figsize=(20, 10))
 
                     axs[0].imshow(input_image[0], cmap="gray")
-                    axs[0].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-                    axs[0].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+                    axs[0].imshow(mask_nuc[0], cmap=cmap, norm=norm)
+                    axs[0].imshow(mask_cyto[0], cmap=cmap, norm=norm)
                     axs[0].axis("off")
                     axs[0].set_title("results overlayed nucleus channel")
 
                     axs[1].imshow(input_image[1], cmap="gray")
-                    axs[1].imshow(mask_nuc[0], cmap=cmap, norm = norm)
-                    axs[1].imshow(mask_cyto[0], cmap=cmap, norm = norm)
+                    axs[1].imshow(mask_nuc[0], cmap=cmap, norm=norm)
+                    axs[1].imshow(mask_cyto[0], cmap=cmap, norm=norm)
                     axs[1].axis("off")
                     axs[1].set_title("results overlayed cytosol channel")
-                    
+
                     fig.tight_layout()
                     fig_path = os.path.join(self.directory, "Results_mask_matching.png")
                     fig.savefig(fig_path)
 
                     self._clear_cache(vars_to_delete=[fig, input_image, cmap, norm])
 
-            
             # clearup memory
-            self._clear_cache(
-                vars_to_delete=[mask_nuc, mask_cyto, plot_results]
-            )
+            self._clear_cache(vars_to_delete=[mask_nuc, mask_cyto, plot_results])
 
         self.log(
-            "Total time to perform nucleus and cytosol mask matching filtering: {:.2f} seconds".format(
-                time.time() - start_time
-            )
+            f"Total time to perform nucleus and cytosol mask matching filtering: {time.time() - start_time:.2f} seconds"
         )
 
         return masks_nucleus, masks_cytosol
@@ -638,6 +740,7 @@ class _BaseSegmentation(Segmentation):
 
 class _ClassicalSegmentation(_BaseSegmentation):
     def __init__(self, *args, **kwargs):
+        self.maps = None  # just a typehint hack. Remove this and fix it properly.
         super().__init__(*args, **kwargs)
 
     def _visualize_final_masks(self):
@@ -651,9 +754,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
             fig = plt.figure(frameon=False, figsize=(10, 10))
             plt.imshow(image)
-            plt.scatter(
-                self.nucleus_centers[:, 1], self.nucleus_centers[:, 0], s=2, color="red"
-            )
+            plt.scatter(self.nucleus_centers[:, 1], self.nucleus_centers[:, 0], s=2, color="red")
             plt.axis("off")
             fig.tight_layout()
             fig.savefig(os.path.join(self.directory, "finalized_nucleus_mask.png"))
@@ -668,9 +769,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
             fig = plt.figure(frameon=False, figsize=(10, 10))
             plt.imshow(image)
-            plt.scatter(
-                self.nucleus_centers[:, 1], self.nucleus_centers[:, 0], s=2, color="red"
-            )
+            plt.scatter(self.nucleus_centers[:, 1], self.nucleus_centers[:, 0], s=2, color="red")
             plt.axis("off")
             fig.tight_layout()
             fig.savefig(os.path.join(self.directory, "cytosol_mask.png"))
@@ -693,15 +792,10 @@ class _ClassicalSegmentation(_BaseSegmentation):
             self.upper_quantile_normalization_input_image = 1
 
             if isinstance(self.config["lower_quantile_normalization"], float):
-                self.lower_quantile_normalization_input_image = self.config[
-                    "lower_quantile_normalization"
-                ]
+                self.lower_quantile_normalization_input_image = self.config["lower_quantile_normalization"]
 
             elif isinstance(self.config["lower_quantile_normalization"], list):
-                if (
-                    len(self.config["lower_quantile_normalization"])
-                    != self.input_image.shape[0]
-                ):
+                if len(self.config["lower_quantile_normalization"]) != self.input_image.shape[0]:
                     raise ValueError(
                         "Number of specified normalization ranges for lower quantile normalization does not match the number of input channels."
                     )
@@ -709,6 +803,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                     zip(
                         range(self.input_image.shape[0]),
                         self.config["lower_quantile_normalization"],
+                        strict=False,
                     )
                 )
             else:
@@ -719,15 +814,10 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
             # get upper quantile normalization range
             if isinstance(self.config["upper_quantile_normalization"], float):
-                self.upper_quantile_normalization_input_image = self.config[
-                    "upper_quantile_normalization"
-                ]
+                self.upper_quantile_normalization_input_image = self.config["upper_quantile_normalization"]
 
             elif isinstance(self.config["upper_quantile_normalization"], list):
-                if (
-                    len(self.config["upper_quantile_normalization"])
-                    != self.input_image.shape[0]
-                ):
+                if len(self.config["upper_quantile_normalization"]) != self.input_image.shape[0]:
                     raise ValueError(
                         "Number of specified normalization ranges for upper quantile normalization does not match the number of input channels."
                     )
@@ -735,6 +825,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                     zip(
                         range(self.input_image.shape[0]),
                         self.config["upper_quantile_normalization"],
+                        strict=False,
                     )
                 )
             else:
@@ -744,9 +835,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 )
 
             # check that the normalization ranges are of the same type otherwise this will result in issues
-            assert type(self.lower_quantile_normalization_input_image) == type(
+            assert type(self.lower_quantile_normalization_input_image) == type(  # noqa: E721
                 self.upper_quantile_normalization_input_image
-            )
+            )  # these need to be the same types! So we need to circumvent the ruff linting rules here
 
         # check if median filtering is required
         if "median_filter_size" in self.config.keys():
@@ -767,14 +858,14 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
             if "lower_quantile_normalization" in self.config["nucleus_segmentation"]:
                 self.normalization_nucleus_segmentation = True
-                self.normalization_nucleus_lower_quantile = self.config[
-                    "nucleus_segmentation"
-                ]["lower_quantile_normalization"]
+                self.normalization_nucleus_lower_quantile = self.config["nucleus_segmentation"][
+                    "lower_quantile_normalization"
+                ]
             if "upper_quantile_normalization" in self.config["nucleus_segmentation"]:
                 self.normalization_nucleus_segmentation = True
-                self.normalization_nucleus_upper_quantile = self.config[
-                    "nucleus_segmentation"
-                ]["upper_quantile_normalization"]
+                self.normalization_nucleus_upper_quantile = self.config["nucleus_segmentation"][
+                    "upper_quantile_normalization"
+                ]
 
             # check if nuclei should be filtered based on size
             self._check_for_size_filtering(mask_types=["nucleus"])
@@ -782,9 +873,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
             # check if nuclei should be filtered based on contact
             if "contact_filter" in self.config["nucleus_segmentation"]:
                 self.contact_filter_nuclei = True
-                self.contact_filter_nuclei_threshold = self.config[
-                    "nucleus_segmentation"
-                ]["contact_filter"]
+                self.contact_filter_nuclei_threshold = self.config["nucleus_segmentation"]["contact_filter"]
             else:
                 self.contact_filter_nuclei = False
 
@@ -799,17 +888,14 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
             if "lower_quantile_normalization" in self.config["cytosol_segmentation"]:
                 self.normalization_cytosol_segmentation = True
-                self.normalization_cytosol_lower_quantile = self.config[
-                    "cytosol_segmentation"
-                ]["lower_quantile_normalization"]
-            if (
-                "upper_quantile_normalization"
-                in self.config_cytosol_segmentation.keys()
-            ):
+                self.normalization_cytosol_lower_quantile = self.config["cytosol_segmentation"][
+                    "lower_quantile_normalization"
+                ]
+            if "upper_quantile_normalization" in self.config_cytosol_segmentation.keys():
                 self.normalization_cytosol_segmentation = True
-                self.normalization_cytosol_upper_quantile = self.config[
-                    "cytosol_segmentation"
-                ]["upper_quantile_normalization"]
+                self.normalization_cytosol_upper_quantile = self.config["cytosol_segmentation"][
+                    "upper_quantile_normalization"
+                ]
 
             # check if cytosol should be filtered based on size
             self._check_for_size_filtering(mask_types=["cytosol"])
@@ -817,9 +903,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
             # check if cytosol should be filtered based on contact
             if "contact_filter" in self.config["cytosol_segmentation"]:
                 self.contact_filter_cytosol = True
-                self.contact_filter_cytosol_threshold = self.config[
-                    "cytosol_segmentation"
-                ]["contact_filter"]
+                self.contact_filter_cytosol_threshold = self.config["cytosol_segmentation"]["contact_filter"]
             else:
                 self.contact_filter_cytosol = False
 
@@ -831,23 +915,16 @@ class _ClassicalSegmentation(_BaseSegmentation):
             lower = self.normalization_nucleus_lower_quantile
             upper = self.normalization_nucleus_upper_quantile
 
-            self.log(
-                f"Percentile normalization of nucleus input image to range {lower}, {upper}"
-            )
+            self.log(f"Percentile normalization of nucleus input image to range {lower}, {upper}")
             input_image = self._normalize_image(input_image, lower, upper, debug=debug)
 
         # perform thresholding to generate  a mask of the nuclei
 
         # Use manual threshold if defined in ["wga_segmentation"]["threshold"]
         # If not, use global otsu
-        if (
-            "threshold" in self.config["nucleus_segmentation"]
-            and "median_block" in self.config["nucleus_segmentation"]
-        ):
+        if "threshold" in self.config["nucleus_segmentation"] and "median_block" in self.config["nucleus_segmentation"]:
             threshold = self.config["nucleus_segmentation"]["threshold"]
-            self.log(
-                f"Using local thresholding with a threshold of {threshold} to calculate nucleus mask."
-            )
+            self.log(f"Using local thresholding with a threshold of {threshold} to calculate nucleus mask.")
             self.maps["nucleus_segmentation"] = segment_local_threshold(
                 input_image,
                 dilation=self.config["nucleus_segmentation"]["dilation"],
@@ -860,9 +937,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 debug=self.debug,
             )
         else:
-            self.log(
-                "Using global otsu to calculate threshold for nucleus mask generation."
-            )
+            self.log("Using global otsu to calculate threshold for nucleus mask generation.")
             self.maps["nucleus_segmentation"] = segment_global_threshold(
                 input_image,
                 dilation=self.config["nucleus_segmentation"]["dilation"],
@@ -881,25 +956,21 @@ class _ClassicalSegmentation(_BaseSegmentation):
         self.nucleus_centers = centers
 
         # ensure all edge labels are removed
-        self.maps["nucleus_segmentation"] = remove_edge_labels(
-            self.maps["nucleus_segmentation"]
-        )
+        self.maps["nucleus_segmentation"] = remove_edge_labels(self.maps["nucleus_segmentation"])
 
         if self.filter_size:
             self.maps["nucleus_segmentation"] = self._perform_size_filtering(
                 self.maps["nucleus_segmentation"],
-                self.nucleus_thresholds,
-                self.nucleus_confidence_interval,
+                self.nucleus_thresholds,  # type: ignore
+                self.nucleus_confidence_interval,  # type: ignore
                 "nucleus",
                 debug=self.debug,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
         if self.contact_filter_nuclei:
             if self.debug:
-                n_classes = len(
-                    set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
-                )
+                n_classes = len(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
 
             self.maps["nucleus_segmentation"] = contact_filter(
                 self.maps["nucleus_segmentation"],
@@ -908,18 +979,12 @@ class _ClassicalSegmentation(_BaseSegmentation):
             )
 
             if self.debug:
-                n_classes_post = len(
-                    set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
-                )
-                self.log(
-                    f"Filtered out {n_classes - n_classes_post} nuclei due to contact filtering."
-                )
+                n_classes_post = len(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
+                self.log(f"Filtered out {n_classes - n_classes_post} nuclei due to contact filtering.")
 
     def _cytosol_segmentation(self, input_image, debug: bool = False):
         if not self.segment_nuclei:
-            raise ValueError(
-                "Nucleus segmentation must be performed to be able to perform a cytosol segmentation."
-            )
+            raise ValueError("Nucleus segmentation must be performed to be able to perform a cytosol segmentation.")
 
         if self.normalization_cytosol_segmentation:
             lower = self.normalization_cytosol_lower_quantile
@@ -932,13 +997,9 @@ class _ClassicalSegmentation(_BaseSegmentation):
         # Use manual threshold if defined in ["wga_segmentation"]["threshold"]
         # If not, use global otsu
         if "threshold" in self.config["cytosol_segmentation"]:
-            cytosol_mask = (
-                input_image < self.config["cytosol_segmentation"]["threshold"]
-            )
+            cytosol_mask = input_image < self.config["cytosol_segmentation"]["threshold"]
         else:
-            self.log(
-                "No treshold for cytosol segmentation defined, global otsu will be used."
-            )
+            self.log("No treshold for cytosol segmentation defined, global otsu will be used.")
             cytosol_mask = input_image < global_otsu(input_image)
 
         self._clear_cache(vars_to_delete=[input_image])
@@ -949,9 +1010,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
         cytosol_mask = np.clip(cytosol_mask, 0, 1)
 
         # Apply dilation and erosion
-        cytosol_mask = dilation(
-            cytosol_mask, footprint=disk(self.config["cytosol_segmentation"]["erosion"])
-        )
+        cytosol_mask = dilation(cytosol_mask, footprint=disk(self.config["cytosol_segmentation"]["erosion"]))
         cytosol_mask = binary_erosion(
             cytosol_mask,
             footprint=disk(self.config["cytosol_segmentation"]["dilation"]),
@@ -971,8 +1030,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
 
         # calculate potential map for cytosol segmentation
         potential_map = (
-            self.maps["median_corrected"][1]
-            - np.quantile(self.maps["median_corrected"][1], 0.02)
+            self.maps["median_corrected"][1] - np.quantile(self.maps["median_corrected"][1], 0.02)
         ) / np.quantile(self.maps["median_corrected"][1], 0.98)
         potential_map = np.clip(potential_map, 0, 1)
 
@@ -983,9 +1041,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
         # enhance potential map to generate speedmap
         min_clip = self.config["cytosol_segmentation"]["min_clip"]
         max_clip = self.config["cytosol_segmentation"]["max_clip"]
-        potential_map = (np.clip(potential_map, min_clip, max_clip) - min_clip) / (
-            max_clip - min_clip
-        )
+        potential_map = (np.clip(potential_map, min_clip, max_clip) - min_clip) / (max_clip - min_clip)
         potential_map = (potential_map * 0.9 + 0.1).astype(float)
 
         self.maps["potential_map"] = potential_map
@@ -1021,9 +1077,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
         marker = np.zeros_like(self.maps["median_corrected"][1])
 
         for center in px_center:
-            marker[center[0], center[1]] = self.maps["nucleus_segmentation"][
-                center[0], center[1]
-            ]
+            marker[center[0], center[1]] = self.maps["nucleus_segmentation"][center[0], center[1]]
 
         cytosol_labels = watershed(
             self.maps["travel_time"],
@@ -1031,9 +1085,7 @@ class _ClassicalSegmentation(_BaseSegmentation):
             mask=(self.maps["cytosol_mask"] == 0).astype(np.int64),
         )
 
-        cytosol_segmentation = np.where(
-            self.maps["cytosol_mask"] > 0.5, 0, cytosol_labels
-        )
+        cytosol_segmentation = np.where(self.maps["cytosol_mask"] > 0.5, 0, cytosol_labels)
 
         # ensure all edge labels are removed
         cytosol_segmentation = remove_edge_labels(cytosol_segmentation)
@@ -1042,18 +1094,16 @@ class _ClassicalSegmentation(_BaseSegmentation):
         if self.filter_size:
             self.maps["cytosol_segmentation"] = self._perform_size_filtering(
                 self.maps["cytosol_segmentation"],
-                self.cytosol_thresholds,
-                self.cytosol_confidence_interval,
+                self.cytosol_thresholds,  # type: ignore
+                self.cytosol_confidence_interval,  # type: ignore
                 "cytosol",
                 debug=self.debug,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
         if self.contact_filter_cytosol:
             if self.debug:
-                n_classes = len(
-                    set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
-                )
+                n_classes = len(set(np.unique(self.maps["cytosol_segmentation"])) - {0})
 
             self.maps["cytosol_segmentation"] = contact_filter(
                 self.maps["cytosol_segmentation"],
@@ -1062,46 +1112,40 @@ class _ClassicalSegmentation(_BaseSegmentation):
             )
 
             if self.debug:
-                n_classes_post = len(
-                    set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
-                )
-                self.log(
-                    f"Filtered out {n_classes - n_classes_post} cytosols due to contact filtering."
-                )
+                n_classes_post = len(set(np.unique(self.maps["cytosol_segmentation"])) - {0})
+                self.log(f"Filtered out {n_classes - n_classes_post} cytosols due to contact filtering.")
 
-        unique_cytosol_ids = set(np.unique(self.maps["cytosol_segmentation"])) - set(
-            [0]
-        )
+        unique_cytosol_ids = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
         # remove any ids from nucleus mask that dont have a cytosol mask
-        self.maps["nucleus_segmentation"][
-            ~np.isin(self.maps["nucleus_segmentation"], list(unique_cytosol_ids))
-        ] = 0
+        self.maps["nucleus_segmentation"][~np.isin(self.maps["nucleus_segmentation"], list(unique_cytosol_ids))] = 0
 
 
 class WGASegmentation(_ClassicalSegmentation):
     N_MASKS = 2
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["nuclei", "cytosol"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [1]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]).astype(
+            self.DEFAULT_SEGMENTATION_DTYPE
+        )
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
         self.maps = {}
 
-        # save input image
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
+        input_image = self._transform_input_image(input_image)
 
         self.maps["input_image"] = input_image
 
@@ -1123,26 +1167,27 @@ class WGASegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             image = input_image[0]
             self._nucleus_segmentation(image, debug=self.debug)
 
         if self.segment_cytosol:
             image = self.maps["input_image"][1]
-            if isinstance(image, xarray.DataArray):
-                image = image.data.compute()
             self._cytosol_segmentation(image, debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         if self.debug:
             self._visualize_final_masks()
 
-        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
-        segmentation = self._finalize_segmentation_results()
+        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
+        segmentation = self._finalize_segmentation_results()  # type: ignore
 
         print("Channels shape: ", segmentation.shape)
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
-        return results
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedWGASegmentation(ShardedSegmentation):
@@ -1153,30 +1198,27 @@ class ShardedWGASegmentation(ShardedSegmentation):
 
 
 class DAPISegmentation(_ClassicalSegmentation):
-
     N_MASKS = 1
+    N_INPUT_CHANNELS = 1
     MASK_NAMES = ["nuclei"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def _finalize_segmentation_results(self):
-
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"]]
-        ).astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        segmentation = np.stack([self.maps["nucleus_segmentation"]]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
         self._get_processing_parameters()
 
         # intialize maps for storing intermediate results
         self.maps = {}
 
-        # save input image
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
+        input_image = self._transform_input_image(input_image)
         self.maps["input_image"] = input_image.copy()
 
         # normalize input
@@ -1197,14 +1239,17 @@ class DAPISegmentation(_ClassicalSegmentation):
             # update input image to median corrected image
             input_image = self.maps["median_corrected"]
 
+        start_segmentation = timeit.default_timer()
         if self.segment_nuclei:
             self._nucleus_segmentation(input_image[0], debug=self.debug)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
-        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - set([0]))
+        all_classes = list(set(np.unique(self.maps["nucleus_segmentation"])) - {0})
         segmentation = self._finalize_segmentation_results()
 
-        results = self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
-        return results
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedDAPISegmentation(ShardedSegmentation):
@@ -1215,9 +1260,7 @@ class ShardedDAPISegmentation(ShardedSegmentation):
 
 
 class _CellposeSegmentation(_BaseSegmentation):
-    def _read_cellpose_model(
-        self, modeltype: str, name: str, gpu: str, device
-    ) -> models.Cellpose:
+    def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
         """
         Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
 
@@ -1239,9 +1282,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
         return model
 
-    def _load_model(
-        self, model_type: str, gpu: str, device
-    ) -> Tuple[float, models.Cellpose]:
+    def _load_model(self, model_type: str, gpu: str, device) -> tuple[float, models.Cellpose]:
         """
         Loads cellpose model
 
@@ -1258,15 +1299,11 @@ class _CellposeSegmentation(_BaseSegmentation):
         # load correct segmentation model for cytosol
         if "model" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model"]
-            model = self._read_cellpose_model(
-                "pretrained", model_name, gpu=gpu, device=device
-            )
+            model = self._read_cellpose_model("pretrained", model_name, gpu=gpu, device=device)
 
         elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model_path"]
-            model = self._read_cellpose_model(
-                "custom", model_name, gpu=gpu, device=device
-            )
+            model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
 
         if "diameter" in self.config[f"{model_type}_segmentation"].keys():
             diameter = self.config[f"{model_type}_segmentation"]["diameter"]
@@ -1283,9 +1320,7 @@ class _CellposeSegmentation(_BaseSegmentation):
                     "Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers."
                 )
             else:
-                ValueError(
-                    "Image is not of type uint16, cellpose segmentation expects int input images."
-                )
+                ValueError("Image is not of type uint16, cellpose segmentation expects int input images.")
 
     def _check_gpu_status(self):
         """
@@ -1305,7 +1340,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             self.gpu_id = gpu_id_list[cpu_id]
             self.status = "multi_GPU"
 
-        except Exception:
+        except (AttributeError, ValueError):
             # default to single GPU
             self.gpu_id = 0
             self.status = "potentially_single_GPU"
@@ -1339,9 +1374,12 @@ class _CellposeSegmentation(_BaseSegmentation):
             f"GPU Status for segmentation is {self.use_GPU} and will segment using the following device {self.device}."
         )
 
+
 class DAPISegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 1
+    N_INPUT_CHANNELS = 1
     MASK_NAMES = ["nuclei"]
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1356,18 +1394,11 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
             mask=self.maps["nucleus_segmentation"], mask_name="nucleus"
         )
 
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"]]
-        )
+        segmentation = np.stack([self.maps["nucleus_segmentation"]])
 
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-        
-        #ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-        
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1375,9 +1406,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         ### Perform Nucleus Segmentation
         ################################
 
-        diameter, model = self._load_model(
-            model_type="nucleus", gpu=self.use_GPU, device=self.device
-        )
+        diameter, model = self._load_model(model_type="nucleus", gpu=self.use_GPU, device=self.device)
 
         masks = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
         masks = np.array(masks)  # convert to array
@@ -1395,7 +1424,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
                 confidence_interval=self.nucleus_confidence_interval,
                 mask_name="nucleus",
                 log=True,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
         # save segementation to maps for access from other subfunctions
@@ -1404,16 +1433,13 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model, diameter, masks])
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
 
         # check that the correct level of input image is used
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
-        # check that the image is of the correct dtype
         self._check_input_image_dtype(input_image)
-
-        # only get the first cannel for segmentation (does not use excess space on the GPU this way)
-        input_image = input_image[:1, :, :]
 
         # initialize location to save masks to
         self.maps = {
@@ -1424,14 +1450,17 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
@@ -1440,8 +1469,11 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
 
 class CytosolSegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 2
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["nuclei", "cytosol"]
-    
+    DEFAULT_NUCLEI_CHANNEL_IDS = [0]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [1]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1455,9 +1487,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             mask=self.maps["cytosol_segmentation"], mask_name="cytosol"
         )
 
-        segmentation = np.stack(
-            [self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]]
-        )
+        segmentation = np.stack([self.maps["nucleus_segmentation"], self.maps["cytosol_segmentation"]])
 
         return segmentation
 
@@ -1466,11 +1496,6 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         self._check_for_mask_matching_filtering()
 
     def cellpose_segmentation(self, input_image):
-
-        #ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-        
         self._check_gpu_status()
         self._clear_cache()  # ensure we start with an empty cache
 
@@ -1478,9 +1503,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         ### Perform Nucleus Segmentation
         ################################
 
-        diameter, model = self._load_model(
-            model_type="nucleus", gpu=self.use_GPU, device=self.device
-        )
+        diameter, model = self._load_model(model_type="nucleus", gpu=self.use_GPU, device=self.device)
 
         masks_nucleus = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
         masks_nucleus = np.array(masks_nucleus)  # convert to array
@@ -1495,9 +1518,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         #### Perform Cytosol Segmentation
         #################################
 
-        diameter, model = self._load_model(
-            model_type="cytosol", gpu=self.use_GPU, device=self.device
-        )
+        diameter, model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
 
         masks_cytosol = model.eval([input_image], diameter=diameter, channels=[2, 1])[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
@@ -1523,7 +1544,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 mask_name="nucleus",
                 log=True,
                 debug=self.debug,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
             masks_cytosol = self._perform_size_filtering(
@@ -1533,7 +1554,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
         ######################
@@ -1545,7 +1566,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             masks_nucleus, masks_cytosol = self._perform_mask_matching_filtering(
                 nucleus_mask=masks_nucleus,
                 cytosol_mask=masks_cytosol,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
                 filtering_threshold=self.mask_matching_filtering_threshold,
                 debug=self.debug,
             )
@@ -1559,25 +1580,20 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         ######################
 
         # first when the masks are finalized save them to the maps
-        self.maps["nucleus_segmentation"] = masks_nucleus.reshape(
-            masks_nucleus.shape[1:]
-        )
+        self.maps["nucleus_segmentation"] = masks_nucleus.reshape(masks_nucleus.shape[1:])
 
-        self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
-            masks_cytosol.shape[1:]
-        )
+        self.maps["cytosol_segmentation"] = masks_cytosol.reshape(masks_cytosol.shape[1:])
 
         self._clear_cache(vars_to_delete=[masks_nucleus, masks_cytosol])
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
         input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
-
-        # only get the first two input image channels to perform segmentation to optimize memory usage on the GPU
-        input_image = input_image[:2, :, :]
 
         # initialize location to save masks to
         self.maps = {
@@ -1593,17 +1609,20 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize segmentation classes ensuring that background is removed
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
 
         # clean up memory
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedCytosolSegmentationCellpose(ShardedSegmentation):
@@ -1622,23 +1641,31 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             self.maps["cytosol_segmentation"], "cytosol_segmentation"
         )
 
-        self.maps["fullsize_nucleus_segmentation"] = self._check_seg_dtype(mask=self.maps["fullsize_nucleus_segmentation"], mask_name="nucleus")
-        self.maps["fullsize_cytosol_segmentation"] = self._check_seg_dtype(mask=self.maps["fullsize_cytosol_segmentation"], mask_name="cytosol")
+        self.maps["fullsize_nucleus_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["fullsize_nucleus_segmentation"], mask_name="nucleus"
+        )
+        self.maps["fullsize_cytosol_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["fullsize_cytosol_segmentation"], mask_name="cytosol"
+        )
 
         # combine masks into one stack
-        segmentation = np.stack([self.maps["fullsize_nucleus_segmentation"], self.maps["fullsize_cytosol_segmentation"]])
+        segmentation = np.stack(
+            [self.maps["fullsize_nucleus_segmentation"], self.maps["fullsize_cytosol_segmentation"]]
+        )
 
         return segmentation
 
-    def process(self, input_image):
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
         # only get the first two channels to save memory consumption
-        input_image = input_image[:2, :, :] 
+        input_image = input_image[:2, :, :]
 
         # setup downsampling
         self._get_downsampling_parameters()
@@ -1668,16 +1695,19 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
             ),
         }
 
-        # self.log("Starting Cellpose DAPI Segmentation.")
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # finalize classes list
-        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["nucleus_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
 
-        self._save_segmentation_sdata(segmentation, all_classes, masks = self.MASK_NAMES)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self._clear_cache(vars_to_delete=[segmentation, all_classes])
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
@@ -1686,8 +1716,10 @@ class ShardedCytosolSegmentationDownsamplingCellpose(ShardedSegmentation):
 
 class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 1
+    N_INPUT_CHANNELS = 2
     MASK_NAMES = ["cytosol"]
-    
+    DEFAULT_CYTOSOL_IDS = [0, 1]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1695,24 +1727,16 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         self._check_for_size_filtering(mask_types=["cytosol"])
 
     def _finalize_segmentation_results(self):
-
         # ensure correct dtype of maps
         self.maps["cytosol_segmentation"] = self._check_seg_dtype(
             mask=self.maps["cytosol_segmentation"], mask_name="cytosol"
         )
 
-        segmentation = np.stack(
-            [self.maps["cytosol_segmentation"]]
-        )
+        segmentation = np.stack([self.maps["cytosol_segmentation"]])
 
         return segmentation
 
     def cellpose_segmentation(self, input_image):
-        
-        #ensure we have a numpy array
-        if isinstance(input_image, xarray.DataArray):
-            input_image = input_image.data.compute()
-
         self._setup_processing()
         self._clear_cache()
 
@@ -1720,9 +1744,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         ### Perform Cytosol Segmentation
         #####
 
-        diameter, model = self._load_model(
-            model_type="cytosol", gpu=self.use_GPU, device=self.device
-        )
+        diameter, model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
 
         masks_cytosol = model.eval([input_image], diameter=diameter, channels=[2, 1])[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
@@ -1747,7 +1769,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
-                input_image = input_image if self.debug else None,
+                input_image=input_image if self.debug else None,
             )
 
         self.maps["cytosol_segmentation"] = masks_cytosol.reshape(
@@ -1761,16 +1783,10 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         total_time_start = timeit.default_timer()
 
         # transform input image
-        start_transform = timeit.default_timer()
-        self._transform_input_image(input_image)
-        stop_transform = timeit.default_timer()
-        self.transform_time = stop_transform - start_transform
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
-
-        # only get the first two channels for segmentation (does not use excess space on the GPU this way)
-        input_image = input_image[:2, :, :]  # we still need both even though its cytosol only because the cytosol models optionally also take the nucleus channel for additional information
 
         # initialize location to save masks to
         self.maps = {
@@ -1788,7 +1804,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         self.segmentation_time = stop_segmentation - start_segmentation
 
         # get final classes list
-        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
         segmentation = self._finalize_segmentation_results()
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
@@ -1812,9 +1828,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
     def _finalize_segmentation_results(self, size_padding):
         _seg_size = self.maps["cytosol_segmentation"].shape
 
-        self.log(
-            f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}"
-        )
+        self.log(f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}")
 
         _, x, y = size_padding
 
@@ -1824,17 +1838,11 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         )
 
         # perform erosion and dilation for smoothing
-        cyto_seg = erosion(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
-        cyto_seg = dilation(
-            cyto_seg, footprint=disk(self.config["smoothing_kernel_size"])
-        )
+        cyto_seg = erosion(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        cyto_seg = dilation(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
 
         # combine masks into one stack
-        segmentation = np.stack([cyto_seg]).astype(
-            self.DEFAULT_SEGMENTATION_DTYPE
-        )
+        segmentation = np.stack([cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
         del cyto_seg
 
         # rescale segmentation results to original size
@@ -1853,9 +1861,7 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             else:
                 segmentation = segmentation
 
-        self.log(
-            f"Segmentation size after resize to original dimensions: {segmentation.shape}"
-        )
+        self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
 
         if segmentation.shape[1] != self.input_image_size[1]:
             sys.exit("Error. Segmentation mask and image have different shapes")
@@ -1864,14 +1870,16 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
 
         return segmentation
 
-    def process(self, input_image) -> None:
+    def _execute_segmentation(self, input_image) -> None:
+        total_time_start = timeit.default_timer()
+
         # ensure the correct level is selected for the input image
-        self._transform_input_image(input_image)
+        input_image = self._transform_input_image(input_image)
 
         # check image dtype since cellpose expects int input images
         self._check_input_image_dtype(input_image)
 
-        #get the relevant channels for processing
+        # get the relevant channels for processing
         input_image = input_image[:2, :, :]
         self.input_image_size = input_image.shape
 
@@ -1895,25 +1903,27 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
             ),
         }
 
+        start_segmentation = timeit.default_timer()
         self.cellpose_segmentation(input_image)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
 
         # currently no implemented filtering steps to remove nuclei outside of specific thresholds
-        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - set([0])
+        all_classes = set(np.unique(self.maps["cytosol_segmentation"])) - {0}
 
-        segmentation = self._finalize_segmentation_results()
+        segmentation = self._finalize_segmentation_results()  # type: ignore
 
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
-
-        return None
-
+        self.total_time = timeit.default_timer() - total_time_start
 
 
 class Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose(ShardedSegmentation):
     method = CytosolOnly_Segmentation_Downsampling_Cellpose
 
+
 #### TIMECOURSE SEGMENTATION METHODS #####
 #### THIS SHOULD BE SWITCHED TO THE BATCHED CLASS IMPLEMENTED BY TIM ####
-#currently these are not functional with the new spatialdata format
+# currently these are not functional with the new spatialdata format
 
 # class WGA_TimecourseSegmentation(TimecourseSegmentation):
 #     """

@@ -18,13 +18,12 @@ shapely
 rasterio
 imagesize
 imagecodecs
-xarray
-xarray-datatree
+xarray>=2024.10.0
 opencv-python
 scikit-image>=0.22.0
 scikit-fmm
 scipy
-cellpose
+cellpose<3.1.0
 
 torch
 pytorch-lightning
@@ -34,7 +33,7 @@ spatialdata
 napari-spatialdata
 pyqt5
 lxml_html_clean
-ashlar @ git+https://github.com/labsyspharm/ashlar.git@master
+ashlar>=1.19.0
 networkx
 py-lmd
 
@@ -43,6 +42,13 @@ sphinx
 sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
-renku-sphinx-theme
+nbsphinx-link
+sphinx-book-theme
+sphinx-design
+sphinx-copybutton
+sphinx-gallery
+
 #for testing
-pytest 
+pytest
+# development
+pre-commit

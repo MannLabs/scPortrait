@@ -1,5 +1,5 @@
 [![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
-[![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/html/index.html)](https://mannlabs.github.io/scPortrait/html/index.html)
+[![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 
 ![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
 
@@ -7,28 +7,28 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 ## Getting started
 
-Please refer to our [documentation](https://mannlabs.github.io/scPortrait/html/index.html) in particular:
+Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in particular:
 
-- [getting started](https://mannlabs.github.io/scPortrait/html/index.html)
-- [example notebooks](https://mannlabs.github.io/scPortrait/html/index.html)
+- [Introduction](https://mannlabs.github.io/scPortrait/pages/introduction.html)
+- [Tutorials](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
 
 ## Installation from Github
 
-Check out the docs for more complete installation instructions. scPortrait currently supports python 3.10 and 3.11.
+Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.10 and 3.11.
 
-To get started you can install via pip:
+To get started you can install scPortrait via pip:
 
 ```
-pip install git+https://github.org/MannLabs/scPortrait
+pip install git+https://github.com/MannLabs/scPortrait
 ```
 
 ### Limitations
 
-Currently the scPortrait framework is being developed using Linux and macOS and only provides limited Windows support. Please refer to this [git issue](https://github.com/MannLabs/scPortrait/issues/28) for more information.
+Currently the scPortrait framework is being developed using Linux and macOS, and only provides limited Windows support. Please refer to this [GitHub issue](https://github.com/MannLabs/scPortrait/issues/28) for more information.
 
 ## Citing our Work
 
-scPortrait was created by Sophia Mädler and Niklas Schmacke in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann), [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab) in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
+scPortrait was created by Sophia Mädler, Niklas Schmacke and Georg Wallmann in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann), [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab) in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
 
 If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1):
 

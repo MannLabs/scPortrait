@@ -1,7 +1,9 @@
-#helper functions for paralellization
+# helper functions for paralellization
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
+
 from tqdm.auto import tqdm
+
 
 def execute_indexed_parallel(func: Callable, *, args: list, tqdm_args: dict = None, n_threads: int = 10) -> list:
     """parallelization of function call with indexed arguments using ThreadPoolExecutor. Returns a list of results in the order of the input arguments.
@@ -16,7 +18,7 @@ def execute_indexed_parallel(func: Callable, *, args: list, tqdm_args: dict = No
         list: containing the results of the function calls in the same order as the input arguments
     """
     if tqdm_args is None:
-        tqdm_args = {"total":len(args)}
+        tqdm_args = {"total": len(args)}
     elif "total" not in tqdm_args:
         tqdm_args["total"] = len(args)
 
@@ -31,6 +33,7 @@ def execute_indexed_parallel(func: Callable, *, args: list, tqdm_args: dict = No
 
     return results
 
+
 def execute_parallel(func: Callable, *, args: list, tqdm_args: dict = None, n_threads: int = 10) -> None:
     """parallelization of function call with ThreadPoolExecutor.
 
@@ -44,7 +47,7 @@ def execute_parallel(func: Callable, *, args: list, tqdm_args: dict = None, n_th
         None
     """
     if tqdm_args is None:
-        tqdm_args = {"total":len(args)}
+        tqdm_args = {"total": len(args)}
     elif "total" not in tqdm_args:
         tqdm_args["total"] = len(args)
 
@@ -53,5 +56,5 @@ def execute_parallel(func: Callable, *, args: list, tqdm_args: dict = None, n_th
             futures = {executor.submit(func, *arg): i for i, arg in enumerate(args)}
             for _ in as_completed(futures):
                 pbar.update(1)
-    
+
     return None

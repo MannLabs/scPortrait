@@ -2,54 +2,74 @@
 functions adapted from https://github.com/labsyspharm/ashlar to provide support for multi-threaded execution.
 """
 
-import sys
-import numpy as np
 import copy as copy
+import sys
+
+import numpy as np
 
 # Import your utils module here
 import sklearn.linear_model
 
-#import graph algorithms
+# import graph algorithms
 try:
-    from graph_tool.topology import shortest_path, label_components
     from graph_tool import Graph as gtGraph
     from graph_tool import GraphView
     from graph_tool.generation import remove_parallel_edges
     from graph_tool.search import bfs_iterator
+    from graph_tool.topology import label_components, shortest_path
+
     flavor = "graph-tool"
 except ImportError:
     flavor = "networkx"
 
-from networkx import Graph as nxGraph
 import networkx as nx
-
-from ashlar.reg import EdgeAligner, warn_data, Mosaic
-from ashlar import utils as utils  
-
-from scportrait.tools.stitch._utils.parallelilzation import execute_indexed_parallel, execute_parallel
-from scportrait.tools.stitch._utils.graphs import nx2gt, get_center_nodes
+from alphabase.io.tempmmap import mmap_array_from_path
+from ashlar import utils as utils
+from ashlar.reg import EdgeAligner, Mosaic, warn_data
+from networkx import Graph as nxGraph
 from tqdm.auto import tqdm
 
-from alphabase.io.tempmmap import mmap_array_from_path
+from scportrait.tools.stitch._utils.graphs import get_center_nodes, nx2gt
+from scportrait.tools.stitch._utils.parallelilzation import execute_indexed_parallel, execute_parallel
+
 
 class ParallelEdgeAligner(EdgeAligner):
-
     def __init__(
-        self, reader, n_threads = 20, channel=0, max_shift=15, alpha=0.01, max_error=None,
-        randomize=False, filter_sigma=0.0, do_make_thumbnail=True, verbose=False
+        self,
+        reader,
+        n_threads=20,
+        channel=0,
+        max_shift=15,
+        alpha=0.01,
+        max_error=None,
+        randomize=False,
+        filter_sigma=0.0,
+        do_make_thumbnail=True,
+        verbose=False,
     ):
-        super().__init__(reader = reader, channel=channel, max_shift = max_shift, alpha = alpha, max_error = max_error,
-        randomize=randomize, filter_sigma=filter_sigma, do_make_thumbnail=do_make_thumbnail, verbose=verbose)
+        super().__init__(
+            reader=reader,
+            channel=channel,
+            max_shift=max_shift,
+            alpha=alpha,
+            max_error=max_error,
+            randomize=randomize,
+            filter_sigma=filter_sigma,
+            do_make_thumbnail=do_make_thumbnail,
+            verbose=verbose,
+        )
 
         self.n_threads = n_threads
 
-        #set flavor to graph-tool if available
+        # set flavor to graph-tool if available
         try:
             from graph_tool import Graph as gtGraph
+
             self.flavor = "graph-tool"
         except ImportError:
-            Warning("graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance.")
-            print("graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance.")
+            Warning(
+                "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
+            )
             self.flavor = "networkx"
 
     def compute_threshold(self):
@@ -84,7 +104,7 @@ class ParallelEdgeAligner(EdgeAligner):
             random_state = np.random.RandomState()
         for i in range(n):
             # Limit tries to avoid infinite loop in pathological cases.
-            for current_try in range(max_tries):
+            for _current_try in range(max_tries):
                 t1, t2 = random_state.randint(self.metadata.num_images, size=2)
                 o1, o2 = random_state.randint(max_offset, size=2)
                 # Check for non-overlapping strips and abort the retry loop.
@@ -121,19 +141,19 @@ class ParallelEdgeAligner(EdgeAligner):
 
         # prepare arguments for executor
         args = []
-        for (t1, t2), (offset1, offset2) in zip(pairs, offsets):
+        for (t1, t2), (offset1, offset2) in zip(pairs, offsets, strict=False):
             arg = (t1, t2, offset1, offset2)
             args.append(copy.deepcopy(arg))
 
         errors = execute_indexed_parallel(
             register,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="    quantifying alignment error",
-            ),
-            n_threads=self.n_threads
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "    quantifying alignment error",
+            },
+            n_threads=self.n_threads,
         )
 
         errors = np.array(errors)
@@ -149,36 +169,34 @@ class ParallelEdgeAligner(EdgeAligner):
         execute_parallel(
             self.register_pair,
             args=args,
-            tqdm_args=dict(
-                file=sys.stdout,
-                disable=not self.verbose,
-                desc="                  aligning edge",
-            ),
-            n_threads=self.n_threads
+            tqdm_args={
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": "                  aligning edge",
+            },
+            n_threads=self.n_threads,
         )
 
-        #need to reorder the errors to match the order of the edges
+        # need to reorder the errors to match the order of the edges
         self.all_errors = np.array([x[1] for x in self._cache.values()])
-        
+
         # Set error values above the threshold to infinity.
         for k, v in self._cache.items():
             if v[1] > self.max_error or np.any(np.abs(v[0]) > self.max_shift_pixels):
                 self._cache[k] = (v[0], np.inf)
 
-        self.cached_errors = self._cache.copy() # save as a backup
+        self.cached_errors = self._cache.copy()  # save as a backup
 
     def _build_spanning_tree_gt(self):
         g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from(
-            (t1, t2, error)
-            for (t1, t2), (_, error) in self.cached_errors.items()
-            if np.isfinite(error)
+            (t1, t2, error) for (t1, t2), (_, error) in self.cached_errors.items() if np.isfinite(error)
         )
 
-        #convert to a graph-tool graph
+        # convert to a graph-tool graph
         gtG = nx2gt(g)
-        
+
         spanning_tree = gtGraph(gtG)
         spanning_tree.clear_edges()
 
@@ -194,28 +212,23 @@ class ParallelEdgeAligner(EdgeAligner):
             centers.append(center)
             vertices = list(u.vertices())
             for vertix in vertices:
-                vlist, elist = shortest_path(u, center, vertix, weights = u.ep.weight)
+                vlist, elist = shortest_path(u, center, vertix, weights=u.ep.weight)
                 spanning_tree.add_edge_list(elist)
 
         remove_parallel_edges(spanning_tree)
 
         self.spanning_tree = spanning_tree
         self.centers_spanning_tree = centers
-    
-    def _build_spanning_tree_nxg(self):
 
+    def _build_spanning_tree_nxg(self):
         g = nx.Graph()
         g.add_nodes_from(self.neighbors_graph)
-        g.add_weighted_edges_from(
-            (t1, t2, error)
-            for (t1, t2), (_, error) in self._cache.items()
-            if np.isfinite(error)
-        )
+        g.add_weighted_edges_from((t1, t2, error) for (t1, t2), (_, error) in self._cache.items() if np.isfinite(error))
         spanning_tree = nx.Graph()
         spanning_tree.add_nodes_from(g)
 
         centers = []
-        
+
         for c in nx.connected_components(g):
             cc = g.subgraph(c)
             center = nx.center(cc)[0]
@@ -223,16 +236,18 @@ class ParallelEdgeAligner(EdgeAligner):
             paths = nx.single_source_dijkstra_path(cc, center).values()
             for path in paths:
                 nx.add_path(spanning_tree, path)
-        
+
         self.spanning_tree = spanning_tree
         self.centers_spanning_tree = centers
-        
+
     def build_spanning_tree(self):
         if self.flavor == "graph-tool":
+            print("using graph-tool to build spanning tree")
             self._build_spanning_tree_gt()
         if self.flavor == "networkx":
+            print("using networkx to build spanning tree")
             self._build_spanning_tree_nxg()
-    
+
     def _calculate_positions_gt(self):
         shifts = {}
         _components = []
@@ -247,9 +262,9 @@ class ParallelEdgeAligner(EdgeAligner):
             _components.append(set(nodes))
 
             center = self.centers_spanning_tree[ix]
-            
+
             shifts[center] = np.array([0, 0])
-            
+
             if len(nodes) > 1:
                 for edge in bfs_iterator(u, source=center):
                     source, dest = edge
@@ -266,7 +281,7 @@ class ParallelEdgeAligner(EdgeAligner):
             self.components_spanning_tree = _components
         else:
             # TODO: fill in shifts and positions with 0x2 arrays
-            raise NotImplementedError("No images")   
+            raise NotImplementedError("No images")
 
     def _calculate_positions_nxg(self):
         shifts = {}
@@ -287,19 +302,16 @@ class ParallelEdgeAligner(EdgeAligner):
         else:
             # TODO: fill in shifts and positions with 0x2 arrays
             raise NotImplementedError("No images")
-    
+
     def calculate_positions(self):
         if self.flavor == "graph-tool":
             self._calculate_positions_gt()
         if self.flavor == "networkx":
             self._calculate_positions_nxg()
-   
+
     def fit_model(self):
         components = self.components_spanning_tree
-        components = sorted(
-            components,
-            key=len, reverse=True
-        )
+        components = sorted(components, key=len, reverse=True)
 
         # Fit LR model on positions of largest connected component.
         cc0 = list(components[0])
@@ -311,13 +323,10 @@ class ParallelEdgeAligner(EdgeAligner):
         if np.linalg.det(self.lr.coef_) < 1e-3:
             # FIXME We should probably exit here, not just warn. We may provide
             # an option to force it anyway.
-            warn_data(
-                "Could not align enough edges, proceeding anyway with original"
-                " stage positions."
-            )
+            warn_data("Could not align enough edges, proceeding anyway with original" " stage positions.")
             self.lr.coef_ = np.diag(np.ones(2))
             self.lr.intercept_ = np.zeros(2)
-        
+
         # Adjust position of remaining components so their centroids match
         # the predictions of the model.
         for cc in components[1:]:
@@ -332,26 +341,36 @@ class ParallelEdgeAligner(EdgeAligner):
         self.lr.intercept_ -= self.origin
         self.centers = self.positions + self.metadata.size / 2
 
+
 class ParallelMosaic(Mosaic):
-
-    def __init__(self, aligner, shape, n_threads=20, channels=None, ffp_path=None, dfp_path=None,
-                 flip_mosaic_x=False, flip_mosaic_y=False, barrel_correction=None,
-                 verbose=False):
-
-        super().__init__(aligner=aligner, shape=shape, channels=channels, ffp_path=ffp_path, dfp_path=dfp_path,
-                         flip_mosaic_x=flip_mosaic_x, flip_mosaic_y=flip_mosaic_y, barrel_correction=barrel_correction,
-                         verbose=verbose)
+    def __init__(
+        self,
+        aligner,
+        shape,
+        n_threads=20,
+        channels=None,
+        ffp_path=None,
+        dfp_path=None,
+        flip_mosaic_x=False,
+        flip_mosaic_y=False,
+        barrel_correction=None,
+        verbose=False,
+    ):
+        super().__init__(
+            aligner=aligner,
+            shape=shape,
+            channels=channels,
+            ffp_path=ffp_path,
+            dfp_path=dfp_path,
+            flip_mosaic_x=flip_mosaic_x,
+            flip_mosaic_y=flip_mosaic_y,
+            barrel_correction=barrel_correction,
+            verbose=verbose,
+        )
 
         self.n_threads = n_threads
-  
-    def assemble_channel_parallel(
-            self,
-            channel,
-            ch_index,
-            out = None,
-            hdf5_path = None,
-            tqdm_args = None
-    ):
+
+    def assemble_channel_parallel(self, channel, ch_index, out=None, hdf5_path=None, tqdm_args=None):
         """This function assembles a single channel of the mosaic writing to the same HDF5 file being used as a mmap array in the backend."""
         if out is None:
             if hdf5_path is not None:
@@ -360,29 +379,28 @@ class ParallelMosaic(Mosaic):
                 out = np.zeros(self.shape, self.dtype)
         else:
             if out.shape != self.shape:
-                raise ValueError(
-                    f"out array shape {out.shape} does not match Mosaic"
-                    f" shape {self.shape}"
-                )
+                raise ValueError(f"out array shape {out.shape} does not match Mosaic" f" shape {self.shape}")
             if hdf5_path is None:
                 raise ValueError(
                     "if specifying an out array, you also need to pass the HDF5 path of the memory mapped temparray"
                 )
-            
-        tqdm_args = dict(
-                file=sys.stdout,
-                disable= not self.verbose,
-                desc=f"assembling channel {ch_index}",
-                total=len(self.aligner.positions),
-            )
-        
-        #this can not be multi-threaded as it leads to inconsistent results in the overlap array
-        #threading over the channels was the easiest and most robust way to implement
-        for si, position in tqdm(enumerate(self.aligner.positions), **tqdm_args): #potentially may want to disable tqdm output for this as this runs in an individual thread and it could get confusing
+
+        tqdm_args = {
+            "file": sys.stdout,
+            "disable": not self.verbose,
+            "desc": f"assembling channel {ch_index}",
+            "total": len(self.aligner.positions),
+        }
+
+        # this can not be multi-threaded as it leads to inconsistent results in the overlap array
+        # threading over the channels was the easiest and most robust way to implement
+        for si, position in tqdm(
+            enumerate(self.aligner.positions), **tqdm_args
+        ):  # potentially may want to disable tqdm output for this as this runs in an individual thread and it could get confusing
             img = self.aligner.reader.read(c=channel, series=si)
             img = self.correct_illumination(img, channel)
             utils.paste(out[ch_index, :, :], img, position, func=utils.pastefunc_blend)
-            
+
         # Memory-conserving axis flips.
         if self.flip_mosaic_x:
             for i in range(len(out)):
@@ -390,5 +408,5 @@ class ParallelMosaic(Mosaic):
         if self.flip_mosaic_y:
             for i in range(len(out) // 2):
                 out[[i, -i - 1]] = out[[-i - 1, i]]
-        
+
         return None

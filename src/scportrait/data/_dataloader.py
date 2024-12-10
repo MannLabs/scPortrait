@@ -13,7 +13,7 @@ from filelock import FileLock
 from tqdm import tqdm
 
 
-def download(
+def _download(
     url: str,
     archive_format: Literal["zip", "tar", "tar.gz", "tgz"] = None,
     output_file_name: str = None,
@@ -69,12 +69,13 @@ def download(
 
         temp_file_name = f"{download_to_path}.part"
 
-        with open(temp_file_name, "wb") as file, tqdm(
-                    total=total, unit="B", unit_scale=True, desc="Downloading..."
-                ) as progress_bar:
-                    for data in response.iter_content(block_size):
-                        file.write(data)
-                        progress_bar.update(len(data))
+        with (
+            open(temp_file_name, "wb") as file,
+            tqdm(total=total, unit="B", unit_scale=True, desc="Downloading...") as progress_bar,
+        ):
+            for data in response.iter_content(block_size):
+                file.write(data)
+                progress_bar.update(len(data))
 
         Path(temp_file_name).replace(download_to_path)
 
@@ -83,23 +84,3 @@ def download(
             os.remove(download_to_path)
 
     Path(lock_path).unlink()
-
-
-def remove_archive_extension(file_path):
-    return (
-        str(Path(file_path).with_suffix(""))
-        if any(
-            Path(file_path).suffix.endswith(ext)
-            for ext in [
-                ".zip",
-                ".tar",
-                ".tar.gz",
-                ".tgz",
-                ".tar.bz2",
-                ".tbz2",
-                ".tar.xz",
-                ".txz",
-            ]
-        )
-        else file_path
-    )

@@ -1,49 +1,45 @@
-# -*- coding: utf-8 -*-
-import warnings
-import shutil
 import os
-import yaml
-import psutil
-from typing import List, Union, Dict
-import tempfile
 import re
+import shutil
+import tempfile
+import warnings
 from time import time
+from typing import Literal
 
-import numpy as np
-from alphabase.io import tempmmap
 import dask.array as darray
-import datatree
+import numpy as np
+import psutil
 import xarray
-
-from tifffile import imread
+import yaml
+from alphabase.io import tempmmap
+from napari_spatialdata import Interactive
 from ome_zarr.io import parse_url
 from ome_zarr.reader import Reader
-
 from spatialdata import SpatialData
+from spatialdata.models import Image2DModel, PointsModel
 from spatialdata.transformations.transformations import Identity
-from spatialdata.models import PointsModel, Image2DModel
-from napari_spatialdata import Interactive
+from tifffile import imread
 
 from scportrait.io import daskmmap
-
 from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
 from scportrait.pipeline._utils.spatialdata_helper import (
-    get_unique_cell_ids,
-    generate_region_annotation_lookuptable,
-    remap_region_annotation_table,
-    rechunk_image,
-    get_chunk_size,
     calculate_centroids,
+    generate_region_annotation_lookuptable,
+    get_chunk_size,
+    get_unique_cell_ids,
+    rechunk_image,
+    remap_region_annotation_table,
 )
+
 
 class Project(Logable):
     CLEAN_LOG = True
 
     DEFAULT_CONFIG_NAME = "config.yml"
     DEFAULT_INPUT_IMAGE_NAME = "input_image"
-    DEFAULT_SDATA_FILE = "sparcs.sdata"
+    DEFAULT_SDATA_FILE = "scportrait.sdata"
 
     DEFAULT_PREFIX_MAIN_SEG = "seg_all"
     DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
@@ -60,7 +56,7 @@ class Project(Logable):
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
+    DEFAULT_FEATURIZATION_DIR_NAME = "featurization"
 
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
@@ -74,7 +70,7 @@ class Project(Logable):
         config_path,
         segmentation_f=None,
         extraction_f=None,
-        classification_f=None,
+        featurization_f=None,
         selection_f=None,
         overwrite=False,
         debug=False,
@@ -94,7 +90,7 @@ class Project(Logable):
 
         self.segmentation_f = segmentation_f
         self.extraction_f = extraction_f
-        self.classification_f = classification_f
+        self.featurization_f = featurization_f
         self.selection_f = selection_f
 
         if self.CLEAN_LOG:
@@ -104,16 +100,18 @@ class Project(Logable):
         if not os.path.isdir(self.project_location):
             os.makedirs(self.project_location)
         else:
-            warnings.warn("There is already a directory in the location path")
-        
+            Warning("There is already a directory in the location path")
+
         # === setup sdata reader/writer ===
-        self.filehandler = sdata_filehandler(directory=self.directory, 
-                                             sdata_path=self.sdata_path, 
-                                             input_image_name = self.DEFAULT_INPUT_IMAGE_NAME,
-                                             nuc_seg_name = self.nuc_seg_name,
-                                             cyto_seg_name = self.cyto_seg_name,
-                                             centers_name = self.DEFAULT_CENTERS_NAME,
-                                             debug=self.debug)
+        self.filehandler = sdata_filehandler(
+            directory=self.directory,
+            sdata_path=self.sdata_path,
+            input_image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+            nuc_seg_name=self.nuc_seg_name,
+            cyto_seg_name=self.cyto_seg_name,
+            centers_name=self.DEFAULT_CENTERS_NAME,
+            debug=self.debug,
+        )
         self._read_sdata()
         self._check_sdata_status()
 
@@ -123,12 +121,11 @@ class Project(Logable):
         # === setup extraction ===
         self._setup_extraction_f(extraction_f)
 
-        # === setup classification ===
-        self._setup_classification_f(classification_f)
+        # === setup featurization ===
+        self._setup_featurization_f(featurization_f)
 
         # ==== setup selection ===
         self._setup_selection(selection_f)
-
 
     ##### Setup Functions #####
 
@@ -144,13 +141,13 @@ class Project(Logable):
         if not os.path.isfile(file_path):
             raise ValueError(f"Your config path {file_path} is invalid.")
 
-        with open(file_path, "r") as stream:
+        with open(file_path) as stream:
             try:
                 self.config = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
 
-    def _get_config_file(self, config_path: Union[str, None] = None):
+    def _get_config_file(self, config_path: str | None = None):
         # load config file
         self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
 
@@ -160,25 +157,19 @@ class Project(Logable):
             if os.path.isfile(self.config_path):
                 self._load_config_from_file(self.config_path)
             else:
-                raise ValueError(
-                    "No config passed and no config found in project directory."
-                )
+                raise ValueError("No config passed and no config found in project directory.")
 
         else:
             if not os.path.isfile(config_path):
-                
-                raise ValueError(
-                    f"Your config path {config_path} is invalid. Please specify a valid config path."
-                )
+                raise ValueError(f"Your config path {config_path} is invalid. Please specify a valid config path.")
 
             else:
-
                 print("Updating project config file.")
-                
+
                 if os.path.isfile(self.config_path):
                     os.remove(self.config_path)
 
-                #ensure that the project location exists
+                # ensure that the project location exists
                 if not os.path.isdir(self.project_location):
                     os.makedirs(self.project_location)
 
@@ -187,44 +178,35 @@ class Project(Logable):
                 self._load_config_from_file(self.config_path)
 
     def _setup_segmentation_f(self, segmentation_f):
-
         if self.segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {segmentation_f.__name__} is missing from the config file."
-                )
+                raise ValueError(f"Config for {segmentation_f.__name__} is missing from the config file.")
 
-            seg_directory = os.path.join(
-                self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME
-            )
+            seg_directory = os.path.join(self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME)
 
             self.seg_directory = seg_directory
 
             self.segmentation_f = segmentation_f(
                 self.config[segmentation_f.__name__],
                 self.seg_directory,
-                nuc_seg_name = self.nuc_seg_name,
-                cyto_seg_name = self.cyto_seg_name, 
-                _tmp_image_path = None,
+                nuc_seg_name=self.nuc_seg_name,
+                cyto_seg_name=self.cyto_seg_name,
+                _tmp_image_path=None,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=None,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def _setup_extraction_f(self, extraction_f):
         if extraction_f is not None:
-            extraction_directory = os.path.join(
-                self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME
-            )
+            extraction_directory = os.path.join(self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME)
 
             self.extraction_directory = extraction_directory
 
             if extraction_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {extraction_f.__name__} is missing from the config file"
-                )
+                raise ValueError(f"Config for {extraction_f.__name__} is missing from the config file")
 
             self.extraction_f = extraction_f(
                 self.config[extraction_f.__name__],
@@ -233,42 +215,34 @@ class Project(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
-    def _setup_classification_f(self, classification_f):
-        if classification_f is not None:
-            if classification_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {classification_f.__name__} is missing from the config file"
-                )
+    def _setup_featurization_f(self, featurization_f):
+        if featurization_f is not None:
+            if featurization_f.__name__ not in self.config:
+                raise ValueError(f"Config for {featurization_f.__name__} is missing from the config file")
 
-            classification_directory = os.path.join(
-                self.project_location, self.DEFAULT_CLASSIFICATION_DIR_NAME
-            )
+            featurization_directory = os.path.join(self.project_location, self.DEFAULT_FEATURIZATION_DIR_NAME)
 
-            self.classification_directory = classification_directory
+            self.featurization_directory = featurization_directory
 
-            self.classification_f = classification_f(
-                self.config[classification_f.__name__],
-                self.classification_directory,
+            self.featurization_f = featurization_f(
+                self.config[featurization_f.__name__],
+                self.featurization_directory,
                 project_location=self.project_location,
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
     def _setup_selection(self, selection_f):
         if self.selection_f is not None:
             if selection_f.__name__ not in self.config:
-                raise ValueError(
-                    f"Config for {selection_f.__name__} is missing from the config file"
-                )
+                raise ValueError(f"Config for {selection_f.__name__} is missing from the config file")
 
-            selection_directory = os.path.join(
-                self.project_location, self.DEFAULT_SELECTION_DIR_NAME
-            )
+            selection_directory = os.path.join(self.project_location, self.DEFAULT_SELECTION_DIR_NAME)
 
             self.selection_directory = selection_directory
 
@@ -279,22 +253,20 @@ class Project(Logable):
                 debug=self.debug,
                 overwrite=self.overwrite,
                 project=self,
-                filehandler = self.filehandler
+                filehandler=self.filehandler,
             )
 
-    def update_classification_f(self, classification_f) -> None:
-        """Update the classification method chosen for the project without reinitializing the entire project.
+    def update_featurization_f(self, featurization_f) -> None:
+        """Update the featurization method chosen for the project without reinitializing the entire project.
 
         Parameters
         ----------
-        classification_f : class
-            The classification method that should be used for the project.
+        featurization_f : class
+            The featurization method that should be used for the project.
 
         """
-        self.log(
-            f"Replacing current classification method {self.classification_f.__class__} with {classification_f}"
-        )
-        self._setup_classification_f(classification_f)
+        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
+        self._setup_featurization_f(featurization_f)
 
     ##### General small helper functions ####
 
@@ -317,7 +289,7 @@ class Project(Logable):
 
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
-            if not all([x == chunk_size[0] for x in chunk_size]):
+            if not all(x == chunk_size[0] for x in chunk_size):
                 elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
             else:
                 # ensure that the chunk size is the default chunk size
@@ -350,9 +322,7 @@ class Project(Logable):
         self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
         self._tmp_dir_path = self._tmp_dir.name
 
-        self.log(
-            f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}"
-        )
+        self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
 
     def _clear_temp_dir(self):
         if "_tmp_dir" in self.__dict__.keys():
@@ -372,9 +342,7 @@ class Project(Logable):
 
         if os.path.exists(self.sdata_path):
             if self.overwrite:
-                self.log(
-                    f"Output location {self.sdata_path} already exists. Overwriting."
-                )
+                self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
@@ -400,9 +368,7 @@ class Project(Logable):
         """Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
         for keys in list(self.sdata.labels.keys()):
             if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
-                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(
-                    self.sdata.labels[keys]
-                )
+                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
 
     def _check_sdata_status(self, print_status=False):
         if self.sdata is None:
@@ -415,18 +381,10 @@ class Project(Logable):
             self.centers_status = self.filehandler.centers_status
 
             if self.input_image_status:
-                if isinstance(
-                    self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree
-                ):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME][
-                        "scale0"
-                    ].image
-                elif isinstance(
-                    self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray
-                ):
-                    self.input_image = self.sdata.images[
-                        self.DEFAULT_INPUT_IMAGE_NAME
-                    ].image
+                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+                elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
                 else:
                     self.input_image = None
 
@@ -446,30 +404,14 @@ class Project(Logable):
         self._check_sdata_status()
 
     def view_sdata(self):
-        self.sdata = self.filehandler.get_sdata() # ensure its up to date
+        self.sdata = self.filehandler.get_sdata()  # ensure its up to date
 
         # open interactive viewer in napari
         interactive = Interactive(self.sdata)
         interactive.run()
 
-    #### Functions for operations on sdata object #####
-
-    # def _get_centers(self, segmentation_label: str) -> PointsModel:
-    #     if segmentation_label not in self.sdata.labels:
-    #         raise ValueError(
-    #             f"Segmentation {segmentation_label} not found in sdata object."
-    #         )
-
-    #     centers = calculate_centroids(self.sdata.labels[segmentation_label])
-
-    #     return centers
-
-    # def _add_centers(self, segmentation_label: str, overwrite = False) -> None:
-    #     centroids_object = self._get_centers(segmentation_label)
-    #     self._write_points_object_sdata(centroids_object, self.DEFAULT_CENTERS_NAME, overwrite = overwrite)
-
     #### Functions for adding elements to sdata object ########
-    def _force_delete_object(self, name:str, type:str):
+    def _force_delete_object(self, name: str, type: str):
         """
         Force delete an object from the sdata object and the corresponding directory.
 
@@ -482,8 +424,8 @@ class Project(Logable):
         """
         if name in self.sdata:
             del self.sdata[name]
-        
-        #define path 
+
+        # define path
         path = os.path.join(self.sdata_path, type, name)
         if os.path.exists(path):
             shutil.rmtree(path, ignore_errors=True)
@@ -493,9 +435,9 @@ class Project(Logable):
         image,
         image_name,
         channel_names=None,
-        scale_factors=[2, 4, 8],
+        scale_factors=None,
         chunks=(1, 1000, 1000),
-        overwrite = False
+        overwrite=False,
     ):
         """
         Write the supplied image to the spatialdata object.
@@ -508,6 +450,8 @@ class Project(Logable):
             List of scale factors for the image. Default is [2, 4, 8]. This will load the image at 4 different resolutions to allow for fluid visualization.
         """
 
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         if self.sdata is None:
             self._read_sdata()
 
@@ -539,57 +483,9 @@ class Project(Logable):
         # track that input image has been loaded
         self.input_image_status = True
 
-    # def _write_segmentation_object_sdata(
-    #     self, segmentation_object, segmentation_label: str, classes: set = None, overwrite = False
-    # ):
-    #     # ensure that the segmentation object is converted to the scPortrait Labels2DModel
-    #     if not hasattr(segmentation_object.attrs, "cell_ids"):
-    #         segmentation_object = spLabels2DModel().convert(
-    #             segmentation_object, classes=classes
-    #         )
-
-    #     if overwrite:
-    #         self._force_delete_object(segmentation_label, "labels")
-
-    #     self.sdata.labels[segmentation_label] = segmentation_object
-    #     self.sdata.write_element(segmentation_label, overwrite=True)
-
-    #     self.log(f"Segmentation {segmentation_label} written to sdata object.")
-
-    # def _write_segmentation_sdata(
-    #     self,
-    #     segmentation,
-    #     segmentation_label: str,
-    #     classes: set = None,
-    #     chunks=(1000, 1000),
-    #     overwrite = False
-    # ):
-    #     transform_original = Identity()
-    #     mask = spLabels2DModel.parse(
-    #         segmentation,
-    #         dims=["y", "x"],
-    #         transformations={"global": transform_original},
-    #         chunks=chunks,
-    #     )
-
-    #     if not get_chunk_size(mask) == chunks:
-    #         mask.data = mask.data.rechunk(chunks)
-
-    #     self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite = overwrite)
-
-    def _write_table_object_sdata(self, table, table_name: str, overwrite=False):
-        
-        if overwrite:
-            self._force_delete_object(table_name, "tables")
-
-        self.sdata.tables[table_name] = table
-        self.sdata.write_element(table_name, overwrite=False)
-
-        self.log(f"Table {table_name} written to sdata object.")
-
     #### Functions for getting elements from sdata object #####
 
-    def _load_seg_to_memmap(self, seg_name: List[str], tmp_dir_abs_path: str):
+    def _load_seg_to_memmap(self, seg_name: list[str], tmp_dir_abs_path: str):
         """
         Helper function to load segmentation masks from sdata to memory mapped temp arrays for faster access.
         Loading happens in a chunked manner to avoid memory issues.
@@ -617,7 +513,7 @@ class Project(Logable):
 
         # get the segmentation object
         assert all(
-            [seg in self.sdata.labels for seg in seg_name]
+            seg in self.sdata.labels for seg in seg_name
         ), "Not all passed segmentation elements found in sdata object."
         seg_objects = [self.sdata.labels[seg] for seg in seg_name]
 
@@ -664,9 +560,9 @@ class Project(Logable):
         for i, seg in enumerate(seg_objects):
             if Z is not None:
                 for z in range(Z):
-                        seg_masks[i][z] = seg.data[z].compute()
+                    seg_masks[i][z] = seg.data[z].compute()
             else:
-                    seg_masks[i] = seg.data.compute()
+                seg_masks[i] = seg.data.compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[seg_objects, seg_masks, seg])
@@ -721,10 +617,10 @@ class Project(Logable):
         if Z is not None:
             for z in range(Z):
                 for c in range(C):
-                        input_image[z][c] = self.input_image[z][c].compute()
+                    input_image[z][c] = self.input_image[z][c].compute()
         else:
             for c in range(C):
-                    input_image[c] = self.input_image[c].compute()
+                input_image[c] = self.input_image[c].compute()
 
         # cleanup the cache
         self._clear_cache(vars_to_delete=[input_image])
@@ -732,9 +628,7 @@ class Project(Logable):
         return path_input_image
 
     #### Functions to load input data ####
-    def load_input_from_array(
-        self, array: np.ndarray, channel_names: List[str] = None, overwrite=None
-    ):
+    def load_input_from_array(self, array: np.ndarray, channel_names: list[str] = None, overwrite=None):
         # check if an input image was already loaded if so throw error if overwrite = False
 
         # setup overwrite
@@ -774,7 +668,7 @@ class Project(Logable):
         self,
         file_paths,
         channel_names=None,
-        crop=[(0, -1), (0, -1)],
+        crop=None,
         overwrite=None,
         remap=None,
         cache=None,
@@ -798,7 +692,10 @@ class Project(Logable):
 
         """
 
-        def extract_unique_parts(paths: List[str]):
+        if crop is None:
+            crop = [(0, -1), (0, -1)]
+
+        def extract_unique_parts(paths: list[str]):
             """helper function to get unique channel names from filepaths
 
             Parameters
@@ -840,13 +737,6 @@ class Project(Logable):
         # check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_sdata_object()
 
-        if not len(file_paths) == self.config["input_channels"]:
-            raise ValueError(
-                "Expected {} image paths because this number of input_channels is specified in the config, but received {} instead.".format(
-                    self.config["input_channels"], len(file_paths)
-                )
-            )
-
         # save channel names
         if channel_names is None:
             channel_names = extract_unique_parts(file_paths)
@@ -878,9 +768,7 @@ class Project(Logable):
 
             self._check_image_dtype(im)
 
-            im = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[
-                slice(*crop[0]), slice(*crop[1])
-            ]
+            im = np.array(im, dtype=self.DEFAULT_IMAGE_DTYPE)[slice(*crop[0]), slice(*crop[1])]
 
             if i == 0:
                 # define shape of required tempmmap array to read results to
@@ -915,8 +803,8 @@ class Project(Logable):
         self._clear_cache(vars_to_delete=[temp_image_path, im, channels])
         self._clear_temp_dir()
 
-        #strange workaround that is required so that the sdata input image does not point to the dask array anymore but
-        #to the image which was written to disk
+        # strange workaround that is required so that the sdata input image does not point to the dask array anymore but
+        # to the image which was written to disk
         self._check_sdata_status()
 
     def load_input_from_omezarr(self, ome_zarr_path, overwrite=None):
@@ -939,9 +827,7 @@ class Project(Logable):
             zarr_reader.load("0").compute()
         )  ### adapt here to not read the entire image to memory TODO
         time_end = time()
-        self.log(
-            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes."
-        )
+        self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
         # Access the metadata to get channel names
         zarr_group = loc.zarr_group()
@@ -1002,9 +888,7 @@ class Project(Logable):
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
-            self.log(
-                "Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
-            )
+            self.log("Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
@@ -1014,16 +898,13 @@ class Project(Logable):
             self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
             self.cyto_seg_status = True
-            self.log(
-                "Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object."
-            )
+            self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
         assert (
-            self.sdata[self.nuc_seg_name].attrs["cell_ids"]
-            == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
+            self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
         ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
 
         # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
@@ -1043,23 +924,17 @@ class Project(Logable):
 
                         new_table_name = f"annot_{region_name}_{table_name}"
 
-                        table = remap_region_annotation_table(
-                            table, region_name=region_name
-                        )
+                        table = remap_region_annotation_table(table, region_name=region_name)
 
-                        self._write_table_object_sdata(table, new_table_name)
+                        self.filehandler._write_table_object_sdata(table, new_table_name)
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
                 else:
-                    self.log(
-                        f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}."
-                    )
+                    self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
 
                 # add centers of cells for available nucleus map
-                centroids = calculate_centroids(
-                    self.sdata.labels[region_name], coordinate_system="global"
-                )
+                centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
                 self._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
 
                 self.centers_status = True
@@ -1072,25 +947,21 @@ class Project(Logable):
                         region_name = self.cyto_seg_name
                         new_table_name = f"annot_{region_name}_{table_name}"
 
-                        table = remap_region_annotation_table(
-                            table, region_name=region_name
-                        )
-                        self._write_table_object_sdata(table, new_table_name)
+                        table = remap_region_annotation_table(table, region_name=region_name)
+                        self.filehandler._write_table_object_sdata(table, new_table_name)
 
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
                 else:
-                    self.log(
-                        f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}."
-                    )
+                    self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
 
         self._check_sdata_status()
         self.overwrite = original_overwrite  # reset to original value
 
     #### Functions to perform processing ####
 
-    def segment(self, overwrite: Union[bool, None] = None):
+    def segment(self, overwrite: bool | None = None):
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
@@ -1104,20 +975,19 @@ class Project(Logable):
         original_overwrite = self.segmentation_f.overwrite
         if overwrite is not None:
             self.segmentation_f.overwrite = overwrite
-        
+
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
-        
+
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-        self.sdata = self.filehandler.get_sdata() #update
+        self.sdata = self.filehandler.get_sdata()  # update
 
-    def complete_segmentation(self, overwrite: Union[bool, None] = None):
-        
+    def complete_segmentation(self, overwrite: bool | None = None):
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
@@ -1131,18 +1001,18 @@ class Project(Logable):
         original_overwrite = self.segmentation_f.overwrite
         if overwrite is not None:
             self.segmentation_f.overwrite = overwrite
-        
+
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
-        
+
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-   
-    def extract(self, partial=False, n_cells=None, overwrite: Union[bool, None] = None):
+
+    def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
@@ -1150,9 +1020,7 @@ class Project(Logable):
         self._check_sdata_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         # setup overwrite if specified in call
         if overwrite is not None:
@@ -1161,22 +1029,20 @@ class Project(Logable):
         self.extraction_f(partial=partial, n_cells=n_cells)
         self._check_sdata_status()
 
-    def classify(
+    def featurize(
         self,
-        n_cells=0,
-        data_type="complete",
-        partial_seed=None,
-        overwrite: Union[bool, None] = None,
+        n_cells: int = 0,
+        data_type: Literal["complete", "partial", "filtered"] = "complete",
+        partial_seed: None | int = None,
+        overwrite: bool | None = None,
     ):
-        if self.classification_f is None:
-            raise ValueError("No classification method defined")
+        if self.featurization_f is None:
+            raise ValueError("No featurization method defined")
 
         self._check_sdata_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         extraction_dir = self.extraction_f.get_directory()
 
@@ -1184,9 +1050,7 @@ class Project(Logable):
             cells_path = f"{extraction_dir}/data/single_cells.h5"
 
         if data_type == "partial":
-            partial_runs = [
-                x for x in os.listdir(extraction_dir) if x.startswith("partial_data")
-            ]
+            partial_runs = [x for x in os.listdir(extraction_dir) if x.startswith("partial_data")]
             selected_runs = [x for x in partial_runs if f"ncells_{n_cells}" in x]
 
             if len(selected_runs) == 0:
@@ -1198,17 +1062,11 @@ class Project(Logable):
                         f"Multiple partial data runs found for n_cells = {n_cells} with varying seed number. Please select one by specifying partial_seed."
                     )
                 else:
-                    selected_run = [
-                        x for x in selected_runs if f"seed_{partial_seed}" in x
-                    ]
+                    selected_run = [x for x in selected_runs if f"seed_{partial_seed}" in x]
                     if len(selected_run) == 0:
-                        raise ValueError(
-                            f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}."
-                        )
+                        raise ValueError(f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}.")
                     else:
-                        cells_path = (
-                            f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
-                        )
+                        cells_path = f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
             else:
                 cells_path = f"{extraction_dir}/{selected_runs[0]}/single_cells.h5"
 
@@ -1219,22 +1077,22 @@ class Project(Logable):
 
         # setup overwrite if specified in call
         if overwrite is not None:
-            self.classification_f.overwrite_run_path = overwrite
+            self.featurization_f.overwrite_run_path = overwrite
 
         # update the number of masks that are available in the segmentation object
-        self.classification_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
-        self.classification_f.data_type = data_type
+        self.featurization_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
+        self.featurization_f.data_type = data_type
 
-        self.classification_f(cells_path, size=n_cells)
+        self.featurization_f(cells_path, size=n_cells)
 
         self._check_sdata_status()
 
     def select(
         self,
-        cell_sets: List[Dict],
-        calibration_marker: Union[np.array, None] = None,
+        cell_sets: list[dict],
+        calibration_marker: np.ndarray | None = None,
         segmentation_name: str = "seg_all_nucleus",
-        name: Union[str, None] = None,
+        name: str | None = None,
     ):
         """
         Select specified classes using the defined selection method.
@@ -1246,13 +1104,9 @@ class Project(Logable):
         self._check_sdata_status()
 
         if not self.nuc_seg_status or not self.cyto_seg_status:
-            raise ValueError(
-                "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
-            )
+            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
-        assert (
-            segmentation_name in self.sdata.labels
-        ), f"Segmentation {segmentation_name} not found in sdata object."
+        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
 
         self.selection_f(
             segmentation_name=segmentation_name,
@@ -1276,7 +1130,7 @@ class Project(Logable):
 #     location_path : str
 #         Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
 #     config_path : str, optional, default ""
-#         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_CLASSIFICATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
+#         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_FEATURIZATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
 #     debug : bool, default False
 #         When set to True debug outputs will be printed where applicable.
 #     overwrite : bool, default False
@@ -1285,8 +1139,8 @@ class Project(Logable):
 #         Class containing segmentation workflow.
 #     extraction_f : Class, default None
 #         Class containing extraction workflow.
-#     classification_f : Class, default None
-#         Class containing classification workflow.
+#     featurization_f : Class, default None
+#         Class containing featurization workflow.
 #     selection_f : Class, default None
 #         Class containing selection workflow.
 
@@ -1300,9 +1154,9 @@ class Project(Logable):
 #         Default foldername for the segmentation process.
 #     DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
 #         Default foldername for the extraction process.
-#     DEFAULT_CLASSIFICATION_DIR_NAME : str, default "selection"
-#         Default foldername for the classification process.
-#     DEFAULT_SELECTION_DIR_NAME : str, default "classification"
+#     DEFAULT_FEATURIZATION_DIR_NAME : str, default "selection"
+#         Default foldername for the featurization process.
+#     DEFAULT_SELECTION_DIR_NAME : str, default "featurization"
 #         Default foldername for the selection process.
 #     """
 
