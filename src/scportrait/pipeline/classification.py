@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from torch.masked import masked_tensor
 
-from scportrait.ml.datasets import HDF5SingleCellDataset
-from scportrait.ml.transforms import ChannelSelector
-from scportrait.ml.plmodels import MultilabelSupervisedModel
+from scportrait.tools.ml.datasets import HDF5SingleCellDataset
+from scportrait.tools.ml.transforms import ChannelSelector
+from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 from scportrait.pipeline.base import ProcessingStep
 
 from torchvision import transforms
