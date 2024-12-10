@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
-import datatree
 import numpy as np
 import xarray
 from alphabase.io import tempmmap
@@ -134,7 +133,7 @@ class sdata_filehandler(Logable):
             ValueError: If input image not found
         """
         if self.input_image_status:
-            if isinstance(sdata.images[self.input_image_name], datatree.DataTree):
+            if isinstance(sdata.images[self.input_image_name], xarray.DataTree):
                 input_image = sdata.images[self.input_image_name]["scale0"].image
             elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
                 input_image = sdata.images[self.input_image_name].image

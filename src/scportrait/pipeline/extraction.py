@@ -6,7 +6,6 @@ import sys
 import timeit
 from functools import partial as func_partial
 
-import datatree
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -224,7 +223,6 @@ class HDF5CellExtraction(ProcessingStep):
             output_folder_name = self.DEFAULT_DATA_DIR
 
         self._setup_output(folder_name=output_folder_name)
-
         self._get_segmentation_info()
         self._get_input_image_info()
 
@@ -413,18 +411,6 @@ class HDF5CellExtraction(ProcessingStep):
         # no additional labelling required
         return (index, save_index, cell_id, None, None)
 
-    def _get_sdata(self):
-        path = os.path.join(self.project_location, self.DEFAULT_SDATA_FILE)
-
-        self.sdata = SpatialData.read(path)
-
-        if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], datatree.DataTree):
-            self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-        elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-            self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-        else:
-            raise ValueError("Input image could not be found. Cannot proceed with extraction.")
-
     def _save_removed_classes(self, classes):
         # define path where classes should be saved
         filtered_path = os.path.join(
@@ -541,10 +527,8 @@ class HDF5CellExtraction(ProcessingStep):
 
             # get the image data
             if image_index is None:
-                # image_data = self.input_image[:, window_y, window_x].compute()
                 image_data = self.image_data[:, window_y, window_x]
             else:
-                # image_data = self.input_image[image_index, :, window_y, window_x].compute()
                 image_data = self.image_data[image_index, :, window_y, window_x]
 
             image_data = (
