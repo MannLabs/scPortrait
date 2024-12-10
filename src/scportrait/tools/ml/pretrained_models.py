@@ -54,7 +54,7 @@ def get_data_dir() -> Path:
                 return parent
         return None
 
-    src_code_dir = find_root_by_file("README.md", Path(__file__))
+    src_code_dir = find_root_by_file("pyproject.toml", Path(__file__))
     if src_code_dir is None:
         raise FileNotFoundError("Could not find scPortrait root directory")
 
