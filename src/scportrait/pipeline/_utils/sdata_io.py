@@ -157,7 +157,11 @@ class sdata_filehandler(Logable):
 
         Args:
             image (dask.array): Image to be written to the spatialdata object.
+            image_name (str): Name of the image to be written to the spatialdata object.
+            channel_names list[str]: List of channel names for the image. Default is None.
             scale_factors list[int]: List of scale factors for the image. Default is [2, 4, 8]. This will load the image at 4 different resolutions to allow for fluid visualization.
+            chunks (tuple): Chunk size for the image. Default is (1, 1000, 1000).
+            overwrite (bool): Whether to overwrite existing data. Default is False.
         """
 
         if scale_factors is None:
