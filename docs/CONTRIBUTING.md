@@ -43,48 +43,20 @@ git pull --rebase
 to integrate the changes into yours.
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
-## Writing tests
-
-```{note}
-Remember to first install the package with pip install -e '.[dev]'
-```
-TBD
-
-## Publishing a release
-
-### Updating the version number
-
-Before making a release, you need to update the version number. Please adhere to [Semantic Versioning][semver], in brief
-
-> Given a version number MAJOR.MINOR.PATCH, increment the:
->
-> 1.  MAJOR version when you make incompatible API changes,
-> 2.  MINOR version when you add functionality in a backwards compatible manner, and
-> 3.  PATCH version when you make backwards compatible bug fixes.
->
-> Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
-
-Once you are done, run
-
-```
-git push --tags
-```
-
-to publish the created tag on GitHub.
-
 ## Writing documentation
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
 
 -   Google-style docstrings
--   TBD
+-   example code
+-   automatic building with Sphinx
 
 See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
-on how to write documentation.
+on how to write documentation. (remove later)
 
 ### Tutorials with jupyter notebooks
 
-TBD
+link to notebooks repo
 
 <!-- Links -->
 
