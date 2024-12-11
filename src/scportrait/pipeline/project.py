@@ -2,12 +2,11 @@
 project
 =======
 
-Within scPortrait, all operations are centered around the concept of a ``Project``. A ``Project`` is a python class which manages
-all of the scPortrait processing steps and is the central element through which all operations are performed. Each ``Project`` directly
-maps to a directory on the file system which contains all of the inputs to a specific scPortrait run as well as the generated outputs.
-Depending on the structure of the data that is to be processed a different Project class is required.
+At the core of scPortrait is the concept of a `Project`. A `Project` is a Python class that orchestrates all scPortrait processing steps, serving as the central element for all operations. 
+Each `Project` corresponds to a directory on the file system, which houses the input data for a specific scPortrait run along with the generated outputs. 
+The choice of the appropriate `Project` class depends on the structure of the data to be processed.
 
-Please see :ref:`here <projects>` for more information.
+For more details, refer to :ref:`here <projects>`.
 """
 
 import os
@@ -47,6 +46,13 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 
 
 class Project(Logable):
+    """Base implementation for a scPortrait project.
+
+    This class is designed to handle single-timepoint, single-location data, like e.g. whole-slide images.
+
+    Segmentation Methods should be based on :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>` or :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` or ShardedSegmentation. 
+    Extraction Methods should be based on :func:`HDF5CellExtraction <scportrait.pipeline.extraction.HDF5CellExtraction>`.
+    """
     CLEAN_LOG = True
 
     DEFAULT_CONFIG_NAME = "config.yml"
@@ -271,11 +277,17 @@ class Project(Logable):
     def update_featurization_f(self, featurization_f) -> None:
         """Update the featurization method chosen for the project without reinitializing the entire project.
 
-        Parameters
-        ----------
-        featurization_f : class
-            The featurization method that should be used for the project.
+        Args:
+            featurization_f: The featurization method that should be used for the project.
 
+        Returns:
+            None: the featurization method is updated in the project object.
+
+        Examples:
+            Update the featurization method for a project::
+
+                from scportrait.pipeline.featurization import CellFeaturizer
+                project.update_featurization_f(CellFeaturizer)
         """
         self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
         self._setup_featurization_f(featurization_f)
@@ -337,6 +349,7 @@ class Project(Logable):
         self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
 
     def _clear_temp_dir(self):
+        """Clear the temporary directory."""
         if "_tmp_dir" in self.__dict__.keys():
             shutil.rmtree(self._tmp_dir_path, ignore_errors=True)
             self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
@@ -382,6 +395,11 @@ class Project(Logable):
             if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
                 self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
 
+    def print_project_status(self):
+        """Print the current project status.
+        """
+        self._check_sdata_status(print_status=True)
+
     def _check_sdata_status(self, print_status=False):
         if self.sdata is None:
             self._read_sdata()
@@ -416,6 +434,10 @@ class Project(Logable):
         self._check_sdata_status()
 
     def view_sdata(self):
+        """Start an interactive napari viewer to look at the sdata object associated with the project.
+        Note:
+            This only works in sessions with a visual interface.
+        """
         self.sdata = self.filehandler.get_sdata()  # ensure its up to date
 
         # open interactive viewer in napari
