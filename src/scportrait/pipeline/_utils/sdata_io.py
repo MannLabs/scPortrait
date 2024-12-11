@@ -9,7 +9,7 @@ import numpy as np
 import xarray
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
-from spatialdata.models import PointsModel, TableModel
+from spatialdata.models import PointsModel, TableModel, Image2DModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -143,6 +143,52 @@ class sdata_filehandler(Logable):
         return input_image
 
     ## write elements to sdata object
+    def _write_image_sdata(
+        self,
+        image,
+        image_name: str,
+        channel_names: list[str] = None,
+        scale_factors: list[int]= [2, 4, 8],
+        chunks: ChunkSize=(1, 1000, 1000),
+        overwrite=False,
+    ):
+        """
+        Write the supplied image to the spatialdata object.
+
+        Args:
+            image (dask.array): Image to be written to the spatialdata object.
+            scale_factors list[int]: List of scale factors for the image. Default is [2, 4, 8]. This will load the image at 4 different resolutions to allow for fluid visualization.
+        """
+
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
+
+        _sdata = self._read_sdata()
+
+        if channel_names is None:
+            channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+
+        # transform to spatialdata image model
+        transform_original = Identity()
+        image = Image2DModel.parse(
+            image,
+            dims=["c", "y", "x"],
+            chunks=chunks,
+            c_coords=channel_names,
+            scale_factors=scale_factors,
+            transformations={"global": transform_original},
+            rgb=False,
+        )
+
+        if overwrite:
+            self._force_delete_object(image_name, "images")
+
+        _sdata.images[image_name] = image
+        _sdata.write_element(image_name, overwrite=True)
+
+        self.log(f"Image {image_name} written to sdata object.")
+        self._check_sdata_status()
+
     def _write_segmentation_object_sdata(
         self,
         segmentation_object: spLabels2DModel,
@@ -268,6 +314,7 @@ class sdata_filehandler(Logable):
         centroids_object = self._get_centers(_sdata, segmentation_label)
         self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
 
+    ## load elements from sdata to a memory mapped array
     def _load_input_image_to_memmap(
         self, tmp_dir_abs_path: str | Path, image: np.typing.NDArray[Any] | None = None
     ) -> str:
