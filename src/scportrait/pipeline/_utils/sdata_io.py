@@ -9,7 +9,7 @@ import numpy as np
 import xarray
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
-from spatialdata.models import PointsModel, TableModel, Image2DModel
+from spatialdata.models import Image2DModel, PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -19,7 +19,8 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     get_chunk_size,
 )
 
-ChunkSize: TypeAlias = tuple[int, int]
+ChunkSize2D: TypeAlias = tuple[int, int]
+ChunkSize3D: TypeAlias = tuple[int, int, int]
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables"]
 
 
@@ -148,8 +149,8 @@ class sdata_filehandler(Logable):
         image,
         image_name: str,
         channel_names: list[str] = None,
-        scale_factors: list[int]= [2, 4, 8],
-        chunks: ChunkSize=(1, 1000, 1000),
+        scale_factors: list[int] = None,
+        chunks: ChunkSize3D = (1, 1000, 1000),
         overwrite=False,
     ):
         """
@@ -164,6 +165,8 @@ class sdata_filehandler(Logable):
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
 
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
         if scale_factors is None:
             scale_factors = [2, 4, 8]
 
@@ -185,7 +188,7 @@ class sdata_filehandler(Logable):
         )
 
         if overwrite:
-            self._force_delete_object(image_name, "images")
+            self._force_delete_object(_sdata, image_name, "images")
 
         _sdata.images[image_name] = image
         _sdata.write_element(image_name, overwrite=True)
@@ -227,7 +230,7 @@ class sdata_filehandler(Logable):
         segmentation: xarray.DataArray | np.ndarray,
         segmentation_label: str,
         classes: set[str] | None = None,
-        chunks: ChunkSize = (1000, 1000),
+        chunks: ChunkSize2D = (1000, 1000),
         overwrite: bool = False,
     ) -> None:
         """Write segmentation data to SpatialData.
