@@ -155,9 +155,10 @@ class LMDSelection(ProcessingStep):
                 segmentation = tempmmap.array(
                     shape=(x, y), dtype=hdf_labels.dtype, tmp_dir_abs_path=self._tmp_dir_path
                 )
-                segmentation = hdf_labels[self.config["segmentation_channel"], :, :]
+                segmentation[:] = hdf_labels[self.config["segmentation_channel"], :, :]
                 
-            coord_index = _create_coord_index_sparse(segmentation)
+            coord_index = dict(_create_coord_index_sparse(segmentation))
+            
             with open(self.coord_pickle_file_path, "wb") as f:
                 pickle.dump(coord_index, f)
             self.log(f"Coordinate lookup index saved to file {self.coord_pickle_file_path}.")
