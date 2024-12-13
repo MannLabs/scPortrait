@@ -41,22 +41,22 @@ git pull --rebase
 ```
 
 to integrate the changes into yours.
+
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
 ## Writing documentation
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
 
--   Google-style docstrings
+-   Google-style docstrings, where the __init__ method should be documented in its own docstring, not at the class level.
 -   example code
 -   automatic building with Sphinx
 
-See the [scanpy developer docs](https://scanpy.readthedocs.io/en/latest/dev/documentation.html) for more information
-on how to write documentation. (remove later)
+Refer to [sphinx google style docstrings][] for detailed information on writing documentation.
 
 ### Tutorials with jupyter notebooks
 
-link to notebooks repo
+The tutorials for this project are hosted in a dedicated repository: [scPortrait Notebooks](https://github.com/MannLabs/scPortrait-notebooks).
 
 <!-- Links -->
 
@@ -67,3 +67,5 @@ link to notebooks repo
 [pre-commit]: https://pre-commit.com/
 [sphinx]: https://www.sphinx-doc.org/en/master/
 [sphinx autodoc typehints]: https://github.com/tox-dev/sphinx-autodoc-typehints
+[sphinx google style docstrings]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+[scPortrait Notebooks]: (https://github.com/MannLabs/scPortrait-notebooks)
