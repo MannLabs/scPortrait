@@ -48,17 +48,18 @@ def get_data_dir() -> Path:
         Path to data directory
     """
 
-    def find_root_by_file(marker_file: str, current_path: Path) -> Path | None:
+    def find_root_by_folder(marker_folder: str, current_path: Path) -> Path | None:
         for parent in current_path.parents:
-            if (parent / marker_file).exists():
+            if (parent / marker_folder).is_dir():
                 return parent
         return None
 
-    src_code_dir = find_root_by_file("README.md", Path(__file__))
-    if src_code_dir is None:
-        raise FileNotFoundError("Could not find scPortrait root directory")
+    src_code_dir = find_root_by_folder("io", Path(__file__))
 
+    if src_code_dir is None:
+        raise FileNotFoundError("Could not find scPortrait source directory")
     data_dir = src_code_dir / "scportrait_data"
+
     return data_dir.absolute()
 
 
