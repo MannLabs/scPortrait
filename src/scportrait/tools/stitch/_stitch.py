@@ -33,41 +33,23 @@ class Stitcher:
     """
     Class for stitching of image tiles to assemble a mosaic.
 
-    Parameters:
-    -----------
-    input_dir : str
-        Directory containing the input image tiles.
-    slidename : str
-        Name of the slide.
-    outdir : str
-        Output directory to save the stitched mosaic.
-    stitching_channel : str
-        Name of the channel to be used for stitching.
-    pattern : str
-        File pattern to match the image tiles.
-    overlap : float, optional
-        Overlap between adjacent image tiles (default is 0.1).
-    max_shift : float, optional
-        Maximum allowed shift during alignment (default is 30).
-    filter_sigma : int, optional
-        Sigma value for Gaussian filter applied during alignment (default is 0).
-    do_intensity_rescale : bool or "full_image", optional
-        Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
-    rescale_range : tuple or dictionary, optional
-        If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaleing (default is (1, 99)). Alternatively
-        a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
-    channel_order : list, optional
-        Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-    reader_type : class, optional
-        Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
-    orientation : dict, optional
-        Dictionary specifiying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
-    plot_QC : bool, optional
-        Flag to indicate whether to plot quality control (QC) figures (default is True).
-    overwrite : bool, optional
-        Flag to indicate whether to overwrite the output directory if it already exists (default is False).
-    cache : str, optional
-        Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
+    Args:
+        input_dir (str): Directory containing the input image tiles.
+        slidename (str): Name of the slide.
+        outdir (str): Output directory to save the stitched mosaic.
+        stitching_channel (str): Name of the channel to be used for stitching.
+        pattern (str): File pattern to match the image tiles.
+        overlap (float, optional): Overlap between adjacent image tiles (default is 0.1).
+        max_shift (float, optional): Maximum allowed shift during alignment (default is 30).
+        filter_sigma (int, optional): Sigma value for Gaussian filter applied during alignment (default is 0).
+        do_intensity_rescale (bool or "full_image", optional): Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
+        rescale_range (tuple or dict, optional): If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
+        channel_order (list, optional): Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
+        reader_type (class, optional): Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
+        orientation (dict, optional): Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
+        plot_QC (bool, optional): Flag to indicate whether to plot quality control (QC) figures (default is True).
+        overwrite (bool, optional): Flag to indicate whether to overwrite the output directory if it already exists (default is False).
+        cache (str, optional): Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
     """
 
     def __init__(
@@ -163,7 +145,10 @@ class Stitcher:
         self.channel_order = channel_order
         self.cache = cache
 
-        self.initialize_outdir()
+        self._initialize_outdir()
+
+        # initialize variables to default values
+        self.reader = None
 
     def _lazy_imports(self):
         """
@@ -179,12 +164,12 @@ class Stitcher:
         self.ashlar_process_axis_flip = process_axis_flip
 
     def __exit__(self):
-        self.clear_cache()
+        self._clear_cache()
 
     def __del__(self):
-        self.clear_cache()
+        self._clear_cache()
 
-    def create_cache(self):
+    def _create_cache(self):
         """
         Create a temporary cache directory for storing intermediate files during stitching.
         """
@@ -195,7 +180,7 @@ class Stitcher:
 
         self.TEMP_DIR_NAME = TEMP_DIR_NAME
 
-    def clear_cache(self):
+    def _clear_cache(self):
         """
         Clear the temporary cache directory.
         """
@@ -203,7 +188,7 @@ class Stitcher:
             if os.path.exists(self.TEMP_DIR_NAME):
                 shutil.rmtree(self.TEMP_DIR_NAME)
 
-    def initialize_outdir(self):
+    def _initialize_outdir(self):
         """
         Initialize the output directory for saving the stitched mosaic.
         """
@@ -220,7 +205,7 @@ class Stitcher:
                     f"Output directory at {self.outdir} already exists. Set overwrite to True to overwrite the directory."
                 )
 
-    def get_channel_info(self):
+    def _get_channel_info(self):
         """
         Get information about the channels in the image tiles.
         """
@@ -231,7 +216,20 @@ class Stitcher:
         self.stitching_channel_id = list(self.channel_lookup.values()).index(self.stitching_channel)
         self.n_channels = len(self.channels)
 
-    def setup_rescaling(self):
+    def get_stitching_information(self):
+        """Print information about the configuration of the stitching process."""
+        if self.reader is None:
+            self._initialize_reader()
+        self._get_channel_info()
+
+        print("Tile positions will be calculated based on channel:", self.stitching_channel)
+        print("Channel Names:", self.channel_names)
+        print("Overlap of image tiles:", self.overlap)
+        print("Max Shift value:", self.max_shift)
+        print("Filter Sigma value:", self.filter_sigma)
+        print("Output will be written to:", self.outdir)
+
+    def _setup_rescaling(self):
         """
         Setup image rescaling based on the specified rescale_range.
         """
@@ -276,7 +274,7 @@ class Stitcher:
             self.reader.do_rescale = False
             self.reader.rescale_range = None
 
-    def reorder_channels(self):
+    def _reorder_channels(self):
         """
         Reorder the channels in the mosaic based on the specified channel_order.
         """
@@ -292,7 +290,7 @@ class Stitcher:
 
             self.channels = channels
 
-    def initialize_reader(self):
+    def _initialize_reader(self):
         """
         Initialize the reader for reading image tiles.
         """
@@ -314,8 +312,8 @@ class Stitcher:
         )
 
         # setup rescaling
-        self.get_channel_info()
-        self.setup_rescaling()
+        self._get_channel_info()
+        self._setup_rescaling()
 
     def save_positions(self):
         """
@@ -332,12 +330,11 @@ class Stitcher:
         """
         Generate a thumbnail of the stitched mosaic.
 
-        Parameters:
-        -----------
-        scale : float, optional
-            Scale factor for the thumbnail (default is 0.05).
+        Args:
+            scale (float, optional): Scale factor for the thumbnail. Defaults to 0.05.
+
         """
-        self.initialize_reader()
+        self._initialize_reader()
         self.thumbnail = self.ashlar_thumbnail.make_thumbnail(
             self.reader, channel=self.stitching_channel_id, scale=scale
         )
@@ -358,14 +355,12 @@ class Stitcher:
         if rescale:
             self.thumbnail = rescale_image(self.thumbnail, rescale_range)
 
-    def initialize_aligner(self):
+    def _initialize_aligner(self):
         """
         Initialize the aligner for aligning the image tiles.
 
         Returns:
-        --------
-        aligner : EdgeAligner
-            Initialized EdgeAligner object.
+            aligner (EdgeAligner): Initialized EdgeAligner object.
         """
         aligner = self.ashlar_EdgeAligner(
             self.reader,
@@ -384,15 +379,15 @@ class Stitcher:
         plot_edge_scatter(self.aligner, self.outdir)
         plot_edge_quality(self.aligner, self.outdir)
 
-    def perform_alignment(self):
+    def _perform_alignment(self):
         """
         Perform alignment of the image tiles.
         """
         # intitialize reader for getting individual image tiles
-        self.initialize_reader()
+        self._initialize_reader()
 
         print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
-        self.aligner = self.initialize_aligner()
+        self.aligner = self._initialize_aligner()
         self.aligner.run()
 
         if self.plot_QC:
@@ -405,14 +400,12 @@ class Stitcher:
 
         print("Alignment complete.")
 
-    def initialize_mosaic(self):
+    def _initialize_mosaic(self):
         """
         Initialize the mosaic object for assembling the image tiles.
 
         Returns:
-        --------
-        mosaic : Mosaic
-            Initialized Mosaic object.
+            mosaic (Mosaic): Initialized Mosaic object.
         """
         mosaic = self.ashlar_Mosaic(
             self.aligner,
@@ -422,7 +415,7 @@ class Stitcher:
         )
         return mosaic
 
-    def assemble_mosaic(self):
+    def _assemble_mosaic(self):
         """
         Assemble the image tiles into a mosaic.
         """
@@ -434,7 +427,7 @@ class Stitcher:
         # initialize tempmmap array to save assemled mosaic to
         # if no cache is specified the tempmmap will be created in the outdir
 
-        self.create_cache()
+        self._create_cache()
 
         # create empty mmap array to store assembled mosaic
         hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
@@ -458,31 +451,32 @@ class Stitcher:
         # convery to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
-    def generate_mosaic(self):
+    def _generate_mosaic(self):
         # reorder channels
-        self.reorder_channels()
+        self._reorder_channels()
 
-        self.mosaic = self.initialize_mosaic()
+        self.mosaic = self._initialize_mosaic()
 
         # ensure dtype is set correctly
         self.mosaic.dtype = np.uint16
-        self.assemble_mosaic()
+        self._assemble_mosaic()
 
     def stitch(self):
         """
-        Perform the stitching process.
+        Generate the stitched mosaic.
         """
-        self.perform_alignment()
-        self.generate_mosaic()
+        self._perform_alignment()
+        self._generate_mosaic()
 
-    def write_tif(self, export_xml=True):
+    def write_tif(self, export_xml: bool = True) -> None:
         """
         Write the assembled mosaic as TIFF files.
 
-        Parameters:
-        -----------
-        export_xml : bool, optional
-            Flag to indicate whether to export an XML file for the TIFF files (default is True). This XML file is compatible with loading the generarted TIFF files into BIAS.
+        Args:
+            export_xml (bool, optional): Flag to indicate whether to export an XML file for the TIFF files (default is True). This XML file is compatible with loading the generated TIFF files into BIAS.
+
+        Returns:
+            The assembled mosaic are written to file as TIFF files in the specified output directory.
         """
         filenames = []
         for i, channel in enumerate(self.channel_names):
@@ -494,23 +488,22 @@ class Stitcher:
             write_xml(filenames, self.channel_names, self.slidename)
 
     def write_ome_zarr(self, downscaling_size=4, n_downscaling_layers=4, chunk_size=(1, 1024, 1024)):
-        """
-        Write the assembled mosaic as an OME-Zarr file.
+        """Write the assembled mosaic as an OME-Zarr file.
 
-        Parameters:
-        -----------
-        downscaling_size : int, optional
-            Downscaling factor for generating lower resolution layers (default is 4).
-        n_downscaling_layers : int, optional
-            Number of downscaling layers to generate (default is 4).
-        chunk_size : tuple, optional
-            Chunk size for the generated OME-Zarr file (default is (1, 1024, 1024)).
+        Args:
+            downscaling_size (int, optional): Downscaling factor for generating lower resolution layers (default is 4).
+            n_downscaling_layers (int, optional): Number of downscaling layers to generate (default is 4).
+            chunk_size (tuple, optional): Chunk size for the generated OME-Zarr file (default is (1, 1024, 1024)).
+
+        Returns:
+            None
         """
         filepath = os.path.join(self.outdir, f"{self.slidename}.ome.zarr")
+
         write_ome_zarr(
             filepath,
             self.assembled_mosaic,
-            self.channels,
+            self.channel_names,
             self.slidename,
             overwrite=self.overwrite,
             downscaling_size=downscaling_size,
@@ -536,13 +529,11 @@ class Stitcher:
         """
         Write the assembled mosaic as a SpatialData object.
 
-        Parameters:
-        -----------
-        scale_factors : list, optional
-            List of scale factors for the generated SpatialData object (default is [2, 4, 8]).
-            The scale factors are used to generate downsampled versions of the image for faster visualization at lower resolutions.
+        Args:
+            scale_factors (list, optional): List of scale factors for the generated SpatialData object.
+                Default is [2, 4, 8]. The scale factors are used to generate downsampled versions of the
+                image for faster visualization at lower resolutions.
         """
-
         if scale_factors is None:
             scale_factors = [2, 4, 8]
         filepath = os.path.join(self.outdir, f"{self.slidename}.spatialdata")
@@ -561,43 +552,24 @@ class ParallelStitcher(Stitcher):
     """
     Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.
 
-    Parameters:
-    -----------
-    input_dir : str
-        Directory containing the input image tiles.
-    slidename : str
-        Name of the slide.
-    outdir : str
-        Output directory to save the stitched mosaic.
-    stitching_channel : str
-        Name of the channel to be used for stitching.
-    pattern : str
-        File pattern to match the image tiles.
-    overlap : float, optional
-        Overlap between adjacent image tiles (default is 0.1).
-    max_shift : float, optional
-        Maximum allowed shift during alignment (default is 30).
-    filter_sigma : int, optional
-        Sigma value for Gaussian filter applied during alignment (default is 0).
-    do_intensity_rescale : bool or "full_image", optional
-        Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
-    rescale_range : tuple or dictionary, optional
-        If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaleing (default is (1, 99)). Alternatively
-        a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
-    channel_order : list, optional
-        Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-    reader_type : class, optional
-        Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
-    orientation : dict, optional
-        Dictionary specifiying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
-    plot_QC : bool, optional
-        Flag to indicate whether to plot quality control (QC) figures (default is True).
-    overwrite : bool, optional
-        Flag to indicate whether to overwrite the output directory if it already exists (default is False).
-    cache : str, optional
-        Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
-    threads : int, optional
-        Number of threads to use for parallel processing (default is 20).
+    Args:
+        input_dir (str): Directory containing the input image tiles.
+        slidename (str): Name of the slide.
+        outdir (str): Output directory to save the stitched mosaic.
+        stitching_channel (str): Name of the channel to be used for stitching.
+        pattern (str): File pattern to match the image tiles.
+        overlap (float, optional): Overlap between adjacent image tiles (default is 0.1).
+        max_shift (float, optional): Maximum allowed shift during alignment (default is 30).
+        filter_sigma (int, optional): Sigma value for Gaussian filter applied during alignment (default is 0).
+        do_intensity_rescale (bool or "full_image", optional): Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
+        rescale_range (tuple or dict, optional): If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
+        channel_order (list, optional): Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
+        reader_type (class, optional): Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
+        orientation (dict, optional): Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
+        plot_QC (bool, optional): Flag to indicate whether to plot quality control (QC) figures (default is True).
+        overwrite (bool, optional): Flag to indicate whether to overwrite the output directory if it already exists (default is False).
+        cache (str, optional): Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
+        threads (int, optional): Number of threads to use for parallel processing (default is 20).
     """
 
     def __init__(
@@ -653,14 +625,12 @@ class ParallelStitcher(Stitcher):
 
         self.threads = threads
 
-    def initialize_aligner(self):
+    def _initialize_aligner(self):
         """
         Initialize the aligner for aligning the image tiles.
 
         Returns:
-        --------
-        aligner : ParallelEdgeAligner
-            Initialized ParallelEdgeAligner object.
+            aligner (ParallelEdgeAligner): Initialized ParallelEdgeAligner object.
         """
         aligner = ParallelEdgeAligner(
             self.reader,
@@ -673,13 +643,13 @@ class ParallelStitcher(Stitcher):
         )
         return aligner
 
-    def initialize_mosaic(self):
+    def _initialize_mosaic(self):
         mosaic = ParallelMosaic(
             self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
         )
         return mosaic
 
-    def assemble_channel(self, args):
+    def _assemble_channel(self, args):
         hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
         out = mmap_array_from_path(hdf5_path)
@@ -690,14 +660,14 @@ class ParallelStitcher(Stitcher):
             print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
             out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
 
-    def assemble_mosaic(self):
+    def _assemble_mosaic(self):
         # get dimensions of assembled final mosaic
         x, y = self.mosaic.shape
         shape = (self.n_channels, x, y)
 
         print(f"assembling mosaic with shape {shape}")
 
-        self.create_cache()
+        self._create_cache()
 
         hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
@@ -721,7 +691,7 @@ class ParallelStitcher(Stitcher):
         workers = np.min([self.threads, self.n_channels])
         print(f"assembling channels with {workers} workers")
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            list(tqdm(executor.map(self.assemble_channel, args), **tqdm_args))
+            list(tqdm(executor.map(self._assemble_channel, args), **tqdm_args))
 
         # conver to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
@@ -729,10 +699,8 @@ class ParallelStitcher(Stitcher):
     def write_tif_parallel(self, export_xml=True):
         """Parallelized version of the write_tif method to write the assembled mosaic as TIFF files.
 
-        Parameters
-        ----------
-        export_xml : bool, optional
-            Flag to indicate whether to export an XML file for the TIFF files (default is True). This XML file is compatible with loading the generarted TIFF files into BIAS.
+        Args:
+            export_xml (bool, optional): Flag to indicate whether to export an XML file for the TIFF files (default is True). This XML file is compatible with loading the generarted TIFF files into BIAS.
 
         """
 

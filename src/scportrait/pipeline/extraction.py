@@ -842,8 +842,10 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("Loading input images to memory mapped arrays...")
         start_data_transfer = timeit.default_timer()
 
-        self.path_seg_masks = self.project._load_seg_to_memmap(seg_name=self.masks, tmp_dir_abs_path=self._tmp_dir_path)
-        self.path_image_data = self.project._load_input_image_to_memmap(tmp_dir_abs_path=self._tmp_dir_path)
+        self.path_seg_masks = self.filehandler._load_seg_to_memmap(
+            seg_name=self.masks, tmp_dir_abs_path=self._tmp_dir_path
+        )
+        self.path_image_data = self.filehandler._load_input_image_to_memmap(tmp_dir_abs_path=self._tmp_dir_path)
 
         stop_data_transfer = timeit.default_timer()
         time_data_transfer = stop_data_transfer - start_data_transfer
