@@ -816,8 +816,7 @@ class Project(Logable):
         self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
 
         # Access the metadata to get channel names
-        zarr_group = loc.zarr_group()
-        metadata = zarr_group.attrs.asdict()
+        metadata = loc.root_attrs
 
         if "omero" in metadata and "channels" in metadata["omero"]:
             channels = metadata["omero"]["channels"]
