@@ -1718,7 +1718,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     N_MASKS = 1
     N_INPUT_CHANNELS = 2
     MASK_NAMES = ["cytosol"]
-    DEFAULT_CYTOSOL_IDS = [0, 1]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [0, 1]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
