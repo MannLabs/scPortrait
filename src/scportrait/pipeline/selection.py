@@ -266,6 +266,7 @@ class LMDSelection(ProcessingStep):
 
         #calculate a coordinate lookup file where for each cell id the coordinates for their location in the segmentation mask are stored
         self.log("Calculating coordinate lookup index for the specified cell ids.")
+        self.log(f"Using segmentation channel with the id: {self.segmentation_channel_to_select}")
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
