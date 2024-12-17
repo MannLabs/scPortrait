@@ -1814,11 +1814,11 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         return None
 
 
-class Sharded_CytosolOnly_Cellpose_Segmentation(ShardedSegmentation):
+class ShardedCytosolOnlySegmentationCellpose(ShardedSegmentation):
     method = CytosolOnlySegmentationCellpose
 
 
-class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCellpose):
+class CytosolOnlySegmentationDownsamplingCellpose(CytosolOnlySegmentationCellpose):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -1914,8 +1914,8 @@ class CytosolOnly_Segmentation_Downsampling_Cellpose(CytosolOnlySegmentationCell
         self.total_time = timeit.default_timer() - total_time_start
 
 
-class Sharded_CytosolOnly_Segmentation_Downsampling_Cellpose(ShardedSegmentation):
-    method = CytosolOnly_Segmentation_Downsampling_Cellpose
+class ShardedCytosolOnlySegmentationDownsamplingCellpose(ShardedSegmentation):
+    method = CytosolOnlySegmentationDownsamplingCellpose
 
 
 #### TIMECOURSE SEGMENTATION METHODS #####
