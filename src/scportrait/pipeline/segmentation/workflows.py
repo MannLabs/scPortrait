@@ -148,8 +148,7 @@ class _BaseSegmentation(Segmentation):
                 cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS].squeeze()
             values.append(cytosol_channel)
 
-        input_image = np.array(values)
-
+        input_image = np.vstack(values)
         assert (
             input_image.shape[0] == self.N_INPUT_CHANNELS
         ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
