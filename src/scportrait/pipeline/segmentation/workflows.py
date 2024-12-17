@@ -164,6 +164,7 @@ class _BaseSegmentation(Segmentation):
             values.append(cytosol_channel)
 
         input_image = np.vstack(values)
+
         assert (
             input_image.shape[0] == self.N_INPUT_CHANNELS
         ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
@@ -1683,6 +1684,9 @@ class CytosolSegmentationDownsamplingCellpose(CytosolSegmentationCellpose):
         self._get_downsampling_parameters()
         self._calculate_padded_image_size(input_image)
 
+        # downsample the image
+        input_image = self._downsample_image(input_image)
+
         # setup the memory mapped arrays to store the results
         self.maps = {
             "nucleus_segmentation": tempmmap.array(
@@ -1899,6 +1903,7 @@ class CytosolOnlySegmentationDownsamplingCellpose(CytosolOnlySegmentationCellpos
         self._get_downsampling_parameters()
         self._calculate_padded_image_size(input_image)
 
+        #downsample the image
         input_image = self._downsample_image(input_image)
 
         # setup the memory mapped arrays to store the results
