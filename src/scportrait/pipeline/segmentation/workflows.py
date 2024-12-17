@@ -1903,7 +1903,7 @@ class CytosolOnlySegmentationDownsamplingCellpose(CytosolOnlySegmentationCellpos
         self._get_downsampling_parameters()
         self._calculate_padded_image_size(input_image)
 
-        #downsample the image
+        # downsample the image
         input_image = self._downsample_image(input_image)
 
         # setup the memory mapped arrays to store the results
