@@ -132,9 +132,16 @@ class _BaseSegmentation(Segmentation):
                     f"For nucleus segmentation using the maximum intensity projection of channels {self.original_combine_nucleus_channels}."
                 )
                 nucleus_channel = self._maximum_project_channels(input_image, self.combine_nucleus_channels)
-                nucleus_channel = nucleus_channel.squeeze()
+                if len(nucleus_channel.shape) == 2:
+                    nucleus_channel = nucleus_channel[np.newaxis, ...]
+                if len(nucleus_channel.shape) == 4:
+                    nucleus_channel = nucleus_channel.squeeze()
             else:
-                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS].squeeze()
+                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS]
+                if len(nucleus_channel.shape) == 2:
+                    nucleus_channel = nucleus_channel[np.newaxis, ...]
+                if len(nucleus_channel.shape) == 4:
+                    nucleus_channel = nucleus_channel.squeeze()
             values.append(nucleus_channel)
 
         if "cytosol" in self.MASK_NAMES:
@@ -143,9 +150,17 @@ class _BaseSegmentation(Segmentation):
                     f"For cytosol segmentation using the maximum intensity projection of channels {self.original_combine_cytosol_channels}."
                 )
                 cytosol_channel = self._maximum_project_channels(input_image, self.combine_cytosol_channels)
-                cytosol_channel = cytosol_channel.squeeze()
+                if len(cytosol_channel.shape) == 4:
+                    cytosol_channel = cytosol_channel.squeeze()
+                if len(cytosol_channel.shape) == 2:
+                    cytosol_channel = cytosol_channel[np.newaxis, ...]
             else:
-                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS].squeeze()
+                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS]
+                if len(cytosol_channel.shape) == 4:
+                    cytosol_channel = cytosol_channel.squeeze()
+                if len(cytosol_channel.shape) == 2:
+                    cytosol_channel = cytosol_channel[np.newaxis, ...]
+
             values.append(cytosol_channel)
 
         input_image = np.vstack(values)
