@@ -1841,48 +1841,17 @@ class CytosolOnlySegmentationDownsamplingCellpose(CytosolOnlySegmentationCellpos
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _finalize_segmentation_results(self, size_padding):
-        _seg_size = self.maps["cytosol_segmentation"].shape
-
-        self.log(f"Segmentation size after downsampling before resize to original dimensions: {_seg_size}")
-
-        _, x, y = size_padding
-
-        cyto_seg = self.maps["cytosol_segmentation"]
-        cyto_seg = cyto_seg.repeat(self.config["downsampling_factor"], axis=0).repeat(
-            self.config["downsampling_factor"], axis=1
+    def _finalize_segmentation_results(self):
+        self.maps["fullsize_cytosol_segmentation"] = self._rescale_downsampled_mask(
+            self.maps["cytosol_segmentation"], "cytosol_segmentation"
         )
 
-        # perform erosion and dilation for smoothing
-        cyto_seg = erosion(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
-        cyto_seg = dilation(cyto_seg, footprint=disk(self.config["smoothing_kernel_size"]))
+        self.maps["fullsize_cytosol_segmentation"] = self._check_seg_dtype(
+            mask=self.maps["fullsize_cytosol_segmentation"], mask_name="cytosol"
+        )
 
         # combine masks into one stack
-        segmentation = np.stack([cyto_seg]).astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        del cyto_seg
-
-        # rescale segmentation results to original size
-        x_trim = x - self.input_image_size[1]
-        y_trim = y - self.input_image_size[2]
-
-        # if no padding was performed then we need to keep the same dimensions
-        if x_trim > 0:
-            if y_trim > 0:
-                segmentation = segmentation[:, :-x_trim, :-y_trim]
-            else:
-                segmentation = segmentation[:, :-x_trim, :]
-        else:
-            if y_trim > 0:
-                segmentation = segmentation[:, :, :-y_trim]
-            else:
-                segmentation = segmentation
-
-        self.log(f"Segmentation size after resize to original dimensions: {segmentation.shape}")
-
-        if segmentation.shape[1] != self.input_image_size[1]:
-            sys.exit("Error. Segmentation mask and image have different shapes")
-        if segmentation.shape[2] != self.input_image_size[2]:
-            sys.exit("Error. Segmentation mask and image have different shapes")
+        segmentation = np.stack([self.maps["fullsize_cytosol_segmentation"]])
 
         return segmentation
 
