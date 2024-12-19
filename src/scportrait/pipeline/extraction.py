@@ -877,7 +877,7 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             # set up function for multi-threaded processing
             f = func_partial(self._extract_classes_multi, self.px_centers)
-            batched_args = self._generate_batched_args(args)
+            args = self._generate_batched_args(args)
 
             self.log(f"Running in multiprocessing mode with {self.threads} threads.")
             with mp.get_context("fork").Pool(
@@ -885,17 +885,19 @@ class HDF5CellExtraction(ProcessingStep):
             ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
                 results = list(
                     tqdm(
-                        pool.imap(f, batched_args),
-                        total=len(batched_args),
+                        pool.imap(f, args),
+                        total=len(args),
                         desc="Processing cell batches",
                     )
                 )
                 pool.close()
                 pool.join()
-                print("multiprocessing done.")
 
             self.save_index_to_remove = flatten(results)
 
+        #cleanup memory and remove any no longer required variables
+        del results, args
+        #self._clear_cache(vars_to_delete=["results", "args"]) # this is not working as expected at the moment so need to manually delete the variables
         stop_extraction = timeit.default_timer()
 
         # calculate duration

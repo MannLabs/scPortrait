@@ -91,6 +91,27 @@ class Logable:
 
         if os.path.exists(log_file_path):
             os.remove(log_file_path)
+    
+    # def _clear_cache(self, vars_to_delete=None):
+    #     """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations.
+
+    #     Args:
+    #         vars_to_delete (list): List of variable names (as strings) to delete.
+    #     """
+
+    #     # delete all specified variables
+    #     if vars_to_delete is not None:
+    #         for var_name in vars_to_delete:
+    #             if var_name in globals():
+    #                 del globals()[var_name]
+
+    #     if torch.cuda.is_available():
+    #         torch.cuda.empty_cache()
+
+    #     if torch.backends.mps.is_available():
+    #         torch.mps.empty_cache()
+
+    #     gc.collect()
 
     def _clear_cache(self, vars_to_delete=None):
         """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
