@@ -636,7 +636,7 @@ class HDF5CellExtraction(ProcessingStep):
                     axs[i].imshow(img, vmin=0, vmax=1)
                     axs[i].axis("off")
                 fig.tight_layout()
-                fig.show()
+                plt.show(fig)
 
         self.log("Transferring extracted single cells to .hdf5")
 
