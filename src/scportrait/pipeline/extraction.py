@@ -813,7 +813,6 @@ class HDF5CellExtraction(ProcessingStep):
                 # directory where intermediate results should be saved
                 cache: "/mnt/temp/cache"
         """
-
         total_time_start = timeit.default_timer()
 
         start_setup = timeit.default_timer()
@@ -876,7 +875,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single threaded mode.")
             results = []
-            for arg in tqdm(args):
+            for arg in tqdm(args, total = len(args), desc = "Processing cell batches"):
                 x = f(arg)
                 results.append(x)
         else:
@@ -919,7 +918,6 @@ class HDF5CellExtraction(ProcessingStep):
             self.DEFAULT_LOG_NAME = "processing.log"  # change log name back to default
 
         self._post_extraction_cleanup()
-
         total_time_stop = timeit.default_timer()
         total_time = total_time_stop - total_time_start
 
