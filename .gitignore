@@ -7,6 +7,8 @@ config_test.yml
 segmentation_workflows/
 scportrait_data/
 docs/auto_examples/
+project/
+project_sharded/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
