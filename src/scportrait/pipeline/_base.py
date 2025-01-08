@@ -91,7 +91,7 @@ class Logable:
 
         if os.path.exists(log_file_path):
             os.remove(log_file_path)
-    
+
     # def _clear_cache(self, vars_to_delete=None):
     #     """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations.
 

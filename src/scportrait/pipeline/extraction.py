@@ -652,7 +652,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("single-cell index created.")
             del cell_ids
-            #self._clear_cache(vars_to_delete=[cell_ids]) # this is not working as expected so we will just delete the variable directly
+            # self._clear_cache(vars_to_delete=[cell_ids]) # this is not working as expected so we will just delete the variable directly
 
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset(
@@ -670,7 +670,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("single-cell data created")
             del single_cell_data
-            #self._clear_cache(vars_to_delete=[single_cell_data]) # this is not working as expected so we will just delete the variable directly
+            # self._clear_cache(vars_to_delete=[single_cell_data]) # this is not working as expected so we will just delete the variable directly
 
             # also transfer labelled index to HDF5
             index_labelled = _tmp_single_cell_index[keep_index]
@@ -687,7 +687,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("single-cell index labelled created.")
             del index_labelled
-            #self._clear_cache(vars_to_delete=[index_labelled]) # this is not working as expected so we will just delete the variable directly
+            # self._clear_cache(vars_to_delete=[index_labelled]) # this is not working as expected so we will just delete the variable directly
 
             hf.create_dataset(
                 "channel_information",
@@ -699,7 +699,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         # cleanup memory
         del _tmp_single_cell_index
-        #self._clear_cache(vars_to_delete=[_tmp_single_cell_index]) # this is not working as expected so we will just delete the variable directly
+        # self._clear_cache(vars_to_delete=[_tmp_single_cell_index]) # this is not working as expected so we will just delete the variable directly
 
         os.remove(self._tmp_single_cell_data_path)
         os.remove(self._tmp_single_cell_index_path)
@@ -875,7 +875,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single threaded mode.")
             results = []
-            for arg in tqdm(args, total = len(args), desc = "Processing cell batches"):
+            for arg in tqdm(args, total=len(args), desc="Processing cell batches"):
                 x = f(arg)
                 results.append(x)
         else:
@@ -899,9 +899,9 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.save_index_to_remove = flatten(results)
 
-        #cleanup memory and remove any no longer required variables
+        # cleanup memory and remove any no longer required variables
         del results, args
-        #self._clear_cache(vars_to_delete=["results", "args"]) # this is not working as expected at the moment so need to manually delete the variables
+        # self._clear_cache(vars_to_delete=["results", "args"]) # this is not working as expected at the moment so need to manually delete the variables
         stop_extraction = timeit.default_timer()
 
         # calculate duration
