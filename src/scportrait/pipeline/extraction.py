@@ -280,15 +280,15 @@ class HDF5CellExtraction(ProcessingStep):
             if isinstance(self.config["segmentation_mask"], str):
                 assert (self.config["segmentation_mask"] in allowed_mask_values)
 
-                if "nucleus" in self.main_segmenation_mask:
-                    self.nucleus_key = self.main_segmenation_mask
+                if "nucleus" in self.config["segmentation_mask"]:
+                    self.nucleus_key = self.config["segmentation_mask"]
                     self.extract_nucleus_mask = True
 
-                elif "cytosol" in self.main_segmenation_mask:
-                    self.cytosol_key = self.main_segmenation_mask
+                elif "cytosol" in self.config["segmentation_mask"]:
+                    self.cytosol_key = self.config["segmentation_mask"]
                     self.extract_cytosol_mask = True
                 else:
-                    raise ValueError(f"Segmentation mask {self.main_segmenation_mask} is not a valid mask to extract from.")
+                    raise ValueError(f"Segmentation mask {self.config['segmentation_mask']} is not a valid mask to extract from.")
 
             elif isinstance(self.config["segmentation_mask"], list):
                 assert all(x in allowed_mask_values for x in self.config["segmentation_mask"])
