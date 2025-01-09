@@ -267,7 +267,7 @@ class HDF5CellExtraction(ProcessingStep):
                 f"Found no segmentation masks with key {self.segmentation_key}. Cannot proceed with extraction."
             )
 
-        #intialize default values to track what should be extracted
+        # intialize default values to track what should be extracted
         self.nucleus_key = None
         self.cytosol_key = None
         self.extract_nucleus_mask = False
@@ -278,7 +278,7 @@ class HDF5CellExtraction(ProcessingStep):
             allowed_mask_values = [f"{self.segmentation_key}_{x}" for x in allowed_mask_values]
 
             if isinstance(self.config["segmentation_mask"], str):
-                assert (self.config["segmentation_mask"] in allowed_mask_values)
+                assert self.config["segmentation_mask"] in allowed_mask_values
 
                 if "nucleus" in self.config["segmentation_mask"]:
                     self.nucleus_key = self.config["segmentation_mask"]
@@ -288,7 +288,9 @@ class HDF5CellExtraction(ProcessingStep):
                     self.cytosol_key = self.config["segmentation_mask"]
                     self.extract_cytosol_mask = True
                 else:
-                    raise ValueError(f"Segmentation mask {self.config['segmentation_mask']} is not a valid mask to extract from.")
+                    raise ValueError(
+                        f"Segmentation mask {self.config['segmentation_mask']} is not a valid mask to extract from."
+                    )
 
             elif isinstance(self.config["segmentation_mask"], list):
                 assert all(x in allowed_mask_values for x in self.config["segmentation_mask"])
