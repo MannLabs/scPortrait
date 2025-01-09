@@ -57,7 +57,13 @@ class HDF5CellExtraction(ProcessingStep):
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
-        self.compression_type = "lzf" if self.compression else None
+        if (self.compression) or (self.compression == "lzf"):
+            self.compression_type = "lzf"
+            return self.compression_type
+        elif self.compression == "gzip":
+            self.compression_type = "gzip"
+            return self.compression_type
+        self.compression_type = None
         return self.compression_type
 
     def _check_config(self):
@@ -655,18 +661,25 @@ class HDF5CellExtraction(ProcessingStep):
             #self._clear_cache(vars_to_delete=[cell_ids]) # this is not working as expected so we will just delete the variable directly
 
             _, c, x, y = _tmp_single_cell_data.shape
+            print(_tmp_single_cell_data.shape)
+            print(self.image_size)
+            print(keep_index.shape)
             single_cell_data = hf.create_dataset(
                 "single_cell_data",
                 shape=(len(keep_index), c, x, y),
                 chunks=(1, 1, self.image_size, self.image_size),
-                compression=self.compression_type,
+                # compression=self.compression_type,
+                compression='gzip', #was lzf, gzip works
                 dtype=np.float16,
+               # rdcc_nbytes=5242880000, # 5gb 1024 * 1024 * 5000
+               # rdcc_w0=1,
+               # rdcc_nslots=50000,
             )
 
             # populate dataset in loop to prevent loading of entire dataset into memory
             # this is required to process large datasets to not run into memory issues
             for ix, i in enumerate(keep_index):
-                single_cell_data[ix] = _tmp_single_cell_data[i]
+               single_cell_data[ix] = _tmp_single_cell_data[i]
 
             self.log("single-cell data created")
             del single_cell_data
