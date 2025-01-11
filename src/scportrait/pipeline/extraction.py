@@ -450,9 +450,10 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _save_removed_classes(self, classes):
         # define path where classes should be saved
+
         filtered_path = os.path.join(
             self.project_location,
-            self.DEFAULT_SEGMENTATION_DIR_NAME,
+            self.DEFAULT_EXTRACTION_DIR_NAME,
             self.DEFAULT_REMOVED_CLASSES_FILE,
         )
 
