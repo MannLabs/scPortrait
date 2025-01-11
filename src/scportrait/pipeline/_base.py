@@ -158,7 +158,7 @@ class ProcessingStep(Logable):
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_TILES_FOLDER = "tiles"
 
-    DEFAULT_EXTRACTIN_DIR_NAME = "extraction"
+    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
     DEFAULT_IMAGE_DTYPE = np.uint16
