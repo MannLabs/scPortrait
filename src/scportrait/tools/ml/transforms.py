@@ -19,7 +19,7 @@ class RandomRotation:
             delta = (360 - angles[-1]) / 2
             angles = angles + delta
 
-        self.choices = angles
+        self.choices = angles.tolist()
 
     def __call__(self, tensor):
         angle = random.choice(self.choices)
