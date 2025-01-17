@@ -888,9 +888,10 @@ class Project(Logable):
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        assert (
-            self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
-        ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
+        if self.nuc_seg_status in self.sdata.keys() and self.cyto_seg_status in self.sdata.keys():
+            assert (
+                self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
+            ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
 
         # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
         # THIS NEEDS TO BE IMPLEMENTED HERE
