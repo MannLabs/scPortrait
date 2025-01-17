@@ -57,7 +57,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
-        if (self.compression == True) or (self.compression == "lzf"):
+        if (self.compression is True) or (self.compression == "lzf"):
             self.compression_type = "lzf"
         elif self.compression == "gzip":
             self.compression_type = "gzip"
