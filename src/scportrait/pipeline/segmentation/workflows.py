@@ -15,6 +15,7 @@ from skimage.color import label2rgb
 from skimage.filters import median
 from skimage.morphology import binary_erosion, dilation, disk, erosion
 from skimage.segmentation import watershed
+import _multiprocessing
 
 from scportrait.pipeline._utils.segmentation import (
     contact_filter,
@@ -1352,6 +1353,9 @@ class _CellposeSegmentation(_BaseSegmentation):
             cpu_name = current.name
             gpu_id_list = current.gpu_id_list
             cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
+
+            if cpu_id >= len(gpu_id_list):
+                cpu_id = cpu_id%current.n_processes
 
             # track gpu_id and update GPU status
             self.gpu_id = gpu_id_list[cpu_id]
