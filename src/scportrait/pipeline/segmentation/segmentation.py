@@ -742,7 +742,6 @@ class ShardedSegmentation(Segmentation):
             local_hf = h5py.File(local_output, "r")
             local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)[:]
 
-            print(type(local_hdf_labels))
             shifted_map, edge_labels = shift_labels(
                 local_hdf_labels,
                 class_id_shift,
