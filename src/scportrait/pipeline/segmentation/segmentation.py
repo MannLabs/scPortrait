@@ -742,7 +742,6 @@ class ShardedSegmentation(Segmentation):
             local_hf = h5py.File(local_output, "r")
             local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)[:]
 
-            print(type(local_hdf_labels))
             shifted_map, edge_labels = shift_labels(
                 local_hdf_labels,
                 class_id_shift,
@@ -902,8 +901,9 @@ class ShardedSegmentation(Segmentation):
         if not self.deep_debug:
             self._cleanup_shards(sharding_plan)
 
-    def _initializer_function(self, gpu_id_list):
+    def _initializer_function(self, gpu_id_list, n_processes):
         current_process().gpu_id_list = gpu_id_list
+        current_process().n_processes = n_processes
 
     def _perform_segmentation(self, shard_list):
         # get GPU status
@@ -921,7 +921,7 @@ class ShardedSegmentation(Segmentation):
             with mp.get_context(self.context).Pool(
                 processes=self.n_processes,
                 initializer=self._initializer_function,
-                initargs=[self.gpu_id_list],
+                initargs=[self.gpu_id_list, self.n_processes],
             ) as pool:
                 list(
                     tqdm(
