@@ -6,9 +6,9 @@ WGASegmentation:
     input_channels: 3
     cache: "."
     chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
-    lower_quantile_normalization:   0.001
-    upper_quantile_normalization:   0.999
-    median_filter_size:   4 # Size in pixels
+    lower_quantile_normalization: 0.001
+    upper_quantile_normalization: 0.999
+    median_filter_size: 4 # Size in pixels
     nucleus_segmentation:
         lower_quantile_normalization:   0.01 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
         upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
@@ -85,7 +85,7 @@ MLClusterClassifier:
     log_transform: False
     network: "autophagy_classifier2.1"
     classifier_architecture: "VGG2_old"
-    screen_label: "Autophagy_15h_classifier2.1"
+    inference_label: "Autophagy_15h_classifier2.1"
     epoch: "max"
     encoders: ["forward"]
     inference_device: "cpu"
