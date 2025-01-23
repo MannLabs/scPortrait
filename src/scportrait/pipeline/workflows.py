@@ -742,10 +742,8 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 )
 
             # check that the normalization ranges are of the same type otherwise this will result in issues
-            assert isinstance(
-                type(self.lower_quantile_normalization_input_image),
-                type(self.upper_quantile_normalization_input_image),
-            )
+            assert isinstance(self.lower_quantile_normalization_input_image, float) == isinstance(self.upper_quantile_normalization_input_image, float)
+            assert isinstance(self.lower_quantile_normalization_input_image, list) == isinstance(self.upper_quantile_normalization_input_image, list)
 
         # check if median filtering is required
         if "median_filter_size" in self.config.keys():
