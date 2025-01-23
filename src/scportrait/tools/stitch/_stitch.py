@@ -21,13 +21,7 @@ from tqdm import tqdm
 from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.processing.images._image_processing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
-from scportrait.tools.stitch._utils.filereaders import (
-    BioformatsReaderRescale,
-    FilePatternReaderRescale,
-)
 from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
-from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
-
 
 class Stitcher:
     """
@@ -65,7 +59,7 @@ class Stitcher:
         do_intensity_rescale: bool | str = True,
         rescale_range: tuple = (1, 99),
         channel_order: list[str] = None,
-        reader_type=FilePatternReaderRescale,
+        reader_type="FilePatternReaderRescale",
         orientation: dict = None,
         plot_QC: bool = True,
         overwrite: bool = False,
@@ -112,8 +106,13 @@ class Stitcher:
         """
         self._lazy_imports()
 
+        # workaround for lazy imports of module
+        if self.reader_type == "FilePatternReaderRescale":
+            self.reader_type = self.FilePatternReaderRescale
+
         if orientation is None:
             orientation = {"flip_x": False, "flip_y": True}
+
         self.input_dir = input_dir
         self.slidename = slidename
         self.outdir = outdir
@@ -158,10 +157,21 @@ class Stitcher:
         from ashlar.reg import EdgeAligner, Mosaic
         from ashlar.scripts.ashlar import process_axis_flip
 
+        from scportrait.tools.stitch._utils.filereaders import (
+            BioformatsReaderRescale,
+            FilePatternReaderRescale,
+        )
+
+        from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
+
         self.ashlar_thumbnail = thumbnail
         self.ashlar_EdgeAligner = EdgeAligner
         self.ashlar_Mosaic = Mosaic
         self.ashlar_process_axis_flip = process_axis_flip
+        self.BioformatsReaderRescale = BioformatsReaderRescale
+        self.FilePatternReaderRescale = FilePatternReaderRescale
+        self.ParallelEdgeAligner = ParallelEdgeAligner
+        self.ParallelMosaic = ParallelMosaic
 
     def __exit__(self):
         self._clear_cache()
@@ -294,14 +304,14 @@ class Stitcher:
         """
         Initialize the reader for reading image tiles.
         """
-        if self.reader_type == FilePatternReaderRescale:
+        if self.reader_type == self.FilePatternReaderRescale:
             self.reader = self.reader_type(
                 self.input_dir,
                 self.pattern,
                 self.overlap,
                 rescale_range=self.rescale_range,
             )
-        elif self.reader_type == BioformatsReaderRescale:
+        elif self.reader_type == self.BioformatsReaderRescale:
             self.reader = self.reader_type(self.input_dir, rescale_range=self.rescale_range)
 
         # setup correct orientation of slide (this depends on microscope used to generate the data)
@@ -564,7 +574,7 @@ class ParallelStitcher(Stitcher):
         do_intensity_rescale (bool or "full_image", optional): Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
         rescale_range (tuple or dict, optional): If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
         channel_order (list, optional): Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-        reader_type (class, optional): Type of reader to use for reading image tiles (default is FilePatternReaderRescale).
+        reader_type (class, optional): Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
         orientation (dict, optional): Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
         plot_QC (bool, optional): Flag to indicate whether to plot quality control (QC) figures (default is True).
         overwrite (bool, optional): Flag to indicate whether to overwrite the output directory if it already exists (default is False).
@@ -588,7 +598,7 @@ class ParallelStitcher(Stitcher):
         WGAchannel: str = None,
         channel_order: list[str] = None,
         overwrite: bool = False,
-        reader_type=FilePatternReaderRescale,
+        reader_type="FilePatternReaderRescale",
         orientation=None,
         cache: str = None,
         threads: int = 20,
@@ -613,8 +623,9 @@ class ParallelStitcher(Stitcher):
             overwrite,
             cache,
         )
+
         # dirty fix to avoide multithreading error with BioformatsReader until this can be fixed
-        if self.reader_type == BioformatsReaderRescale:
+        if self.reader_type == self.BioformatsReaderRescale:
             threads = 1
             print(
                 "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
@@ -632,7 +643,7 @@ class ParallelStitcher(Stitcher):
         Returns:
             aligner (ParallelEdgeAligner): Initialized ParallelEdgeAligner object.
         """
-        aligner = ParallelEdgeAligner(
+        aligner = self.ParallelEdgeAligner(
             self.reader,
             channel=self.stitching_channel_id,
             filter_sigma=self.filter_sigma,
@@ -644,7 +655,7 @@ class ParallelStitcher(Stitcher):
         return aligner
 
     def _initialize_mosaic(self):
-        mosaic = ParallelMosaic(
+        mosaic =self.ParallelMosaic(
             self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
         )
         return mosaic
