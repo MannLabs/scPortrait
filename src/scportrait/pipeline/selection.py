@@ -121,7 +121,7 @@ class LMDSelection(ProcessingStep):
 
             sparse = coo_array(_cropped == _id)
 
-            if 0 in sparse:
+            if 0 in sparse.coords[0] or 0 in sparse.coords[1] or width*2 - 1 in sparse.coords[0] or width*2 - 1 in sparse.coords[1]:
                 Warning(f"Cell {i} with id {_id} is potentially not fully contained in the bounding mask. Consider increasing the value for the 'cell_width' parameter in your config.")
 
             x = sparse.coords[0] + x_start
