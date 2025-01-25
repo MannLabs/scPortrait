@@ -23,7 +23,6 @@ from scportrait.processing.images._image_processing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
 from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
 
-
 class Stitcher:
     """
     Class for stitching of image tiles to assemble a mosaic.
@@ -107,10 +106,6 @@ class Stitcher:
         """
         self._lazy_imports()
 
-        # workaround for lazy imports of module
-        if self.reader_type == "FilePatternReaderRescale":
-            self.reader_type = self.FilePatternReaderRescale
-
         if orientation is None:
             orientation = {"flip_x": False, "flip_y": True}
 
@@ -138,6 +133,10 @@ class Stitcher:
         # setup reader for images
         self.orientation = orientation
         self.reader_type = reader_type
+
+        # workaround for lazy imports of module
+        if self.reader_type == "FilePatternReaderRescale":
+            self.reader_type = self.FilePatternReaderRescale
 
         # workflow setup
         self.plot_QC = plot_QC

@@ -148,7 +148,7 @@ class LMDSelection(ProcessingStep):
 
     def _get_coords(
         self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60, batch_size: int = 100, threads: int = 10
-    ) -> dict:
+    ) -> dict[int, np.ndarray]:
         # create batches
         n_batches = int(np.ceil(len(cell_ids) / batch_size))
         slices = [(i * batch_size, i * batch_size + batch_size) for i in range(n_batches - 1)]
@@ -174,8 +174,8 @@ class LMDSelection(ProcessingStep):
                 pool.close()
                 pool.join()
 
-        results = flatten(results)
-        return dict(results)
+        results = flatten(results)  # type: ignore
+        return dict(results)  # type: ignore
 
     def _get_cell_ids(self, cell_sets: list[dict]) -> list[int]:
         cell_ids = []

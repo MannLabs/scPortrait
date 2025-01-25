@@ -3,7 +3,7 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-def flatten(nested_list: list[list[T]]) -> list[T]:
+def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
     """Flatten a list of lists into a single list.
 
     Args:
