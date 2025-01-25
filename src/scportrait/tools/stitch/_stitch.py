@@ -23,6 +23,7 @@ from scportrait.processing.images._image_processing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
 from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
 
+
 class Stitcher:
     """
     Class for stitching of image tiles to assemble a mosaic.
