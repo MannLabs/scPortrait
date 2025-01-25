@@ -1080,7 +1080,6 @@ class Project(Logable):
         self,
         cell_sets: list[dict],
         calibration_marker: np.ndarray | None = None,
-        segmentation_name: str = "seg_all_nucleus",
         name: str | None = None,
     ):
         """
@@ -1096,10 +1095,8 @@ class Project(Logable):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         assert self.sdata is not None, "No sdata object loaded."
-        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
 
         self.selection_f(
-            segmentation_name=segmentation_name,
             cell_sets=cell_sets,
             calibration_marker=calibration_marker,
             name=name,
