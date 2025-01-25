@@ -304,8 +304,6 @@ class LMDSelection(ProcessingStep):
 
         self._setup_selection()
 
-        print("Here", flush=True)
-
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
