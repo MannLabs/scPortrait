@@ -35,4 +35,4 @@ pyqt5
 lxml_html_clean
 ashlar>=1.19.0
 networkx
-py-lmd
+py-lmd>=1.3.0
