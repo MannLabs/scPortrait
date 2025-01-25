@@ -1,22 +1,21 @@
+import multiprocessing as mp
 import os
-
-import numpy as np
-from alphabase.io import tempmmap
-from lmd.lib import SegmentationLoader
+import pickle
+import timeit
+from functools import partial as func_partial
 
 import h5py
-import timeit
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-import pickle
+from alphabase.io import tempmmap
+from lmd.lib import SegmentationLoader
 from scipy.sparse import coo_array
 from tqdm.auto import tqdm
-from functools import partial as func_partial
-import multiprocessing as mp
 
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.helper import flatten
 
-import matplotlib.pyplot as plt
 
 class LMDSelection(ProcessingStep):
     """
@@ -32,7 +31,7 @@ class LMDSelection(ProcessingStep):
         self.cell_sets = None
         self.calibration_marker = None
 
-        self.deep_debug = False #flag for deep debugging by developers
+        self.deep_debug = False  # flag for deep debugging by developers
 
     def _check_config(self):
         assert "segmentation_channel" in self.config, "segmentation_channel not defined in config"
@@ -40,8 +39,8 @@ class LMDSelection(ProcessingStep):
 
         # check for optional config parameters
 
-        #this defines how large the box mask around the center of a cell is for the coordinate extraction
-        #assumption is that all pixels belonging to each mask are within the box otherwise they will be cut off during cutting contour generation
+        # this defines how large the box mask around the center of a cell is for the coordinate extraction
+        # assumption is that all pixels belonging to each mask are within the box otherwise they will be cut off during cutting contour generation
 
         if "cell_width" in self.config:
             self.cell_radius = self.config["cell_width"]
@@ -66,7 +65,9 @@ class LMDSelection(ProcessingStep):
             self.orientation_transform = self.config["orientation_transform"]
         else:
             self.orientation_transform = np.array([[0, -1], [1, 0]])
-            self.config["orientation_transform"] = self.orientation_transform #ensure its also in config so its passed on to the segmentation loader
+            self.config["orientation_transform"] = (
+                self.orientation_transform
+            )  # ensure its also in config so its passed on to the segmentation loader
 
         if "processes_cell_sets" in self.config:
             self.processes_cell_sets = self.config["processes_cell_sets"]
@@ -76,7 +77,6 @@ class LMDSelection(ProcessingStep):
             self.processes_cell_sets = 1
 
     def _setup_selection(self):
-
         # configure name of extraction
         if self.name is None:
             try:
@@ -89,13 +89,14 @@ class LMDSelection(ProcessingStep):
         savename = name.replace(" ", "_") + ".xml"
         self.savepath = os.path.join(self.directory, savename)
 
-        #check that the segmentation label exists
-        assert self.segmentation_channel_to_select in self.project.filehandler.get_sdata()._shared_keys, f"Segmentation channel {self.segmentation_channel_to_select} not found in sdata."
+        # check that the segmentation label exists
+        assert (
+            self.segmentation_channel_to_select in self.project.filehandler.get_sdata()._shared_keys
+        ), f"Segmentation channel {self.segmentation_channel_to_select} not found in sdata."
 
-    def __get_coords(self,
-                     cell_ids: list,
-                     centers:list[tuple[int, int]],
-                     width:int = 60) -> list[tuple[int, np.ndarray]]:
+    def __get_coords(
+        self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60
+    ) -> list[tuple[int, np.ndarray]]:
         results = []
 
         _sdata = self.project.filehandler.get_sdata()
@@ -105,12 +106,14 @@ class LMDSelection(ProcessingStep):
             x_start = np.max([int(values[0]) - width, 0])
             y_start = np.max([int(values[1]) - width, 0])
 
-            x_end = x_start + width*2
-            y_end = y_start + width*2
+            x_end = x_start + width * 2
+            y_end = y_start + width * 2
 
-            _cropped = _sdata[self.segmentation_channel_to_select][slice(x_start, x_end), slice(y_start, y_end)].compute()
+            _cropped = _sdata[self.segmentation_channel_to_select][
+                slice(x_start, x_end), slice(y_start, y_end)
+            ].compute()
 
-            #optional plotting output for deep debugging
+            # optional plotting output for deep debugging
             if self.deep_debug:
                 if self.threads == 1:
                     plt.figure()
@@ -121,44 +124,48 @@ class LMDSelection(ProcessingStep):
 
             sparse = coo_array(_cropped == _id)
 
-            if 0 in sparse.coords[0] or 0 in sparse.coords[1] or width*2 - 1 in sparse.coords[0] or width*2 - 1 in sparse.coords[1]:
-                Warning(f"Cell {i} with id {_id} is potentially not fully contained in the bounding mask. Consider increasing the value for the 'cell_width' parameter in your config.")
+            if (
+                0 in sparse.coords[0]
+                or 0 in sparse.coords[1]
+                or width * 2 - 1 in sparse.coords[0]
+                or width * 2 - 1 in sparse.coords[1]
+            ):
+                Warning(
+                    f"Cell {i} with id {_id} is potentially not fully contained in the bounding mask. Consider increasing the value for the 'cell_width' parameter in your config."
+                )
 
             x = sparse.coords[0] + x_start
             y = sparse.coords[1] + y_start
 
-            results.append((_id, np.array(list(zip(x, y, strict = True)))))
+            results.append((_id, np.array(list(zip(x, y, strict=True)))))
 
-        return(results)
+        return results
 
-    def _get_coords_multi(self, width:int, arg: tuple[list[int], np.ndarray]) -> list[tuple[int, np.ndarray]]:
+    def _get_coords_multi(self, width: int, arg: tuple[list[int], np.ndarray]) -> list[tuple[int, np.ndarray]]:
         cell_ids, centers = arg
         results = self.__get_coords(cell_ids, centers, width)
-        return(results)
+        return results
 
-    def _get_coords(self,
-                    cell_ids: list,
-                    centers:list[tuple[int, int]],
-                    width:int = 60,
-                    batch_size:int = 100,
-                    threads:int = 10) -> dict:
-
-        #create batches
-        n_batches = int(np.ceil(len(cell_ids)/batch_size))
-        slices = [(i*batch_size, i*batch_size + batch_size) for i in range(n_batches - 1)]
-        slices.append(((n_batches - 1)*batch_size, len(cell_ids)))
+    def _get_coords(
+        self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60, batch_size: int = 100, threads: int = 10
+    ) -> dict:
+        # create batches
+        n_batches = int(np.ceil(len(cell_ids) / batch_size))
+        slices = [(i * batch_size, i * batch_size + batch_size) for i in range(n_batches - 1)]
+        slices.append(((n_batches - 1) * batch_size, len(cell_ids)))
 
         batched_args = [(cell_ids[start:end], centers[start:end]) for start, end in slices]
 
-        f = func_partial(self._get_coords_multi,
-                        width
-            )
+        f = func_partial(self._get_coords_multi, width)
 
-        if threads == 1: # if only one thread is used, the function is called directly to avoid the overhead of multiprocessing
+        if (
+            threads == 1
+        ):  # if only one thread is used, the function is called directly to avoid the overhead of multiprocessing
             results = [f(arg) for arg in batched_args]
         else:
-            with mp.get_context(self.context).Pool(processes=threads) as pool: 
-                results = list(tqdm(
+            with mp.get_context(self.context).Pool(processes=threads) as pool:
+                results = list(
+                    tqdm(
                         pool.imap(f, batched_args),
                         total=len(batched_args),
                         desc="Processing cell batches",
@@ -168,7 +175,7 @@ class LMDSelection(ProcessingStep):
                 pool.join()
 
         results = flatten(results)
-        return(dict(results))
+        return dict(results)
 
     def _get_cell_ids(self, cell_sets: list[dict]) -> list[int]:
         cell_ids = []
@@ -177,13 +184,15 @@ class LMDSelection(ProcessingStep):
                 cell_ids.extend(cell_set["classes"])
             else:
                 Warning(f"Cell set {cell_set['name']} does not contain any classes.")
-        return(cell_ids)
+        return cell_ids
 
     def _get_centers(self, cell_ids: list[int]) -> list[tuple[int, int]]:
         _sdata = self.project.filehandler.get_sdata()
         centers = _sdata["centers_cells"].compute()
         centers = centers.loc[cell_ids, :]
-        return(centers[["y", "x"]].values.tolist()) #needs to be returned as yx to match the coordinate system as saved in spatialdataobjects
+        return centers[
+            ["y", "x"]
+        ].values.tolist()  # needs to be returned as yx to match the coordinate system as saved in spatialdataobjects
 
     def _post_processing_cleanup(self, vars_to_delete: list | None = None):
         if vars_to_delete is not None:
@@ -307,11 +316,10 @@ class LMDSelection(ProcessingStep):
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
-        coord_index = self._get_coords(cell_ids = cell_ids,
-                                        centers = centers,
-                                        width = self.cell_radius,
-                                        batch_size = self.batch_size,
-                                        threads = self.threads)
+        print("Here", flush=True)
+        coord_index = self._get_coords(
+            cell_ids=cell_ids, centers=centers, width=self.cell_radius, batch_size=self.batch_size, threads=self.threads
+        )
         self.log(f"Coordinate lookup index calculation took {timeit.default_timer() - start_time} seconds.")
 
         sl = SegmentationLoader(
@@ -320,11 +328,7 @@ class LMDSelection(ProcessingStep):
             processes=self.config["processes_cell_sets"],
         )
 
-        shape_collection = sl(None,
-                              self.cell_sets,
-                              self.calibration_marker,
-                              coords_lookup=coord_index)
-
+        shape_collection = sl(None, self.cell_sets, self.calibration_marker, coords_lookup=coord_index)
 
         if self.debug:
             shape_collection.plot(calibration=True)

@@ -23,6 +23,7 @@ from scportrait.processing.images._image_processing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
 from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
 
+
 class Stitcher:
     """
     Class for stitching of image tiles to assemble a mosaic.
@@ -161,7 +162,6 @@ class Stitcher:
             BioformatsReaderRescale,
             FilePatternReaderRescale,
         )
-
         from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
 
         self.ashlar_thumbnail = thumbnail
@@ -655,7 +655,7 @@ class ParallelStitcher(Stitcher):
         return aligner
 
     def _initialize_mosaic(self):
-        mosaic =self.ParallelMosaic(
+        mosaic = self.ParallelMosaic(
             self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
         )
         return mosaic
