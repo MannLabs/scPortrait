@@ -186,7 +186,11 @@ class ProcessingStep(Logable):
         self.project_location = project_location
 
         if isinstance(config, str):
-            self.config = read_config(config)
+            config = read_config(config)
+            if self.__class__.__name__ in config.keys():
+                self.config = config[self.__class__.__name__ ]
+            else:
+                self.config = config
         else:
             self.config = config
         self.overwrite = overwrite
