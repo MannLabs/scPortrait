@@ -9,6 +9,7 @@ from datetime import datetime
 import numpy as np
 import torch
 
+from scportrait.pipeline._utils.helper import read_config
 
 class Logable:
     """Create log entries.
@@ -183,7 +184,11 @@ class ProcessingStep(Logable):
         self.debug = debug
         self.overwrite = overwrite
         self.project_location = project_location
-        self.config = config
+
+        if isinstance(config, str):
+            self.config = read_config(config)
+        else:
+            self.config = config
         self.overwrite = overwrite
 
         self.project = project
