@@ -23,7 +23,6 @@ import dask.array as darray
 import numpy as np
 import psutil
 import xarray
-import yaml
 from alphabase.io import tempmmap
 from napari_spatialdata import Interactive
 from ome_zarr.io import parse_url
@@ -33,6 +32,7 @@ from tifffile import imread
 
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.helper import read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
@@ -94,7 +94,7 @@ class Project(Logable):
     def __init__(
         self,
         project_location: str,
-        config_path: str,
+        config_path: str = None,
         segmentation_f=None,
         extraction_f=None,
         featurization_f=None,
@@ -185,11 +185,7 @@ class Project(Logable):
         if not os.path.isfile(file_path):
             raise ValueError(f"Your config path {file_path} is invalid.")
 
-        with open(file_path) as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
+        self.config = read_config(file_path)
 
     def _get_config_file(self, config_path: str | None = None) -> None:
         """Load the config file for the project. If no config file is passed the default config file in the project directory is loaded.
