@@ -36,6 +36,7 @@ class _FeaturizationBase(ProcessingStep):
         self.model = None
         self.transforms = None
         self.expected_imagesize = None
+        self.data_type = None
 
         self._setup_channel_selection()
 
@@ -59,7 +60,10 @@ class _FeaturizationBase(ProcessingStep):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        self.run_path = os.path.join(self.directory, f"{self.data_type}_{self.label}")
+        if self.data_type is None:
+            self.run_path = os.path.join(self.directory, self.label)
+        else:
+            self.run_path = os.path.join(self.directory, f"{self.data_type}_{self.label}")
 
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
