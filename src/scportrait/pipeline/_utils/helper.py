@@ -1,7 +1,9 @@
 from typing import TypeVar
+
 import yaml
 
 T = TypeVar("T")
+
 
 def read_config(config_path: str) -> dict:
     with open(config_path) as stream:
@@ -10,6 +12,7 @@ def read_config(config_path: str) -> dict:
         except yaml.YAMLError as exc:
             print(exc)
     return config
+
 
 def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
     """Flatten a list of lists into a single list.

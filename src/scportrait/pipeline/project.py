@@ -307,7 +307,7 @@ class Project(Logable):
                 self.featurization_directory,
                 project_location=self.project_location,
                 debug=self.debug,
-                overwrite=False,  #this needs to be set to false as the featurization step should not remove previously created features
+                overwrite=False,  # this needs to be set to false as the featurization step should not remove previously created features
                 project=self,
                 filehandler=self.filehandler,
                 from_project=True,

@@ -5,8 +5,8 @@ import shutil
 from contextlib import redirect_stdout
 from functools import partial as func_partial
 
-import numpy as np
 import h5py
+import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
@@ -17,6 +17,7 @@ from torchvision import transforms
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import HDF5SingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
+
 
 class _FeaturizationBase(ProcessingStep):
     PRETRAINED_MODEL_NAMES = [
@@ -175,9 +176,7 @@ class _FeaturizationBase(ProcessingStep):
             try:
                 self.n_masks = h5py.File(self.extraction_file, "r")["n_masks"][()].item()
             except Exception as e:
-                raise ValueError(
-                    f"Could not extract number of masks from HDF5 file. Error: {e}"
-                ) from e
+                raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
 
     def _general_setup(self, extraction_dir: str, return_results: bool = False):
         """Helper function to execute all setup functions that are common to all featurization steps."""
@@ -892,7 +891,7 @@ class MLClusterClassifier(_FeaturizationBase):
         self.log("Started MLClusterClassifier classification.")
 
         # perform setup
-        self._setup(extraction_dir = extraction_dir, return_results=return_results)
+        self._setup(extraction_dir=extraction_dir, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
@@ -975,8 +974,8 @@ class EnsembleClassifier(_FeaturizationBase):
         memory_usage = self._get_gpu_memory_usage()
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-    def _setup(self, extraction_dir: str):
-        self._general_set(extraction_dir=extraction_dir)
+    def _setup(self, extraction_dir: str, return_results: bool):
+        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._get_model_specs()
         self._setup_transforms()
 
@@ -988,7 +987,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self._load_models()
 
-    def process(self, extraction_dir:str, size:int = 0, return_results:bool = False):
+    def process(self, extraction_dir: str, size: int = 0, return_results: bool = False):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -1335,12 +1334,12 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self, extraction_dir:str, return_results:bool):
+    def _setup(self, extraction_dir: str, return_results: bool):
         self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_transforms()
         self._get_channel_specs()
 
-    def process(self, extraction_dir: str, size: int =0, return_results: bool = False):
+    def process(self, extraction_dir: str, size: int = 0, return_results: bool = False):
         """
         Perform featurization on the provided HDF5 dataset.
 
@@ -1453,7 +1452,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self, extraction_dir:str, return_results:bool):
+    def _setup(self, extraction_dir: str, return_results: bool):
         self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()

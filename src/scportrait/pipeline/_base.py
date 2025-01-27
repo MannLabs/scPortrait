@@ -11,6 +11,7 @@ import torch
 
 from scportrait.pipeline._utils.helper import read_config
 
+
 class Logable:
     """Create log entries.
 
@@ -179,13 +180,13 @@ class ProcessingStep(Logable):
     def __init__(
         self,
         config,
-        directory = None,
-        project_location = None,
+        directory=None,
+        project_location=None,
         debug=False,
         overwrite=False,
         project=None,
         filehandler=None,
-        from_project:bool = False,
+        from_project: bool = False,
     ):
         super().__init__(directory=directory)
 
@@ -205,7 +206,7 @@ class ProcessingStep(Logable):
         if isinstance(config, str):
             config = read_config(config)
             if self.__class__.__name__ in config.keys():
-                self.config = config[self.__class__.__name__ ]
+                self.config = config[self.__class__.__name__]
             else:
                 self.config = config
         else:
