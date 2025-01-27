@@ -253,6 +253,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=None,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_extraction_f(self, extraction_f):
@@ -281,6 +282,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_featurization_f(self, featurization_f):
@@ -308,6 +310,7 @@ class Project(Logable):
                 overwrite=False,  #this needs to be set to false as the featurization step should not remove previously created features
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_selection(self, selection_f):
@@ -335,6 +338,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def update_featurization_f(self, featurization_f):

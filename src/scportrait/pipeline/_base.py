@@ -177,13 +177,30 @@ class ProcessingStep(Logable):
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
     def __init__(
-        self, config, directory, project_location, debug=False, overwrite=False, project=None, filehandler=None
+        self,
+        config,
+        directory = None,
+        project_location = None,
+        debug=False,
+        overwrite=False,
+        project=None,
+        filehandler=None,
+        from_project:bool = False,
     ):
         super().__init__(directory=directory)
 
         self.debug = debug
         self.overwrite = overwrite
-        self.project_location = project_location
+        if from_project:
+            self.project_run = True
+            self.project_location = project_location
+            self.project = project
+            self.filehandler = filehandler
+        else:
+            self.project_run = False
+            self.project_location = None
+            self.project = None
+            self.filehandler = None
 
         if isinstance(config, str):
             config = read_config(config)
@@ -194,9 +211,6 @@ class ProcessingStep(Logable):
         else:
             self.config = config
         self.overwrite = overwrite
-
-        self.project = project
-        self.filehandler = filehandler
 
         self.get_context()
 
