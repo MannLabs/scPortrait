@@ -732,6 +732,12 @@ class HDF5CellExtraction(ProcessingStep):
                 dtype=h5py.special_dtype(vlen=str),
             )
 
+            hf.create_dataset(
+                "n_masks",
+                data=self.n_masks,
+                dtype=int,
+            )
+
             self.log("channel information created.")
 
         # cleanup memory
