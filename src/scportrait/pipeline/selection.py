@@ -316,7 +316,6 @@ class LMDSelection(ProcessingStep):
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
-        print("Here", flush=True)
         coord_index = self._get_coords(
             cell_ids=cell_ids, centers=centers, width=self.cell_radius, batch_size=self.batch_size, threads=self.threads
         )
