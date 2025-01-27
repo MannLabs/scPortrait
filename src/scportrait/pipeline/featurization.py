@@ -119,7 +119,9 @@ class _FeaturizationBase(ProcessingStep):
                 for file in self.extraction_file:
                     with h5py.File(file, "r") as f:
                         n_masks.append(f["n_masks"][()].item())
-                assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed HDF5 files."
+                assert (
+                    x == n_masks[0] for x in n_masks
+                ), "number of masks are not consistent over all passed HDF5 files."
                 self.n_masks = n_masks[0]
             try:
                 self.n_masks = h5py.File(self.extraction_file, "r")["n_masks"][()].item()
@@ -188,7 +190,7 @@ class _FeaturizationBase(ProcessingStep):
             self.inference_device = self._detect_automatic_inference_device()
             self.log(f"Automatically configured inferece device to {self.inference_device}")
 
-    def _general_setup(self, extraction_dir: str, return_results: bool = False):
+    def _general_setup(self, extraction_dir: str | list[str], return_results: bool = False):
         """Helper function to execute all setup functions that are common to all featurization steps."""
 
         self.extraction_file = extraction_dir
@@ -834,11 +836,7 @@ class MLClusterClassifier(_FeaturizationBase):
         self._setup_encoders()
         self._setup_transforms()
 
-    def process(self,
-                extraction_dir: str,
-                labels: int | list[int] = 0,
-                size: int = 0,
-                return_results: bool = False):
+    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
         """
         Perform classification on the provided HDF5 dataset.
 
@@ -919,7 +917,7 @@ class MLClusterClassifier(_FeaturizationBase):
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
-            labels = labels,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1012,11 +1010,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self._load_models()
 
-    def process(self,
-                extraction_dir: str,
-                labels: int | list[int] = 0,
-                size: int = 0,
-                return_results: bool = False):
+    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -1075,7 +1069,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
-            labels = labels,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1149,7 +1143,9 @@ class _cellFeaturizerBase(_FeaturizationBase):
                 for file in self.extraction_file:
                     with h5py.File(file, "r") as f:
                         channel_names.append(list(f["channel_information"][:].astype(str)))
-                assert (x == channel_names[0] for x in channel_names), "Channel names are not consistent over all passed HDF5 files."
+                assert (
+                    x == channel_names[0] for x in channel_names
+                ), "Channel names are not consistent over all passed HDF5 files."
                 self.channel_names = channel_names[0]
         else:
             if "channel_names" in self.project.__dict__.keys():
@@ -1367,16 +1363,14 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self, extraction_dir: str, return_results: bool):
+    def _setup(self, extraction_dir: str | list[str], return_results: bool):
         self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_transforms()
         self._get_channel_specs()
 
-    def process(self,
-                extraction_dir: str | list[str],
-                labels: int | list[int] = 0,
-                size: int = 0,
-                return_results: bool = False):
+    def process(
+        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+    ):
         """
         Perform featurization on the provided HDF5 dataset.
 
@@ -1435,7 +1429,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
-            labels = labels,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1490,18 +1484,15 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self, extraction_dir: str, return_results: bool):
+    def _setup(self, extraction_dir: str | list[str], return_results: bool):
         self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()
         self._get_channel_specs()
 
-    def process(self,
-                extraction_dir: str | list[str],
-                labels: int | list[int] = 0,
-                size=0,
-                return_results: bool = False):
-
+    def process(
+        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
+    ):
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
@@ -1509,7 +1500,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
-            labels = labels,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
