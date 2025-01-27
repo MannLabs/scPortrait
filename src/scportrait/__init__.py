@@ -11,3 +11,8 @@ from scportrait import tools as tl
 
 # silence warning from spatialdata resulting in an older dask version see #139
 warnings.filterwarnings("ignore", message="ignoring keyword argument 'read_only'")
+
+# silence warning from cellpose resulting in missing parameter set in model call see #141
+warnings.filterwarnings(
+    "ignore", message=r"You are using `torch.load` with `weights_only=False`.*", category=FutureWarning
+)
