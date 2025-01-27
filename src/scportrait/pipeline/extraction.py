@@ -91,7 +91,7 @@ class HDF5CellExtraction(ProcessingStep):
         # set developer debug mode for super detailed output
         self.deep_debug = False
 
-        #initialize default values
+        # initialize default values
         self.extraction_data_directory = None
 
         # check for windows operating system and if so set threads to 1
@@ -625,8 +625,10 @@ class HDF5CellExtraction(ProcessingStep):
             )  # increase to 64 bit otherwise information may become truncated
 
             self.log("single-cell index created.")
-            self._clear_cache(vars_to_delete=[cell_ids])
+            del cell_ids
+            # self._clear_cache(vars_to_delete=[cell_ids])
 
+        with h5py.File(self.output_path, "a") as hf:
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset(
                 "single_cell_data",
@@ -638,11 +640,16 @@ class HDF5CellExtraction(ProcessingStep):
 
             # populate dataset in loop to prevent loading of entire dataset into memory
             # this is required to process large datasets to not run into memory issues
-            for ix, i in enumerate(keep_index):
+            for ix, i in tqdm(
+                enumerate(keep_index),
+                total=len(keep_index),
+                desc="Transferring single-cell images",
+            ):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
 
             self.log("single-cell data created")
-            self._clear_cache(vars_to_delete=[single_cell_data])
+            del single_cell_data, _tmp_single_cell_data
+            # self._clear_cache(vars_to_delete=[single_cell_data])
 
             # also transfer labelled index to HDF5
             index_labelled = _tmp_single_cell_index[keep_index]
@@ -660,7 +667,8 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             self.log("single-cell index labelled created.")
-            self._clear_cache(vars_to_delete=[index_labelled])
+            del index_labelled, _tmp_single_cell_index
+            # self._clear_cache(vars_to_delete=[index_labelled])
 
             hf.create_dataset(
                 "channel_information",
@@ -671,7 +679,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.log("channel information created.")
 
         # cleanup memory
-        self._clear_cache(vars_to_delete=[_tmp_single_cell_index, index_labelled])
+        # self._clear_cache(vars_to_delete=[_tmp_single_cell_index])
         os.remove(self._tmp_single_cell_data_path)
         os.remove(self._tmp_single_cell_index_path)
 

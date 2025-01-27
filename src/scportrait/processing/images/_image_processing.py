@@ -4,7 +4,14 @@ from numba import jit
 from skimage.exposure import rescale_intensity
 
 
-def rescale_image(image, rescale_range, outrange=(0, 1), dtype="uint16", cutoff_threshold=None, return_float=False):
+def rescale_image(
+    image,
+    rescale_range,
+    outrange=(0, 1),
+    dtype="uint16",
+    cutoff_threshold=None,
+    return_float=False,
+):
     # convert to float for better percentile calculation
     img = image.astype("float")
 
@@ -96,7 +103,9 @@ def _percentile_norm(im, lower_percentile, upper_percentile):
     return out_im
 
 
-def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999, return_copy=True):
+def percentile_normalization(
+    im, lower_percentile=0.001, upper_percentile=0.999, return_copy=True
+):
     """
     Normalize an input image channel-wise based on defined percentiles.
 
@@ -132,7 +141,9 @@ def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999,
             im[i] = _percentile_norm(im[i], lower_percentile, upper_percentile)
 
     else:
-        raise ValueError("Input dimensions should be (height, width) or (channels, height, width).")
+        raise ValueError(
+            "Input dimensions should be (height, width) or (channels, height, width)."
+        )
 
     return im
 
@@ -149,8 +160,14 @@ def downsample_img(img, N=2, return_dtype=np.uint16):
     N : int, default = 2
         number of pixels that should be binned together using mean between pixels
     """
-    downsampled = xr.DataArray(img, dims=["c", "x", "y"]).coarsen(c=1, x=N, y=N, boundary="exact").mean()
-    downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(return_dtype)
+    downsampled = (
+        xr.DataArray(img, dims=["c", "x", "y"])
+        .coarsen(c=1, x=N, y=N, boundary="exact")
+        .mean()
+    )
+    downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(
+        return_dtype
+    )
     return np.array(downsampled)
 
 
@@ -204,7 +221,9 @@ def downsample_img_padding(img, N=2):
     else:
         pad_y = (0, N - y % N)
 
-    print(f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {N}.")
+    print(
+        f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {N}."
+    )
 
     # perform image padding to ensure that image is compatible with downsample kernel size
     img = np.pad(img, ((0, 0), pad_x, pad_y))
@@ -217,7 +236,9 @@ def downsample_img_padding(img, N=2):
     return img
 
 
-@jit(nopython=True, parallel=True)  # Set "nopython" mode for best performance, equivalent to @njit
+@jit(
+    nopython=True, parallel=True
+)  # Set "nopython" mode for best performance, equivalent to @njit
 def rolling_window_mean(array, size, scaling=False):
     """
     Compute rolling window mean and normalize the input 2D array.

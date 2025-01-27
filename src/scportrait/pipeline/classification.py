@@ -17,8 +17,8 @@ import pandas as pd
 import io
 from contextlib import redirect_stdout
 from pathlib import Path
-from typing import Union
 from alphabase.io import tempmmap
+
 
 class MLClusterClassifier(ProcessingStep):
     """
@@ -43,10 +43,11 @@ class MLClusterClassifier(ProcessingStep):
     """
 
     CLEAN_LOG = True
-    PRETRAINED_MODELS = ["autophagy_classifier1.0",
-                         "autophagy_classifier2.0",
-                         "autophagy_classifier2.1"
-                        ]  
+    PRETRAINED_MODELS = [
+        "autophagy_classifier1.0",
+        "autophagy_classifier2.0",
+        "autophagy_classifier2.1",
+    ]
     CLASSIFIER_ARCHITECTURES = ["VGG1", "VGG2", "VGG1_old", "VGG2_old"]
 
     def __init__(
@@ -139,14 +140,13 @@ class MLClusterClassifier(ProcessingStep):
             return False
 
     def _get_config_parameters(self):
-        
-        #define base values if values are not specified in the config file
-        #for those values that are essential raise warning if they are missing
+        # define base values if values are not specified in the config file
+        # for those values that are essential raise warning if they are missing
         if "pretrained_model" in self.config.keys():
             self.pretrained_model = self.config["pretrained_model"]
         else:
             self.pretrained_model = False
-        
+
         if "encoders" in self.config.keys():
             self.encoders = self.config["encoders"]
         else:
@@ -158,69 +158,99 @@ class MLClusterClassifier(ProcessingStep):
         else:
             self.resize = False
 
-        assert "network" in self.config.keys(), "no network checkpoint specified in config file"
-        assert "channel_classification" in self.config.keys(), "no channel_classification specified in config file"
-        assert "dataloader_worker_number" in self.config.keys(), "no dataloader_worker_number specified in config file"
-        assert "batch_size" in self.config.keys(), "no batch_size specified in config file"
-        assert "inference_device" in self.config.keys(), "no inference_device specified in config file"
-        assert "inference_label" in self.config.keys(), "no inference_label specified in config file"
-        assert "classifier_architecture" in self.config.keys(), "no classifier_architecture specified in config file"
+        assert (
+            "network" in self.config.keys()
+        ), "no network checkpoint specified in config file"
+        assert (
+            "channel_classification" in self.config.keys()
+        ), "no channel_classification specified in config file"
+        assert (
+            "dataloader_worker_number" in self.config.keys()
+        ), "no dataloader_worker_number specified in config file"
+        assert (
+            "batch_size" in self.config.keys()
+        ), "no batch_size specified in config file"
+        assert (
+            "inference_device" in self.config.keys()
+        ), "no inference_device specified in config file"
+        assert (
+            "inference_label" in self.config.keys()
+        ), "no inference_label specified in config file"
+        assert (
+            "classifier_architecture" in self.config.keys()
+        ), "no classifier_architecture specified in config file"
 
         self.network_dir = self.config["network"]
-        
-        if self.pretrained_model:
-            assert self.network_dir in self.PRETRAINED_MODELS, f"the specified Pretrained model {self.networkdir} not available in scPortrait. Please choose one of the following available models: {self.PRETRAINED_MODELS}"
-        else:
-            assert os.path.exists(self.network_dir), f"the specified network checkpoint {self.network_dir} does not exist"
 
-        if "hparams_file" in self.config.keys():
-            self.hparams_file = self.config["hparams_file"]
+        if self.pretrained_model:
+            assert (
+                self.network_dir in self.PRETRAINED_MODELS
+            ), f"the specified Pretrained model {self.networkdir} not available in scPortrait. Please choose one of the following available models: {self.PRETRAINED_MODELS}"
         else:
-            hparam_path = Path(self.network_dir).parent / "hparams.yaml"
-            if os.path.exists(hparam_path):
-                self.hparams_file = hparam_path
+            assert os.path.exists(
+                self.network_dir
+            ), f"the specified network checkpoint {self.network_dir} does not exist"
+
+            if "hparams_file" in self.config.keys():
+                self.hparams_file = self.config["hparams_file"]
             else:
-                raise ValueError("no hparams file specified in config and could not be dynamically found based on checkpoint path.")
+                hparam_path = Path(self.network_dir).parent / "hparams.yaml"
+                if os.path.exists(hparam_path):
+                    self.hparams_file = hparam_path
+                else:
+                    raise ValueError(
+                        "no hparams file specified in config and could not be dynamically found based on checkpoint path."
+                    )
 
         self.channel_classification = self.config["channel_classification"]
-        #if multiple channels are selected ensure that they are converted to the proper format for passing to the pytorch dataset
-        
+        # if multiple channels are selected ensure that they are converted to the proper format for passing to the pytorch dataset
+
         if isinstance(self.channel_classification, str):
-            self.channel_classification = [int(x) for x in self.channel_classification.split(":")]
+            self.channel_classification = [
+                int(x) for x in self.channel_classification.split(":")
+            ]
         else:
-            assert isinstance(self.channel_classification, int), f"channel_classification should be an integer or a string of integers separated by colons. Provided value: {self.channel_classification}"
+            assert isinstance(
+                self.channel_classification, int
+            ), f"channel_classification should be an integer or a string of integers separated by colons. Provided value: {self.channel_classification}"
             self.channel_classification = [self.channel_classification]
 
         self.dataloader_worker_number = self.config["dataloader_worker_number"]
         self.batch_size = self.config["batch_size"]
         self.inference_device = self.config["inference_device"]
         self.inference_label = self.config["inference_label"]
-        
+
         self.classifier_architecture = self.config["classifier_architecture"]
-        assert self.classifier_architecture in self.CLASSIFIER_ARCHITECTURES, f"provided Classifier architecture {self.classifier_architecture} not implemented in scPortrait. Choose one of the following: {self.CLASSIFIER_ARCHITECTURES}"
-
-
+        assert (
+            self.classifier_architecture in self.CLASSIFIER_ARCHITECTURES
+        ), f"provided Classifier architecture {self.classifier_architecture} not implemented in scPortrait. Choose one of the following: {self.CLASSIFIER_ARCHITECTURES}"
 
     def _load_model(self):
-
         if self.pretrained_model:
             if self.network_dir == "autophagy_classifier1.0":
                 from scportrait.ml.pretrained_models import autophagy_classifier1_0
+
                 model = autophagy_classifier1_0(device=self.config["inference_device"])
-            
+
             elif self.network_dir == "autophagy_classifier2.0":
                 from scportrait.ml.pretrained_models import autophagy_classifier2_0
+
                 model = autophagy_classifier2_0(device=self.config["inference_device"])
-            
+
             elif self.network_dir == "autophagy_classifier2.1":
                 from scportrait.ml.pretrained_models import autophagy_classifier2_1
+
                 model = autophagy_classifier2_1(device=self.config["inference_device"])
             else:
                 sys.exit("incorrect specification for pretrained model.")
-        
+
         else:
-            self.log(f"loading model from the following checkpoint file: {self.network_dir}")
-            self.log(f"loading model with the following hparams file: {self.hparams_file}")
+            self.log(
+                f"loading model from the following checkpoint file: {self.network_dir}"
+            )
+            self.log(
+                f"loading model with the following hparams file: {self.hparams_file}"
+            )
 
             model = MultilabelSupervisedModel.load_from_checkpoint(
                 self.network_dir,
@@ -228,42 +258,41 @@ class MLClusterClassifier(ProcessingStep):
                 type=self.classifier_architecture,
                 map_location=self.inference_device,
             )
-        
+
         model = model.eval()
         model.to(self.inference_device)
-        
-        return(model)
+
+        return model
 
     def _load_dataset(self):
-
         # transforms like noise, random rotations, channel selection are still hardcoded
         if self.resize:
             t = transforms.Compose(
                 [
                     ChannelSelector(self.channel_classification),
-                    transforms.Resize((self.resize_value, self.resize_value), antialias=True),
+                    transforms.Resize(
+                        (self.resize_value, self.resize_value), antialias=True
+                    ),
                 ]
             )
         else:
-            t = transforms.Compose(
-                [ChannelSelector(self.channel_classification)]
-            )
+            t = transforms.Compose([ChannelSelector(self.channel_classification)])
 
         self.log(f"loading cells from {self.extraction_dir}")
-        self.dataset = self.dataset_type([f"{self.extraction_dir}/single_cells.h5"], 
-                                        [0], 
-                                        transform=t, 
-                                        return_id=True
-                                        )
+        self.dataset = self.dataset_type(
+            [f"{self.extraction_dir}"], [0], transform=t, return_id=True
+        )
 
-        self.dataset_size = len(self.dataset) #save length of dataset for reaccess during inference
+        self.dataset_size = len(
+            self.dataset
+        )  # save length of dataset for reaccess during inference
         self.log(f"Processing dataset with {self.dataset_size} cells")
 
-    def __call__(
+    def __call__(  # type: ignore
         self,
-        extraction_dir,
+        extraction_dir: str,
         partial: bool = False,
-        dataset_type = HDF5SingleCellDataset,
+        dataset_type=HDF5SingleCellDataset,
     ):
         """
         Perform classification on the provided HDF5 dataset.
@@ -334,9 +363,9 @@ class MLClusterClassifier(ProcessingStep):
                 inference_device: "cuda"
         """
 
-        self.create_temp_dir() #setup directory for memory mapped temp file generation using alphabase.io
+        self.create_temp_dir()  # setup directory for memory mapped temp file generation using alphabase.io
         self._get_config_parameters()
-        
+
         self.extraction_dir = extraction_dir
         self.dataset_type = dataset_type
 
@@ -366,13 +395,10 @@ class MLClusterClassifier(ProcessingStep):
             if encoder == "encoder":
                 self.inference(dataloader, model.network.encoder, partial=partial)
 
-        #ensure all intermediate results are cleared after processing
+        # ensure all intermediate results are cleared after processing
         self.clear_temp_dir()
 
-    def inference(self, 
-                  dataloader, 
-                  model_fun, 
-                  partial=False):
+    def inference(self, dataloader, model_fun, partial=False):
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
 
@@ -380,7 +406,7 @@ class MLClusterClassifier(ProcessingStep):
         self.log(
             f"Start processing {len(data_iter)} batches with {model_fun.__name__} based inference"
         )
-        
+
         with torch.no_grad():
             ix = 0
             batch_size = self.batch_size
@@ -389,26 +415,26 @@ class MLClusterClassifier(ProcessingStep):
             r = model_fun(x.to(self.config["inference_device"]))
             result = r.cpu().detach()
 
-            #initialize an empty memory mapped array for saving results into
+            # initialize an empty memory mapped array for saving results into
             _, n_features = result.shape
 
             shape_features = (self.dataset_size, n_features)
             shape_labels = (self.dataset_size, 1)
-            
-            features_path = tempmmap.create_empty_mmap(shape_features, dtype = np.float32)
-            cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype = np.int64)
-            labels_path = tempmmap.create_empty_mmap(shape_labels, dtype = np.int64)
-            
+
+            features_path = tempmmap.create_empty_mmap(shape_features, dtype=np.float32)
+            cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+            labels_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+
             features = tempmmap.mmap_array_from_path(features_path)
             cell_ids = tempmmap.mmap_array_from_path(cell_ids_path)
             labels = tempmmap.mmap_array_from_path(labels_path)
 
-            #save the results for each batch into the memory mapped array at the specified indices
-            features[ix:(ix+batch_size)] = result.numpy()
-            cell_ids[ix:(ix+batch_size)] = class_id.unsqueeze(1)
-            labels[ix:(ix+batch_size)] = label.unsqueeze(1)
+            # save the results for each batch into the memory mapped array at the specified indices
+            features[ix : (ix + batch_size)] = result.numpy()
+            cell_ids[ix : (ix + batch_size)] = class_id.unsqueeze(1)
+            labels[ix : (ix + batch_size)] = label.unsqueeze(1)
             ix += batch_size
-            
+
             for i in range(len(dataloader) - 1):
                 if i % 10 == 0:
                     self.log(f"processing batch {i}")
@@ -416,11 +442,11 @@ class MLClusterClassifier(ProcessingStep):
 
                 r = model_fun(x.to(self.config["inference_device"]))
 
-                #save the results for each batch into the memory mapped array at the specified indices
-                features[ix:(ix+r.shape[0])] = r.cpu().detach().numpy()
-                cell_ids[ix:(ix+r.shape[0])] = class_id.unsqueeze(1)
-                labels[ix:(ix+r.shape[0])] = label.unsqueeze(1)
-                
+                # save the results for each batch into the memory mapped array at the specified indices
+                features[ix : (ix + r.shape[0])] = r.cpu().detach().numpy()
+                cell_ids[ix : (ix + r.shape[0])] = class_id.unsqueeze(1)
+                labels[ix : (ix + r.shape[0])] = label.unsqueeze(1)
+
                 ix += r.shape[0]
 
         if hasattr(self.config, "log_transform"):
@@ -445,7 +471,7 @@ class MLClusterClassifier(ProcessingStep):
             path = os.path.join(
                 self.run_path, f"dimension_reduction_{model_fun.__name__}.csv"
             )
-        
+
         dataframe.to_csv(path)
 
 
@@ -494,7 +520,6 @@ class EnsembleClassifier(ProcessingStep):
             dataset = HDF5SingleCellDataset(
                 [extraction_dir],
                 [0],
-                "/",
                 transform=t,
                 return_id=True,
                 select_channel=self.config["channel_classification"],
@@ -898,7 +923,7 @@ class CellFeaturizer(ProcessingStep):
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = HDF5SingleCellDataset(
-                [extraction_dir], [0], "/", transform=t, return_id=True
+                [extraction_dir], [0], transform=t, return_id=True
             )
 
             if size == 0:
@@ -911,7 +936,7 @@ class CellFeaturizer(ProcessingStep):
             self.log(f"loading {accessory_paths[i]}")
             with redirect_stdout(f):
                 local_dataset = HDF5SingleCellDataset(
-                    [accessory_paths[i]], [i + 1], "/", transform=t, return_fake_id=True
+                    [accessory_paths[i]], [i + 1], transform=t, return_fake_id=True
                 )
 
             if len(local_dataset) > accessory_sizes[i]:

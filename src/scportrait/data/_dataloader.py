@@ -12,6 +12,7 @@ import requests
 from filelock import FileLock
 from tqdm import tqdm
 
+
 def _get_data_dir():
     """
     Helper Function to get path to data that was packaged with scPortrait
@@ -33,6 +34,7 @@ def _get_data_dir():
 
     return data_dir
 
+
 def _download(
     url: str,
     archive_format: Literal["zip", "tar", "tar.gz", "tgz"] = None,
@@ -53,7 +55,9 @@ def _download(
     """
     if output_file_name is None:
         letters = ascii_lowercase
-        output_file_name = f"scportrait_tmp_{''.join(choice(letters) for _ in range(10))}"
+        output_file_name = (
+            f"scportrait_tmp_{''.join(choice(letters) for _ in range(10))}"
+        )
 
     if output_path is None:
         output_path = tempfile.gettempdir()
@@ -91,7 +95,9 @@ def _download(
 
         with (
             open(temp_file_name, "wb") as file,
-            tqdm(total=total, unit="B", unit_scale=True, desc="Downloading...") as progress_bar,
+            tqdm(
+                total=total, unit="B", unit_scale=True, desc="Downloading..."
+            ) as progress_bar,
         ):
             for data in response.iter_content(block_size):
                 file.write(data)

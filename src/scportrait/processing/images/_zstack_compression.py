@@ -24,7 +24,9 @@ def EDF(image):
 
     image = image.reshape((stack, -1))  # image is now (stack, nr_pixels)
     image = image.transpose()  # image is now (nr_pixels, stack)
-    r = image[np.arange(len(image)), best.ravel()]  # Select the right pixel at each location
+    r = image[
+        np.arange(len(image)), best.ravel()
+    ]  # Select the right pixel at each location
     r = r.reshape((h, w))  # reshape to get final result
 
     return r
