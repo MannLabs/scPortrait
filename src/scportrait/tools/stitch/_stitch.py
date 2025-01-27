@@ -20,13 +20,24 @@ from tqdm import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.processing.images._image_processing import rescale_image
-from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
+from scportrait.tools.stitch._utils.ashlar_plotting import (
+    plot_edge_quality,
+    plot_edge_scatter,
+)
 from scportrait.tools.stitch._utils.filereaders import (
     BioformatsReaderRescale,
     FilePatternReaderRescale,
 )
-from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
-from scportrait.tools.stitch._utils.parallelized_ashlar import ParallelEdgeAligner, ParallelMosaic
+from scportrait.tools.stitch._utils.filewriters import (
+    write_ome_zarr,
+    write_spatialdata,
+    write_tif,
+    write_xml,
+)
+from scportrait.tools.stitch._utils.parallelized_ashlar import (
+    ParallelEdgeAligner,
+    ParallelMosaic,
+)
 
 
 class Stitcher:
@@ -213,7 +224,9 @@ class Stitcher:
         self.channel_lookup = self.reader.metadata.channel_map
         self.channel_names = list(self.reader.metadata.channel_map.values())
         self.channels = list(self.reader.metadata.channel_map.keys())
-        self.stitching_channel_id = list(self.channel_lookup.values()).index(self.stitching_channel)
+        self.stitching_channel_id = list(self.channel_lookup.values()).index(
+            self.stitching_channel
+        )
         self.n_channels = len(self.channels)
 
     def get_stitching_information(self):
@@ -222,7 +235,10 @@ class Stitcher:
             self._initialize_reader()
         self._get_channel_info()
 
-        print("Tile positions will be calculated based on channel:", self.stitching_channel)
+        print(
+            "Tile positions will be calculated based on channel:",
+            self.stitching_channel,
+        )
         print("Channel Names:", self.channel_names)
         print("Overlap of image tiles:", self.overlap)
         print("Max Shift value:", self.max_shift)
@@ -246,10 +262,14 @@ class Stitcher:
 
             # make sure all channels provided in lookup dictionary are in the experiment
             if not set(rescale_channels).issubset(set(self.channel_names)):
-                raise ValueError("The rescale_range dictionary contains a channel not found in the experiment.")
+                raise ValueError(
+                    "The rescale_range dictionary contains a channel not found in the experiment."
+                )
 
             # check if we have any channels missing in the rescale_range dictionary
-            missing_channels = set.difference(set(self.channel_names), set(rescale_channels))
+            missing_channels = set.difference(
+                set(self.channel_names), set(rescale_channels)
+            )
 
             if len(missing_channels) > 0:
                 Warning(
@@ -261,13 +281,19 @@ class Stitcher:
                     self.rescale_range[missing_channel] = (0, 1)
 
                 self.reader.no_rescale_channel = [
-                    list(self.channel_names).index(missing_channel) for missing_channel in missing_channels
+                    list(self.channel_names).index(missing_channel)
+                    for missing_channel in missing_channels
                 ]
 
             # lookup channel names and match them with channel ids to return a new dict whose keys are the channel ids
-            rescale_range_ids = {list(self.channel_names).index(k): v for k, v in self.rescale_range.items()}
+            rescale_range_ids = {
+                list(self.channel_names).index(k): v
+                for k, v in self.rescale_range.items()
+            }
             self.reader.do_rescale = True
-            self.reader.rescale_range = rescale_range_ids  # update so that the lookup can occur correctly
+            self.reader.rescale_range = (
+                rescale_range_ids  # update so that the lookup can occur correctly
+            )
 
         else:
             self.reader.no_rescale_channel = []
@@ -302,7 +328,9 @@ class Stitcher:
                 rescale_range=self.rescale_range,
             )
         elif self.reader_type == BioformatsReaderRescale:
-            self.reader = self.reader_type(self.input_dir, rescale_range=self.rescale_range)
+            self.reader = self.reader_type(
+                self.input_dir, rescale_range=self.rescale_range
+            )
 
         # setup correct orientation of slide (this depends on microscope used to generate the data)
         self.ashlar_process_axis_flip(
@@ -344,7 +372,7 @@ class Stitcher:
         if type(self.rescale_range) is tuple:
             rescale_range = {k: self.rescale_range for k in self.channel_names}
             rescale = True
-        elif type(self.rescale_range) is dict:
+        elif isinstance(self.rescale_range, dict):
             rescale_range = self.rescale_range[self.stitching_channel]
             rescale = True
         else:
@@ -386,7 +414,9 @@ class Stitcher:
         # intitialize reader for getting individual image tiles
         self._initialize_reader()
 
-        print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
+        print(
+            f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}"
+        )
         self.aligner = self._initialize_aligner()
         self.aligner.run()
 
@@ -430,7 +460,9 @@ class Stitcher:
         self._create_cache()
 
         # create empty mmap array to store assembled mosaic
-        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
+        hdf5_path = create_empty_mmap(
+            shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME
+        )
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)
         self.hdf5_path = hdf5_path  # save variable into self for easier access
@@ -443,7 +475,9 @@ class Stitcher:
 
             if self.rescale_full_image:
                 # warning this has not been tested for memory efficiency
-                print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
+                print(
+                    "Rescaling entire input image to 0-1 range using percentiles specified in rescale_range."
+                )
                 self.assembled_mosaic[i, :, :] = rescale_image(
                     self.assembled_mosaic[i, :, :], self.rescale_range[channel]
                 )
@@ -487,7 +521,9 @@ class Stitcher:
         if export_xml:
             write_xml(filenames, self.channel_names, self.slidename)
 
-    def write_ome_zarr(self, downscaling_size=4, n_downscaling_layers=4, chunk_size=(1, 1024, 1024)):
+    def write_ome_zarr(
+        self, downscaling_size=4, n_downscaling_layers=4, chunk_size=(1, 1024, 1024)
+    ):
         """Write the assembled mosaic as an OME-Zarr file.
 
         Args:
@@ -645,7 +681,11 @@ class ParallelStitcher(Stitcher):
 
     def _initialize_mosaic(self):
         mosaic = ParallelMosaic(
-            self.aligner, self.aligner.mosaic_shape, verbose=True, channels=self.channels, n_threads=self.threads
+            self.aligner,
+            self.aligner.mosaic_shape,
+            verbose=True,
+            channels=self.channels,
+            n_threads=self.threads,
         )
         return mosaic
 
@@ -653,11 +693,15 @@ class ParallelStitcher(Stitcher):
         hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
         out = mmap_array_from_path(hdf5_path)
-        self.mosaic.assemble_channel_parallel(channel=channel, ch_index=i, hdf5_path=hdf5_path)
+        self.mosaic.assemble_channel_parallel(
+            channel=channel, ch_index=i, hdf5_path=hdf5_path
+        )
 
         if self.rescale_full_image:
             # warning this has not been tested for memory efficiency
-            print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
+            print(
+                "Rescaling entire input image to 0-1 range using percentiles specified in rescale_range."
+            )
             out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
 
     def _assemble_mosaic(self):
@@ -669,7 +713,9 @@ class ParallelStitcher(Stitcher):
 
         self._create_cache()
 
-        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
+        hdf5_path = create_empty_mmap(
+            shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME
+        )
         print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
 
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)

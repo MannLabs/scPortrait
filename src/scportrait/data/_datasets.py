@@ -4,6 +4,7 @@ from pathlib import Path
 from scportrait.data._dataloader import _download
 from scportrait.data._dataloader import _get_data_dir
 
+
 def dataset_1():
     """
     Download and extract the example dataset 1 images.
