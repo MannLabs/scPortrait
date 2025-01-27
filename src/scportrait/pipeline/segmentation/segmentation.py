@@ -85,6 +85,7 @@ class Segmentation(ProcessingStep):
         overwrite,
         project,
         filehandler,
+        from_project: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -95,6 +96,7 @@ class Segmentation(ProcessingStep):
             overwrite=overwrite,
             project=project,
             filehandler=filehandler,
+            from_project=from_project,
         )
 
         if self.directory is not None:
