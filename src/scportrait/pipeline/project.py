@@ -1093,7 +1093,7 @@ class Project(Logable):
 
         self._check_sdata_status()
 
-        if not self.nuc_seg_status or not self.cyto_seg_status:
+        if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         assert self.sdata is not None, "No sdata object loaded."
