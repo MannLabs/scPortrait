@@ -1,10 +1,20 @@
+import multiprocessing as mp
 import os
+import pickle
+import timeit
+from functools import partial as func_partial
 
+import h5py
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from alphabase.io import tempmmap
 from lmd.lib import SegmentationLoader
+from scipy.sparse import coo_array
+from tqdm.auto import tqdm
 
 from scportrait.pipeline._base import ProcessingStep
+from scportrait.pipeline._utils.helper import flatten
 
 
 class LMDSelection(ProcessingStep):
@@ -13,20 +23,60 @@ class LMDSelection(ProcessingStep):
     This method class relies on the functionality of the pylmd library.
     """
 
-    # define all valid path optimization methods used with the "path_optimization" argument in the configuration
-    VALID_PATH_OPTIMIZERS = ["none", "hilbert", "greedy"]
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._check_config()
 
         self.name = None
         self.cell_sets = None
         self.calibration_marker = None
 
-    def _setup_selection(self):
-        # set orientation transform
-        self.config["orientation_transform"] = np.array([[0, -1], [1, 0]])
+        self.deep_debug = False  # flag for deep debugging by developers
 
+    def _check_config(self):
+        assert "segmentation_channel" in self.config, "segmentation_channel not defined in config"
+        self.segmentation_channel_to_select = self.config["segmentation_channel"]
+
+        # check for optional config parameters
+
+        # this defines how large the box mask around the center of a cell is for the coordinate extraction
+        # assumption is that all pixels belonging to each mask are within the box otherwise they will be cut off during cutting contour generation
+
+        if "cell_width" in self.config:
+            self.cell_radius = self.config["cell_width"]
+        else:
+            self.cell_radius = 100
+
+        if "threads" in self.config:
+            self.threads = self.config["threads"]
+            assert self.threads > 0, "threads must be greater than 0"
+            assert isinstance(self.threads, int), "threads must be an integer"
+        else:
+            self.threads = 10
+
+        if "batch_size_coordinate_extraction" in self.config:
+            self.batch_size = self.config["batch_size_coordinate_extraction"]
+            assert self.batch_size > 0, "batch_size_coordinate_extraction must be greater than 0"
+            assert isinstance(self.batch_size, int), "batch_size_coordinate_extraction must be an integer"
+        else:
+            self.batch_size = 100
+
+        if "orientation_transform" in self.config:
+            self.orientation_transform = self.config["orientation_transform"]
+        else:
+            self.orientation_transform = np.array([[0, -1], [1, 0]])
+            self.config["orientation_transform"] = (
+                self.orientation_transform
+            )  # ensure its also in config so its passed on to the segmentation loader
+
+        if "processes_cell_sets" in self.config:
+            self.processes_cell_sets = self.config["processes_cell_sets"]
+            assert self.processes_cell_sets > 0, "processes_cell_sets must be greater than 0"
+            assert isinstance(self.processes_cell_sets, int), "processes_cell_sets must be an integer"
+        else:
+            self.processes_cell_sets = 1
+
+    def _setup_selection(self):
         # configure name of extraction
         if self.name is None:
             try:
@@ -38,6 +88,111 @@ class LMDSelection(ProcessingStep):
         # create savepath
         savename = name.replace(" ", "_") + ".xml"
         self.savepath = os.path.join(self.directory, savename)
+
+        # check that the segmentation label exists
+        assert (
+            self.segmentation_channel_to_select in self.project.filehandler.get_sdata()._shared_keys
+        ), f"Segmentation channel {self.segmentation_channel_to_select} not found in sdata."
+
+    def __get_coords(
+        self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60
+    ) -> list[tuple[int, np.ndarray]]:
+        results = []
+
+        _sdata = self.project.filehandler.get_sdata()
+        for i, _id in enumerate(cell_ids):
+            values = centers[i]
+
+            x_start = np.max([int(values[0]) - width, 0])
+            y_start = np.max([int(values[1]) - width, 0])
+
+            x_end = x_start + width * 2
+            y_end = y_start + width * 2
+
+            _cropped = _sdata[self.segmentation_channel_to_select][
+                slice(x_start, x_end), slice(y_start, y_end)
+            ].compute()
+
+            # optional plotting output for deep debugging
+            if self.deep_debug:
+                if self.threads == 1:
+                    plt.figure()
+                    plt.imshow(_cropped)
+                    plt.show()
+                else:
+                    raise ValueError("Deep debug is not supported with multiple threads.")
+
+            sparse = coo_array(_cropped == _id)
+
+            if (
+                0 in sparse.coords[0]
+                or 0 in sparse.coords[1]
+                or width * 2 - 1 in sparse.coords[0]
+                or width * 2 - 1 in sparse.coords[1]
+            ):
+                Warning(
+                    f"Cell {i} with id {_id} is potentially not fully contained in the bounding mask. Consider increasing the value for the 'cell_width' parameter in your config."
+                )
+
+            x = sparse.coords[0] + x_start
+            y = sparse.coords[1] + y_start
+
+            results.append((_id, np.array(list(zip(x, y, strict=True)))))
+
+        return results
+
+    def _get_coords_multi(self, width: int, arg: tuple[list[int], np.ndarray]) -> list[tuple[int, np.ndarray]]:
+        cell_ids, centers = arg
+        results = self.__get_coords(cell_ids, centers, width)
+        return results
+
+    def _get_coords(
+        self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60, batch_size: int = 100, threads: int = 10
+    ) -> dict[int, np.ndarray]:
+        # create batches
+        n_batches = int(np.ceil(len(cell_ids) / batch_size))
+        slices = [(i * batch_size, i * batch_size + batch_size) for i in range(n_batches - 1)]
+        slices.append(((n_batches - 1) * batch_size, len(cell_ids)))
+
+        batched_args = [(cell_ids[start:end], centers[start:end]) for start, end in slices]
+
+        f = func_partial(self._get_coords_multi, width)
+
+        if (
+            threads == 1
+        ):  # if only one thread is used, the function is called directly to avoid the overhead of multiprocessing
+            results = [f(arg) for arg in batched_args]
+        else:
+            with mp.get_context(self.context).Pool(processes=threads) as pool:
+                results = list(
+                    tqdm(
+                        pool.imap(f, batched_args),
+                        total=len(batched_args),
+                        desc="Processing cell batches",
+                    )
+                )
+                pool.close()
+                pool.join()
+
+        results = flatten(results)  # type: ignore
+        return dict(results)  # type: ignore
+
+    def _get_cell_ids(self, cell_sets: list[dict]) -> list[int]:
+        cell_ids = []
+        for cell_set in cell_sets:
+            if "classes" in cell_set:
+                cell_ids.extend(cell_set["classes"])
+            else:
+                Warning(f"Cell set {cell_set['name']} does not contain any classes.")
+        return cell_ids
+
+    def _get_centers(self, cell_ids: list[int]) -> list[tuple[int, int]]:
+        _sdata = self.project.filehandler.get_sdata()
+        centers = _sdata["centers_cells"].compute()
+        centers = centers.loc[cell_ids, :]
+        return centers[
+            ["y", "x"]
+        ].values.tolist()  # needs to be returned as yx to match the coordinate system as saved in spatialdataobjects
 
     def _post_processing_cleanup(self, vars_to_delete: list | None = None):
         if vars_to_delete is not None:
@@ -51,7 +206,6 @@ class LMDSelection(ProcessingStep):
 
     def process(
         self,
-        segmentation_name: str,
         cell_sets: list[dict],
         calibration_marker: np.array,
         name: str | None = None,
@@ -61,9 +215,9 @@ class LMDSelection(ProcessingStep):
         Under the hood this method relies on the pylmd library and utilizies its `SegmentationLoader` Class.
 
         Args:
-            segmentation_name (str): Name of the segmentation to be used for shape generation in the sdata object.
             cell_sets (list of dict): List of dictionaries containing the sets of cells which should be sorted into a single well. Mandatory keys for each dictionary are: name, classes. Optional keys are: well.
             calibration_marker (numpy.array): Array of size ‘(3,2)’ containing the calibration marker coordinates in the ‘(row, column)’ format.
+            name (str, optional): Name of the output file. If not provided, the name will be generated based on the names of the cell sets or if also not specified set to "selected_cells".
 
         Example:
 
@@ -76,7 +230,6 @@ class LMDSelection(ProcessingStep):
 
                 # A numpy Array of shape (3, 2) should be passed.
                 calibration_marker = np.array([marker_0, marker_1, marker_2])
-
 
                 # Sets of cells can be defined by providing a name and a list of classes in a dictionary.
                 cells_to_select = [{"name": "dataset1", "classes": [1, 2, 3]}]
@@ -122,7 +275,7 @@ class LMDSelection(ProcessingStep):
                     convolution_smoothing: 25
 
                     # fold reduction of datapoints for compression
-                    poly_compression_factor: 30
+                    rdp: 0.7
 
                     # Optimization of the cutting path inbetween shapes
                     # optimized paths improve the cutting time and the microscopes focus
@@ -160,32 +313,21 @@ class LMDSelection(ProcessingStep):
 
         self._setup_selection()
 
-        ## TO Do
-        # check if classes and seglookup table already exist as pickle file
-        # if not create them
-        # else load them and proceed with selection
-
-        # load segmentation from hdf5
-        self.path_seg_mask = self.filehandler._load_seg_to_memmap(
-            [segmentation_name], tmp_dir_abs_path=self._tmp_dir_path
+        start_time = timeit.default_timer()
+        cell_ids = self._get_cell_ids(cell_sets)
+        centers = self._get_centers(cell_ids)
+        coord_index = self._get_coords(
+            cell_ids=cell_ids, centers=centers, width=self.cell_radius, batch_size=self.batch_size, threads=self.threads
         )
+        self.log(f"Coordinate lookup index calculation took {timeit.default_timer() - start_time} seconds.")
 
-        segmentation = tempmmap.mmap_array_from_path(self.path_seg_mask)
-
-        # create segmentation loader
         sl = SegmentationLoader(
             config=self.config,
             verbose=self.debug,
             processes=self.config["processes_cell_sets"],
         )
 
-        if len(segmentation.shape) == 3:
-            segmentation = np.squeeze(segmentation)
-        else:
-            raise ValueError(f"Segmentation shape is not correct. Expected 2D array, got {segmentation.shape}")
-
-        # get shape collections
-        shape_collection = sl(segmentation, self.cell_sets, self.calibration_marker)
+        shape_collection = sl(None, self.cell_sets, self.calibration_marker, coords_lookup=coord_index)
 
         if self.debug:
             shape_collection.plot(calibration=True)
@@ -196,4 +338,4 @@ class LMDSelection(ProcessingStep):
         self.log(f"Saved output at {self.savepath}")
 
         # perform post processing cleanup
-        self._post_processing_cleanup(vars_to_delete=[shape_collection, sl, segmentation])
+        self._post_processing_cleanup(vars_to_delete=[shape_collection, sl, coord_index])

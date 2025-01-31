@@ -23,7 +23,6 @@ import dask.array as darray
 import numpy as np
 import psutil
 import xarray
-import yaml
 from alphabase.io import tempmmap
 from napari_spatialdata import Interactive
 from ome_zarr.io import parse_url
@@ -33,6 +32,7 @@ from tifffile import imread
 
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
+from scportrait.pipeline._utils.helper import read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
@@ -94,7 +94,7 @@ class Project(Logable):
     def __init__(
         self,
         project_location: str,
-        config_path: str,
+        config_path: str = None,
         segmentation_f=None,
         extraction_f=None,
         featurization_f=None,
@@ -185,11 +185,7 @@ class Project(Logable):
         if not os.path.isfile(file_path):
             raise ValueError(f"Your config path {file_path} is invalid.")
 
-        with open(file_path) as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
+        self.config = read_config(file_path)
 
     def _get_config_file(self, config_path: str | None = None) -> None:
         """Load the config file for the project. If no config file is passed the default config file in the project directory is loaded.
@@ -257,6 +253,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=None,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_extraction_f(self, extraction_f):
@@ -285,6 +282,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_featurization_f(self, featurization_f):
@@ -309,9 +307,10 @@ class Project(Logable):
                 self.featurization_directory,
                 project_location=self.project_location,
                 debug=self.debug,
-                overwrite=self.overwrite,
+                overwrite=False,  # this needs to be set to false as the featurization step should not remove previously created features
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def _setup_selection(self, selection_f):
@@ -339,6 +338,7 @@ class Project(Logable):
                 overwrite=self.overwrite,
                 project=self,
                 filehandler=self.filehandler,
+                from_project=True,
             )
 
     def update_featurization_f(self, featurization_f):
@@ -888,9 +888,10 @@ class Project(Logable):
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        assert (
-            self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
-        ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
+        if self.nuc_seg_status in self.sdata.keys() and self.cyto_seg_status in self.sdata.keys():
+            assert (
+                self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
+            ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
 
         # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
         # THIS NEEDS TO BE IMPLEMENTED HERE
@@ -1066,6 +1067,8 @@ class Project(Logable):
         # setup overwrite if specified in call
         if overwrite is not None:
             self.featurization_f.overwrite_run_path = overwrite
+        if overwrite is None:
+            self.featurization_f.overwrite_run_path = True
 
         # update the number of masks that are available in the segmentation object
         self.featurization_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
@@ -1079,7 +1082,6 @@ class Project(Logable):
         self,
         cell_sets: list[dict],
         calibration_marker: np.ndarray | None = None,
-        segmentation_name: str = "seg_all_nucleus",
         name: str | None = None,
     ):
         """
@@ -1091,14 +1093,12 @@ class Project(Logable):
 
         self._check_sdata_status()
 
-        if not self.nuc_seg_status or not self.cyto_seg_status:
+        if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
         assert self.sdata is not None, "No sdata object loaded."
-        assert segmentation_name in self.sdata.labels, f"Segmentation {segmentation_name} not found in sdata object."
 
         self.selection_f(
-            segmentation_name=segmentation_name,
             cell_sets=cell_sets,
             calibration_marker=calibration_marker,
             name=name,

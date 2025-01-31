@@ -9,6 +9,8 @@ from datetime import datetime
 import numpy as np
 import torch
 
+from scportrait.pipeline._utils.helper import read_config
+
 
 class Logable:
     """Create log entries.
@@ -92,6 +94,27 @@ class Logable:
         if os.path.exists(log_file_path):
             os.remove(log_file_path)
 
+    # def _clear_cache(self, vars_to_delete=None):
+    #     """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations.
+
+    #     Args:
+    #         vars_to_delete (list): List of variable names (as strings) to delete.
+    #     """
+
+    #     # delete all specified variables
+    #     if vars_to_delete is not None:
+    #         for var_name in vars_to_delete:
+    #             if var_name in globals():
+    #                 del globals()[var_name]
+
+    #     if torch.cuda.is_available():
+    #         torch.cuda.empty_cache()
+
+    #     if torch.backends.mps.is_available():
+    #         torch.mps.empty_cache()
+
+    #     gc.collect()
+
     def _clear_cache(self, vars_to_delete=None):
         """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
 
@@ -137,7 +160,7 @@ class ProcessingStep(Logable):
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_TILES_FOLDER = "tiles"
 
-    DEFAULT_EXTRACTIN_DIR_NAME = "extraction"
+    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
 
     DEFAULT_IMAGE_DTYPE = np.uint16
@@ -155,18 +178,40 @@ class ProcessingStep(Logable):
     DEFAULT_SELECTION_DIR_NAME = "selection"
 
     def __init__(
-        self, config, directory, project_location, debug=False, overwrite=False, project=None, filehandler=None
+        self,
+        config,
+        directory=None,
+        project_location=None,
+        debug=False,
+        overwrite=False,
+        project=None,
+        filehandler=None,
+        from_project: bool = False,
     ):
         super().__init__(directory=directory)
 
         self.debug = debug
         self.overwrite = overwrite
-        self.project_location = project_location
-        self.config = config
-        self.overwrite = overwrite
+        if from_project:
+            self.project_run = True
+            self.project_location = project_location
+            self.project = project
+            self.filehandler = filehandler
+        else:
+            self.project_run = False
+            self.project_location = None
+            self.project = None
+            self.filehandler = None
 
-        self.project = project
-        self.filehandler = filehandler
+        if isinstance(config, str):
+            config = read_config(config)
+            if self.__class__.__name__ in config.keys():
+                self.config = config[self.__class__.__name__]
+            else:
+                self.config = config
+        else:
+            self.config = config
+        self.overwrite = overwrite
 
         self.get_context()
 

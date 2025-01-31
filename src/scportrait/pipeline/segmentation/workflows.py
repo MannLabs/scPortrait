@@ -653,7 +653,11 @@ class _BaseSegmentation(Segmentation):
         else:
             # add deprecation warning for old config setup
             if "filter_status" in self.config.keys():
-                Warning("filter_status is deprecated, please use match_masks instead Will not perform filtering.")
+                self.filter_match_masks = True
+                self.mask_matching_filtering_threshold = 0.95
+                Warning(
+                    "filter_status is deprecated, please use match_masks instead. Will use default settings for mask matching."
+                )
 
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
@@ -1348,6 +1352,9 @@ class _CellposeSegmentation(_BaseSegmentation):
             cpu_name = current.name
             gpu_id_list = current.gpu_id_list
             cpu_id = int(cpu_name[cpu_name.find("-") + 1 :]) - 1
+
+            if cpu_id >= len(gpu_id_list):
+                cpu_id = cpu_id % current.n_processes
 
             # track gpu_id and update GPU status
             self.gpu_id = gpu_id_list[cpu_id]

@@ -71,10 +71,12 @@ class sdata_filehandler(Logable):
             _sdata = SpatialData()
             _sdata.write(self.sdata_path, overwrite=True)
 
+        allowed_labels = ["seg_all_nucleus", "seg_all_cytosol"]
         for key in _sdata.labels:
-            segmentation_object = _sdata.labels[key]
-            if not hasattr(segmentation_object.attrs, "cell_ids"):
-                segmentation_object = spLabels2DModel().convert(segmentation_object, classes=None)
+            if key in allowed_labels:
+                segmentation_object = _sdata.labels[key]
+                if not hasattr(segmentation_object.attrs, "cell_ids"):
+                    segmentation_object = spLabels2DModel().convert(segmentation_object, classes=None)
 
         return _sdata
 

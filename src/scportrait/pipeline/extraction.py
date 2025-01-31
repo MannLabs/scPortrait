@@ -57,7 +57,13 @@ class HDF5CellExtraction(ProcessingStep):
             self.overwrite_run_path = self.overwrite
 
     def _get_compression_type(self):
-        self.compression_type = "lzf" if self.compression else None
+        if (self.compression is True) or (self.compression == "lzf"):
+            self.compression_type = "lzf"
+        elif self.compression == "gzip":
+            self.compression_type = "gzip"
+        else:
+            self.compression_type = None
+        self.log(f"Compression algorithm: {self.compression_type}")
         return self.compression_type
 
     def _check_config(self):
@@ -261,24 +267,55 @@ class HDF5CellExtraction(ProcessingStep):
                 f"Found no segmentation masks with key {self.segmentation_key}. Cannot proceed with extraction."
             )
 
-        # get relevant segmentation masks to perform extraction on
-        nucleus_key = f"{self.segmentation_key}_nucleus"
+        # intialize default values to track what should be extracted
+        self.nucleus_key = None
+        self.cytosol_key = None
+        self.extract_nucleus_mask = False
+        self.extract_cytosol_mask = False
 
-        if nucleus_key in relevant_masks:
-            self.extract_nucleus_mask = True
-            self.nucleus_key = nucleus_key
+        if "segmentation_mask" in self.config:
+            allowed_mask_values = ["nucleus", "cytosol"]
+            allowed_mask_values = [f"{self.segmentation_key}_{x}" for x in allowed_mask_values]
+
+            if isinstance(self.config["segmentation_mask"], str):
+                assert self.config["segmentation_mask"] in allowed_mask_values
+
+                if "nucleus" in self.config["segmentation_mask"]:
+                    self.nucleus_key = self.config["segmentation_mask"]
+                    self.extract_nucleus_mask = True
+
+                elif "cytosol" in self.config["segmentation_mask"]:
+                    self.cytosol_key = self.config["segmentation_mask"]
+                    self.extract_cytosol_mask = True
+                else:
+                    raise ValueError(
+                        f"Segmentation mask {self.config['segmentation_mask']} is not a valid mask to extract from."
+                    )
+
+            elif isinstance(self.config["segmentation_mask"], list):
+                assert all(x in allowed_mask_values for x in self.config["segmentation_mask"])
+
+                for x in self.config["segmentation_mask"]:
+                    if "nucleus" in x:
+                        self.nucleus_key = x
+                        self.extract_nucleus_mask = True
+                    if "cytosol" in x:
+                        self.cytosol_key = x
+                        self.extract_cytosol_mask = True
+
         else:
-            self.extract_nucleus_mask = False
-            self.nucleus_key = None
+            # get relevant segmentation masks to perform extraction on
+            nucleus_key = f"{self.segmentation_key}_nucleus"
 
-        cytosol_key = f"{self.segmentation_key}_cytosol"
+            if nucleus_key in relevant_masks:
+                self.extract_nucleus_mask = True
+                self.nucleus_key = nucleus_key
 
-        if cytosol_key in relevant_masks:
-            self.extract_cytosol_mask = True
-            self.cytosol_key = cytosol_key
-        else:
-            self.extract_cytosol_mask = False
-            self.cytosol_key = None
+            cytosol_key = f"{self.segmentation_key}_cytosol"
+
+            if cytosol_key in relevant_masks:
+                self.extract_cytosol_mask = True
+                self.cytosol_key = cytosol_key
 
         self.n_masks = np.sum([self.extract_nucleus_mask, self.extract_cytosol_mask])
         self.masks = [x for x in [self.nucleus_key, self.cytosol_key] if x is not None]
@@ -415,7 +452,7 @@ class HDF5CellExtraction(ProcessingStep):
         # define path where classes should be saved
         filtered_path = os.path.join(
             self.project_location,
-            self.DEFAULT_SEGMENTATION_DIR_NAME,
+            self.DEFAULT_EXTRACTION_DIR_NAME,
             self.DEFAULT_REMOVED_CLASSES_FILE,
         )
 
@@ -636,7 +673,7 @@ class HDF5CellExtraction(ProcessingStep):
                     axs[i].imshow(img, vmin=0, vmax=1)
                     axs[i].axis("off")
                 fig.tight_layout()
-                fig.show()
+                plt.show(fig)
 
         self.log("Transferring extracted single cells to .hdf5")
 
@@ -651,7 +688,8 @@ class HDF5CellExtraction(ProcessingStep):
             )  # increase to 64 bit otherwise information may become truncated
 
             self.log("single-cell index created.")
-            self._clear_cache(vars_to_delete=[cell_ids])
+            del cell_ids
+            # self._clear_cache(vars_to_delete=[cell_ids]) # this is not working as expected so we will just delete the variable directly
 
             _, c, x, y = _tmp_single_cell_data.shape
             single_cell_data = hf.create_dataset(
@@ -668,7 +706,8 @@ class HDF5CellExtraction(ProcessingStep):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
 
             self.log("single-cell data created")
-            self._clear_cache(vars_to_delete=[single_cell_data])
+            del single_cell_data
+            # self._clear_cache(vars_to_delete=[single_cell_data]) # this is not working as expected so we will just delete the variable directly
 
             # also transfer labelled index to HDF5
             index_labelled = _tmp_single_cell_index[keep_index]
@@ -684,7 +723,8 @@ class HDF5CellExtraction(ProcessingStep):
             hf.create_dataset("single_cell_index_labelled", data=index_labelled, chunks=None, dtype=dt)
 
             self.log("single-cell index labelled created.")
-            self._clear_cache(vars_to_delete=[index_labelled])
+            del index_labelled
+            # self._clear_cache(vars_to_delete=[index_labelled]) # this is not working as expected so we will just delete the variable directly
 
             hf.create_dataset(
                 "channel_information",
@@ -692,10 +732,18 @@ class HDF5CellExtraction(ProcessingStep):
                 dtype=h5py.special_dtype(vlen=str),
             )
 
+            hf.create_dataset(
+                "n_masks",
+                data=self.n_masks,
+                dtype=int,
+            )
+
             self.log("channel information created.")
 
         # cleanup memory
-        self._clear_cache(vars_to_delete=[_tmp_single_cell_index, index_labelled])
+        del _tmp_single_cell_index
+        # self._clear_cache(vars_to_delete=[_tmp_single_cell_index]) # this is not working as expected so we will just delete the variable directly
+
         os.remove(self._tmp_single_cell_data_path)
         os.remove(self._tmp_single_cell_index_path)
 
@@ -808,7 +856,6 @@ class HDF5CellExtraction(ProcessingStep):
                 # directory where intermediate results should be saved
                 cache: "/mnt/temp/cache"
         """
-
         total_time_start = timeit.default_timer()
 
         start_setup = timeit.default_timer()
@@ -871,13 +918,13 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single threaded mode.")
             results = []
-            for arg in tqdm(args):
+            for arg in tqdm(args, total=len(args), desc="Processing cell batches"):
                 x = f(arg)
                 results.append(x)
         else:
             # set up function for multi-threaded processing
             f = func_partial(self._extract_classes_multi, self.px_centers)
-            batched_args = self._generate_batched_args(args)
+            args = self._generate_batched_args(args)
 
             self.log(f"Running in multiprocessing mode with {self.threads} threads.")
             with mp.get_context("fork").Pool(
@@ -885,17 +932,19 @@ class HDF5CellExtraction(ProcessingStep):
             ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
                 results = list(
                     tqdm(
-                        pool.imap(f, batched_args),
-                        total=len(batched_args),
+                        pool.imap(f, args),
+                        total=len(args),
                         desc="Processing cell batches",
                     )
                 )
                 pool.close()
                 pool.join()
-                print("multiprocessing done.")
 
             self.save_index_to_remove = flatten(results)
 
+        # cleanup memory and remove any no longer required variables
+        del results, args
+        # self._clear_cache(vars_to_delete=["results", "args"]) # this is not working as expected at the moment so need to manually delete the variables
         stop_extraction = timeit.default_timer()
 
         # calculate duration
@@ -912,7 +961,6 @@ class HDF5CellExtraction(ProcessingStep):
             self.DEFAULT_LOG_NAME = "processing.log"  # change log name back to default
 
         self._post_extraction_cleanup()
-
         total_time_stop = timeit.default_timer()
         total_time = total_time_stop - total_time_start
 
