@@ -1201,7 +1201,7 @@ class ConvNeXtFeaturizer(ProcessingStep):
 
         model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
         model.eval()
-        model.to(self.device)
+        model.to(self.inference_device)
 
         return model
 
@@ -1338,7 +1338,7 @@ class ConvNeXtFeaturizer(ProcessingStep):
             batch_size = self.batch_size
 
             images, label, class_id = next(data_iter)
-            images["pixel_values"] = images["pixel_values"][0].to(self.device)
+            images["pixel_values"] = images["pixel_values"][0].to(self.inference_device)
             o = model_fun(**images)
             result = o.pooler_output.cpu().detach()
 
@@ -1364,7 +1364,9 @@ class ConvNeXtFeaturizer(ProcessingStep):
 
             for i in tqdm(range(len(dataloader) - 1)):
                 images, label, class_id = next(data_iter)
-                images["pixel_values"] = images["pixel_values"][0].to(self.device)
+                images["pixel_values"] = images["pixel_values"][0].to(
+                    self.inference_device
+                )
 
                 o = model_fun(**images)
                 result = o.pooler_output.cpu().detach()
