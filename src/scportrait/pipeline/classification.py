@@ -19,7 +19,6 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from alphabase.io import tempmmap
 
-from typing import Union, List
 from tqdm.auto import tqdm
 
 
@@ -1185,11 +1184,16 @@ class ConvNeXtFeaturizer(ProcessingStep):
             self.channel_selection = self.config["channel_selection"]
 
             assert isinstance(
-                self.channel_selection, Union[int, List[int]]
+                self.channel_selection, (int, list)
             ), "channel_selection should be an integer or a list of integers"
 
             if isinstance(self.channel_selection, int):
                 self.channel_selection = [self.channel_selection]
+            if isinstance(self.channel_selection, list):
+                assert all(isinstance(i, int) for i in self.channel_selection)
+                "channel_selection should be an integer or a list of integers"
+                assert len(self.channel_selection) in [1, 3]
+                "channel_selection should be either 1 or 3 channels"
 
     def _load_model(self):
         # lazy imports
