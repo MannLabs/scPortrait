@@ -1396,7 +1396,7 @@ class ConvNeXtFeaturizer(ProcessingStep):
             labels[ix : (ix + batch_size)] = label.unsqueeze(1)
             ix += batch_size
 
-            for i in tqdm(range(len(dataloader) - 1)):
+            for i in tqdm(range(len(dataloader) - 1), desc="Processing batches"):
                 images, label, class_id = next(data_iter)
                 images["pixel_values"] = images["pixel_values"][0].to(
                     self.inference_device
