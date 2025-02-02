@@ -19,6 +19,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from alphabase.io import tempmmap
 
+from typing import Union, List
+from tqdm.auto import tqdm
+
 
 class MLClusterClassifier(ProcessingStep):
     """
@@ -1097,4 +1100,289 @@ class CellFeaturizer(ProcessingStep):
             path = os.path.join(self.run_path, "partial_calculated_features.csv")
         else:
             path = os.path.join(self.run_path, "calculated_features.csv")
+        dataframe.to_csv(path)
+
+
+class ConvNeXtFeaturizer(ProcessingStep):
+    def __init__(
+        self,
+        config,
+        path,
+        project_location,
+        debug=False,
+        overwrite=False,
+        intermediate_output=True,
+    ):
+        self._check_config()
+
+        # assert that the correct transformers version is installed
+        try:
+            import transformers
+        except ImportError:
+            raise ImportError(
+                "transformers is not installed. Please install it via pip install 'transformers==4.26.0'"
+            )
+
+        assert (
+            transformers.__version__ == "4.26.0"
+        ), "Please install transformers version 4.26.0"
+
+        self.debug = debug
+        self.overwrite = overwrite
+        self.config = config
+        self.intermediate_output = intermediate_output
+        self.project_location = project_location
+
+        if "filtered_dataset" in config.keys():
+            self.filtered_dataset = self.config["filtered_dataset"]
+
+        # Create classification directory
+        self.directory = path
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+
+        # Set up log and clean old log
+        if self.CLEAN_LOG:
+            log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
+            if os.path.isfile(log_path):
+                os.remove(log_path)
+
+        # create specific output directory
+        if hasattr(self, "filtered_dataset"):
+            if self.filtered_dataset is not None:
+                self.run_path = os.path.join(
+                    self.directory, f"ConvNeXt_{self.filtered_dataset}"
+                )
+            else:
+                self.run_path = os.path.join(self.directory, "ConvNeXt")
+        else:
+            self.run_path = os.path.join(
+                self.directory, "ConvNeXt"
+            )  # to ensure that you can tell by directory name what is being classified
+
+        if not os.path.isdir(self.run_path):
+            os.makedirs(self.run_path)
+            self.log("Created new directory " + self.run_path)
+
+        self.log(f"current run: {self.current_run}")
+
+        self.inference_device = self.config["inference_device"]
+        self.dataloader_worker_number = self.config["dataloader_worker_number"]
+        self.batch_size = self.config["batch_size"]
+
+    def _check_config(self):
+        assert (
+            "inference_device" in self.config.keys()
+        ), "no inference_device specified in config file"
+        assert (
+            "dataloader_worker_number" in self.config.keys()
+        ), "no dataloader_worker_number specified in config file"
+        assert (
+            "batch_size" in self.config.keys()
+        ), "no batch_size specified in config file"
+
+        if "channel_selection" in self.config.keys():
+            self.channel_selection = self.config["channel_selection"]
+
+            assert isinstance(
+                self.channel_selection, Union[int, List[int]]
+            ), "channel_selection should be an integer or a list of integers"
+
+            if isinstance(self.channel_selection, int):
+                self.channel_selection = [self.channel_selection]
+
+    def _load_model(self):
+        # lazy imports
+        from transformers import ConvNextModel
+
+        model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
+        model.eval()
+        model.to(self.device)
+
+        return model
+
+    def _setup_transform(self):
+        # lazy imports
+        from transformers import AutoImageProcessor
+        from scportrait.ml.transforms import ChannelSelector, ChannelMultiplier
+
+        feature_extractor = AutoImageProcessor.from_pretrained(
+            "facebook/convnext-xlarge-224-22k"
+        )
+
+        if len(self.channel_selection) == 1:
+            self.transforms = transforms.Compose(
+                [
+                    ChannelSelector(self.channel_selection),
+                    ChannelMultiplier(3),
+                    feature_extractor,
+                ]
+            )
+        elif len(self.channel_selection) == 3:
+            self.transforms = transforms.Compose(
+                [
+                    ChannelSelector(self.channel_selection),
+                    feature_extractor,
+                ]
+            )
+        else:
+            raise ValueError("channel_selection should be either 1 or 3 channels")
+
+    def _load_dataset(self):
+        # transforms like noise, random rotations, channel selection are still hardcoded
+
+        self.log(f"loading cells from {self.extraction_dir}")
+        self.dataset = self.dataset_type(
+            [f"{self.extraction_dir}"], [0], transform=self.transforms, return_id=True
+        )
+
+        self.dataset_size = len(
+            self.dataset
+        )  # save length of dataset for reaccess during inference
+        self.log(f"Processing dataset with {self.dataset_size} cells")
+
+    def __call__(  # type: ignore
+        self,
+        extraction_dir: str,
+        partial: bool = False,
+        dataset_type=HDF5SingleCellDataset,
+    ):
+        """
+        Perform ConvNeXt inference on the provided HDF5 dataset.
+
+        Parameters
+        ----------
+        extraction_dir : str
+            Directory containing the extracted HDF5 files from the project. If this class is used as part of
+            a project processing workflow, this argument will be provided automatically.
+        partial: bool, optional
+            Flag to run on a selected subset of n_cells generated by a partial extraction. Default is False.
+        dataset_type : HDF5SingleCellDataset, optional
+            Pytorch Dataset to use for loading the dataset. Default is HDF5SingleCellDataset.
+
+        Returns
+        -------
+        None
+            Results are written to CSV files located in the project directory.
+
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
+        class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
+        The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
+
+        Examples
+        --------
+        .. code-block:: python
+            project.classify()
+
+        Notes
+        -----
+        The following parameters are required in the config file:
+
+        .. code-block:: yaml
+
+            MLClusterClassifier:
+                # Channel index on which the classification should be performed
+                channel_selection: 4
+
+                # Number of threads to use for dataloader
+                dataloader_worker_number: 24
+
+                # Batch size to pass to GPU
+                batch_size: 100
+
+                # On which device inference should be performed
+                # For speed, should be "cuda"
+                inference_device: "cuda"
+        """
+
+        self.create_temp_dir()  # setup directory for memory mapped temp file generation using alphabase.io
+
+        self.extraction_dir = extraction_dir
+        self.dataset_type = dataset_type
+
+        self.log("Started Featurization")
+
+        model = self._load_model()
+        self._load_dataset()
+
+        if partial is True:
+            self.log("Running partial classification on selected cells.")
+
+        dataloader = torch.utils.data.DataLoader(
+            self.dataset,
+            batch_size=self.batch_size,
+            num_workers=self.dataloader_worker_number,
+            shuffle=False,
+        )
+
+        self.inference(dataloader, model, partial=partial)
+
+        # ensure all intermediate results are cleared after processing
+        self.clear_temp_dir()
+
+    def inference(self, dataloader, model_fun, partial=False):
+        # 1. performs inference for a dataloader and a given network call
+        # 2. saves the results to file
+
+        data_iter = iter(dataloader)
+        self.log(f"Start processing {len(data_iter)} batches with ConvNeXt model.")
+
+        with torch.no_grad():
+            ix = 0
+            batch_size = self.batch_size
+
+            images, label, class_id = next(data_iter)
+            images["pixel_values"] = images["pixel_values"][0].to(self.device)
+            o = model_fun(**images)
+            result = o.pooler_output.cpu().detach()
+
+            # initialize an empty memory mapped array for saving results into
+            _, n_features = result.shape
+
+            shape_features = (self.dataset_size, n_features)
+            shape_labels = (self.dataset_size, 1)
+
+            features_path = tempmmap.create_empty_mmap(shape_features, dtype=np.float32)
+            cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+            labels_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+
+            features = tempmmap.mmap_array_from_path(features_path)
+            cell_ids = tempmmap.mmap_array_from_path(cell_ids_path)
+            labels = tempmmap.mmap_array_from_path(labels_path)
+
+            # save the results for each batch into the memory mapped array at the specified indices
+            features[ix : (ix + batch_size)] = result.numpy()
+            cell_ids[ix : (ix + batch_size)] = class_id.unsqueeze(1)
+            labels[ix : (ix + batch_size)] = label.unsqueeze(1)
+            ix += batch_size
+
+            for i in tqdm(range(len(dataloader) - 1)):
+                images, label, class_id = next(data_iter)
+                images["pixel_values"] = images["pixel_values"][0].to(self.device)
+
+                o = model_fun(**images)
+                result = o.pooler_output.cpu().detach()
+
+                # save the results for each batch into the memory mapped array at the specified indices
+                features[ix : (ix + result.shape[0])] = result.numpy()
+                cell_ids[ix : (ix + result.shape[0])] = class_id.unsqueeze(1)
+                labels[ix : (ix + result.shape[0])] = label.unsqueeze(1)
+
+                ix += result.shape[0]
+
+            # save inferred activations / predictions
+            result_labels = [f"convnext_{i}" for i in range(n_features)]
+            dataframe = pd.DataFrame(data=features, columns=result_labels)
+            dataframe["label"] = labels
+            dataframe["cell_id"] = cell_ids.astype("int")
+
+        self.log("finished processing")
+
+        if partial:
+            path = os.path.join(self.run_path, "partial_featurization_ConvNeXt.csv")
+        else:
+            path = os.path.join(self.run_path, "featurization_ConvNeXt.csv")
+
         dataframe.to_csv(path)
