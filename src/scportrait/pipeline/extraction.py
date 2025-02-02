@@ -918,7 +918,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single threaded mode.")
             results = []
-            for arg in tqdm(args, total=len(args), desc="Processing cell batches"):
+            for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
                 x = f(arg)
                 results.append(x)
         else:
@@ -934,7 +934,7 @@ class HDF5CellExtraction(ProcessingStep):
                     tqdm(
                         pool.imap(f, args),
                         total=len(args),
-                        desc="Processing cell batches",
+                        desc="Extracting cell batches",
                     )
                 )
                 pool.close()
