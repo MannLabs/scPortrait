@@ -1393,3 +1393,4 @@ class ConvNeXtFeaturizer(ProcessingStep):
             path = os.path.join(self.run_path, "featurization_ConvNeXt.csv")
 
         dataframe.to_csv(path)
+        self.clear_temp_dir()  # ensure temp directories are deleted after processing
