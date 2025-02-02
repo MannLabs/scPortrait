@@ -1199,6 +1199,19 @@ class ConvNeXtFeaturizer(ProcessingStep):
         # lazy imports
         from transformers import ConvNextModel
 
+        # silence warnings from transformers that are not relevant here
+        # we do actually just want to load some of the weights to access the convnext features
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            message="Some weights of the model checkpoint at facebook/convnext-xlarge-224-22k were not used.*",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="Could not find image processor class in the image processor config.*",
+        )
+
         model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
         model.eval()
         model.to(self.inference_device)
