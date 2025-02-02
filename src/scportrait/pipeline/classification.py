@@ -1354,9 +1354,6 @@ class ConvNeXtFeaturizer(ProcessingStep):
 
         self.inference(dataloader, model, partial=partial)
 
-        # ensure all intermediate results are cleared after processing
-        self.clear_temp_dir()
-
     def inference(self, dataloader, model_fun, partial=False):
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
