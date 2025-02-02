@@ -1039,12 +1039,11 @@ class HDF5CellExtraction(ProcessingStep):
                     tqdm(
                         pool.imap(f, batched_args),
                         total=len(batched_args),
-                        desc="Processing cell batches",
+                        desc="Extracting cell batches",
                     )
                 )
                 pool.close()
                 pool.join()
-                print("multiprocessing done.")
 
             self.save_index_to_remove = flatten(results)
 
