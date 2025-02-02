@@ -1113,6 +1113,12 @@ class ConvNeXtFeaturizer(ProcessingStep):
         overwrite=False,
         intermediate_output=True,
     ):
+        self.debug = debug
+        self.overwrite = overwrite
+        self.config = config
+        self.intermediate_output = intermediate_output
+        self.project_location = project_location
+
         self._check_config()
 
         # assert that the correct transformers version is installed
@@ -1126,12 +1132,6 @@ class ConvNeXtFeaturizer(ProcessingStep):
         assert (
             transformers.__version__ == "4.26.0"
         ), "Please install transformers version 4.26.0"
-
-        self.debug = debug
-        self.overwrite = overwrite
-        self.config = config
-        self.intermediate_output = intermediate_output
-        self.project_location = project_location
 
         if "filtered_dataset" in config.keys():
             self.filtered_dataset = self.config["filtered_dataset"]
