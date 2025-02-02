@@ -1309,6 +1309,7 @@ class ConvNeXtFeaturizer(ProcessingStep):
         self.log("Started Featurization")
 
         model = self._load_model()
+        self._setup_transform()
         self._load_dataset()
 
         if partial is True:
