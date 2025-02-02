@@ -1201,22 +1201,38 @@ class ConvNeXtFeaturizer(ProcessingStep):
 
         # silence warnings from transformers that are not relevant here
         # we do actually just want to load some of the weights to access the convnext features
-        import warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            message="Some weights of the model checkpoint at facebook/convnext-xlarge-224-22k were not used.*",
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="Could not find image processor class in the image processor config.*",
-        )
 
         model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
         model.eval()
         model.to(self.inference_device)
 
         return model
+
+    def _silence_warnings(self):
+        import logging
+        from transformers import logging as hf_logging
+
+        # Create a custom filter class to suppress specific warnings from huggingfaces transformers
+        class SpecificMessageFilter(logging.Filter):
+            def __init__(self, suppressed_keywords):
+                super().__init__()
+                self.suppressed_keywords = suppressed_keywords
+
+            def filter(self, record):
+                return not any(
+                    keyword in record.getMessage()
+                    for keyword in self.suppressed_keywords
+                )
+
+        # Keywords to suppress
+        suppressed_keywords = [
+            "Some weights of the model checkpoint at facebook",
+            "Could not find image processor class in the image processor config",
+        ]
+
+        transformers_logger = hf_logging.get_logger()
+        for handler in transformers_logger.handlers:
+            handler.addFilter(SpecificMessageFilter(suppressed_keywords))
 
     def _setup_transform(self):
         # lazy imports
@@ -1314,6 +1330,7 @@ class ConvNeXtFeaturizer(ProcessingStep):
                 inference_device: "cuda"
         """
 
+        self._silence_warnings()
         self.create_temp_dir()  # setup directory for memory mapped temp file generation using alphabase.io
 
         self.extraction_dir = extraction_dir
