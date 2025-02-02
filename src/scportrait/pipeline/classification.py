@@ -1103,6 +1103,8 @@ class CellFeaturizer(ProcessingStep):
 
 
 class ConvNeXtFeaturizer(ProcessingStep):
+    CLEAN_LOG = True
+
     def __init__(
         self,
         config,
