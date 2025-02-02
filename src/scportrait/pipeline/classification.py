@@ -1165,8 +1165,6 @@ class ConvNeXtFeaturizer(ProcessingStep):
             os.makedirs(self.run_path)
             self.log("Created new directory " + self.run_path)
 
-        self.log(f"current run: {self.current_run}")
-
         self.inference_device = self.config["inference_device"]
         self.dataloader_worker_number = self.config["dataloader_worker_number"]
         self.batch_size = self.config["batch_size"]
