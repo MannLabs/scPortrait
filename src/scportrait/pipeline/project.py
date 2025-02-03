@@ -861,6 +861,9 @@ class Project(Logable):
         # ensure chunking is correct
         image = self._check_chunk_size(image)
 
+        # Reset all transformations
+        image.attrs = {}
+
         # check coordinate system of input image
         ### PLACEHOLDER
 
