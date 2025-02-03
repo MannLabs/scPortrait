@@ -862,7 +862,9 @@ class Project(Logable):
         image = self._check_chunk_size(image)
 
         # Reset all transformations
-        image.attrs = {}
+        if image.attrs.get("transform"):
+            self.log(f"Image contains transformations which are removed")
+            image.attrs["transform"] = None
 
         # check coordinate system of input image
         ### PLACEHOLDER
@@ -893,7 +895,7 @@ class Project(Logable):
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        if self.nuc_seg_status in self.sdata.keys() and self.cyto_seg_status in self.sdata.keys():
+        if self.nuc_seg_status in self.sdata and self.cyto_seg_status in self.sdata:
             assert (
                 self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
             ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
