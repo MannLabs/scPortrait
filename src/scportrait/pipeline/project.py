@@ -382,15 +382,15 @@ class Project(Logable):
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
             if not all(x == chunk_size[0] for x in chunk_size):
-                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
             else:
                 # ensure that the chunk size is the default chunk size
                 if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                    elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                    elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
         else:
             # ensure that the chunk size is the default chunk size
             if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
 
         return elem
 
@@ -813,7 +813,9 @@ class Project(Logable):
             zarr_reader.load("0").compute()
         )  ### adapt here to not read the entire image to memory TODO
         time_end = time()
-        self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
+        self.log(
+            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start) / 60} minutes."
+        )
 
         # Access the metadata to get channel names
         metadata = loc.root_attrs
