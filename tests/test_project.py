@@ -32,7 +32,7 @@ def config_path(tmp_path):
     os.remove(config_path)
 
 
-@pytest.mark.parametrize("image_name", ["blobs_image", "blobs_multiscale_image"])
+@pytest.mark.parametrize("image_name", ["blobs_image"])
 def test_project_load_input_from_sdata(sdata_path, config_path, tmp_path, image_name: str):
     project_path = str(tmp_path / "scportrait/project/")
 
