@@ -1,10 +1,11 @@
-import pytest
 import os
 import shutil
-import yaml
 
+import pytest
 import spatialdata as sd
+import yaml
 from spatialdata.datasets import blobs
+
 from scportrait.pipeline.project import Project
 
 

@@ -863,7 +863,7 @@ class Project(Logable):
 
         # Reset all transformations
         if image.attrs.get("transform"):
-            self.log(f"Image contains transformations which are removed")
+            self.log("Image contains transformations which are removed")
             image.attrs["transform"] = None
 
         # check coordinate system of input image
