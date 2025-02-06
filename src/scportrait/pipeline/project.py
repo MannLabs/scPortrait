@@ -382,15 +382,15 @@ class Project(Logable):
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
             if not all(x == chunk_size[0] for x in chunk_size):
-                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
             else:
                 # ensure that the chunk size is the default chunk size
                 if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                    elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                    elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
         else:
             # ensure that the chunk size is the default chunk size
             if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                elem = rechunk_image(elem, chunks=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
 
         return elem
 
@@ -813,7 +813,9 @@ class Project(Logable):
             zarr_reader.load("0").compute()
         )  ### adapt here to not read the entire image to memory TODO
         time_end = time()
-        self.log(f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start)/60} minutes.")
+        self.log(
+            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start) / 60} minutes."
+        )
 
         # Access the metadata to get channel names
         metadata = loc.root_attrs
@@ -859,6 +861,11 @@ class Project(Logable):
         # ensure chunking is correct
         image = self._check_chunk_size(image)
 
+        # Reset all transformations
+        if image.attrs.get("transform"):
+            self.log("Image contains transformations which are removed")
+            image.attrs["transform"] = None
+
         # check coordinate system of input image
         ### PLACEHOLDER
 
@@ -888,7 +895,7 @@ class Project(Logable):
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        if self.nuc_seg_status in self.sdata.keys() and self.cyto_seg_status in self.sdata.keys():
+        if self.nuc_seg_status in self.sdata and self.cyto_seg_status in self.sdata:
             assert (
                 self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
             ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."

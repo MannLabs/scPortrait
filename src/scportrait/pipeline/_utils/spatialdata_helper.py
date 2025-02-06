@@ -137,7 +137,7 @@ def rechunk_image(element: DataElement, chunk_size: ChunkSize) -> DataElement:
         ValueError: If element type is not supported
     """
     if isinstance(element, xarray.DataArray):
-        element["image"].data = element["image"].data.rechunk(chunk_size)
+        element.data = element.data.rechunk(chunk_size)
         return element
     elif isinstance(element, xarray.DataTree):
         for scale in element:
