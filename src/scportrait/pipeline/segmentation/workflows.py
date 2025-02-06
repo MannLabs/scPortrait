@@ -1292,6 +1292,31 @@ class _CellposeSegmentation(_BaseSegmentation):
             f.write(f"Normalize: {self.normalize}\n")
             f.write(f"Rescale: {self.rescale}\n")
 
+    def _add_seg_parameters_to_sdata(self, model_type: str, model_name: str) -> None:
+        _sdata = self.filehandler.get_sdata()
+
+        _dict = {
+            "model": model_name,
+            "diameter": self.diameter,
+            "resample": self.resample,
+            "flow_threshold": self.flow_threshold,
+            "cellprob_threshold": self.cellprob_threshold,
+            "normalize": self.normalize,
+            "rescale": self.rescale,
+        }
+
+        if "segmentation_parameters" in _sdata.attrs.keys():
+            if "cellpose" in _sdata.attrs["segmentation_parameters"].keys():
+                if not self.overwrite:
+                    assert model_type not in _sdata.attrs["segmentation_parameters"]["cellpose"].keys()
+                _sdata.attrs["segmentation_parameters"]["cellpose"][model_type] = _dict
+            else:
+                _sdata.attrs["segmentation_parameters"]["cellpose"] = {model_type: _dict}
+        else:
+            _sdata.attrs["segmentation_parameters"] = {"cellpose": {model_type: _dict}}
+
+        _sdata.write_metadata()
+
     def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
         """
         Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
@@ -1371,6 +1396,7 @@ class _CellposeSegmentation(_BaseSegmentation):
         self.log(f"Segmenting {model_type} using the following model: {model_name}")
 
         self._write_cellpose_seg_params_to_file(model_type=model_type, model_name=model_name)
+        self._add_seg_parameters_to_sdata(model_type=model_type, model_name=model_name)
 
         return model
 
