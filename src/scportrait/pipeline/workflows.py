@@ -1241,11 +1241,27 @@ class _CellposeSegmentation(_BaseSegmentation):
             model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
         return model
 
+    def _write_cellpose_seg_params_to_file(
+        self, model_type: str, model_name: str
+    ) -> None:
+        """
+        Writes the cellpose segmentation parameters to a file for debugging/logging purposes
+        """
+        with open(os.path.join(self.directory, "cellpose_params.txt"), "w") as f:
+            f.write("Cellpose Parameters:\n")
+            f.write(f"Model: {model_name}\n")
+            f.write(f"Model Type: {model_type}\n")
+            f.write(f"Diameter: {self.diameter}\n")
+            f.write(f"Resample: {self.resample}\n")
+            f.write(f"Flow Threshold: {self.flow_threshold}\n")
+            f.write(f"Cellprob Threshold: {self.cellprob_threshold}\n")
+            f.write(f"Normalize: {self.normalize}\n")
+
     def _load_model(
         self, model_type: str, gpu: str, device
     ) -> Tuple[float, models.Cellpose]:
         """
-        Loads cellpose model
+        Loads cellpose model and gets configuration parameters from the config file
 
         Parameters
         ----------
@@ -1254,7 +1270,7 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         Returns
         -------
-        tuple of expected diameter and the cellpose model
+        the cellpose model
         """
 
         # load correct segmentation model for cytosol
@@ -1270,13 +1286,48 @@ class _CellposeSegmentation(_BaseSegmentation):
                 "custom", model_name, gpu=gpu, device=device
             )
 
+        # get model parameters from config if not defined use default values
         if "diameter" in self.config[f"{model_type}_segmentation"].keys():
-            diameter = self.config[f"{model_type}_segmentation"]["diameter"]
+            self.diameter = self.config[f"{model_type}_segmentation"]["diameter"]
         else:
-            diameter = None
+            self.diameter = None
+
+        if "resample" in self.config[f"{model_type}_segmentation"].keys():
+            self.resample = self.config[f"{model_type}_segmentation"]["resample"]
+        else:
+            self.resample = True
+
+        if "flow_threshold" in self.config[f"{model_type}_segmentation"].keys():
+            self.flow_threshold = self.config[f"{model_type}_segmentation"][
+                "flow_threshold"
+            ]
+        else:
+            self.flow_threshold = 0.4
+
+        if "cellprob_threshold" in self.config[f"{model_type}_segmentation"].keys():
+            self.cellprob_threshold = self.config[f"{model_type}_segmentation"][
+                "cellprob_threshold"
+            ]
+        else:
+            self.cellprob_threshold = 0.0
+
+        if "normalize" in self.config[f"{model_type}_segmentation"].keys():
+            self.normalize = self.config[f"{model_type}_segmentation"]["normalize"]
+        else:
+            self.normalize = True
+
+        if "rescale" in self.config[f"{model_type}_segmentation"].keys():
+            self.rescale = self.config[f"{model_type}_segmentation"]["rescale"]
+        else:
+            self.rescale = None
 
         self.log(f"Segmenting {model_type} using the following model: {model_name}")
-        return diameter, model
+
+        self._write_cellpose_seg_params_to_file(
+            model_type=model_type, model_name=model_name
+        )
+
+        return model
 
     def _check_input_image_dtype(self, input_image):
         if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
@@ -1370,11 +1421,20 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         ### Perform Nucleus Segmentation
         ################################
 
-        diameter, model = self._load_model(
+        model = self._load_model(
             model_type="nucleus", gpu=self.use_GPU, device=self.device
         )
 
-        masks = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
+        masks, _, _, _ = model.eval(
+            [input_image],
+            rescale=self.rescale,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=[1, 0],
+        )
+
         masks = np.array(masks)  # convert to array
 
         # ensure all edge classes are removed
@@ -1396,7 +1456,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         self.maps["nucleus_segmentation"] = masks.reshape(masks.shape[1:])
 
         # manually delete model and perform gc to free up memory on GPU
-        self._clear_cache(vars_to_delete=[model, diameter, masks])
+        self._clear_cache(vars_to_delete=[model, masks])
 
     def process(self, input_image):
         # ensure that we have the correct dtype loaded
@@ -1461,15 +1521,23 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         ### Perform Nucleus Segmentation
         ################################
 
-        diameter, model = self._load_model(
+        model = self._load_model(
             model_type="nucleus", gpu=self.use_GPU, device=self.device
         )
 
-        masks_nucleus = model.eval([input_image], diameter=diameter, channels=[1, 0])[0]
+        masks_nucleus, _, _, _ = model.eval(
+            [input_image],
+            rescale=self.rescale,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=[1, 0],
+        )
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
-        self._clear_cache(vars_to_delete=[model, diameter])
+        self._clear_cache(vars_to_delete=[model])
 
         # remove edge labels from masks
         masks_nucleus = remove_edge_labels(masks_nucleus)
@@ -1478,15 +1546,23 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         #### Perform Cytosol Segmentation
         #################################
 
-        diameter, model = self._load_model(
+        model = self._load_model(
             model_type="cytosol", gpu=self.use_GPU, device=self.device
         )
 
-        masks_cytosol = model.eval([input_image], diameter=diameter, channels=[2, 1])[0]
+        masks_cytosol, _, _, _ = model.eval(
+            [input_image],
+            rescale=self.rescale,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=[2, 1],
+        )
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
-        self._clear_cache(vars_to_delete=[model, diameter])
+        self._clear_cache(vars_to_delete=[model])
 
         # remove edge labels from masks
         masks_cytosol = remove_edge_labels(masks_cytosol)
@@ -1821,15 +1897,23 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         ### Perform Cytosol Segmentation
         #####
 
-        diameter, model = self._load_model(
+        model = self._load_model(
             model_type="cytosol", gpu=self.use_GPU, device=self.device
         )
 
-        masks_cytosol = model.eval([input_image], diameter=diameter, channels=[2, 1])[0]
+        masks_cytosol, _, _, _ = model.eval(
+            [input_image],
+            rescale=self.rescale,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=[2, 1],
+        )
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
-        self._clear_cache(vars_to_delete=[model, diameter])
+        self._clear_cache(vars_to_delete=[model])
 
         # ensure edge classes are removed
         masks_cytosol = remove_edge_labels(masks_cytosol)
