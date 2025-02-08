@@ -1472,6 +1472,11 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
 
         model = self._load_model(model_type="nucleus", gpu=self.use_GPU, device=self.device)
 
+        if self.normalize is False:
+            input_image = (input_image - np.min(input_image)) / (
+                np.max(input_image) - np.min(input_image)
+            )  # min max normalize to 0-1 range as cellpose expects this
+
         masks, _, _, _ = model.eval(
             [input_image],
             rescale=self.rescale,
@@ -1576,6 +1581,11 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         ################################
 
         model = self._load_model(model_type="nucleus", gpu=self.use_GPU, device=self.device)
+
+        if self.normalize is False:
+            input_image = (input_image - np.min(input_image)) / (
+                np.max(input_image) - np.min(input_image)
+            )  # min max normalize to 0-1 range as cellpose expects this
 
         masks_nucleus, _, _, _ = model.eval(
             [input_image],
@@ -1836,6 +1846,11 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         #####
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
+
+        if self.normalize is False:
+            input_image = (input_image - np.min(input_image)) / (
+                np.max(input_image) - np.min(input_image)
+            )  # min max normalize to 0-1 range as cellpose expects this
 
         masks_cytosol, _, _, _ = model.eval(
             [input_image],
