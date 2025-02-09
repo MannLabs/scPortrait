@@ -857,11 +857,11 @@ class Project(Logable):
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
-
         image_c, image_x, image_y = image.scale0.image.shape
 
         # ensure chunking is correct
-        image = self._check_chunk_size(image)
+        for scale in image:
+            image[scale] = self._check_chunk_size(image[scale].image)
 
         # Reset all transformations
         if image.attrs.get("transform"):
