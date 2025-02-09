@@ -875,6 +875,11 @@ class Project(Logable):
         # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
             mask = sdata_input.labels[nucleus_segmentation_name]
+
+            # if mask is multi-scale ensure we only use the scale 0
+            if isinstance(mask, xarray.DataTree):
+                mask = mask["scale0"].image
+
             mask = self._check_chunk_size(mask)  # ensure chunking is correct
 
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
@@ -885,6 +890,11 @@ class Project(Logable):
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
             mask = sdata_input.labels[cytosol_segmentation_name]
+
+            # if mask is multi-scale ensure we only use the scale 0
+            if isinstance(mask, xarray.DataTree):
+                mask = mask["scale0"].image
+
             mask = self._check_chunk_size(mask)  # ensure chunking is correct
 
             self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
