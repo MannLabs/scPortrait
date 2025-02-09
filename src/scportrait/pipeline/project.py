@@ -908,7 +908,7 @@ class Project(Logable):
 
             self._check_chunk_size(mask)  # ensure chunking is correct
 
-            self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
             self.cyto_seg_status = True
             self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
