@@ -855,11 +855,19 @@ class Project(Logable):
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
-        image_c, image_x, image_y = image.scale0.image.shape
 
-        # ensure chunking is correct
-        for scale in image:
-            self._check_chunk_size(image[scale].image)
+        if isinstance(image, xarray.DataTree):
+            image_c, image_x, image_y = image.scale0.image.shape
+            # ensure chunking is correct
+            for scale in image:
+                self._check_chunk_size(image[scale].image)
+        elif isinstance(image, xarray.DataArray):
+            (
+                image_c,
+                image_x,
+                image_y,
+            ) = image.shape
+            self._check_chunk_size(image)
 
         # Reset all transformations
         if image.attrs.get("transform"):
