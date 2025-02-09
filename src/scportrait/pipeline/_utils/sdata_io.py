@@ -54,6 +54,21 @@ class sdata_filehandler(Logable):
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
 
+    def _create_empty_sdata(self) -> SpatialData:
+        """Create an empty SpatialData object.
+
+        Returns:
+            SpatialData object without any data
+        """
+        _sdata = SpatialData()
+        _sdata.attrs["sdata_status"] = {
+            "input_images": False,
+            "nucleus_segmentation": False,
+            "cytosol_segmentation": False,
+            "centers": False,
+        }
+        return _sdata
+
     def _read_sdata(self) -> SpatialData:
         """Read or create SpatialData object.
 
@@ -63,12 +78,13 @@ class sdata_filehandler(Logable):
         if os.path.exists(self.sdata_path):
             if len(os.listdir(self.sdata_path)) == 0:
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = SpatialData()
+                _sdata = self._create_empty_sdata()
                 _sdata.write(self.sdata_path, overwrite=True)
             else:
                 _sdata = SpatialData.read(self.sdata_path)
+
         else:
-            _sdata = SpatialData()
+            _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
 
         allowed_labels = ["seg_all_nucleus", "seg_all_cytosol"]
@@ -118,6 +134,15 @@ class sdata_filehandler(Logable):
         self.nuc_seg_status = self.nuc_seg_name in _sdata.labels
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
         self.centers_status = self.centers_name in _sdata.points
+
+        _sdata.attrs["sdata_status"] = {
+            "input_images": self.input_image_status,
+            "nucleus_segmentation": self.nuc_seg_status,
+            "cytosol_segmentation": self.cyto_seg_status,
+            "centers": self.centers_status,
+        }
+
+        _sdata.write_metadata()  # ensure the metadata is updated on file
 
         if return_sdata:
             return _sdata
