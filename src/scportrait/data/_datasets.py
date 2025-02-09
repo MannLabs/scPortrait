@@ -21,6 +21,24 @@ def dataset_1() -> Path:
     return save_path
 
 
+def dataset_1_omezarr() -> Path:
+    """Download and extract the example dataset 1 images in ome.zarr format.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    data_dir = Path(get_data_dir())
+    save_path = data_dir / "example_1_images_omezarr"
+    if not save_path.exists():
+        _download(
+            url="https://zenodo.org/records/14841309/files/input_image.ome.zarr.zip?download=1",
+            output_path=str(save_path),
+            archive_format="zip",
+        )
+    file_path = save_path / "input_image.ome.zarr"
+    return file_path
+
+
 def dataset_2() -> Path:
     """Download and extract the example dataset 2 images.
 
