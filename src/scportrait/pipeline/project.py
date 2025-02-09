@@ -804,16 +804,7 @@ class Project(Logable):
         self.log(f"trying to read file from {ome_zarr_path}")
         loc = parse_url(ome_zarr_path, mode="r")
         zarr_reader = Reader(loc).zarr
-
-        # read entire data into memory
-        time_start = time()
-        input_image = np.array(
-            zarr_reader.load("0").compute()
-        )  ### adapt here to not read the entire image to memory TODO
-        time_end = time()
-        self.log(
-            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start) / 60} minutes."
-        )
+        image = zarr_reader.load("0")
 
         # Access the metadata to get channel names
         metadata = loc.root_attrs
@@ -822,10 +813,26 @@ class Project(Logable):
             channels = metadata["omero"]["channels"]
             channel_names = [channel["label"] for channel in channels]
         else:
-            channel_names = [f"channel_{i}" for i in range(input_image.shape[0])]
+            if len(image.shape) == 3:
+                _, _, n_channels = image.shape
+            elif len(image.shape) == 2:
+                n_channels = 1
+            channel_names = [f"channel_{i}" for i in range(n_channels)]
 
-        # write loaded array to sdata object
-        self.load_input_from_array(input_image, channel_names=channel_names)
+        self.channel_names = channel_names
+
+        if remap is not None:
+            image = image[remap]
+            self.channel_names = [self.channel_names[i] for i in remap]
+
+        # write to sdata object
+        self.filehandler._write_image_sdata(
+            image,
+            channel_names=self.channel_names,
+            scale_factors=[2, 4, 8],
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
+            image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+        )
 
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
