@@ -509,10 +509,9 @@ class Project(Logable):
         if print_status:
             self.log("Current Project Status:")
             self.log("--------------------------------")
-            self.log(f"Input Image Status: {self.input_image_status}")
-            self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
-            self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
-            self.log(f"Centers Status: {self.centers_status}")
+            self.log(f"Input Image in sdata: {self.input_image_status}")
+            self.log(f"Nucleus Segmentation in sdata: {self.nuc_seg_status}")
+            self.log(f"Cytosol Segmentation in sdata: {self.cyto_seg_status}")
             self.log(f"Centers in sdata: {self.centers_status}")
             self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
