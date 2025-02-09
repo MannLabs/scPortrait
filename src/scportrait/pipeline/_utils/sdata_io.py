@@ -173,7 +173,8 @@ class sdata_filehandler(Logable):
             # if so only validate the model since this means we are getting the image from a spatialdata object already
             # image = Image2DModel.validate(image)
             # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
-
+            if scale_factors is not None:
+                Warning("Scale factors are ignored when passing a multi-scale image.")
             image = image.scale0.image
 
         if scale_factors is None:
@@ -181,20 +182,38 @@ class sdata_filehandler(Logable):
         if scale_factors is None:
             scale_factors = [2, 4, 8]
 
-        if channel_names is None:
-            channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+        if isinstance(image, xarray.DataArray):
+            # if so first validate the model since this means we are getting the image from a spatialdata object already
+            # then apply the scales transform
+            # image = Image2DModel.validate(image)
+            # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
 
-        # transform to spatialdata image model
-        transform_original = Identity()
-        image = Image2DModel.parse(
-            image,
-            dims=["c", "y", "x"],
-            chunks=chunks,
-            c_coords=channel_names,
-            scale_factors=scale_factors,
-            transformations={"global": transform_original},
-            rgb=False,
-        )
+            if channel_names is not None:
+                Warning(
+                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                )
+
+            image = Image2DModel.parse(
+                image,
+                scale_factors=scale_factors,
+                rgb=False,
+            )
+
+        else:
+            if channel_names is None:
+                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+
+            # transform to spatialdata image model
+            transform_original = Identity()
+            image = Image2DModel.parse(
+                image,
+                dims=["c", "y", "x"],
+                chunks=chunks,
+                c_coords=channel_names,
+                scale_factors=scale_factors,
+                transformations={"global": transform_original},
+                rgb=False,
+            )
 
         if overwrite:
             self._force_delete_object(_sdata, image_name, "images")
