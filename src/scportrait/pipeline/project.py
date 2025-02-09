@@ -147,8 +147,7 @@ class Project(Logable):
             centers_name=self.DEFAULT_CENTERS_NAME,
             debug=self.debug,
         )
-        self._read_sdata()
-        self._check_sdata_status()
+        self.filehandler._check_sdata_status()  # update sdata object and status
 
         # === setup segmentation ===
         self._setup_segmentation_f(segmentation_f)
@@ -470,8 +469,7 @@ class Project(Logable):
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )
-
-        self._read_sdata()
+        self.filehandler._check_sdata_status()
 
     def _get_sdata_path(self):
         """
@@ -508,10 +506,6 @@ class Project(Logable):
             self.log("--------------------------------")
 
         return None
-
-    def _read_sdata(self):
-        self.filehandler._read_sdata()
-        self._check_sdata_status()
 
     def view_sdata(self):
         """Start an interactive napari viewer to look at the sdata object associated with the project.
