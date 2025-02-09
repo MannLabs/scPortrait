@@ -22,6 +22,25 @@ This notebook walks you through the currently implemented segmentation workflows
 
    notebooks/example_notebook_segmentation_workflows.ipynb
 
+Parsing Workflow
+----------------
+This notebook walks you through using scportrait's `parse` module to prepare imaging data obtained from an Opera Phenix microscope for downstream applications.
+
+.. toctree::
+   :maxdepth: 2
+
+   notebooks/example_parsing_notebook.ipynb
+
+Stitching Workflow
+------------------
+
+This notebook walks you through using scportrait's `stitch` module to assemble whole-slide images from individual tif images.
+
+.. toctree::
+   :maxdepth: 2
+
+   notebooks/example_stitching_notebook.ipynb
+
 Additional Notebooks
 --------------------
 

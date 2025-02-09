@@ -48,13 +48,6 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tools
-
-   pages/tools/parsing/parsing
-   pages/tools/stitching/stitching
-
-.. toctree::
-   :maxdepth: 2
    :caption: Code Examples
 
    auto_examples/code_snippets/index
