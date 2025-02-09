@@ -485,9 +485,9 @@ class Project(Logable):
 
     def print_project_status(self):
         """Print the current project status."""
-        self._check_sdata_status(print_status=True)
+        self.get_project_status(print_status=True)
 
-    def _check_sdata_status(self, print_status=False):
+    def get_project_status(self, print_status=False):
         self.filehandler._check_sdata_status()
         self.input_image_status = self.filehandler.input_image_status
         self.nuc_seg_status = self.filehandler.nuc_seg_status
@@ -588,7 +588,7 @@ class Project(Logable):
             image_name=self.DEFAULT_INPUT_IMAGE_NAME,
         )
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_tif_files(
@@ -752,7 +752,7 @@ class Project(Logable):
 
         # strange workaround that is required so that the sdata input image does not point to the dask array anymore but
         # to the image which was written to disk
-        self._check_sdata_status()
+        self.get_project_status()
 
     def load_input_from_omezarr(
         self,
@@ -821,7 +821,7 @@ class Project(Logable):
         # write loaded array to sdata object
         self.load_input_from_array(input_image, channel_names=channel_names)
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_sdata(
@@ -913,6 +913,7 @@ class Project(Logable):
 
             self.cyto_seg_status = True
             self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
+        self.get_project_status()
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
@@ -971,7 +972,7 @@ class Project(Logable):
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     #### Functions to perform processing ####
@@ -981,7 +982,7 @@ class Project(Logable):
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -998,7 +999,7 @@ class Project(Logable):
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
     def complete_segmentation(self, overwrite: bool | None = None):
@@ -1009,7 +1010,7 @@ class Project(Logable):
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1026,7 +1027,7 @@ class Project(Logable):
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
     def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
@@ -1034,7 +1035,7 @@ class Project(Logable):
             raise ValueError("No extraction method defined")
 
         # ensure that a segmentation has been stored that can be extracted
-        self._check_sdata_status()
+        self.get_project_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1044,7 +1045,7 @@ class Project(Logable):
             self.extraction_f.overwrite_run_path = overwrite
 
         self.extraction_f(partial=partial, n_cells=n_cells)
-        self._check_sdata_status()
+        self.get_project_status()
 
     def featurize(
         self,
@@ -1056,7 +1057,7 @@ class Project(Logable):
         if self.featurization_f is None:
             raise ValueError("No featurization method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1104,7 +1105,7 @@ class Project(Logable):
 
         self.featurization_f(cells_path, size=n_cells)
 
-        self._check_sdata_status()
+        self.get_project_status()
 
     def select(
         self,
@@ -1119,8 +1120,7 @@ class Project(Logable):
         if self.selection_f is None:
             raise ValueError("No selection method defined")
 
-        self._check_sdata_status()
-
+        self.get_project_status()
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
@@ -1131,7 +1131,7 @@ class Project(Logable):
             calibration_marker=calibration_marker,
             name=name,
         )
-        self._check_sdata_status()
+        self.get_project_status()
 
 
 # this class has not yet been set up to be used with spatialdata
