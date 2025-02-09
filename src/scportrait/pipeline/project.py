@@ -46,6 +46,11 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from typing import TypeAlias
+
+ChunkSize2D: TypeAlias = tuple[int, int]
+ChunkSize3D: TypeAlias = tuple[int, int, int]
+
 
 class Project(Logable):
     """Base implementation for a scPortrait ``project``.
@@ -77,11 +82,13 @@ class Project(Logable):
 
     DEFAULT_CENTERS_NAME: str = "centers_cells"
 
-    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (1000, 1000)
 
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
+    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
     DEFAULT_FEATURIZATION_DIR_NAME = "featurization"
 
@@ -120,9 +127,6 @@ class Project(Logable):
         self.config = None
         self._get_config_file(config_path)
 
-        self.sdata_path = self._get_sdata_path()
-        self.sdata = None
-
         self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
@@ -150,8 +154,7 @@ class Project(Logable):
             centers_name=self.DEFAULT_CENTERS_NAME,
             debug=self.debug,
         )
-        self._read_sdata()
-        self._check_sdata_status()
+        self.filehandler._check_sdata_status()  # update sdata object and status
 
         # === setup segmentation ===
         self._setup_segmentation_f(segmentation_f)
@@ -170,6 +173,15 @@ class Project(Logable):
 
     def __del__(self):
         self._clear_temp_dir()
+
+    @property
+    def sdata_path(self) -> str:
+        return self._get_sdata_path()
+
+    @property
+    def sdata(self) -> SpatialData:
+        """Shape of data matrix (:attr:`n_obs`, :attr:`n_vars`)."""
+        return self.filehandler.get_sdata()
 
     ##### Setup Functions #####
 
@@ -371,7 +383,7 @@ class Project(Logable):
 
         return array_size < available_memory
 
-    def _check_chunk_size(self, elem):
+    def _check_chunk_size(self, elem, chunk_size):
         """
         Check if the chunk size of the element is the default chunk size. If not rechunk the element to the default chunk size.
         """
@@ -382,17 +394,15 @@ class Project(Logable):
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
             if not all(x == chunk_size[0] for x in chunk_size):
-                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=chunk_size)
             else:
                 # ensure that the chunk size is the default chunk size
-                if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                    elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
+                if chunk_size != chunk_size:
+                    elem = rechunk_image(elem, chunk_size=chunk_size)
         else:
             # ensure that the chunk size is the default chunk size
-            if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
-
-        return elem
+            if chunk_size != chunk_size:
+                elem = rechunk_image(elem, chunk_size=chunk_size)
 
     def _check_image_dtype(self, image: np.ndarray) -> None:
         """Check if the image dtype is the default image dtype.
@@ -466,8 +476,7 @@ class Project(Logable):
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )
-
-        self._read_sdata()
+        self.filehandler._check_sdata_status()
 
     def _get_sdata_path(self):
         """
@@ -475,56 +484,46 @@ class Project(Logable):
         """
         return os.path.join(self.project_location, self.DEFAULT_SDATA_FILE)
 
-    def _ensure_all_labels_habe_cell_ids(self):
-        """Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
-        for keys in list(self.sdata.labels.keys()):
-            if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
-                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
-
     def print_project_status(self):
         """Print the current project status."""
-        self._check_sdata_status(print_status=True)
+        self.get_project_status(print_status=True)
 
-    def _check_sdata_status(self, print_status=False):
-        if self.sdata is None:
-            self._read_sdata()
-        else:
-            self.sdata = self.filehandler._check_sdata_status(return_sdata=True)
-            self.input_image_status = self.filehandler.input_image_status
-            self.nuc_seg_status = self.filehandler.nuc_seg_status
-            self.cyto_seg_status = self.filehandler.cyto_seg_status
-            self.centers_status = self.filehandler.centers_status
+    def get_project_status(self, print_status=False):
+        self.filehandler._check_sdata_status()
+        self.input_image_status = self.filehandler.input_image_status
+        self.nuc_seg_status = self.filehandler.nuc_seg_status
+        self.cyto_seg_status = self.filehandler.cyto_seg_status
+        self.centers_status = self.filehandler.centers_status
+        extraction_file = os.path.join(
+            self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE
+        )
+        self.extraction_status = True if os.path.isfile(extraction_file) else False
 
-            if self.input_image_status:
-                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-                elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-                else:
-                    self.input_image = None
+        if self.input_image_status:
+            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            else:
+                self.input_image = None
 
         if print_status:
             self.log("Current Project Status:")
             self.log("--------------------------------")
-            self.log(f"Input Image Status: {self.input_image_status}")
-            self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
-            self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
-            self.log(f"Centers Status: {self.centers_status}")
+            self.log(f"Input Image in sdata: {self.input_image_status}")
+            self.log(f"Nucleus Segmentation in sdata: {self.nuc_seg_status}")
+            self.log(f"Cytosol Segmentation in sdata: {self.cyto_seg_status}")
+            self.log(f"Centers in sdata: {self.centers_status}")
+            self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
 
         return None
-
-    def _read_sdata(self):
-        self.sdata = self.filehandler.get_sdata()  # type: SpatialData
-        self._check_sdata_status()
 
     def view_sdata(self):
         """Start an interactive napari viewer to look at the sdata object associated with the project.
         Note:
             This only works in sessions with a visual interface.
         """
-        self.sdata = self.filehandler.get_sdata()  # ensure its up to date
-
         # open interactive viewer in napari
         interactive = Interactive(self.sdata)
         interactive.run()
@@ -580,7 +579,7 @@ class Project(Logable):
         self.channel_names = channel_names
 
         # ensure the array is a dask array
-        image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE)
+        image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE_3D)
 
         if remap is not None:
             image = image[remap]
@@ -591,11 +590,11 @@ class Project(Logable):
             image,
             channel_names=self.channel_names,
             scale_factors=[2, 4, 8],
-            chunks=self.DEFAULT_CHUNK_SIZE,
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
             image_name=self.DEFAULT_INPUT_IMAGE_NAME,
         )
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_tif_files(
@@ -748,10 +747,9 @@ class Project(Logable):
             self.DEFAULT_INPUT_IMAGE_NAME,
             channel_names=self.channel_names,
             scale_factors=[2, 4, 8],
-            chunks=self.DEFAULT_CHUNK_SIZE,
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
         )
 
-        self.sdata = None
         self.overwrite = original_overwrite  # reset to original value
 
         # cleanup variables and temp dir
@@ -760,7 +758,7 @@ class Project(Logable):
 
         # strange workaround that is required so that the sdata input image does not point to the dask array anymore but
         # to the image which was written to disk
-        self._check_sdata_status()
+        self.get_project_status()
 
     def load_input_from_omezarr(
         self,
@@ -806,16 +804,7 @@ class Project(Logable):
         self.log(f"trying to read file from {ome_zarr_path}")
         loc = parse_url(ome_zarr_path, mode="r")
         zarr_reader = Reader(loc).zarr
-
-        # read entire data into memory
-        time_start = time()
-        input_image = np.array(
-            zarr_reader.load("0").compute()
-        )  ### adapt here to not read the entire image to memory TODO
-        time_end = time()
-        self.log(
-            f"Read input image from file {ome_zarr_path} to numpy array in {(time_end - time_start) / 60} minutes."
-        )
+        image = zarr_reader.load("0")
 
         # Access the metadata to get channel names
         metadata = loc.root_attrs
@@ -824,20 +813,36 @@ class Project(Logable):
             channels = metadata["omero"]["channels"]
             channel_names = [channel["label"] for channel in channels]
         else:
-            channel_names = [f"channel_{i}" for i in range(input_image.shape[0])]
+            if len(image.shape) == 3:
+                _, _, n_channels = image.shape
+            elif len(image.shape) == 2:
+                n_channels = 1
+            channel_names = [f"channel_{i}" for i in range(n_channels)]
 
-        # write loaded array to sdata object
-        self.load_input_from_array(input_image, channel_names=channel_names)
+        self.channel_names = channel_names
 
-        self._check_sdata_status()
+        if remap is not None:
+            image = image[remap]
+            self.channel_names = [self.channel_names[i] for i in remap]
+
+        # write to sdata object
+        self.filehandler._write_image_sdata(
+            image,
+            channel_names=self.channel_names,
+            scale_factors=[2, 4, 8],
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
+            image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+        )
+
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     def load_input_from_sdata(
         self,
         sdata_path,
-        input_image_name="input_image",
-        nucleus_segmentation_name=None,
-        cytosol_segmentation_name=None,
+        input_image_name: str = "input_image",
+        nucleus_segmentation_name: str | None = None,
+        cytosol_segmentation_name: str | None = None,
         overwrite=None,
     ):
         """
@@ -857,45 +862,77 @@ class Project(Logable):
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
+        self.log(f"Adding image {input_image_name} to sdata object as 'input_image'.")
 
-        # ensure chunking is correct
-        image = self._check_chunk_size(image)
+        if isinstance(image, xarray.DataTree):
+            image_c, image_x, image_y = image.scale0.image.shape
+            # ensure chunking is correct
+            for scale in image:
+                self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+        elif isinstance(image, xarray.DataArray):
+            (
+                image_c,
+                image_x,
+                image_y,
+            ) = image.shape
+            self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
 
         # Reset all transformations
         if image.attrs.get("transform"):
-            self.log("Image contains transformations which are removed")
+            self.log("Image contained transformations which which were removed.")
             image.attrs["transform"] = None
 
         # check coordinate system of input image
         ### PLACEHOLDER
 
         self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME)
-        self.input_image_status = True
 
         # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
             mask = sdata_input.labels[nucleus_segmentation_name]
-            mask = self._check_chunk_size(mask)  # ensure chunking is correct
+            self.log(
+                f"Adding nucleus segmentation mask '{nucleus_segmentation_name}' to sdata object as '{self.nuc_seg_name}'."
+            )
 
+            # if mask is multi-scale ensure we only use the scale 0
+            if isinstance(mask, xarray.DataTree):
+                mask = mask["scale0"].image
+
+            # ensure that loaded masks are at the same scale as the input image
+            mask_x, mask_y = mask.shape
+            assert (mask_x == image_x) and (
+                mask_y == image_y
+            ), "Nucleus segmentation mask does not match input image size."
+
+            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
-
-            self.nuc_seg_status = True
-            self.log("Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
             mask = sdata_input.labels[cytosol_segmentation_name]
-            mask = self._check_chunk_size(mask)  # ensure chunking is correct
+            self.log(
+                f"Adding cytosol segmentation mask '{cytosol_segmentation_name}' to sdata object as '{self.cyto_seg_name}'."
+            )
 
-            self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            # if mask is multi-scale ensure we only use the scale 0
+            if isinstance(mask, xarray.DataTree):
+                mask = mask["scale0"].image
 
-            self.cyto_seg_status = True
-            self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
+            # ensure that loaded masks are at the same scale as the input image
+            mask_x, mask_y = mask.shape
+            assert (mask_x == image_x) and (
+                mask_y == image_y
+            ), "Nucleus segmentation mask does not match input image size."
+
+            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+            self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+
+        self.get_project_status()
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        if self.nuc_seg_status in self.sdata and self.cyto_seg_status in self.sdata:
+        if self.nuc_seg_status and self.cyto_seg_status:
             assert (
                 self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
             ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
@@ -928,7 +965,7 @@ class Project(Logable):
 
                 # add centers of cells for available nucleus map
                 centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
-                self._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
+                self.filehandler._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
 
                 self.centers_status = True
 
@@ -949,7 +986,7 @@ class Project(Logable):
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
     #### Functions to perform processing ####
@@ -959,7 +996,7 @@ class Project(Logable):
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -976,9 +1013,8 @@ class Project(Logable):
         elif self.input_image is not None:
             self.segmentation_f(self.input_image)
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-        self.sdata = self.filehandler.get_sdata()  # update
 
     def complete_segmentation(self, overwrite: bool | None = None):
         """If a sharded Segmentation was run but individual tiles failed to segment properly, this method can be called to repeat the segmentation on the failed tiles only.
@@ -988,7 +1024,7 @@ class Project(Logable):
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1005,7 +1041,7 @@ class Project(Logable):
         elif self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
 
-        self._check_sdata_status()
+        self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
     def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
@@ -1013,7 +1049,7 @@ class Project(Logable):
             raise ValueError("No extraction method defined")
 
         # ensure that a segmentation has been stored that can be extracted
-        self._check_sdata_status()
+        self.get_project_status()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1023,7 +1059,7 @@ class Project(Logable):
             self.extraction_f.overwrite_run_path = overwrite
 
         self.extraction_f(partial=partial, n_cells=n_cells)
-        self._check_sdata_status()
+        self.get_project_status()
 
     def featurize(
         self,
@@ -1035,10 +1071,14 @@ class Project(Logable):
         if self.featurization_f is None:
             raise ValueError("No featurization method defined")
 
-        self._check_sdata_status()
+        self.get_project_status()
 
-        if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
+        # check that prerequisits are fullfilled to featurize cells
+        assert self.featurization_f is not None, "No featurization method defined."
+        assert not (
+            self.nuc_seg_status or self.cyto_seg_status
+        ), "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        assert self.extraction_status, "No single cell data extracted. Please extract single cell data first."
 
         extraction_dir = self.extraction_f.get_directory()
 
@@ -1083,7 +1123,7 @@ class Project(Logable):
 
         self.featurization_f(cells_path, size=n_cells)
 
-        self._check_sdata_status()
+        self.get_project_status()
 
     def select(
         self,
@@ -1098,19 +1138,18 @@ class Project(Logable):
         if self.selection_f is None:
             raise ValueError("No selection method defined")
 
-        self._check_sdata_status()
-
+        self.get_project_status()
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
-        assert self.sdata is not None, "No sdata object loaded."
+        assert len(self.sdata._shared_keys) > 0, "sdata object is empty."
 
         self.selection_f(
             cell_sets=cell_sets,
             calibration_marker=calibration_marker,
             name=name,
         )
-        self._check_sdata_status()
+        self.get_project_status()
 
 
 # this class has not yet been set up to be used with spatialdata
