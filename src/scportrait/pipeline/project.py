@@ -88,6 +88,7 @@ class Project(Logable):
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
+    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
 
     DEFAULT_FEATURIZATION_DIR_NAME = "featurization"
 
