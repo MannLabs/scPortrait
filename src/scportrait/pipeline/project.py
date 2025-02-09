@@ -845,6 +845,7 @@ class Project(Logable):
         cytosol_segmentation_name: str | None = None,
         overwrite: bool | None = None,
         remove_duplicates: bool = True,
+        keep_all: bool = True,
     ):
         """
         Load input image from a spatialdata object.
@@ -860,6 +861,13 @@ class Project(Logable):
 
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
+        if keep_all:
+            shutil.rmtree(self.sdata_path)  # remove old sdata object
+            sdata_input.write(self.sdata_path, overwrite=True)
+            del sdata_input
+            sdata_input = self.filehandler.get_sdata()
+
+        self.get_project_status()
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
