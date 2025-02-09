@@ -1073,8 +1073,12 @@ class Project(Logable):
 
         self.get_project_status()
 
-        if not (self.nuc_seg_status or self.cyto_seg_status):
-            raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
+        # check that prerequisits are fullfilled to featurize cells
+        assert self.featurization_f is not None, "No featurization method defined."
+        assert not (
+            self.nuc_seg_status or self.cyto_seg_status
+        ), "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        assert self.extraction_status, "No single cell data extracted. Please extract single cell data first."
 
         extraction_dir = self.extraction_f.get_directory()
 
