@@ -827,9 +827,9 @@ class Project(Logable):
     def load_input_from_sdata(
         self,
         sdata_path,
-        input_image_name="input_image",
-        nucleus_segmentation_name=None,
-        cytosol_segmentation_name=None,
+        input_image_name: str = "input_image",
+        nucleus_segmentation_name: str | None = None,
+        cytosol_segmentation_name: str | None = None,
         overwrite=None,
     ):
         """
@@ -849,6 +849,7 @@ class Project(Logable):
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
+        self.log(f"Adding image {input_image_name} to sdata object as 'input_image'.")
 
         if isinstance(image, xarray.DataTree):
             image_c, image_x, image_y = image.scale0.image.shape
@@ -865,18 +866,20 @@ class Project(Logable):
 
         # Reset all transformations
         if image.attrs.get("transform"):
-            self.log("Image contains transformations which are removed")
+            self.log("Image contained transformations which which were removed.")
             image.attrs["transform"] = None
 
         # check coordinate system of input image
         ### PLACEHOLDER
 
         self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME)
-        self.input_image_status = True
 
         # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
             mask = sdata_input.labels[nucleus_segmentation_name]
+            self.log(
+                f"Adding nucleus segmentation mask '{nucleus_segmentation_name}' to sdata object as '{self.nuc_seg_name}'."
+            )
 
             # if mask is multi-scale ensure we only use the scale 0
             if isinstance(mask, xarray.DataTree):
@@ -891,12 +894,12 @@ class Project(Logable):
             self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
-            self.nuc_seg_status = True
-            self.log("Nucleus segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
-
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
             mask = sdata_input.labels[cytosol_segmentation_name]
+            self.log(
+                f"Adding cytosol segmentation mask '{cytosol_segmentation_name}' to sdata object as '{self.cyto_seg_name}'."
+            )
 
             # if mask is multi-scale ensure we only use the scale 0
             if isinstance(mask, xarray.DataTree):
@@ -911,14 +914,12 @@ class Project(Logable):
             self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
-            self.cyto_seg_status = True
-            self.log("Cytosol segmentation saved under the label {nucleus_segmentation_name} added to sdata object.")
         self.get_project_status()
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        if self.nuc_seg_status in self.sdata and self.cyto_seg_status in self.sdata:
+        if self.nuc_seg_status and self.cyto_seg_status:
             assert (
                 self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
             ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
