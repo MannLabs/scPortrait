@@ -961,6 +961,12 @@ class Project(Logable):
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
+
+                        if remove_duplicates:
+                            self.log(
+                                f"Deleting original annotation {table_name} for nucleus segmentation {nucleus_segmentation_name} from sdata object to prevent information duplication."
+                            )
+                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
 
@@ -984,6 +990,12 @@ class Project(Logable):
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
+
+                        if remove_duplicates:
+                            self.log(
+                                f"Deleting original annotation {table_name} for cytosol segmentation {cytosol_segmentation_name} from sdata object to prevent information duplication."
+                            )
+                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
         if remove_duplicates:
