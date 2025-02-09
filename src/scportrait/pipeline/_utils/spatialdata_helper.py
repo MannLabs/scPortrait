@@ -69,9 +69,13 @@ def remap_region_annotation_table(table: TableModel, region_name: str) -> TableM
     Returns:
         Remapped table
     """
+    instance_key = table.uns["spatialdata_attrs"]["instance_key"]
+    new_instance_key = "cell_id"  # default value for scportrait runs
+
     table = table.copy()
     table.obs["region"] = region_name
     table.obs["region"] = table.obs["region"].astype("category")
+    table.obs.rename(columns={instance_key: new_instance_key}, inplace=True)
 
     if "spatialdata_attrs" in table.uns:
         del table.uns["spatialdata_attrs"]  # remove the spatialdata attributes so that the table can be re-written
