@@ -493,6 +493,10 @@ class Project(Logable):
         self.nuc_seg_status = self.filehandler.nuc_seg_status
         self.cyto_seg_status = self.filehandler.cyto_seg_status
         self.centers_status = self.filehandler.centers_status
+        extraction_file = os.path.join(
+            self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE
+        )
+        self.extraction_status = True if os.path.isfile(extraction_file) else False
 
         if self.input_image_status:
             if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
@@ -509,6 +513,8 @@ class Project(Logable):
             self.log(f"Nucleus Segmentation Status: {self.nuc_seg_status}")
             self.log(f"Cytosol Segmentation Status: {self.cyto_seg_status}")
             self.log(f"Centers Status: {self.centers_status}")
+            self.log(f"Centers in sdata: {self.centers_status}")
+            self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
 
         return None
