@@ -46,6 +46,11 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from typing import TypeAlias
+
+ChunkSize2D: TypeAlias = tuple[int, int]
+ChunkSize3D: TypeAlias = tuple[int, int, int]
+
 
 class Project(Logable):
     """Base implementation for a scPortrait ``project``.
@@ -77,7 +82,8 @@ class Project(Logable):
 
     DEFAULT_CENTERS_NAME: str = "centers_cells"
 
-    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (1000, 1000)
 
     DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
@@ -376,7 +382,7 @@ class Project(Logable):
 
         return array_size < available_memory
 
-    def _check_chunk_size(self, elem):
+    def _check_chunk_size(self, elem, chunk_size):
         """
         Check if the chunk size of the element is the default chunk size. If not rechunk the element to the default chunk size.
         """
@@ -387,15 +393,15 @@ class Project(Logable):
         if isinstance(chunk_size, list):
             # check if all chunk sizes are the same otherwise rechunking needs to occur anyways
             if not all(x == chunk_size[0] for x in chunk_size):
-                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
+                elem = rechunk_image(elem, chunk_size=chunk_size)
             else:
                 # ensure that the chunk size is the default chunk size
-                if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                    elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
+                if chunk_size != chunk_size:
+                    elem = rechunk_image(elem, chunk_size=chunk_size)
         else:
             # ensure that the chunk size is the default chunk size
-            if chunk_size != self.DEFAULT_CHUNK_SIZE:
-                elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
+            if chunk_size != chunk_size:
+                elem = rechunk_image(elem, chunk_size=chunk_size)
 
     def _check_image_dtype(self, image: np.ndarray) -> None:
         """Check if the image dtype is the default image dtype.
@@ -567,7 +573,7 @@ class Project(Logable):
         self.channel_names = channel_names
 
         # ensure the array is a dask array
-        image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE)
+        image = darray.from_array(array, chunks=self.DEFAULT_CHUNK_SIZE_3D)
 
         if remap is not None:
             image = image[remap]
@@ -578,7 +584,7 @@ class Project(Logable):
             image,
             channel_names=self.channel_names,
             scale_factors=[2, 4, 8],
-            chunks=self.DEFAULT_CHUNK_SIZE,
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
             image_name=self.DEFAULT_INPUT_IMAGE_NAME,
         )
 
@@ -735,7 +741,7 @@ class Project(Logable):
             self.DEFAULT_INPUT_IMAGE_NAME,
             channel_names=self.channel_names,
             scale_factors=[2, 4, 8],
-            chunks=self.DEFAULT_CHUNK_SIZE,
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
         )
 
         self.overwrite = original_overwrite  # reset to original value
@@ -848,14 +854,14 @@ class Project(Logable):
             image_c, image_x, image_y = image.scale0.image.shape
             # ensure chunking is correct
             for scale in image:
-                self._check_chunk_size(image[scale].image)
+                self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
         elif isinstance(image, xarray.DataArray):
             (
                 image_c,
                 image_x,
                 image_y,
             ) = image.shape
-            self._check_chunk_size(image)
+            self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
 
         # Reset all transformations
         if image.attrs.get("transform"):
@@ -882,7 +888,7 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask)  # ensure chunking is correct
+            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
@@ -902,8 +908,7 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask)  # ensure chunking is correct
-
+            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
             self.cyto_seg_status = True
