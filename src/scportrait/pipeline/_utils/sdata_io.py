@@ -166,28 +166,32 @@ class sdata_filehandler(Logable):
             chunks (tuple): Chunk size for the image. Default is (1, 1000, 1000).
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
-
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
-
         _sdata = self._read_sdata()
 
-        if channel_names is None:
-            channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+        # check if the image is already a multi-scale image
+        if isinstance(image, xarray.DataTree):
+            # if so only validate the model since this means we are getting the image from a spatialdata object already
+            image = Image2DModel.validate(image)
+        else:
+            if scale_factors is None:
+                scale_factors = [2, 4, 8]
+            if scale_factors is None:
+                scale_factors = [2, 4, 8]
 
-        # transform to spatialdata image model
-        transform_original = Identity()
-        image = Image2DModel.parse(
-            image,
-            dims=["c", "y", "x"],
-            chunks=chunks,
-            c_coords=channel_names,
-            scale_factors=scale_factors,
-            transformations={"global": transform_original},
-            rgb=False,
-        )
+            if channel_names is None:
+                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+
+            # transform to spatialdata image model
+            transform_original = Identity()
+            image = Image2DModel.parse(
+                image,
+                dims=["c", "y", "x"],
+                chunks=chunks,
+                c_coords=channel_names,
+                scale_factors=scale_factors,
+                transformations={"global": transform_original},
+                rgb=False,
+            )
 
         if overwrite:
             self._force_delete_object(_sdata, image_name, "images")
