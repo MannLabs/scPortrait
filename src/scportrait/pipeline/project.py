@@ -843,7 +843,8 @@ class Project(Logable):
         input_image_name: str = "input_image",
         nucleus_segmentation_name: str | None = None,
         cytosol_segmentation_name: str | None = None,
-        overwrite=None,
+        overwrite: bool | None = None,
+        remove_duplicates: bool = True,
     ):
         """
         Load input image from a spatialdata object.
@@ -985,6 +986,21 @@ class Project(Logable):
                         )
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
+        if remove_duplicates:
+            # remove input image
+            self.log(f"Deleting input image '{input_image_name}' from sdata object to prevent information duplication.")
+            self.filehandler._force_delete_object(self.sdata, name=input_image_name, type="images")
+
+            if self.nuc_seg_status:
+                self.log(
+                    f"Deleting original nucleus segmentation mask '{nucleus_segmentation_name}' from sdata object to prevent information duplication."
+                )
+                self.filehandler._force_delete_object(self.sdata, name=nucleus_segmentation_name, type="labels")
+            if self.cyto_seg_status:
+                self.log(
+                    f"Deleting original cytosol segmentation mask '{cytosol_segmentation_name}' from sdata object to prevent information duplication."
+                )
+                self.filehandler._force_delete_object(self.sdata, name=cytosol_segmentation_name, type="labels")
 
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
