@@ -10,14 +10,10 @@ Within scPortrait, all operations are centered around the concept of a ``Project
     :align: center
     :alt: scPortrait project structure
 
-Project classes
+Project class
 ---------------
-scPortrait provides several different ``Project`` classes which are designed to handle different input data types. Each ``Project`` class comes with its own set of segmentation and extraction methods which are tailored to the specific type of data. Please refer to the :ref:`segmentation <segmentation>` and :ref:`extraction <extraction>` sections for more details. Below you can find a brief outline of the different ``Project`` classes, what type of data structures they are suited for and their associated methods classes.
 
-1. Project
-++++++++++
-
-The base :func:`Project <scportrait.pipeline.project.Project>` class is for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.
+The base :func:`Project <scportrait.pipeline.project.Project>` class is  desifned for single-timepoint, single-location data. If you for for example are working with fixed whole-slide images, as those you would aquire for downstream laser microdissection, this is the type of project class you would want to use.
 
 Associated methods classes
 **************************
@@ -25,16 +21,16 @@ Associated methods classes
 1. segmentation methods: :func:`Segmentation <scportrait.pipeline.segmentation.Segmentation>`, :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>`
 2. extraction methods: :func:`HDF5CellExtraction <scportrait.pipeline.extraction.HDF5CellExtraction>`
 
-2. TimecourseProject
-+++++++++++++++++++++
+.. 2. TimecourseProject
+.. +++++++++++++++++++++
 
-The :func:`TimecourseProject <scportrait.pipeline.project.TimecourseProject>` class is for datasets with multiple input images, for example those generated via live-cell imaging.
+.. The :func:`TimecourseProject <scportrait.pipeline.project.TimecourseProject>` class is for datasets with multiple input images, for example those generated via live-cell imaging.
 
-Associated methods classes
-**************************
+.. Associated methods classes
+.. **************************
 
-1. segmentation methods: :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <scportrait.pipeline.segmentation.MultithreadedTimecourseSegmentation>`
-2. extraction methods: :func:`TimecourseHDF5CellExtraction <scportrait.pipeline.extraction.TimecourseHDF5CellExtraction>`
+.. 1. segmentation methods: :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>`, :func:`MultithreadedTimecourseSegmentation <scportrait.pipeline.segmentation.MultithreadedTimecourseSegmentation>`
+.. 2. extraction methods: :func:`TimecourseHDF5CellExtraction <scportrait.pipeline.extraction.TimecourseHDF5CellExtraction>`
 
 Initializing a scPortrait Project
 ---------------------------------
