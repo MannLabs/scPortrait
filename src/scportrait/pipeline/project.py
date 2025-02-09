@@ -951,7 +951,7 @@ class Project(Logable):
 
                 # add centers of cells for available nucleus map
                 centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
-                self._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
+                self.filehandler._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
 
                 self.centers_status = True
 
