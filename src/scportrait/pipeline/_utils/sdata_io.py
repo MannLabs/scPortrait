@@ -160,13 +160,11 @@ class sdata_filehandler(Logable):
         Raises:
             ValueError: If input image not found
         """
-        if self.input_image_status:
-            if isinstance(sdata.images[self.input_image_name], xarray.DataTree):
-                input_image = sdata.images[self.input_image_name]["scale0"].image
-            elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
-                input_image = sdata.images[self.input_image_name].image
-        else:
-            raise ValueError("Input image not found in sdata object.")
+        assert sdata.attrs["sdata_status"]["input_images"], "Input image not found in sdata object."
+        if isinstance(sdata.images[self.input_image_name], xarray.DataTree):
+            input_image = sdata.images[self.input_image_name]["scale0"].image
+        elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
+            input_image = sdata.images[self.input_image_name].image
 
         return input_image
 
