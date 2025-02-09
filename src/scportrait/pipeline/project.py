@@ -392,8 +392,6 @@ class Project(Logable):
             if chunk_size != self.DEFAULT_CHUNK_SIZE:
                 elem = rechunk_image(elem, chunk_size=self.DEFAULT_CHUNK_SIZE)
 
-        return elem
-
     def _check_image_dtype(self, image: np.ndarray) -> None:
         """Check if the image dtype is the default image dtype.
 
@@ -861,7 +859,7 @@ class Project(Logable):
 
         # ensure chunking is correct
         for scale in image:
-            image[scale] = self._check_chunk_size(image[scale].image)
+            self._check_chunk_size(image[scale].image)
 
         # Reset all transformations
         if image.attrs.get("transform"):
@@ -888,7 +886,7 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            mask = self._check_chunk_size(mask)  # ensure chunking is correct
+            self._check_chunk_size(mask)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
@@ -908,7 +906,7 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            mask = self._check_chunk_size(mask)  # ensure chunking is correct
+            self._check_chunk_size(mask)  # ensure chunking is correct
 
             self.filehandler_write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
