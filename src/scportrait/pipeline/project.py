@@ -858,6 +858,8 @@ class Project(Logable):
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
 
+        image_c, image_x, image_y = image.scale0.image.shape
+
         # ensure chunking is correct
         image = self._check_chunk_size(image)
 
@@ -880,8 +882,13 @@ class Project(Logable):
             if isinstance(mask, xarray.DataTree):
                 mask = mask["scale0"].image
 
-            mask = self._check_chunk_size(mask)  # ensure chunking is correct
+            # ensure that loaded masks are at the same scale as the input image
+            mask_x, mask_y = mask.shape
+            assert (mask_x == image_x) and (
+                mask_y == image_y
+            ), "Nucleus segmentation mask does not match input image size."
 
+            mask = self._check_chunk_size(mask)  # ensure chunking is correct
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
             self.nuc_seg_status = True
@@ -894,6 +901,12 @@ class Project(Logable):
             # if mask is multi-scale ensure we only use the scale 0
             if isinstance(mask, xarray.DataTree):
                 mask = mask["scale0"].image
+
+            # ensure that loaded masks are at the same scale as the input image
+            mask_x, mask_y = mask.shape
+            assert (mask_x == image_x) and (
+                mask_y == image_y
+            ), "Nucleus segmentation mask does not match input image size."
 
             mask = self._check_chunk_size(mask)  # ensure chunking is correct
 
