@@ -120,9 +120,6 @@ class Project(Logable):
         self.config = None
         self._get_config_file(config_path)
 
-        self.sdata_path = self._get_sdata_path()
-        self.sdata = None
-
         self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
 
@@ -170,6 +167,15 @@ class Project(Logable):
 
     def __del__(self):
         self._clear_temp_dir()
+
+    @property
+    def sdata_path(self) -> str:
+        return self._get_sdata_path()
+
+    @property
+    def sdata(self) -> SpatialData:
+        """Shape of data matrix (:attr:`n_obs`, :attr:`n_vars`)."""
+        return self.filehandler.get_sdata()
 
     ##### Setup Functions #####
 
@@ -473,33 +479,24 @@ class Project(Logable):
         """
         return os.path.join(self.project_location, self.DEFAULT_SDATA_FILE)
 
-    def _ensure_all_labels_habe_cell_ids(self):
-        """Helper function to readd cell-ids to labels objects after reloading until a more permanent solution can be found"""
-        for keys in list(self.sdata.labels.keys()):
-            if not hasattr(self.sdata.labels[keys].attrs, "cell_ids"):
-                self.sdata.labels[keys].attrs["cell_ids"] = get_unique_cell_ids(self.sdata.labels[keys])
-
     def print_project_status(self):
         """Print the current project status."""
         self._check_sdata_status(print_status=True)
 
     def _check_sdata_status(self, print_status=False):
-        if self.sdata is None:
-            self._read_sdata()
-        else:
-            self.sdata = self.filehandler._check_sdata_status(return_sdata=True)
-            self.input_image_status = self.filehandler.input_image_status
-            self.nuc_seg_status = self.filehandler.nuc_seg_status
-            self.cyto_seg_status = self.filehandler.cyto_seg_status
-            self.centers_status = self.filehandler.centers_status
+        self.filehandler._check_sdata_status()
+        self.input_image_status = self.filehandler.input_image_status
+        self.nuc_seg_status = self.filehandler.nuc_seg_status
+        self.cyto_seg_status = self.filehandler.cyto_seg_status
+        self.centers_status = self.filehandler.centers_status
 
-            if self.input_image_status:
-                if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-                elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                    self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
-                else:
-                    self.input_image = None
+        if self.input_image_status:
+            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
+            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
+                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            else:
+                self.input_image = None
 
         if print_status:
             self.log("Current Project Status:")
@@ -513,7 +510,7 @@ class Project(Logable):
         return None
 
     def _read_sdata(self):
-        self.sdata = self.filehandler.get_sdata()  # type: SpatialData
+        self.filehandler._read_sdata()
         self._check_sdata_status()
 
     def view_sdata(self):
@@ -521,8 +518,6 @@ class Project(Logable):
         Note:
             This only works in sessions with a visual interface.
         """
-        self.sdata = self.filehandler.get_sdata()  # ensure its up to date
-
         # open interactive viewer in napari
         interactive = Interactive(self.sdata)
         interactive.run()
@@ -749,7 +744,6 @@ class Project(Logable):
             chunks=self.DEFAULT_CHUNK_SIZE,
         )
 
-        self.sdata = None
         self.overwrite = original_overwrite  # reset to original value
 
         # cleanup variables and temp dir
@@ -1007,7 +1001,6 @@ class Project(Logable):
 
         self._check_sdata_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
-        self.sdata = self.filehandler.get_sdata()  # update
 
     def complete_segmentation(self, overwrite: bool | None = None):
         """If a sharded Segmentation was run but individual tiles failed to segment properly, this method can be called to repeat the segmentation on the failed tiles only.
@@ -1132,7 +1125,7 @@ class Project(Logable):
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
-        assert self.sdata is not None, "No sdata object loaded."
+        assert len(self.sdata._shared_keys) > 0, "sdata object is empty."
 
         self.selection_f(
             cell_sets=cell_sets,
