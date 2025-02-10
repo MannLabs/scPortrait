@@ -335,17 +335,15 @@ class sdata_filehandler(Logable):
 
         # get obs and obs_indices
         obs = adata.obs
-        obs_indices = adata.obs.index
+        obs_indices = adata.obs.index.astype(int)  # need to ensure int subtype to be able to annotate seg masks
 
         # sanity checking
         assert len(obs_indices) == len(set(obs_indices)), "Instance IDs are not unique."
         cell_ids_mask = set(_sdata[f"{self.centers_name}_{segmentation_mask_name}"].index.values.compute())
-        assert (
-            len(set(obs_indices).difference(cell_ids_mask)) == 0
-        ), "Instance IDs do not match segmentation mask cell IDs."
+        assert set(obs_indices).issubset(cell_ids_mask), "Instance IDs do not match segmentation mask cell IDs."
 
-        obs["instance_id"] = obs_indices.astype(int)
-        obs["region"] = "segmentation_mask_name"
+        obs["instance_id"] = obs_indices
+        obs["region"] = segmentation_mask_name
         obs["region"] = obs["region"].astype("category")
 
         adata.obs = obs
