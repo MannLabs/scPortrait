@@ -75,4 +75,4 @@ def test_project_load_from_omezarr(config_path, tmp_path):
         debug=True,
     )
 
-    project.load_from_omezarr(omezarr_path)
+    project.load_input_from_omezarr(omezarr_path)
