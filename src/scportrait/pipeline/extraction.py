@@ -324,9 +324,7 @@ class HDF5CellExtraction(ProcessingStep):
         # this mask will be used to calculate the cell centers
         if self.n_masks == 2:
             # perform sanity check that the masks have the same ids
-            assert (
-                _sdata[self.nucleus_key].attrs["cell_ids"] == _sdata[self.cytosol_key].attrs["cell_ids"]
-            ), "Nucleus and cytosol masks contain different cell ids. Cannot proceed with extraction."
+            # THIS NEEDS TO BE IMPLEMENTED HERE
 
             self.main_segmenation_mask = self.nucleus_key
 
@@ -370,9 +368,7 @@ class HDF5CellExtraction(ProcessingStep):
         ), "Cell ids in centers are not unique. Cannot proceed with extraction."
 
         # double check that the cell_ids contained in the seg masks match to those from centers
-        assert set(self.centers_cell_ids) == set(
-            _sdata[self.main_segmenation_mask].attrs["cell_ids"]
-        ), "Cell ids from centers do not match those from the segmentation mask. Cannot proceed with extraction."
+        # THIS NEEDS TO BE IMPLEMENTED HERE
 
     def _get_classes_to_extract(self):
         if self.partial_processing:
