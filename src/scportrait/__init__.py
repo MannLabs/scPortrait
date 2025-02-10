@@ -1,6 +1,6 @@
 """Top-level package for scPortrait"""
 
-__version__ = "2.0.0-dev0"
+__version__ = "2.0.0"
 
 # silence warnings
 import warnings
