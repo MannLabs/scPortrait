@@ -938,6 +938,7 @@ class Project(Logable):
                 self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
 
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
+            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
@@ -960,6 +961,7 @@ class Project(Logable):
                 self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
 
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
         self.get_project_status()
 
@@ -1000,12 +1002,6 @@ class Project(Logable):
                             self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
-
-                # add centers of cells for available nucleus map
-                centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
-                self.filehandler._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
-
-                self.centers_status = True
 
             # add cytosol segmentations if available
             if self.cyto_seg_status:
