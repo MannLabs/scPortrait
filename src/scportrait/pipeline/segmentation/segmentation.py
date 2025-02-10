@@ -310,12 +310,14 @@ class Segmentation(ProcessingStep):
                 self.filehandler._write_segmentation_sdata(
                     labels[ix], self.nuc_seg_name, classes=classes, overwrite=self.overwrite
                 )
+                self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
 
             if "cytosol" in masks:
                 ix = masks.index("cytosol")
                 self.filehandler._write_segmentation_sdata(
                     labels[ix], self.cyto_seg_name, classes=classes, overwrite=self.overwrite
                 )
+                self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
 
     def save_map(self, map_name):
         """Saves newly computed map.
