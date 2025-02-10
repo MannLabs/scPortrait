@@ -270,7 +270,6 @@ class _FeaturizationBase(ProcessingStep):
     ### Functions for model loading and setup
 
     def _assign_model(self, model):
-        self.log("Model assigned to featurization function.")
         self.model = model
 
         # check if the hparams specify an expected image size

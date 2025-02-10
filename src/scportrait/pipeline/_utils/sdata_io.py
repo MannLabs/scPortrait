@@ -54,6 +54,21 @@ class sdata_filehandler(Logable):
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
 
+    def _create_empty_sdata(self) -> SpatialData:
+        """Create an empty SpatialData object.
+
+        Returns:
+            SpatialData object without any data
+        """
+        _sdata = SpatialData()
+        _sdata.attrs["sdata_status"] = {
+            "input_images": False,
+            "nucleus_segmentation": False,
+            "cytosol_segmentation": False,
+            "centers": False,
+        }
+        return _sdata
+
     def _read_sdata(self) -> SpatialData:
         """Read or create SpatialData object.
 
@@ -63,12 +78,13 @@ class sdata_filehandler(Logable):
         if os.path.exists(self.sdata_path):
             if len(os.listdir(self.sdata_path)) == 0:
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = SpatialData()
+                _sdata = self._create_empty_sdata()
                 _sdata.write(self.sdata_path, overwrite=True)
             else:
                 _sdata = SpatialData.read(self.sdata_path)
+
         else:
-            _sdata = SpatialData()
+            _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
 
         allowed_labels = ["seg_all_nucleus", "seg_all_cytosol"]
@@ -119,6 +135,15 @@ class sdata_filehandler(Logable):
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
         self.centers_status = self.centers_name in _sdata.points
 
+        _sdata.attrs["sdata_status"] = {
+            "input_images": self.input_image_status,
+            "nucleus_segmentation": self.nuc_seg_status,
+            "cytosol_segmentation": self.cyto_seg_status,
+            "centers": self.centers_status,
+        }
+
+        _sdata.write_metadata()  # ensure the metadata is updated on file
+
         if return_sdata:
             return _sdata
         return None
@@ -135,13 +160,11 @@ class sdata_filehandler(Logable):
         Raises:
             ValueError: If input image not found
         """
-        if self.input_image_status:
-            if isinstance(sdata.images[self.input_image_name], xarray.DataTree):
-                input_image = sdata.images[self.input_image_name]["scale0"].image
-            elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
-                input_image = sdata.images[self.input_image_name].image
-        else:
-            raise ValueError("Input image not found in sdata object.")
+        assert sdata.attrs["sdata_status"]["input_images"], "Input image not found in sdata object."
+        if isinstance(sdata.images[self.input_image_name], xarray.DataTree):
+            input_image = sdata.images[self.input_image_name]["scale0"].image
+        elif isinstance(sdata.images[self.input_image_name], xarray.DataArray):
+            input_image = sdata.images[self.input_image_name].image
 
         return input_image
 
@@ -166,28 +189,54 @@ class sdata_filehandler(Logable):
             chunks (tuple): Chunk size for the image. Default is (1, 1000, 1000).
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
-
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
-
         _sdata = self._read_sdata()
 
-        if channel_names is None:
-            channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+        # check if the image is already a multi-scale image
+        if isinstance(image, xarray.DataTree):
+            # if so only validate the model since this means we are getting the image from a spatialdata object already
+            # image = Image2DModel.validate(image)
+            # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
+            if scale_factors is not None:
+                Warning("Scale factors are ignored when passing a multi-scale image.")
+            image = image.scale0.image
 
-        # transform to spatialdata image model
-        transform_original = Identity()
-        image = Image2DModel.parse(
-            image,
-            dims=["c", "y", "x"],
-            chunks=chunks,
-            c_coords=channel_names,
-            scale_factors=scale_factors,
-            transformations={"global": transform_original},
-            rgb=False,
-        )
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
+        if scale_factors is None:
+            scale_factors = [2, 4, 8]
+
+        if isinstance(image, xarray.DataArray):
+            # if so first validate the model since this means we are getting the image from a spatialdata object already
+            # then apply the scales transform
+            # image = Image2DModel.validate(image)
+            # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
+
+            if channel_names is not None:
+                Warning(
+                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                )
+
+            image = Image2DModel.parse(
+                image,
+                scale_factors=scale_factors,
+                rgb=False,
+            )
+
+        else:
+            if channel_names is None:
+                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+
+            # transform to spatialdata image model
+            transform_original = Identity()
+            image = Image2DModel.parse(
+                image,
+                dims=["c", "y", "x"],
+                chunks=chunks,
+                c_coords=channel_names,
+                scale_factors=scale_factors,
+                transformations={"global": transform_original},
+                rgb=False,
+            )
 
         if overwrite:
             self._force_delete_object(_sdata, image_name, "images")

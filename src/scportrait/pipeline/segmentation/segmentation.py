@@ -929,6 +929,7 @@ class ShardedSegmentation(Segmentation):
                     tqdm(
                         pool.imap(self.method._call_as_shard, shard_list),
                         total=len(shard_list),
+                        desc="Segmenting Image Tiles",
                     )
                 )
                 pool.close()

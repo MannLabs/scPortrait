@@ -702,7 +702,9 @@ class HDF5CellExtraction(ProcessingStep):
 
             # populate dataset in loop to prevent loading of entire dataset into memory
             # this is required to process large datasets to not run into memory issues
-            for ix, i in enumerate(keep_index):
+            for ix, i in tqdm(
+                enumerate(keep_index), total=len(keep_index), desc="Transferring single cell images to HDF5"
+            ):
                 single_cell_data[ix] = _tmp_single_cell_data[i]
 
             self.log("single-cell data created")
@@ -918,7 +920,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.log("Running in single threaded mode.")
             results = []
-            for arg in tqdm(args, total=len(args), desc="Processing cell batches"):
+            for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
                 x = f(arg)
                 results.append(x)
         else:
@@ -934,7 +936,7 @@ class HDF5CellExtraction(ProcessingStep):
                     tqdm(
                         pool.imap(f, args),
                         total=len(args),
-                        desc="Processing cell batches",
+                        desc="Extracting cell batches",
                     )
                 )
                 pool.close()
