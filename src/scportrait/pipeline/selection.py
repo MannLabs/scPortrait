@@ -84,6 +84,8 @@ class LMDSelection(ProcessingStep):
             except KeyError:
                 Warning("No name provided for the selection. Will use default name.")
                 name = "selected_cells"
+        else:
+            name = self.name
 
         # create savepath
         savename = name.replace(" ", "_") + ".xml"
