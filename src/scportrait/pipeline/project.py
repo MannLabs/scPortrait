@@ -1125,7 +1125,7 @@ class Project(Logable):
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
-        assert not (
+        assert (
             self.nuc_seg_status or self.cyto_seg_status
         ), "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
         assert self.extraction_status, "No single cell data extracted. Please extract single cell data first."
