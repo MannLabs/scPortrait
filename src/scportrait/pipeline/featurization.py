@@ -1269,64 +1269,17 @@ class _cellFeaturizerBase(_FeaturizationBase):
         if self.project.nuc_seg_status:
             # save nucleus segmentation
             columns_drop = [x for x in results.columns if self.MASK_NAMES[1] in x]
-
-            _results = results.drop(columns=columns_drop)
-            _results.set_index("cell_id", inplace=True)
-            _results.drop(columns=["label"], inplace=True)
-
-            feature_matrix = _results.to_numpy()
-            var_names = _results.columns
-            obs_indices = _results.index.astype(str)
-
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs["instance_id"] = obs_indices.astype(int)
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
-            obs["region"] = obs["region"].astype("category")
-
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
-                region_key="region",
-                instance_key="instance_id",
-            )
-
-            # define name to save table under
-            self.label.replace("CellFeaturizer_", "")  # remove class name from label to ensure we dont have duplicates
+            segmentation_name = f"{mask_type}_{self.MASK_NAMES[0]}"
 
             if self.channel_selection is not None:
                 table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[0]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
-            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
-
         if self.project.cyto_seg_status:
             # save cytosol segmentation
             columns_drop = [x for x in results.columns if self.MASK_NAMES[0] in x]
-
-            _results = results.drop(columns=columns_drop)
-            _results.set_index("cell_id", inplace=True)
-            _results.drop(columns=["label"], inplace=True)
-
-            feature_matrix = _results.to_numpy()
-            var_names = _results.columns
-            obs_indices = _results.index.astype(str)
-
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs["instance_id"] = obs_indices.astype(int)
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
-            obs["region"] = obs["region"].astype("category")
-
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
-                region_key="region",
-                instance_key="instance_id",
-            )
+            segmentation_name = f"{mask_type}_{self.MASK_NAMES[1]}"
 
             # define name to save table under
             if self.channel_selection is not None:
@@ -1334,7 +1287,18 @@ class _cellFeaturizerBase(_FeaturizationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
-            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
+        _results = results.drop(columns=columns_drop)
+        _results.set_index("cell_id", inplace=True)
+        _results.drop(columns=["label"], inplace=True)
+
+        feature_matrix = _results.to_numpy()
+        var_names = _results.columns
+        obs_indices = _results.index.astype(str)
+
+        adata = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=pd.DataFrame(index=obs_indices))
+        self.filehandler._write_table_sdata(
+            adata, segmentation_mask_name=segmentation_name, table_name=table_name, overwrite=self.overwrite_run_path
+        )
 
 
 class CellFeaturizer(_cellFeaturizerBase):
