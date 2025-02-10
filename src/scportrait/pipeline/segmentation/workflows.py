@@ -1477,7 +1477,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks, _, _, _ = model.eval(
+        masks = model.eval(
             [input_image],
             rescale=self.rescale,
             normalize=self.normalize,
@@ -1485,7 +1485,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
             channels=[1, 0],
-        )
+        )[0]
         masks = np.array(masks)  # convert to array
 
         # ensure all edge classes are removed
@@ -1587,7 +1587,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_nucleus, _, _, _ = model.eval(
+        masks_nucleus = model.eval(
             [input_image],
             rescale=self.rescale,
             normalize=self.normalize,
@@ -1595,7 +1595,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
             channels=[1, 0],
-        )
+        )[0]
         masks_nucleus = np.array(masks_nucleus)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
@@ -1610,7 +1610,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
 
-        masks_cytosol, _, _, _ = model.eval(
+        masks_cytosol = model.eval(
             [input_image],
             rescale=self.rescale,
             normalize=self.normalize,
@@ -1618,7 +1618,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
             channels=[2, 1],
-        )
+        )[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
@@ -1852,7 +1852,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_cytosol, _, _, _ = model.eval(
+        masks_cytosol = model.eval(
             [input_image],
             rescale=self.rescale,
             normalize=self.normalize,
@@ -1860,7 +1860,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
             channels=[2, 1],
-        )
+        )[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
         # manually delete model and perform gc to free up memory on GPU
