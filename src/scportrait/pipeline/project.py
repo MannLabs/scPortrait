@@ -915,6 +915,11 @@ class Project(Logable):
         # check coordinate system of input image
         ### PLACEHOLDER
 
+        # check channel names
+        self.log(
+            f"Found the following channel names in the input image and saving in the spatialdata object: {channel_names}"
+        )
+
         self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME, channel_names=channel_names)
 
         # check if a nucleus segmentation exists and if so add it to the sdata object
@@ -938,6 +943,9 @@ class Project(Logable):
                 self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
 
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
+            self.log(
+                f"Calculating centers for nucleus segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
+            )
             self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
@@ -961,6 +969,9 @@ class Project(Logable):
                 self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
 
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            self.log(
+                f"Calculating centers for cytosol segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
+            )
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
         self.get_project_status()
