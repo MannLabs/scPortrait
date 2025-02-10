@@ -846,6 +846,7 @@ class Project(Logable):
         overwrite: bool | None = None,
         keep_all: bool = True,
         remove_duplicates: bool = True,
+        rechunk: bool = False,
     ) -> None:
         """
         Load input image from a spatialdata object.
@@ -890,8 +891,9 @@ class Project(Logable):
             image_c, image_x, image_y = image.scale0.image.shape
 
             # ensure chunking is correct
-            for scale in image:
-                self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+            if rechunk:
+                for scale in image:
+                    self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
 
             # get channel names
             channel_names = image.scale0.image.c.values
@@ -900,7 +902,8 @@ class Project(Logable):
             image_c, image_x, image_y = image.shape
 
             # ensure chunking is correct
-            self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+            if rechunk:
+                self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
 
             channel_names = image.c.values
 
@@ -931,7 +934,9 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+            if rechunk:
+                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
@@ -951,7 +956,9 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+            if rechunk:
+                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
 
         self.get_project_status()
