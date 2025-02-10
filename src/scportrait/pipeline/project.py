@@ -888,16 +888,21 @@ class Project(Logable):
 
         if isinstance(image, xarray.DataTree):
             image_c, image_x, image_y = image.scale0.image.shape
+
             # ensure chunking is correct
             for scale in image:
                 self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+
+            # get channel names
+            channel_names = image.scale0.image.c.values
+
         elif isinstance(image, xarray.DataArray):
-            (
-                image_c,
-                image_x,
-                image_y,
-            ) = image.shape
+            image_c, image_x, image_y = image.shape
+
+            # ensure chunking is correct
             self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+
+            channel_names = image.c.values
 
         # Reset all transformations
         if image.attrs.get("transform"):
@@ -907,7 +912,7 @@ class Project(Logable):
         # check coordinate system of input image
         ### PLACEHOLDER
 
-        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME)
+        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME, channel_names=channel_names)
 
         # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
