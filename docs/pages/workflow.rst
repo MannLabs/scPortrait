@@ -4,7 +4,7 @@
 Workflow
 ************
 
-scPortrait, is a computational framework for transforming raw microscopy images into single cell image datasets that can directly be used for training deep learning models.scPortrait efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications. scPortrait solves several challenges that come with scaling image operations to millions of cells.
+scPortrait, is a computational framework for transforming raw microscopy images into single cell image datasets that can directly be used for training deep learning models. scPortrait efficiently segments individual cells, generates single-cell datasets and provides tools for the efficient deep learning classification of their phenotypes for downstream applications. scPortrait solves several challenges that come with scaling image operations to millions of cells allowing for the processing of extremely large image datasets.
 
 .. image:: images/scportrait_workflow_steps.png
    :width: 100%
@@ -135,8 +135,7 @@ The selection step takes a list of cells that have been selected based on their 
 
 During selection, the appearance of selected cells can be modified, e.g. by applying an erosion or dilation or by smoothing the shapes to further stream-line the excision process. Please refer to the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library for more details on the available parameters.
 
-You can also find an example selection workflow outlined in this `notebook <
-   https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-a-Leica-LMD7>`_.
+You can also find an example selection workflow outlined in this `notebook <https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-a-Leica-LMD7>`_.
 
 .. _detailed_guide:
 

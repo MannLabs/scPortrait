@@ -10,17 +10,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-      - name: Add conda to system path
-        run: |
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Install dependencies
-        run: |
-          conda install -y python=3.10
-          conda env update --file .github/additional_files/environment.yml --name base
+          python-version: "3.11"
+
       - name: Install package
         run: |
           pip install uv
@@ -29,6 +24,7 @@ jobs:
       - name: Install pre-commit
         run: |
           uv pip install --system pre-commit
+
       - name: Run pre-commit checks
         run: |
           pre-commit install

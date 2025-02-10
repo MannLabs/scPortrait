@@ -30,29 +30,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pip cache
-        uses: actions/cache@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.10"
+          python-version: "3.11"
       - name: set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
         with:
           pandoc-version: "3.1.11" # The pandoc version to download (if necessary) and use.
-      - name: Add conda to system path
+      - name: Install package including dev dependencies
         run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Install dependencies
-        run: |
-          conda install -y python=3.10
-          sudo apt install pandoc
-          pip install ."[dev]"/
-          #conda env update --file .github/additional_files/environment.yml --name base
+          pip install uv
+          uv pip install --system -r requirements_dev.txt
+          uv pip install --system .
       - uses: Mushus/checkout-submodule@v1
         with:
           basePath: .
