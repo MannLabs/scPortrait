@@ -80,7 +80,7 @@ class Project(Logable):
     DEFAULT_SEG_NAME_0: str = "nucleus"
     DEFAULT_SEG_NAME_1: str = "cytosol"
 
-    DEFAULT_CENTERS_NAME: str = "centers_cells"
+    DEFAULT_CENTERS_NAME: str = "centers"
 
     DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 1000, 1000)
     DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (1000, 1000)

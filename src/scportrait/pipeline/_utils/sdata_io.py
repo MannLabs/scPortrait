@@ -359,7 +359,8 @@ class sdata_filehandler(Logable):
         """
         _sdata = self._read_sdata()
         centroids_object = self._get_centers(_sdata, segmentation_label)
-        self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
+        centers_name = f"{self.centers_name}_{segmentation_label}"
+        self._write_points_object_sdata(centroids_object, centers_name, overwrite=overwrite)
 
     ## load elements from sdata to a memory mapped array
     def _load_input_image_to_memmap(

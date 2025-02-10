@@ -153,7 +153,7 @@ class ProcessingStep(Logable):
     DEFAULT_SEG_NAME_0 = "nucleus"
     DEFAULT_SEG_NAME_1 = "cytosol"
 
-    DEFAULT_CENTERS_NAME = "centers_cells"
+    DEFAULT_CENTERS_NAME = "centers"
 
     DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
 

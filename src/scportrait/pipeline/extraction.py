@@ -350,17 +350,18 @@ class HDF5CellExtraction(ProcessingStep):
         _sdata = self.filehandler._read_sdata()
 
         # calculate centers if they have not been calculated yet
-        if self.DEFAULT_CENTERS_NAME not in _sdata:
+        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.main_segmenation_mask}"
+        if centers_name not in _sdata:
             self.filehandler._add_centers(self.main_segmenation_mask, overwrite=self.overwrite)
             _sdata = self.filehandler._read_sdata()  # reread to ensure we have updated version
 
-        centers = _sdata[self.DEFAULT_CENTERS_NAME].values.compute()
+        centers = _sdata[centers_name].values.compute()
 
         # round to int so that we can use them as indices
         centers = np.round(centers).astype(int)
 
         self.centers = centers
-        self.centers_cell_ids = _sdata[self.DEFAULT_CENTERS_NAME].index.values.compute()
+        self.centers_cell_ids = _sdata[centers_name].index.values.compute()
 
         # ensure that the centers ids are unique
         assert len(self.centers_cell_ids) == len(
