@@ -9,11 +9,10 @@ import numpy as np
 import xarray
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, PointsModel, TableModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
-from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
 from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
@@ -86,13 +85,6 @@ class sdata_filehandler(Logable):
         else:
             _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
-
-        allowed_labels = ["seg_all_nucleus", "seg_all_cytosol"]
-        for key in _sdata.labels:
-            if key in allowed_labels:
-                segmentation_object = _sdata.labels[key]
-                if not hasattr(segmentation_object.attrs, "cell_ids"):
-                    segmentation_object = spLabels2DModel().convert(segmentation_object, classes=None)
 
         return _sdata
 
@@ -249,7 +241,7 @@ class sdata_filehandler(Logable):
 
     def _write_segmentation_object_sdata(
         self,
-        segmentation_object: spLabels2DModel,
+        segmentation_object: Labels2DModel,
         segmentation_label: str,
         classes: set[str] | None = None,
         overwrite: bool = False,
@@ -263,9 +255,6 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if not hasattr(segmentation_object.attrs, "cell_ids"):
-            segmentation_object = spLabels2DModel().convert(segmentation_object, classes=classes)
 
         if overwrite:
             self._force_delete_object(_sdata, segmentation_label, "labels")
@@ -294,7 +283,7 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         transform_original = Identity()
-        mask = spLabels2DModel.parse(
+        mask = Labels2DModel.parse(
             segmentation,
             dims=["y", "x"],
             transformations={"global": transform_original},
