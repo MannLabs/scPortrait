@@ -840,13 +840,28 @@ class Project(Logable):
     def load_input_from_sdata(
         self,
         sdata_path,
-        input_image_name: str = "input_image",
+        input_image_name: str,
         nucleus_segmentation_name: str | None = None,
         cytosol_segmentation_name: str | None = None,
-        overwrite=None,
-    ):
+        overwrite: bool | None = None,
+        keep_all: bool = True,
+        remove_duplicates: bool = True,
+    ) -> None:
         """
         Load input image from a spatialdata object.
+
+        Args:
+            sdata_path: Path to the spatialdata object.
+            input_image_name: Name of the element in the spatial data object containing the input image.
+            nucleus_segmentation_name: Name of the element in the spatial data object containing the nucleus segmentation mask. Default is ``None``.
+            cytosol_segmentation_name: Name of the element in the spatial data object containing the cytosol segmentation mask. Default is ``None``.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
+            remove_duplicates: If keep_all and remove_duplicates is True then only one copy of the spatialdata elements selected for use with scportrait processing steps will be kept. Otherwise, the element will be saved both under the original as well as the new name.
+
+        Returns:
+            None: Image is written to the project associated sdata object and self.sdata is updated.
         """
 
         # setup overwrite
@@ -859,6 +874,13 @@ class Project(Logable):
 
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
+        if keep_all:
+            shutil.rmtree(self.sdata_path)  # remove old sdata object
+            sdata_input.write(self.sdata_path, overwrite=True)
+            del sdata_input
+            sdata_input = self.filehandler.get_sdata()
+
+        self.get_project_status()
 
         # get input image and write it to the final sdata object
         image = sdata_input.images[input_image_name]
@@ -960,6 +982,12 @@ class Project(Logable):
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
+
+                        if keep_all and remove_duplicates:
+                            self.log(
+                                f"Deleting original annotation {table_name} for nucleus segmentation {nucleus_segmentation_name} from sdata object to prevent information duplication."
+                            )
+                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
 
@@ -983,8 +1011,30 @@ class Project(Logable):
                         self.log(
                             f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
                         )
+
+                        if keep_all and remove_duplicates:
+                            self.log(
+                                f"Deleting original annotation {table_name} for cytosol segmentation {cytosol_segmentation_name} from sdata object to prevent information duplication."
+                            )
+                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
+
+        if keep_all and remove_duplicates:
+            # remove input image
+            self.log(f"Deleting input image '{input_image_name}' from sdata object to prevent information duplication.")
+            self.filehandler._force_delete_object(self.sdata, name=input_image_name, type="images")
+
+            if self.nuc_seg_status:
+                self.log(
+                    f"Deleting original nucleus segmentation mask '{nucleus_segmentation_name}' from sdata object to prevent information duplication."
+                )
+                self.filehandler._force_delete_object(self.sdata, name=nucleus_segmentation_name, type="labels")
+            if self.cyto_seg_status:
+                self.log(
+                    f"Deleting original cytosol segmentation mask '{cytosol_segmentation_name}' from sdata object to prevent information duplication."
+                )
+                self.filehandler._force_delete_object(self.sdata, name=cytosol_segmentation_name, type="labels")
 
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
