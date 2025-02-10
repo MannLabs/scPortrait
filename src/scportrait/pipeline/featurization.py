@@ -1161,7 +1161,7 @@ class _cellFeaturizerBase(_FeaturizationBase):
         column_names = []
 
         if n_masks == 1:
-            self.project._check_sdata_status()
+            self.project.get_project_status()
 
             if self.project.nuc_seg_status:
                 mask_name = self.MASK_NAMES[0]
