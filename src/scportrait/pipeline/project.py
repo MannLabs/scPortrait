@@ -876,7 +876,7 @@ class Project(Logable):
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
         if keep_all:
-            shutil.rmtree(self.sdata_path)  # remove old sdata object
+            shutil.rmtree(self.sdata_path, ignore_errors=True)  # remove old sdata object
             sdata_input.write(self.sdata_path, overwrite=True)
             del sdata_input
             sdata_input = self.filehandler.get_sdata()
