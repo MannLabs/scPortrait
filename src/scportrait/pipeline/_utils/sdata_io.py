@@ -347,7 +347,10 @@ class sdata_filehandler(Logable):
         if segmentation_label not in sdata.labels:
             raise ValueError(f"Segmentation {segmentation_label} not found in sdata object.")
 
-        centers = calculate_centroids(sdata.labels[segmentation_label])
+        mask = sdata.labels[segmentation_label]
+        if isinstance(mask, xarray.DataTree):
+            mask = mask.scale0.image
+        centers = calculate_centroids(mask)
         return centers
 
     def _add_centers(self, segmentation_label: str, overwrite: bool = False) -> None:
