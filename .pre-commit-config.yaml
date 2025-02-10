@@ -10,11 +10,14 @@ repos:
     rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
+        additional_dependencies:
+          -   prettier@2.1.2
+        types_or: [css]
         exclude: |
           (?x)(
-              docs/|
-              docs_source/|
-              example_data/
+              docs|
+              examples|
+              scportrait_data
           )
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.2
