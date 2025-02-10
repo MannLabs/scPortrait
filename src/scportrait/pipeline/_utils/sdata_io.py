@@ -8,6 +8,7 @@ from typing import Any, Literal, TypeAlias
 import numpy as np
 import xarray
 from alphabase.io import tempmmap
+from anndata import AnnData
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
@@ -312,6 +313,50 @@ class sdata_filehandler(Logable):
         _sdata.write_element(points_name, overwrite=True)
 
         self.log(f"Points {points_name} written to sdata object.")
+
+    def _write_table_sdata(
+        self, adata: AnnData, table_name: str, segmentation_mask_name: str, overwrite: bool = False
+    ) -> None:
+        """Write anndata to SpatialData.
+
+        Args:
+            adata: AnnData object to write
+            table_name: Name for the table object under which it should be saved
+            segmentation_mask_name: Name of the segmentation mask that this table annotates
+            overwrite: Whether to overwrite existing data
+
+        Returns:
+            None (writes to sdata object)
+        """
+        _sdata = self._read_sdata()
+
+        assert isinstance(adata, AnnData), "Input data must be an AnnData object."
+        assert segmentation_mask_name in _sdata.labels, "Segmentation mask not found in sdata object."
+
+        # get obs and obs_indices
+        obs = adata.obs
+        obs_indices = adata.obs.index
+
+        # sanity checking
+        assert len(obs_indices) == len(set(obs_indices)), "Instance IDs are not unique."
+        cell_ids_mask = set(_sdata[f"{self.centers_name}_{segmentation_mask_name}"].index.values.compute())
+        assert (
+            len(set(obs_indices).difference(cell_ids_mask)) == 0
+        ), "Instance IDs do not match segmentation mask cell IDs."
+
+        obs["instance_id"] = obs_indices.astype(int)
+        obs["region"] = "segmentation_mask_name"
+        obs["region"] = obs["region"].astype("category")
+
+        adata.obs = obs
+        table = TableModel.parse(
+            adata,
+            region=[segmentation_mask_name],
+            region_key="region",
+            instance_key="instance_id",
+        )
+
+        self._write_table_object_sdata(table, table_name, overwrite=overwrite)
 
     def _write_table_object_sdata(self, table: TableModel, table_name: str, overwrite: bool = False) -> None:
         """Write table object to SpatialData.
