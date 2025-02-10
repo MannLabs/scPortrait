@@ -6,6 +6,7 @@ import spatialdata as sd
 import yaml
 from spatialdata.datasets import blobs
 
+from scportrait.data._datasets import dataset_1_omezarr
 from scportrait.pipeline.project import Project
 
 
@@ -61,3 +62,17 @@ def test_project_load_input_from_sdata_multiscale_image(
     )
 
     project.load_input_from_sdata(sdata_path, input_image_name=image_name, cytosol_segmentation_name=segmentation_name)
+
+
+def test_project_load_from_omezarr(config_path, tmp_path):
+    project_path = str(tmp_path / "scportrait/project/")
+    omezarr_path = dataset_1_omezarr()
+
+    project = Project(
+        project_location=project_path,
+        config_path=config_path,
+        overwrite=True,
+        debug=True,
+    )
+
+    project.load_input_from_omezarr(omezarr_path)
