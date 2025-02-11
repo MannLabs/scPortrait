@@ -18,6 +18,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
+from scportrait.spdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
@@ -96,21 +97,6 @@ class sdata_filehandler(Logable):
             SpatialData object
         """
         return self._read_sdata()
-
-    def _force_delete_object(self, sdata: SpatialData, name: str, type: ObjectType) -> None:
-        """Force delete an object from the SpatialData object and directory.
-
-        Args:
-            sdata: SpatialData object
-            name: Name of object to delete
-            type: Type of object ("images", "labels", "points", "tables")
-        """
-        if name in sdata:
-            del sdata[name]
-
-        path = os.path.join(self.sdata_path, type, name)
-        if os.path.exists(path):
-            shutil.rmtree(path, ignore_errors=True)
 
     def _check_sdata_status(self, return_sdata: bool = False) -> SpatialData | None:
         """Check status of SpatialData objects.
@@ -229,12 +215,7 @@ class sdata_filehandler(Logable):
                     rgb=False,
                 )
 
-        if overwrite:
-            self._force_delete_object(_sdata, image_name, "images")
-
-        _sdata.images[image_name] = image
-        _sdata.write_element(image_name, overwrite=True)
-
+        add_element_sdata(_sdata, image, image_name, overwrite=overwrite)
         self.log(f"Image {image_name} written to sdata object.")
         self._check_sdata_status()
 
@@ -253,13 +234,7 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if overwrite:
-            self._force_delete_object(_sdata, segmentation_label, "labels")
-
-        _sdata.labels[segmentation_label] = segmentation_object
-        _sdata.write_element(segmentation_label, overwrite=True)
-
+        add_element_sdata(_sdata, segmentation_object, segmentation_label, overwrite=overwrite)
         self.log(f"Segmentation {segmentation_label} written to sdata object.")
         self._check_sdata_status()
 
@@ -281,10 +256,7 @@ class sdata_filehandler(Logable):
         """
         transform_original = Identity()
         mask = Labels2DModel.parse(
-            segmentation,
-            dims=["y", "x"],
-            transformations={"global": transform_original},
-            chunks=chunks,
+            segmentation, dims=["y", "x"], transformations={"global": transform_original}, chunks=chunks
         )
 
         if not get_chunk_size(mask) == chunks:
@@ -301,14 +273,9 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if overwrite:
-            self._force_delete_object(_sdata, points_name, "points")
-
-        _sdata.points[points_name] = points
-        _sdata.write_element(points_name, overwrite=True)
-
+        add_element_sdata(_sdata, points, points_name, overwrite=overwrite)
         self.log(f"Points {points_name} written to sdata object.")
+        self._check_sdata_status()
 
     def _write_table_sdata(
         self, adata: AnnData, table_name: str, segmentation_mask_name: str, overwrite: bool = False
@@ -344,10 +311,7 @@ class sdata_filehandler(Logable):
 
         adata.obs = obs
         table = TableModel.parse(
-            adata,
-            region=[segmentation_mask_name],
-            region_key="region",
-            instance_key="instance_id",
+            adata, region=[segmentation_mask_name], region_key="region", instance_key="instance_id"
         )
 
         self._write_table_object_sdata(table, table_name, overwrite=overwrite)
@@ -361,14 +325,9 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if overwrite:
-            self._force_delete_object(_sdata, table_name, "tables")
-
-        _sdata.tables[table_name] = table
-        _sdata.write_element(table_name, overwrite=True)
-
+        add_element_sdata(_sdata, table, table_name, overwrite=overwrite)
         self.log(f"Table {table_name} written to sdata object.")
+        self._check_sdata_status()
 
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
@@ -433,11 +392,7 @@ class sdata_filehandler(Logable):
         shape = image.shape
 
         # initialize empty memory mapped arrays to store the data
-        path_input_image = tempmmap.create_empty_mmap(
-            shape=shape,
-            dtype=image.dtype,
-            tmp_dir_abs_path=tmp_dir_abs_path,
-        )
+        path_input_image = tempmmap.create_empty_mmap(shape=shape, dtype=image.dtype, tmp_dir_abs_path=tmp_dir_abs_path)
 
         input_image_mmap = tempmmap.mmap_array_from_path(path_input_image)
 
@@ -521,9 +476,7 @@ class sdata_filehandler(Logable):
 
         # initialize empty memory mapped arrays to store the data
         path_seg_masks = tempmmap.create_empty_mmap(
-            shape=shape,
-            dtype=seg_objects[0].data.dtype,
-            tmp_dir_abs_path=tmp_dir_abs_path,
+            shape=shape, dtype=seg_objects[0].data.dtype, tmp_dir_abs_path=tmp_dir_abs_path
         )
 
         seg_masks = tempmmap.mmap_array_from_path(path_seg_masks)
