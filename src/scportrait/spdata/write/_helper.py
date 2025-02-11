@@ -1,23 +1,9 @@
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from spatialdata import SpatialData
-from spatialdata.models import (
-    Image2DModel,
-    Image3DModel,
-    Labels2DModel,
-    Labels3DModel,
-    PointsModel,
-    ShapesModel,
-    TableModel,
-)
-from xarray_schema.base import SchemaError
-
-SPATIALDATA_MODELS = [Labels2DModel, Labels3DModel, Image2DModel, Image3DModel, PointsModel, TableModel, ShapesModel]
+from spatialdata.models import get_model
 
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
-spObject: TypeAlias = (
-    Labels2DModel | Labels3DModel | Image2DModel | Image3DModel | PointsModel | TableModel | ShapesModel
-)
 
 
 def _force_delete_object(sdata: SpatialData, name: str) -> None:
@@ -39,7 +25,7 @@ def _force_delete_object(sdata: SpatialData, name: str) -> None:
         sdata.delete_element_from_disk(name)
 
 
-def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, overwrite: bool = True):
+def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overwrite: bool = True):
     """Add an element to the SpatialData object.
 
     Args:
@@ -60,23 +46,7 @@ def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, 
         _force_delete_object(sdata, element_name)
 
     # the element needs to validate with exactly one of the models
-    valid_model = False
-    for model in SPATIALDATA_MODELS:
-        try:
-            model().validate(element)
-        except SchemaError:
-            continue
-        except ValueError:
-            continue
-        except AttributeError:
-            continue
-        except KeyError:
-            continue
-        valid_model = True
-        break  # Exit loop early once validation is performed
-
-    if not valid_model:
-        raise ValueError(f"Element does not validate with any of the models: {SPATIALDATA_MODELS}")
+    get_model(element)
 
     # Add the element to the SpatialData object
     sdata[element_name] = element
