@@ -1,5 +1,6 @@
 from typing import Any, Literal, TypeAlias
 
+import numpy as np
 from spatialdata import SpatialData
 from spatialdata.models import get_model
 from xarray import DataArray, DataTree
@@ -7,21 +8,27 @@ from xarray import DataArray, DataTree
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
-def _get_shape(elem: DataArray | DataTree) -> tuple[int, int] | tuple[int, int, int]:
+def _get_shape(elem: DataArray | DataTree) -> tuple[int, int, int]:
     """Get the shape of the element.
 
     Args:
         elem: Element to get the shape of
 
     Returns:
-        Tuple of the shape of the element
+        Tuple of the shape of the element with c, x, y dimensions. If the element is 2D, the first dimension is set to np.nan.
     """
     if isinstance(elem, DataArray):
-        return elem.shape
+        shape = elem.shape
     elif isinstance(elem, DataTree):
-        return elem.scale0.image.shape
+        shape = elem.scale0.image.shape
     else:
         raise ValueError(f"Element type {type(elem)} not supported.")
+
+    if len(shape) == 2:
+        shape = (np.nan, shape[0], shape[1])
+    elif len(shape) == 3:
+        shape = (shape[0], shape[1], shape[2])
+    return shape
 
 
 def _make_key_lookup(sdata: SpatialData) -> dict:
