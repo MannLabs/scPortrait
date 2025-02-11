@@ -64,3 +64,4 @@ jobs:
               || github.event.inputs.delete_run_by_conclusion_pattern
             }}
           dry_run: ${{ github.event.inputs.dry_run }}
+        timeout-minutes: 10
