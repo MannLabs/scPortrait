@@ -6,6 +6,24 @@ from spatialdata.models import get_model
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
+def _make_key_lookup(sdata: SpatialData) -> dict:
+    """Make a lookup dictionary for the keys in the SpatialData object.
+
+    Args:
+        sdata: SpatialData object
+
+    Returns:
+        Dictionary of the keys in the SpatialData object
+    """
+    dict_lookup: dict[str, list[str]] = {}
+    for elem in sdata.elements_paths_in_memory():
+        key, name = elem.split("/")
+        if key not in dict_lookup:
+            dict_lookup[key] = []
+        dict_lookup[key].append(name)
+    return dict_lookup
+
+
 def _force_delete_object(sdata: SpatialData, name: str) -> None:
     """Force delete an object from the SpatialData object and directory.
 
