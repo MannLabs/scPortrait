@@ -2,8 +2,26 @@ from typing import Any, Literal, TypeAlias
 
 from spatialdata import SpatialData
 from spatialdata.models import get_model
+from xarray import DataArray, DataTree
 
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
+
+
+def _get_shape(elem: DataArray | DataTree) -> tuple[int, int] | tuple[int, int, int]:
+    """Get the shape of the element.
+
+    Args:
+        elem: Element to get the shape of
+
+    Returns:
+        Tuple of the shape of the element
+    """
+    if isinstance(elem, DataArray):
+        return elem.shape
+    elif isinstance(elem, DataTree):
+        return elem.scale0.image.shape
+    else:
+        raise ValueError(f"Element type {type(elem)} not supported.")
 
 
 def _make_key_lookup(sdata: SpatialData) -> dict:
