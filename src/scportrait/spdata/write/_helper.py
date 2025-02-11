@@ -60,6 +60,7 @@ def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, 
         _force_delete_object(sdata, element_name)
 
     # the element needs to validate with exactly one of the models
+    valid_model = False
     for model in SPATIALDATA_MODELS:
         try:
             model().validate(element)
@@ -71,7 +72,12 @@ def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, 
             continue
         except KeyError:
             continue
+        valid_model = True
         break  # Exit loop early once validation is performed
 
+    if not valid_model:
+        raise ValueError(f"Element does not validate with any of the models: {SPATIALDATA_MODELS}")
+
+    # Add the element to the SpatialData object
     sdata[element_name] = element
     sdata.write_element(element_name)
