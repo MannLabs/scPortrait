@@ -42,7 +42,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     rechunk_image,
     remap_region_annotation_table,
 )
-from scportrait.spdata.write._helper import _get_shape, _make_key_lookup
+from scportrait.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -501,10 +501,8 @@ class Project(Logable):
         self.extraction_status = True if os.path.isfile(extraction_file) else False
 
         if self.input_image_status:
-            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            if self.DEFAULT_INPUT_IMAGE_NAME in self.sdata:
+                self.input_image = _get_image(self.sdata[self.DEFAULT_INPUT_IMAGE_NAME])
             else:
                 self.input_image = None
 
