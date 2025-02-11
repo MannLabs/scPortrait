@@ -8,6 +8,24 @@ from xarray import DataArray, DataTree
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
+def _get_image(elem: DataArray | DataTree) -> DataArray:
+    """Get the image from the element.
+
+    Args:
+        elem: Element to get the image from
+
+    Returns:
+        Image of the element or None if the element is not an image
+    """
+    if isinstance(elem, DataArray):
+        image = elem
+    elif isinstance(elem, DataTree):
+        image = elem.scale0.image
+    else:
+        image = None
+    return image
+
+
 def _get_shape(elem: DataArray | DataTree) -> tuple[int, int, int]:
     """Get the shape of the element.
 
