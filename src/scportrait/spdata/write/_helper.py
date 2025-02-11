@@ -10,6 +10,7 @@ from spatialdata.models import (
     ShapesModel,
     TableModel,
 )
+from xarray_schema.base import SchemaError
 
 SPATIALDATA_MODELS = [Labels2DModel, Labels3DModel, Image2DModel, Image3DModel, PointsModel, TableModel, ShapesModel]
 
@@ -62,7 +63,7 @@ def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, 
     for model in SPATIALDATA_MODELS:
         try:
             model().validate(element)
-        except ValueError:
+        except SchemaError:
             continue
         break  # Exit loop early once validation is performed
 
