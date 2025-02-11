@@ -80,7 +80,7 @@ class Project(Logable):
     DEFAULT_SEG_NAME_0: str = "nucleus"
     DEFAULT_SEG_NAME_1: str = "cytosol"
 
-    DEFAULT_CENTERS_NAME: str = "centers_cells"
+    DEFAULT_CENTERS_NAME: str = "centers"
 
     DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 1000, 1000)
     DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (1000, 1000)
@@ -846,6 +846,7 @@ class Project(Logable):
         overwrite: bool | None = None,
         keep_all: bool = True,
         remove_duplicates: bool = True,
+        rechunk: bool = False,
     ) -> None:
         """
         Load input image from a spatialdata object.
@@ -875,7 +876,7 @@ class Project(Logable):
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
         if keep_all:
-            shutil.rmtree(self.sdata_path)  # remove old sdata object
+            shutil.rmtree(self.sdata_path, ignore_errors=True)  # remove old sdata object
             sdata_input.write(self.sdata_path, overwrite=True)
             del sdata_input
             sdata_input = self.filehandler.get_sdata()
@@ -888,16 +889,23 @@ class Project(Logable):
 
         if isinstance(image, xarray.DataTree):
             image_c, image_x, image_y = image.scale0.image.shape
+
             # ensure chunking is correct
-            for scale in image:
-                self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+            if rechunk:
+                for scale in image:
+                    self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+
+            # get channel names
+            channel_names = image.scale0.image.c.values
+
         elif isinstance(image, xarray.DataArray):
-            (
-                image_c,
-                image_x,
-                image_y,
-            ) = image.shape
-            self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+            image_c, image_x, image_y = image.shape
+
+            # ensure chunking is correct
+            if rechunk:
+                self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
+
+            channel_names = image.c.values
 
         # Reset all transformations
         if image.attrs.get("transform"):
@@ -907,7 +915,12 @@ class Project(Logable):
         # check coordinate system of input image
         ### PLACEHOLDER
 
-        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME)
+        # check channel names
+        self.log(
+            f"Found the following channel names in the input image and saving in the spatialdata object: {channel_names}"
+        )
+
+        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME, channel_names=channel_names)
 
         # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
@@ -926,8 +939,14 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+            if rechunk:
+                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+
             self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
+            self.log(
+                f"Calculating centers for nucleus segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
+            )
+            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
 
         # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
@@ -946,18 +965,22 @@ class Project(Logable):
                 mask_y == image_y
             ), "Nucleus segmentation mask does not match input image size."
 
-            self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+            if rechunk:
+                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+
             self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
+            self.log(
+                f"Calculating centers for cytosol segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
+            )
+            self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
         self.get_project_status()
 
         # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
         # requirements are:
         # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        if self.nuc_seg_status and self.cyto_seg_status:
-            assert (
-                self.sdata[self.nuc_seg_name].attrs["cell_ids"] == self.sdata[self.cyto_seg_name].attrs["cell_ids"]
-            ), "The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids."
+        # if self.nuc_seg_status and self.cyto_seg_status:
+        # THIS NEEDS TO BE IMPLEMENTED HERE
 
         # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
         # THIS NEEDS TO BE IMPLEMENTED HERE
@@ -990,12 +1013,6 @@ class Project(Logable):
                             self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
                 else:
                     self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
-
-                # add centers of cells for available nucleus map
-                centroids = calculate_centroids(self.sdata.labels[region_name], coordinate_system="global")
-                self.filehandler._write_points_object_sdata(centroids, self.DEFAULT_CENTERS_NAME)
-
-                self.centers_status = True
 
             # add cytosol segmentations if available
             if self.cyto_seg_status:

@@ -8,12 +8,12 @@ from typing import Any, Literal, TypeAlias
 import numpy as np
 import xarray
 from alphabase.io import tempmmap
+from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, PointsModel, TableModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
-from scportrait.pipeline._utils.spatialdata_classes import spLabels2DModel
 from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
@@ -86,13 +86,6 @@ class sdata_filehandler(Logable):
         else:
             _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
-
-        allowed_labels = ["seg_all_nucleus", "seg_all_cytosol"]
-        for key in _sdata.labels:
-            if key in allowed_labels:
-                segmentation_object = _sdata.labels[key]
-                if not hasattr(segmentation_object.attrs, "cell_ids"):
-                    segmentation_object = spLabels2DModel().convert(segmentation_object, classes=None)
 
         return _sdata
 
@@ -194,49 +187,47 @@ class sdata_filehandler(Logable):
         # check if the image is already a multi-scale image
         if isinstance(image, xarray.DataTree):
             # if so only validate the model since this means we are getting the image from a spatialdata object already
-            # image = Image2DModel.validate(image)
-            # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
+            # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
+            Image2DModel().validate(image)
             if scale_factors is not None:
                 Warning("Scale factors are ignored when passing a multi-scale image.")
-            image = image.scale0.image
+        else:
+            if scale_factors is None:
+                scale_factors = [2, 4, 8]
+            if scale_factors is None:
+                scale_factors = [2, 4, 8]
 
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
-        if scale_factors is None:
-            scale_factors = [2, 4, 8]
+            if isinstance(image, xarray.DataArray):
+                # if so first validate the model since this means we are getting the image from a spatialdata object already
+                # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
+                Image2DModel().validate(image)
 
-        if isinstance(image, xarray.DataArray):
-            # if so first validate the model since this means we are getting the image from a spatialdata object already
-            # then apply the scales transform
-            # image = Image2DModel.validate(image)
-            # this appraoch is currently not functional but an issue was opened at https://github.com/scverse/spatialdata/issues/865
+                if channel_names is not None:
+                    Warning(
+                        "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                    )
 
-            if channel_names is not None:
-                Warning(
-                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                image = Image2DModel.parse(
+                    image,
+                    scale_factors=scale_factors,
+                    rgb=False,
                 )
 
-            image = Image2DModel.parse(
-                image,
-                scale_factors=scale_factors,
-                rgb=False,
-            )
+            else:
+                if channel_names is None:
+                    channel_names = [f"channel_{i}" for i in range(image.shape[0])]
 
-        else:
-            if channel_names is None:
-                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
-
-            # transform to spatialdata image model
-            transform_original = Identity()
-            image = Image2DModel.parse(
-                image,
-                dims=["c", "y", "x"],
-                chunks=chunks,
-                c_coords=channel_names,
-                scale_factors=scale_factors,
-                transformations={"global": transform_original},
-                rgb=False,
-            )
+                # transform to spatialdata image model
+                transform_original = Identity()
+                image = Image2DModel.parse(
+                    image,
+                    dims=["c", "y", "x"],
+                    chunks=chunks,
+                    c_coords=channel_names,
+                    scale_factors=scale_factors,
+                    transformations={"global": transform_original},
+                    rgb=False,
+                )
 
         if overwrite:
             self._force_delete_object(_sdata, image_name, "images")
@@ -249,7 +240,7 @@ class sdata_filehandler(Logable):
 
     def _write_segmentation_object_sdata(
         self,
-        segmentation_object: spLabels2DModel,
+        segmentation_object: Labels2DModel,
         segmentation_label: str,
         classes: set[str] | None = None,
         overwrite: bool = False,
@@ -263,9 +254,6 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if not hasattr(segmentation_object.attrs, "cell_ids"):
-            segmentation_object = spLabels2DModel().convert(segmentation_object, classes=classes)
 
         if overwrite:
             self._force_delete_object(_sdata, segmentation_label, "labels")
@@ -294,7 +282,7 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         transform_original = Identity()
-        mask = spLabels2DModel.parse(
+        mask = Labels2DModel.parse(
             segmentation,
             dims=["y", "x"],
             transformations={"global": transform_original},
@@ -323,6 +311,48 @@ class sdata_filehandler(Logable):
         _sdata.write_element(points_name, overwrite=True)
 
         self.log(f"Points {points_name} written to sdata object.")
+
+    def _write_table_sdata(
+        self, adata: AnnData, table_name: str, segmentation_mask_name: str, overwrite: bool = False
+    ) -> None:
+        """Write anndata to SpatialData.
+
+        Args:
+            adata: AnnData object to write
+            table_name: Name for the table object under which it should be saved
+            segmentation_mask_name: Name of the segmentation mask that this table annotates
+            overwrite: Whether to overwrite existing data
+
+        Returns:
+            None (writes to sdata object)
+        """
+        _sdata = self._read_sdata()
+
+        assert isinstance(adata, AnnData), "Input data must be an AnnData object."
+        assert segmentation_mask_name in _sdata.labels, "Segmentation mask not found in sdata object."
+
+        # get obs and obs_indices
+        obs = adata.obs
+        obs_indices = adata.obs.index.astype(int)  # need to ensure int subtype to be able to annotate seg masks
+
+        # sanity checking
+        assert len(obs_indices) == len(set(obs_indices)), "Instance IDs are not unique."
+        cell_ids_mask = set(_sdata[f"{self.centers_name}_{segmentation_mask_name}"].index.values.compute())
+        assert set(obs_indices).issubset(cell_ids_mask), "Instance IDs do not match segmentation mask cell IDs."
+
+        obs["instance_id"] = obs_indices
+        obs["region"] = segmentation_mask_name
+        obs["region"] = obs["region"].astype("category")
+
+        adata.obs = obs
+        table = TableModel.parse(
+            adata,
+            region=[segmentation_mask_name],
+            region_key="region",
+            instance_key="instance_id",
+        )
+
+        self._write_table_object_sdata(table, table_name, overwrite=overwrite)
 
     def _write_table_object_sdata(self, table: TableModel, table_name: str, overwrite: bool = False) -> None:
         """Write table object to SpatialData.
@@ -358,7 +388,10 @@ class sdata_filehandler(Logable):
         if segmentation_label not in sdata.labels:
             raise ValueError(f"Segmentation {segmentation_label} not found in sdata object.")
 
-        centers = calculate_centroids(sdata.labels[segmentation_label])
+        mask = sdata.labels[segmentation_label]
+        if isinstance(mask, xarray.DataTree):
+            mask = mask.scale0.image
+        centers = calculate_centroids(mask)
         return centers
 
     def _add_centers(self, segmentation_label: str, overwrite: bool = False) -> None:
@@ -370,7 +403,8 @@ class sdata_filehandler(Logable):
         """
         _sdata = self._read_sdata()
         centroids_object = self._get_centers(_sdata, segmentation_label)
-        self._write_points_object_sdata(centroids_object, self.centers_name, overwrite=overwrite)
+        centers_name = f"{self.centers_name}_{segmentation_label}"
+        self._write_points_object_sdata(centroids_object, centers_name, overwrite=overwrite)
 
     ## load elements from sdata to a memory mapped array
     def _load_input_image_to_memmap(
