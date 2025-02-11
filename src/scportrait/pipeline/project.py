@@ -895,7 +895,7 @@ class Project(Logable):
             for elem in all_elements:
                 dict_elems[elem] = sdata_input[elem]
 
-        sdata = SpatialData.from_elements_dict(dict_elems)
+        sdata = SpatialData.init_from_elements(dict_elems)
         sdata.write(self.sdata_path, overwrite=True)
 
         # update project status
