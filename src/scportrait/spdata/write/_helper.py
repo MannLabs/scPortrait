@@ -65,6 +65,12 @@ def add_element_sdata(sdata: SpatialData, element: spObject, element_name: str, 
             model().validate(element)
         except SchemaError:
             continue
+        except ValueError:
+            continue
+        except AttributeError:
+            continue
+        except KeyError:
+            continue
         break  # Exit loop early once validation is performed
 
     sdata[element_name] = element
