@@ -430,7 +430,7 @@ class HDF5CellExtraction(ProcessingStep):
                 list(range(len(self.classes_loaded))), self.n_cells, replace=False
             )
             chosen_ids.sort()
-            self.classes = self.classes_loaded[chosen_ids]
+            self.classes = chosen_ids
             self.px_centers = self.centers[chosen_ids]
         else:
             self.classes = self.classes_loaded
