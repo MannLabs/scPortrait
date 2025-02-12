@@ -452,6 +452,9 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(
             f"Extracted Image Dimensions: {self.extracted_image_size} x {self.extracted_image_size}"
         )
+        self.log(
+            f"Resulting images will be masked to include information from single-cells only: {self.mask_images}"
+        )
 
     def _generate_save_index_lookup(self, class_list):
         self.save_index_lookup = pd.DataFrame(index=class_list)
@@ -613,9 +616,15 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("Transferring extracted single cells to .hdf5")
 
         # create name for output file
-        self.output_path = os.path.join(
-            self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE
-        )
+
+        if self.mask_images:
+            self.output_path = os.path.join(
+                self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE
+            )
+        else:
+            self.output_path = os.path.join(
+                self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE_NO_MASK
+            )
 
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
@@ -761,7 +770,6 @@ class HDF5CellExtraction(ProcessingStep):
                                 slice(y // 2 - 3, y // 2 + 3),
                             ]
                             print("center of nucleus array \n", center_nuclei, "\n")
-
                     mask = np.where(mask == ids[mask_ix], 1, 0).astype(int)
                     mask = binary_fill_holes(mask)
                     mask = gaussian(mask, preserve_range=True, sigma=1)
@@ -776,7 +784,8 @@ class HDF5CellExtraction(ProcessingStep):
                         # image_data = self.input_image[image_index, :, window_y, window_x].compute()
                         channel = hdf_channels[image_index, i, window_y, window_x]
 
-                    channel = channel * masks[-1]
+                    if self.mask_images:
+                        channel = channel * masks[-1]
                     channel = self.norm_function(channel)
 
                     image_data.append(channel)
@@ -914,6 +923,7 @@ class HDF5CellExtraction(ProcessingStep):
         partial=False,
         n_cells=None,
         seed=42,
+        mask_single_cell_images=True,
     ):
         """
         Extracts single cell images from a segmented SPARCSpy project and saves the results to an HDF5 file.
@@ -963,6 +973,7 @@ class HDF5CellExtraction(ProcessingStep):
         """
 
         total_time_start = timeit.default_timer()
+        self.mask_images = mask_single_cell_images
 
         # run all of the extraction setup steps
         start_setup = timeit.default_timer()
@@ -1183,9 +1194,14 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
         self.log("Creating HDF5 file to save results to.")
 
         # define output path
-        self.output_path = os.path.join(
-            self.extraction_data_directory, self.DEFAULT_DATA_FILE
-        )
+        if self.mask_images:
+            self.output_path = os.path.join(
+                self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE
+            )
+        else:
+            self.output_path = os.path.join(
+                self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE_NO_MASK
+            )
 
         with h5py.File(self.output_path, "w") as hf:
             self.log(

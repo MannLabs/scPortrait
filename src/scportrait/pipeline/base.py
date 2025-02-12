@@ -130,8 +130,8 @@ class ProcessingStep(Logable):
     # extraction
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
-    DEFAULT_DATA_FILE = "single_cells.h5"
     DEFAULT_EXTRACTION_FILE = "single_cells.h5"
+    DEFAULT_EXTRACTION_FILE_NO_MASK = "cropped_rois.h5"
 
     # classification
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"

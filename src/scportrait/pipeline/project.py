@@ -93,7 +93,8 @@ class Project(Logable):
     # extraction
     DEFAULT_EXTRACTION_DIR_NAME = "extraction"
     DEFAULT_DATA_DIR = "data"
-    DEFAULT_DATA_FILE = "single_cells.h5"
+    DEFAULT_EXTRACTION_FILE_NAME = "single_cells.h5"
+    DEFAULT_EXTRACTION_FILE_NAME_NO_MASKS = "cropped_rois.h5"
 
     # classification
     DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
@@ -846,7 +847,7 @@ class Project(Logable):
             raise ValueError("input was not found at {}".format(input_extraction))
 
         self.classification_f(
-            f"{input_extraction}/{self.DEFAULT_DATA_FILE}",
+            f"{input_extraction}/{self.DEFAULT_EXTRACTION_FILE_NAME}",
             partial=partial,
             *args,
             **kwargs,

@@ -713,7 +713,7 @@ class EnsembleClassifier(ProcessingStep):
 
         # generate dataloader
         dataloader = self.generate_dataloader(
-            f"{extraction_dir}/{self.DEFAULT_DATA_FILE}"
+            f"{extraction_dir}/{self.DEFAULT_EXTRACTION_FILE}"
         )
 
         # perform inference
