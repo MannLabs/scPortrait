@@ -421,7 +421,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         if self.partial_processing:
             self.log(
-                "Partial extraction mode enabled. Randomly sampling {self.n_cells} cells to extract with seed {self.seed}."
+                f"Partial extraction mode enabled. Randomly sampling {self.n_cells} cells to extract with seed {self.seed}."
             )
 
             # randomly sample n_cells from the centers
