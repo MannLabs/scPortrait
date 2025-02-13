@@ -18,7 +18,6 @@ from alphabase.io.tempmmap import (
     mmap_array_from_path,
     redefine_temp_location,
 )
-from ashlar.reg import EdgeAligner, Mosaic
 from tqdm import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
@@ -330,7 +329,7 @@ class Stitcher:
         if rescale:
             self.thumbnail = rescale_image(self.thumbnail, rescale_range)
 
-    def _initialize_aligner(self) -> EdgeAligner:
+    def _initialize_aligner(self):
         """Initialize the aligner for aligning the image tiles.
 
         Returns:
@@ -370,7 +369,7 @@ class Stitcher:
 
         print("Alignment complete.")
 
-    def _initialize_mosaic(self) -> Mosaic:
+    def _initialize_mosaic(self):
         """Initialize the mosaic object for assembling the image tiles.
 
         Returns:
