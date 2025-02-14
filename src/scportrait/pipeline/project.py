@@ -546,9 +546,7 @@ class Project(Logable):
                 dict_lookup[key] = []
             dict_lookup[key].append(name)
         for _, name in dict_lookup.items():
-            self.interactive_sdata.sdata_interactive.write_element(
-                name
-            )  # replace with correct function once pulled in from sdata
+            self.interactive_sdata.write_element(name)  # replace with correct function once pulled in from sdata
 
     def close_interactive_viewer(self):
         assert self.interactive is not None, "No interactive session found."
