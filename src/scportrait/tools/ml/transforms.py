@@ -42,19 +42,17 @@ class GaussianNoise:
         self.sigma = sigma
         self.channels = channels_to_exclude or []
 
-    def __call__(self, tensor):
-        if self.sigma != 0:
-            scale = self.sigma * tensor
-            sampled_noise = torch.tensor(0, dtype=torch.float32).repeat(*tensor.size()).normal_() * scale
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        scale = self.sigma * tensor
+        sampled_noise = torch.randn_like(tensor) * scale
 
-            # remove noise for masked channels
-            if len(tensor.shape) == 3:
-                for channel in range(tensor.shape[0]):
-                    if channel in self.channels:
-                        sampled_noise[channel, :, :] = 0
+        # Vectorized masking of excluded channels
+        if tensor.ndimension() == 3:  # (C, H, W)
+            sampled_noise[self.channels, :, :] = 0
+        elif tensor.ndimension() == 4:  # (N, C, H, W)
+            sampled_noise[:, self.channels, :, :] = 0
 
-            tensor = tensor + sampled_noise
-        return tensor
+        return tensor.add_(sampled_noise)
 
 
 class GaussianBlur:
