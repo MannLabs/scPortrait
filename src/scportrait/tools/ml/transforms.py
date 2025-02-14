@@ -81,9 +81,13 @@ class GaussianBlur:
 class ChannelSelector:
     """
     select the channel used for prediction.
+
+    Args:
+        channels: list of channel indices to keep
+        num_channels: number of channels in the input tensor
     """
 
-    def __init__(self, channels=None, num_channels=5):
+    def __init__(self, channels: list[int] | None = None, num_channels: int = 5):
         if channels is None:
             channels = list(range(num_channels))
         if not np.max(channels) < num_channels:
