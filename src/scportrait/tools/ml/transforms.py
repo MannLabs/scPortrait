@@ -90,8 +90,7 @@ class ChannelSelector:
     def __init__(self, channels: list[int] | None = None, num_channels: int = 5):
         if channels is None:
             channels = list(range(num_channels))
-        if not np.max(channels) < num_channels:
-            raise ValueError("highest channel index exceeds channel numb")
+        assert np.max(channels) < num_channels, "highest channel index exceeds channel numb"
         self.channels = channels
 
     def __call__(self, tensor):
