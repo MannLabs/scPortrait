@@ -537,7 +537,7 @@ class Project(Logable):
         assert self.interactive_sdata is not None, "No interactive sdata object found."
 
         in_memory_only, _ = self.interactive_sdata._symmetric_difference_with_zarr_store()
-        print("Writing the following manually added files to the sdata object: {in_memory_only}")
+        print(f"Writing the following manually added files to the sdata object: {in_memory_only}")
 
         dict_lookup = {}
         for elem in in_memory_only:
