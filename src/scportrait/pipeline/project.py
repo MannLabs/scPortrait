@@ -550,9 +550,11 @@ class Project(Logable):
 
     def close_interactive_viewer(self):
         assert self.interactive is not None, "No interactive session found."
+        assert self.interactive_sdata is not None, "No interactive sdata object found."
         self._save_interactive_sdata()
         self.interactive._viewer.close()
-        self.interactive_sdata = None  # reset to none value
+        # reset to none values to track next call of view_sdata
+        self.interactive_sdata = None
         self.interactive = None
 
     #### Functions to load input data ####
