@@ -78,26 +78,6 @@ class GaussianBlur:
         return blur(tensor)
 
 
-class ChannelReducer:
-    """
-    can reduce an imaging dataset dataset to 5, 3 or 1 channel
-    5: nuclei_mask, cell_mask, channel_nucleus, channel_cellmask, channel_of_interest
-    3: nuclei_mask, cell_mask, channel_of_interestå
-    1: channel_of_interestå
-    """
-
-    def __init__(self, channels=5):
-        self.channels = channels
-
-    def __call__(self, tensor):
-        if self.channels == 1:
-            return tensor[[3], :, :]
-        elif self.channels == 3:
-            return tensor[[0, 1, 3], :, :]
-        else:
-            return tensor
-
-
 class ChannelSelector:
     """
     select the channel used for prediction.
