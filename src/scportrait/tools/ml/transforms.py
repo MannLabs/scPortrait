@@ -105,7 +105,7 @@ class ChannelSelector:
 
     def __init__(self, channels=None, num_channels=5):
         if channels is None:
-            channels = [0, 1, 2, 3, 4]
+            channels = list(range(num_channels))
         if not np.max(channels) < num_channels:
             raise ValueError("highest channel index exceeds channel numb")
         self.channels = channels
