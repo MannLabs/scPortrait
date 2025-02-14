@@ -135,6 +135,10 @@ class Project(Logable):
         self.featurization_f = featurization_f
         self.selection_f = selection_f
 
+        # intialize containers to support interactive viewing of the spatialdata object
+        self.interactive_sdata = None
+        self.interactive = None
+
         if self.CLEAN_LOG:
             self._clean_log_file()
 
@@ -525,8 +529,9 @@ class Project(Logable):
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari
-        interactive = Interactive(self.sdata)
-        interactive.run()
+        self.interactive_sdata = self.filehandler.get_sdata()
+        self.interactive = Interactive(self.interactive_sdata)
+        self.interactive.run()
 
     #### Functions to load input data ####
     def load_input_from_array(
