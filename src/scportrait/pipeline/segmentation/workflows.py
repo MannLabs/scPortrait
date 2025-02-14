@@ -587,11 +587,13 @@ class _BaseSegmentation(Segmentation):
                         self.filehandler._write_segmentation_sdata(
                             mask,
                             segmentation_label=f"debugging_seg_size_filter_results_{mask_name}",
+                            classes=filter.ids,
                         )
                     else:
                         self.filehandler._write_segmentation_sdata(
                             mask[0],
                             segmentation_label=f"debugging_seg_size_filter_results_{mask_name}",
+                            classes=filter.ids,
                         )
                     # then this does not need to be plotted as it can be visualized from there
                     plot_results = False
@@ -698,10 +700,10 @@ class _BaseSegmentation(Segmentation):
                 if self.save_filter_results:
                     # add filtering results to sdata object
                     self.filehandler._write_segmentation_sdata(
-                        mask_nuc[0], segmentation_label="debugging_seg_match_mask_results_nucleus"
+                        mask_nuc[0], segmentation_label="debugging_seg_match_mask_results_nucleus", classes=None
                     )
                     self.filehandler._write_segmentation_sdata(
-                        mask_cyto[0], segmentation_label="debugging_seg_match_mask_result_cytosol"
+                        mask_cyto[0], segmentation_label="debugging_seg_match_mask_result_cytosol", classes=None
                     )
 
                     # then no plotting needs to be performed as the results can be viewed in the sdata object
