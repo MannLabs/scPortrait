@@ -533,6 +533,30 @@ class Project(Logable):
         self.interactive = Interactive(self.interactive_sdata)
         self.interactive.run()
 
+    def _save_interactive_sdata(self):
+        assert self.interactive_sdata is not None, "No interactive sdata object found."
+
+        in_memory_only, _ = self.interactive_sdata._symmetric_difference_with_zarr_store()
+        print("Writing the following manually added files to the sdata object: {in_memory_only}")
+
+        dict_lookup = {}
+        for elem in in_memory_only:
+            key, name = elem.split("/")
+            if key not in dict_lookup:
+                dict_lookup[key] = []
+            dict_lookup[key].append(name)
+        for _, name in dict_lookup.items():
+            self.interactive_sdata.sdata_interactive.write_element(
+                name
+            )  # replace with correct function once pulled in from sdata
+
+    def close_interactive_viewer(self):
+        assert self.interactive is not None, "No interactive session found."
+        self._save_interactive_sdata()
+        self.interactive._viewer.close()
+        self.interactive_sdata = None  # reset to none value
+        self.interactive = None
+
     #### Functions to load input data ####
     def load_input_from_array(
         self, array: np.ndarray, channel_names: list[str] = None, overwrite: bool | None = None, remap: list[int] = None
