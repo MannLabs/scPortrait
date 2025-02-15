@@ -1,5 +1,6 @@
 import os
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import h5py
 import numpy as np
@@ -249,7 +250,9 @@ class _HDF5SingleCellDataset(Dataset):
         else:
             return
 
-    def _add_all_datasets(self, read_label_from_dataset: bool = False):
+    def _add_all_datasets(
+        self, read_label_from_dataset: bool = False, label_column_transform: None | Callable = None
+    ) -> None:
         """
         iterate through all provided directories and add all found HDF5 files.
 
@@ -258,6 +261,7 @@ class _HDF5SingleCellDataset(Dataset):
         read_label_from_dataset: bool
             boolean value indicating if single-cell labels are read from file or provided in bulk for the entire dataset
         """
+        self.label_column_transform = label_column_transform
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
@@ -336,6 +340,9 @@ class _HDF5SingleCellDataset(Dataset):
 
         if self.transform:
             t = self.transform(t)  # apply transformation
+
+        if self.label_column_transform is not None:
+            label = self.label_column_transform(label)
 
         if self.return_id:
             # return data, label, and cell_id
