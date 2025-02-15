@@ -1,5 +1,6 @@
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as T
@@ -37,10 +38,13 @@ class GaussianNoise:
         channels_to_exclude: List of channel indices to exclude from noise addition.
     """
 
-    def __init__(self, sigma: float = 0.1, channels_to_exclude: list[int] | None = None):
+    def __init__(self, sigma: float = 0.1, channels_to_exclude: list[int] | None = None, deep_debug: bool = False):
+        if channels_to_exclude is None:
+            channels_to_exclude = []
         assert sigma > 0, "sigma must be greater than 0."
         self.sigma = sigma
         self.channels = channels_to_exclude or []
+        self.deep_debug = deep_debug  # can be set to true for debugging purposes
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         scale = self.sigma * tensor
@@ -52,7 +56,36 @@ class GaussianNoise:
         elif tensor.ndimension() == 4:  # (N, C, H, W)
             sampled_noise[:, self.channels, :, :] = 0
 
-        return tensor.add_(sampled_noise)
+        if self.deep_debug:
+            n_channels = tensor.shape[1]
+
+            fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
+            for i in range(n_channels):
+                axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
+                axs[i].axis("off")
+                axs[i].set_title(f"Input tensor index {i} sampled noise")
+
+            fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
+            for i in range(n_channels):
+                axs[i].imshow(sampled_noise[0, i], vmin=0, vmax=1)
+                axs[i].axis("off")
+                axs[i].set_title(f"index {i} sampled noise")
+
+        tensor = tensor.add_(sampled_noise)
+        tensor = torch.clamp(
+            tensor, 0, 1
+        )  # clip any negative values to 0 (don't want to reset the scale of our values)
+
+        if self.deep_debug:
+            n_channels = tensor.shape[1]
+
+            fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
+            for i in range(n_channels):
+                axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
+                axs[i].axis("off")
+                axs[i].set_title(f"Transformed tensor index {i} sampled noise")
+
+        return tensor
 
 
 class GaussianBlur:
