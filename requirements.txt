@@ -1,8 +1,5 @@
 tqdm
-numpy<2.0.0
-pandas
 numba
-matplotlib
 seaborn
 h5py
 yattag
@@ -23,7 +20,7 @@ opencv-python
 scikit-image>=0.22.0
 scikit-fmm
 scipy
-cellpose<3.1.0
+cellpose
 
 torch
 pytorch-lightning
