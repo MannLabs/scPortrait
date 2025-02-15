@@ -25,7 +25,6 @@ class _HDF5SingleCellDataset(Dataset):
         select_channel=None,
         transform=None,
         return_id=False,
-        return_fake_id=False,
         max_level=5,
     ):
         """
@@ -43,8 +42,6 @@ class _HDF5SingleCellDataset(Dataset):
             A optional user-defined function to apply transformations to the data. Default is None.
         return_id : bool, optional
             Whether to return the index of the cell with the data. Default is False.
-        return_fake_id : bool, optional
-            Whether to return a fake index (0) with the data. Default is False.
         max_level : int, optional
             Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
         """
@@ -52,12 +49,7 @@ class _HDF5SingleCellDataset(Dataset):
         self.select_channel = select_channel
         self.transform = transform
         self.return_id = return_id
-        self.return_fake_id = return_fake_id
         self.max_level = max_level
-
-        assert not (
-            self.return_id and self.return_fake_id
-        ), "Both return_id and return_fake_id cannot be True at the same time."
 
         # ensure index list is long enough for all directories
         if index_list is None:
@@ -354,14 +346,6 @@ class _HDF5SingleCellDataset(Dataset):
                 torch.tensor(id),
             )
 
-        elif self.return_fake_id:
-            # return data, label, and fake id
-            sample = (
-                t,
-                torch.tensor(label),
-                torch.tensor(0),
-            )
-
         else:
             # return data and label
             sample = (t, torch.tensor(label))
@@ -393,8 +377,6 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         A optional user-defined function to apply transformations to the data. Default is None.
     return_id : bool, optional
         Whether to return the index of the cell with the data. Default is False.
-    return_fake_id : bool, optional
-        Whether to return a fake index (0) with the data. Default is False.
     max_level : int, optional
         Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
 
@@ -427,7 +409,6 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         transform=None,
         max_level=5,
         return_id=False,
-        return_fake_id=False,
         select_channel=None,
     ):
         super().__init__(
@@ -436,7 +417,6 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
             select_channel=select_channel,
             transform=transform,
             return_id=return_id,
-            return_fake_id=return_fake_id,
             max_level=max_level,
         )
 
@@ -477,8 +457,6 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         A optional user-defined function to apply transformations to the data. Default is None.
     return_id : bool, optional
         Whether to return the index of the cell with the data. Default is False.
-    return_fake_id : bool, optional
-        Whether to return a fake index (0) with the data. Default is False.
     max_level : int, optional
         Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
 
@@ -513,7 +491,6 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         transform=None,
         max_level=5,
         return_id=False,
-        return_fake_id=False,
         select_channel=None,
     ):
         super().__init__(
@@ -522,7 +499,6 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
             select_channel=select_channel,
             transform=transform,
             return_id=return_id,
-            return_fake_id=return_fake_id,
             max_level=max_level,
         )
 
