@@ -25,7 +25,7 @@ class _HDF5SingleCellDataset(Dataset):
         index_list: list[list[int]] | None = None,
         select_channel: list[int] | int | None = None,
         transform=None,
-        return_id: bool = False,
+        return_id: bool = True,
         max_level: int = 5,
     ):
         """
@@ -34,7 +34,9 @@ class _HDF5SingleCellDataset(Dataset):
             index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
             select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
             transform: An optional user-defined function to apply transformations to the data. Default is None.
-            return_id: Whether to return the index of the cell with the data. Default is False.
+            return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+                For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
+                otherwise you can no longer identify the source cell returning a specific result.
             max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
         """
         self.dir_list = dir_list
@@ -383,9 +385,12 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         dir_labels: List of bulk labels applied to all cells within each dataset in `dir_list`.
         index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
         select_channel: Specific channel or list of channels to retrieve from the data. Default is `None`, which returns all channels.
-            This is more efficient than performing selection via a transform function.
+            This is more efficient than performing selection via a transform function as the data is never read in the first place.
         transform: User-defined function to apply transformations to the data. Default is `None`.
         return_id: Whether to return the unique cell-id of the cell along with the data. Default is `False`.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`, otherwise
+            you can no longer identify the source cell returning a specific result.
         max_level (int, optional):
             Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
@@ -417,7 +422,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform=None,
         max_level: int = 5,
-        return_id: bool = False,
+        return_id: bool = True,
         select_channel: int | list[int] | None = None,
     ):
         super().__init__(
@@ -452,10 +457,12 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         label_column_transform: Optional function to apply a mathematical transformation to the read labels.
             For example, if the labels are stored as seconds in the HDF5 dataset, set this value to `lambda x: x / 3600` to return labels in hours.
         index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
-        select_channel: Specific channel or selection of channels to retrieve from the data. Default is `None`, which returns all channels.
-            This is more efficient than performing selection via a transform function.
+        select_channel: Specific channel or list of channels to retrieve from the data. Default is `None`, which returns all channels.
+            This is more efficient than performing selection via a transform function as the data is never read in the first place.
         transform: Optional user-defined function to apply transformations to the data. Default is `None`.
-        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `False`.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`, otherwise
+            you can no longer identify the source cell returning a specific result.
         max_level: Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
     Methods:
@@ -488,7 +495,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform: Callable | None = None,
         max_level: int = 5,
-        return_id: bool = False,
+        return_id: bool = True,
         select_channel: list[int] | None | int = None,
     ):
         super().__init__(
