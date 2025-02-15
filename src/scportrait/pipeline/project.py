@@ -135,6 +135,10 @@ class Project(Logable):
         self.featurization_f = featurization_f
         self.selection_f = selection_f
 
+        # intialize containers to support interactive viewing of the spatialdata object
+        self.interactive_sdata = None
+        self.interactive = None
+
         if self.CLEAN_LOG:
             self._clean_log_file()
 
@@ -525,8 +529,33 @@ class Project(Logable):
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari
-        interactive = Interactive(self.sdata)
-        interactive.run()
+        self.interactive_sdata = self.filehandler.get_sdata()
+        self.interactive = Interactive(self.interactive_sdata)
+        self.interactive.run()
+
+    def _save_interactive_sdata(self):
+        assert self.interactive_sdata is not None, "No interactive sdata object found."
+
+        in_memory_only, _ = self.interactive_sdata._symmetric_difference_with_zarr_store()
+        print(f"Writing the following manually added files to the sdata object: {in_memory_only}")
+
+        dict_lookup = {}
+        for elem in in_memory_only:
+            key, name = elem.split("/")
+            if key not in dict_lookup:
+                dict_lookup[key] = []
+            dict_lookup[key].append(name)
+        for _, name in dict_lookup.items():
+            self.interactive_sdata.write_element(name)  # replace with correct function once pulled in from sdata
+
+    def close_interactive_viewer(self):
+        assert self.interactive is not None, "No interactive session found."
+        assert self.interactive_sdata is not None, "No interactive sdata object found."
+        self._save_interactive_sdata()
+        self.interactive._viewer.close()
+        # reset to none values to track next call of view_sdata
+        self.interactive_sdata = None
+        self.interactive = None
 
     #### Functions to load input data ####
     def load_input_from_array(
