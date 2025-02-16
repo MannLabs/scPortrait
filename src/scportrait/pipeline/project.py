@@ -826,7 +826,7 @@ class Project(Logable):
         if results is not None:
             return results
 
-    def classify(self, partial=False, *args, **kwargs):
+    def classify(self, cropped_rois=False, partial=False, *args, **kwargs):
         """
         Classify extracted single cells with the defined classification method.
         """
@@ -846,8 +846,13 @@ class Project(Logable):
         if not os.path.isdir(input_extraction):
             raise ValueError("input was not found at {}".format(input_extraction))
 
+        if cropped_rois:
+            filename = self.DEFAULT_EXTRACTION_FILE_NAME_NO_MASKS
+        else:
+            filename = self.DEFAULT_EXTRACTION_FILE_NAME
+
         self.classification_f(
-            f"{input_extraction}/{self.DEFAULT_EXTRACTION_FILE_NAME}",
+            f"{input_extraction}/{filename}",
             partial=partial,
             *args,
             **kwargs,
