@@ -114,10 +114,11 @@ class _HDF5SingleCellDataset(Dataset):
                 index_handle = input_hdf.get("single_cell_index")
 
             # ensure that selected channels are within range
-            max_channels = input_hdf.get("single_cell_data").shape[1]
-            assert np.all(
-                [channel_ix < max_channels for channel_ix in self.select_channel]
-            ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
+            if self.select_channel is not None:
+                max_channels = input_hdf.get("single_cell_data").shape[1]
+                assert np.all(
+                    [channel_ix < max_channels for channel_ix in self.select_channel]
+                ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
 
             # add connection to singe cell datasets
             handle_id = len(self.handle_list)
