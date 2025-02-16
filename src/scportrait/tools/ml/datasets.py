@@ -513,5 +513,5 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.label_column_transform = label_column_transform
         self.read_labels_from_dataset = True
 
-        self._add_all_dataset(read_label_from_dataset=self.read_labels_from_dataset)
+        self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
         self.stats()
