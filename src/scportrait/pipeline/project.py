@@ -854,6 +854,7 @@ class Project(Logable):
         self.classification_f(
             f"{input_extraction}/{filename}",
             partial=partial,
+            cropped_rois=cropped_rois,
             *args,
             **kwargs,
         )
