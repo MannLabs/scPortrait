@@ -1,9 +1,20 @@
 from typing import TypeVar
 
+import yaml
+
 T = TypeVar("T")
 
 
-def flatten(nested_list: list[list[T]]) -> list[T]:
+def read_config(config_path: str) -> dict:
+    with open(config_path) as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    return config
+
+
+def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
     """Flatten a list of lists into a single list.
 
     Args:

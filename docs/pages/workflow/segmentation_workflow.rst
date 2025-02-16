@@ -1,35 +1,18 @@
-.. _segmentation:
+.. _segmentation_workflow:
 
-Segmentation
-============
+Segmentation Workflow
+=====================
 
-Segmentation is an essential step in the scPortrait workflow. The goal of segmentation is to generate a mask which maps the pixels of the input image to individual cells, which are then assigned a unique ``cell id``. Background pixels are assigned the value ``0``. In scPortrait we distinguish two different types of segmentation masks: nuclear and cytosolic. Nuclear masks <...> Cytosolic masks <...>.
+To ensure overall flexibility, scPortrait seperates code implementing the segmentation framework (i.e. how input data is loaded, segmentation methods are called or results saved) from the code implementing the actual segmentation algorithm (i.e. how the segmentation mask is calculated for a given input). This allows you to easily exchange one segmentation algorithm for another while retaining the rest of the code framework.
 
-.. |pic1| image:: ../images/input_image.png
-   :width: 100%
+Segmentation frameworks are implemented as so-called `segmentation classes` and segmentation algorithms are implemented as so-called `segmentation workflows`.
+Each segmentation class is optimized for a given input data format and level of parallelization, and each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation).
 
-.. |pic2| image:: ../images/nucleus_mask.png
-   :width: 100%
-
-.. |pic3| image:: ../images/cytosol_mask.png
-   :width: 100%
-
-+-----------------------+-----------------------+-----------------------+
-| Input Image           | Nucleus Mask          | Cytosol Mask          |
-+-----------------------+-----------------------+-----------------------+
-| |pic1|                | |pic2|                | |pic3|                |
-+-----------------------+-----------------------+-----------------------+
-
-To ensure overall flexibility, scPortrait seperates the segmentation code framework (i.e. loading input data, calling a segmentation method or saving results) from the actual segmentation algorithm (i.e. how the segmentation mask is calculated for a given input).
-
-The segmentation code framework is implemented through so called segmentation classes. Each class is optimized for a given input data format and level of parallelization. The segmentation algorithms themselves are implemented by so called segmentation workflows. Each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation).
-
-Using class inheritance each segmentation workflow inherits from a segmentation class to provide the segmentation code framework, but updates the segmentation generation method with the desired algorithm. This way you can easily exchange one segmentation algorithm for another while retaining the rest of the code framework.
-
+.. _segmentation_classes:
 Segmentation classes
 --------------------
 
-scPortrait currently implements two different segmentation classes for each of the input data formats: a serialized segmentation class and a parallelized segmentation class. The serialized segmentation class is ideal for segmenting small input images on only one process. The parallelized segmentation classes can also process larger input images over multiple CPU cores.
+scPortrait currently implements two different segmentation classes for each of the input data formats: a serialized segmentation class and a parallelized segmentation class. The serialized segmentation class is ideal for segmenting small input images in a single process. The parallelized segmentation classes can process larger-than-memory input images over multiple CPU cores.
 
 .. image:: ../images/segmentation_classes.png
    :width: 100%
@@ -71,26 +54,28 @@ The following parameters for a sharded segmentation need to be specified in the 
         ... additional workflow specific parameters...
 
 
-3. TimecourseSegmentation
-+++++++++++++++++++++++++
+.. 3. TimecourseSegmentation
+.. +++++++++++++++++++++++++
 
-The :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a scPortrait :func:`Timecourse Project <scportrait.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
+.. The :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class is optimized for processing input images of the format NCXY within the context of a scPortrait :func:`Timecourse Project <scportrait.pipeline.project.TimecourseProject>`. It loads the input images into memory and segments them sequentially using the provided segmentation workflow. The resulting segmentation masks are then saved to disk.
 
-4. MultithreadedSegmentation
-++++++++++++++++++++++++++++
+.. 4. MultithreadedSegmentation
+.. ++++++++++++++++++++++++++++
 
-The :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class is an extension of the :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class and segments input images in the format NCYX in a parallelized fashion. The parallelization is achieved by splitting the input images along the N axis and processing each imagestack individually. The number of parallel processes can be specified by the user via the configuration file (``threads``).
+.. The :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class is an extension of the :func:`TimecourseSegmentation <scportrait.pipeline.segmentation.TimecourseSegmentation>` class and segments input images in the format NCYX in a parallelized fashion. The parallelization is achieved by splitting the input images along the N axis and processing each imagestack individually. The number of parallel processes can be specified by the user via the configuration file (``threads``).
 
-Configuration parameters
-^^^^^^^^^^^^^^^^^^^^^^^^
+.. Configuration parameters
+.. ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following parameters for a multithreaded segmentation need to be specified in the configuration file:
+.. The following parameters for a multithreaded segmentation need to be specified in the configuration file:
 
-.. code:: yaml
+.. .. code:: yaml
 
-    MultithreadedSegmentationWorkflow:
-        threads: 2 # number of threads to be used for parallelized segmentation of shards
-        ... additional workflow specific parameters...
+..     MultithreadedSegmentationWorkflow:
+..         threads: 2 # number of threads to be used for parallelized segmentation of shards
+..         ... additional workflow specific parameters...
+
+.. _segmentation_workflows:
 
 Segmentation Workflows
 ----------------------
@@ -100,6 +85,7 @@ Within scPortrait a segmentation workflow refers to a specific segmentation algo
 - :ref:`DAPI_segmentation`
 - :ref:`Cytosol_segmentation_cellpose`
 - :ref:`DAPI_segmentation_cellpose`
+- :ref:`cytosol_only_segmentation_cellpose`
 
 If none of these segmentation approaches suit your particular needs you can easily implement your own workflow. In case you need help, please open a git issue.
 
@@ -116,8 +102,6 @@ This segmentation workflow is implemented to only run on the CPU. As such it can
     :caption: Example configuration for  WGASegmentation
 
     WGASegmentation:
-        input_channels: 3
-        chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
         lower_quantile_normalization:   0.001
         upper_quantile_normalization:   0.999
         median_filter_size:   4 # Size in pixels
@@ -126,16 +110,16 @@ This segmentation workflow is implemented to only run on the CPU. As such it can
             upper_quantile_normalization:   0.99 # quantile normalization of dapi channel before local tresholding. Strong normalization (0.05,0.95) can help with nuclear speckles.
             median_block: 41 # Size of pixel disk used for median, should be uneven
             median_step: 4
-            threshold: 0.2 # threshold above which nucleus is detected, if not specified a global threshold is calcualted using otsu
+            threshold: 0.2 # threshold above local median for nuclear segmentation
             min_distance: 8 # minimum distance between two nucleis in pixel
             peak_footprint: 7 #
             speckle_kernel: 9 # Erosion followed by Dilation to remove speckels, size in pixels, should be uneven
             dilation: 0 # final dilation of pixel mask
             min_size: 200 # minimum nucleus area in pixel
-            max_size: 5000 # maximum nucleus area in pixel
+            max_size: 1000 # maximum nucleus area in pixel
             contact_filter: 0.5 # minimum nucleus contact with background
-        wga_segmentation:
-            threshold: 0.05 # threshold above which cytosol is detected, if not specified a global threshold is calcualted using otsu
+        cytosol_segmentation:
+            threshold: 0.05 # treshold above which cytosol is detected
             lower_quantile_normalization: 0.01
             upper_quantile_normalization: 0.99
             erosion: 2 # erosion and dilation are used for speckle removal and shrinking / dilation
@@ -143,8 +127,9 @@ This segmentation workflow is implemented to only run on the CPU. As such it can
             min_clip: 0
             max_clip: 0.2
             min_size: 200
-            max_size: 30000
+            max_size: 6000
         chunk_size: 50
+        filter_masks_size: True
 
 Nucleus Segmentation Algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -211,7 +196,7 @@ This segmentation workflow is built around the cellular segmentation algorithm `
 
 The scPortrait implementation of the cellpose segmenation algorithm allows you to perform both a nuclear and cytosolic segmentation and align the ``cellids`` between the two resulting masks. This means that the nucleus and the cytosol belonging to the same cell have the same ``cellids``. Furthermore, it performs some filtering steps to remove the masks from multi-nucleated cells or those with only a nuclear or cytosolic mask. This ensures that only cells which show a normal physiology are retained for further analysis.
 
-While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance.
+While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
 If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
 
@@ -219,34 +204,26 @@ If you utilize this segmentation workflow please also consider citing the `cellp
     :caption: Example configuration for  Sharded Cytosol Cellpose Segmentation
 
     ShardedCytosolSegmentationCellpose:
-        #segmentation class specific
-        input_channels: 2
-        output_masks: 2
-        shard_size: 120000000 # maxmimum number of pixel per tile
+        shard_size: 2000000 # maxmimum number of pixel per tile
         overlap_px: 100
-        chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
-        threads: 1 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
-        cache: "/fs/pool/pool-mann-maedler-shared/temp"
-        #segmentation workflow specific
-        nGPUs: 2
-        lower_quantile_normalization:   0.001
-        upper_quantile_normalization:   0.999
-        median_filter_size: 6 # Size in pixels
+        nGPUs: 1
+        threads: 2 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+        cache: "."
         nucleus_segmentation:
             model: "nuclei"
         cytosol_segmentation:
             model: "cyto2"
-        chunk_size: 50
-        filtering_threshold: 0.95
+        match_masks: True
+        filter_masks_size: False
 
 .. _DAPI_segmentation_cellpose:
 
 DAPI Cellpose segmentation
 ++++++++++++++++++++++++++
 
-This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a nuclear segmentation. To ensure compatability with the downstream extraction workflow which assumes the presence of both a nuclear and a cytosolic segmentation mask the nuclear mask is duplicated and also used as the cytosolic mask. The generated single cell datasets using this segmentation method only focus on signals contained within the nuclear region.
+This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a nuclear segmentation. The generated single cell datasets using this segmentation method only focus on signals contained within the nuclear region.
 
-As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU.
+As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
 If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
 
@@ -268,3 +245,28 @@ If you utilize this segmentation workflow please also consider citing the `cellp
         median_filter_size: 6 # Size in pixels
         nucleus_segmentation:
             model: "nuclei"
+
+.. _cytosol_only_segmentation_cellpose:
+
+Cytosol Only Cellpose segmentation
+++++++++++++++++++++++++++++++++++
+
+This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation.
+
+As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
+
+If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
+
+..  code-block:: yaml
+    :caption: Example configuration for  Cytosol Only Cellpose segmentation
+
+    ShardedCytosolOnlySegmentationCellpose:
+        shard_size: 2000000 # maxmimum number of pixel per tile
+        overlap_px: 100
+        nGPUs: 1
+        threads: 2 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
+        cache: "."
+        cytosol_segmentation:
+            model: "cyto2"
+        match_masks: True
+        filter_masks_size: False

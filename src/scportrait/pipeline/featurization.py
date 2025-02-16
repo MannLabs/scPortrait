@@ -5,6 +5,7 @@ import shutil
 from contextlib import redirect_stdout
 from functools import partial as func_partial
 
+import h5py
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -36,6 +37,7 @@ class _FeaturizationBase(ProcessingStep):
         self.model = None
         self.transforms = None
         self.expected_imagesize = None
+        self.data_type = None
 
         self._setup_channel_selection()
 
@@ -59,7 +61,10 @@ class _FeaturizationBase(ProcessingStep):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        self.run_path = os.path.join(self.directory, f"{self.data_type}_{self.label}")
+        if self.data_type is None:
+            self.run_path = os.path.join(self.directory, self.label)
+        else:
+            self.run_path = os.path.join(self.directory, f"{self.data_type}_{self.label}")
 
         if not os.path.isdir(self.run_path):
             os.makedirs(self.run_path)
@@ -103,6 +108,25 @@ class _FeaturizationBase(ProcessingStep):
             inference_device = "cpu"
 
         return inference_device
+
+    def _get_nmasks(self):
+        if "n_masks" not in self.__dict__.keys():
+            if isinstance(self.extraction_file, str):
+                with h5py.File(self.extraction_file, "r") as f:
+                    self.n_masks = f["n_masks"][()].item()
+            if isinstance(self.extraction_file, list):
+                n_masks = []
+                for file in self.extraction_file:
+                    with h5py.File(file, "r") as f:
+                        n_masks.append(f["n_masks"][()].item())
+                assert (
+                    x == n_masks[0] for x in n_masks
+                ), "number of masks are not consistent over all passed HDF5 files."
+                self.n_masks = n_masks[0]
+            try:
+                self.n_masks = h5py.File(self.extraction_file, "r")["n_masks"][()].item()
+            except Exception as e:
+                raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
 
     def _setup_inference_device(self):
         """
@@ -166,10 +190,13 @@ class _FeaturizationBase(ProcessingStep):
             self.inference_device = self._detect_automatic_inference_device()
             self.log(f"Automatically configured inferece device to {self.inference_device}")
 
-    def _general_setup(self):
+    def _general_setup(self, extraction_dir: str | list[str], return_results: bool = False):
         """Helper function to execute all setup functions that are common to all featurization steps."""
 
-        self._setup_output()
+        self.extraction_file = extraction_dir
+        if not return_results:
+            self._setup_output()
+        self._get_nmasks()
         self._setup_log_transform()
         self._setup_inference_device()
 
@@ -243,7 +270,6 @@ class _FeaturizationBase(ProcessingStep):
     ### Functions for model loading and setup
 
     def _assign_model(self, model):
-        self.log("Model assigned to featurization function.")
         self.model = model
 
         # check if the hparams specify an expected image size
@@ -391,7 +417,8 @@ class _FeaturizationBase(ProcessingStep):
 
     def generate_dataloader(
         self,
-        extraction_dir: str,
+        extraction_dir: str | list[str],
+        labels: int | list[int] = 0,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
         seed: int | None = 42,
@@ -428,11 +455,20 @@ class _FeaturizationBase(ProcessingStep):
             self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
+        if isinstance(extraction_dir, list):
+            assert isinstance(labels, list), "If multiple directories are provided, multiple labels must be provided."
+            paths = extraction_dir
+            labels = labels
+        elif isinstance(extraction_dir, str):
+            assert isinstance(labels, int), "If only one directory is provided, only one label must be provided."
+            paths = [extraction_dir]
+            labels = [labels]
+
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = dataset_class(
-                dir_list=[extraction_dir],
-                dir_labels=[0],
+                dir_list=paths,
+                dir_labels=labels,
                 transform=t,
                 return_id=True,
                 select_channel=self.channel_selection,
@@ -780,8 +816,8 @@ class MLClusterClassifier(_FeaturizationBase):
 
         return
 
-    def _setup(self):
-        self._general_setup()
+    def _setup(self, extraction_dir: str, return_results: bool):
+        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
 
@@ -799,7 +835,7 @@ class MLClusterClassifier(_FeaturizationBase):
         self._setup_encoders()
         self._setup_transforms()
 
-    def process(self, extraction_dir: str, size: int = 0):
+    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
         """
         Perform classification on the provided HDF5 dataset.
 
@@ -876,31 +912,39 @@ class MLClusterClassifier(_FeaturizationBase):
         self.log("Started MLClusterClassifier classification.")
 
         # perform setup
-        self._setup()
+        self._setup(extraction_dir=extraction_dir, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
         # perform inference
+        all_results = []
         for model in self.models:
             self.log(f"Starting inference for model encoder {model.__name__}")
             results = self.inference(self.dataloader, model)
 
-            output_name = f"inference_{model.__name__}"
-            path = os.path.join(self.run_path, f"{output_name}.csv")
+            if not return_results:
+                output_name = f"inference_{model.__name__}"
+                path = os.path.join(self.run_path, f"{output_name}.csv")
 
-            self._write_results_csv(results, path)
-            self._write_results_sdata(results, label=f"{self.label}_{model.__name__}")
+                self._write_results_csv(results, path)
+                self._write_results_sdata(results, label=f"{self.label}_{model.__name__}")
+            else:
+                all_results.append(results)
 
-        self.log(f"Results saved to file: {path}")
-
-        # perform post processing cleanup
-        if not self.deep_debug:
-            self._post_processing_cleanup()
+        if return_results:
+            self._clear_cache()
+            return all_results
+        else:
+            self.log(f"Results saved to file: {path}")
+            # perform post processing cleanup
+            if not self.deep_debug:
+                self._post_processing_cleanup()
 
 
 class EnsembleClassifier(_FeaturizationBase):
@@ -952,8 +996,8 @@ class EnsembleClassifier(_FeaturizationBase):
         memory_usage = self._get_gpu_memory_usage()
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-    def _setup(self):
-        self._general_setup()
+    def _setup(self, extraction_dir: str, return_results: bool):
+        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._get_model_specs()
         self._setup_transforms()
 
@@ -965,7 +1009,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self._load_models()
 
-    def process(self, extraction_dir, size=0):
+    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
         """
         Function called to perform classification on the provided HDF5 dataset.
 
@@ -1020,29 +1064,39 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self.log("Starting Ensemble Classification")
 
-        self._setup()
+        self._setup(extraction_dir=extraction_dir, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
         )
 
         # perform inference
+        all_results = {}
         for model_name, model in zip(self.model_names, self.model, strict=False):
             self.log(f"Starting inference for model {model_name}")
             results = self.inference(self.dataloader, model)
 
             output_name = f"ensemble_inference_{model_name}"
-            path = os.path.join(self.run_path, f"{output_name}.csv")
 
-            self._write_results_csv(results, path)
-            self._write_results_sdata(results, label=model_name)
+            if not return_results:
+                path = os.path.join(self.run_path, f"{output_name}.csv")
 
-        # perform post processing cleanup
-        if not self.deep_debug:
-            self._post_processing_cleanup()
+                self._write_results_csv(results, path)
+                self._write_results_sdata(results, label=model_name)
+            else:
+                all_results[model_name] = results
+
+        if return_results:
+            self._clear_cache()
+            return all_results
+        else:
+            # perform post processing cleanup
+            if not self.deep_debug:
+                self._post_processing_cleanup()
 
 
 ####### CellFeaturization based on Classic Featurecalculation #######
@@ -1079,10 +1133,24 @@ class _cellFeaturizerBase(_FeaturizationBase):
         return
 
     def _get_channel_specs(self):
-        if "channel_names" in self.project.__dict__.keys():
-            self.channel_names = self.project.channel_names
+        if self.project is None:
+            if isinstance(self.extraction_file, str):
+                with h5py.File(self.extraction_file, "r") as f:
+                    self.channel_names = list(f["channel_information"][:].astype(str))
+            if isinstance(self.extraction_file, list):
+                channel_names = []
+                for file in self.extraction_file:
+                    with h5py.File(file, "r") as f:
+                        channel_names.append(list(f["channel_information"][:].astype(str)))
+                assert (
+                    x == channel_names[0] for x in channel_names
+                ), "Channel names are not consistent over all passed HDF5 files."
+                self.channel_names = channel_names[0]
         else:
-            self.channel_names = self.project.input_image.c.values
+            if "channel_names" in self.project.__dict__.keys():
+                self.channel_names = self.project.channel_names
+            else:
+                self.channel_names = self.project.input_image.c.values
 
     def _generate_column_names(
         self,
@@ -1093,7 +1161,7 @@ class _cellFeaturizerBase(_FeaturizationBase):
         column_names = []
 
         if n_masks == 1:
-            self.project._check_sdata_status()
+            self.project.get_project_status()
 
             if self.project.nuc_seg_status:
                 mask_name = self.MASK_NAMES[0]
@@ -1201,64 +1269,17 @@ class _cellFeaturizerBase(_FeaturizationBase):
         if self.project.nuc_seg_status:
             # save nucleus segmentation
             columns_drop = [x for x in results.columns if self.MASK_NAMES[1] in x]
-
-            _results = results.drop(columns=columns_drop)
-            _results.set_index("cell_id", inplace=True)
-            _results.drop(columns=["label"], inplace=True)
-
-            feature_matrix = _results.to_numpy()
-            var_names = _results.columns
-            obs_indices = _results.index.astype(str)
-
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs["instance_id"] = obs_indices.astype(int)
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
-            obs["region"] = obs["region"].astype("category")
-
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
-                region_key="region",
-                instance_key="instance_id",
-            )
-
-            # define name to save table under
-            self.label.replace("CellFeaturizer_", "")  # remove class name from label to ensure we dont have duplicates
+            segmentation_name = f"{mask_type}_{self.MASK_NAMES[0]}"
 
             if self.channel_selection is not None:
                 table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[0]}"
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
 
-            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
-
         if self.project.cyto_seg_status:
             # save cytosol segmentation
             columns_drop = [x for x in results.columns if self.MASK_NAMES[0] in x]
-
-            _results = results.drop(columns=columns_drop)
-            _results.set_index("cell_id", inplace=True)
-            _results.drop(columns=["label"], inplace=True)
-
-            feature_matrix = _results.to_numpy()
-            var_names = _results.columns
-            obs_indices = _results.index.astype(str)
-
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs["instance_id"] = obs_indices.astype(int)
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
-            obs["region"] = obs["region"].astype("category")
-
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
-                region_key="region",
-                instance_key="instance_id",
-            )
+            segmentation_name = f"{mask_type}_{self.MASK_NAMES[1]}"
 
             # define name to save table under
             if self.channel_selection is not None:
@@ -1266,7 +1287,18 @@ class _cellFeaturizerBase(_FeaturizationBase):
             else:
                 table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
 
-            self.filehandler._write_table_object_sdata(table, table_name, overwrite=self.overwrite_run_path)
+        _results = results.drop(columns=columns_drop)
+        _results.set_index("cell_id", inplace=True)
+        _results.drop(columns=["label"], inplace=True)
+
+        feature_matrix = _results.to_numpy()
+        var_names = _results.columns
+        obs_indices = _results.index.astype(str)
+
+        adata = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=pd.DataFrame(index=obs_indices))
+        self.filehandler._write_table_sdata(
+            adata, segmentation_mask_name=segmentation_name, table_name=table_name, overwrite=self.overwrite_run_path
+        )
 
 
 class CellFeaturizer(_cellFeaturizerBase):
@@ -1294,12 +1326,14 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self):
-        self._general_setup()
+    def _setup(self, extraction_dir: str | list[str], return_results: bool):
+        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_transforms()
         self._get_channel_specs()
 
-    def process(self, extraction_dir, size=0):
+    def process(
+        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+    ):
         """
         Perform featurization on the provided HDF5 dataset.
 
@@ -1354,10 +1388,11 @@ class CellFeaturizer(_cellFeaturizerBase):
         self.log("Started CellFeaturization of all available channels.")
 
         # perform setup
-        self._setup()
+        self._setup(extraction_dir=extraction_dir, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1384,15 +1419,19 @@ class CellFeaturizer(_cellFeaturizerBase):
             column_names=self.column_names,
         )
 
-        output_name = "calculated_image_features"
-        path = os.path.join(self.run_path, f"{output_name}.csv")
+        if return_results:
+            self._clear_cache()
+            return results
+        else:
+            output_name = "calculated_image_features"
+            path = os.path.join(self.run_path, f"{output_name}.csv")
 
-        self._write_results_csv(results, path)
-        self._write_results_sdata(results)
+            self._write_results_csv(results, path)
+            self._write_results_sdata(results)
 
-        # perform post processing cleanup
-        if not self.deep_debug:
-            self._post_processing_cleanup()
+            # perform post processing cleanup
+            if not self.deep_debug:
+                self._post_processing_cleanup()
 
 
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
@@ -1408,20 +1447,23 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self):
-        self._general_setup()
+    def _setup(self, extraction_dir: str | list[str], return_results: bool):
+        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()
         self._get_channel_specs()
 
-    def process(self, extraction_dir, size=0):
+    def process(
+        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
+    ):
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
-        self._setup()
+        self._setup(extraction_dir=extraction_dir, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
             extraction_dir,
+            labels=labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,

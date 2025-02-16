@@ -85,6 +85,7 @@ class Segmentation(ProcessingStep):
         overwrite,
         project,
         filehandler,
+        from_project: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -95,6 +96,7 @@ class Segmentation(ProcessingStep):
             overwrite=overwrite,
             project=project,
             filehandler=filehandler,
+            from_project=from_project,
         )
 
         if self.directory is not None:
@@ -308,12 +310,14 @@ class Segmentation(ProcessingStep):
                 self.filehandler._write_segmentation_sdata(
                     labels[ix], self.nuc_seg_name, classes=classes, overwrite=self.overwrite
                 )
+                self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
 
             if "cytosol" in masks:
                 ix = masks.index("cytosol")
                 self.filehandler._write_segmentation_sdata(
                     labels[ix], self.cyto_seg_name, classes=classes, overwrite=self.overwrite
                 )
+                self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
 
     def save_map(self, map_name):
         """Saves newly computed map.
@@ -742,7 +746,6 @@ class ShardedSegmentation(Segmentation):
             local_hf = h5py.File(local_output, "r")
             local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)[:]
 
-            print(type(local_hdf_labels))
             shifted_map, edge_labels = shift_labels(
                 local_hdf_labels,
                 class_id_shift,
@@ -902,8 +905,9 @@ class ShardedSegmentation(Segmentation):
         if not self.deep_debug:
             self._cleanup_shards(sharding_plan)
 
-    def _initializer_function(self, gpu_id_list):
+    def _initializer_function(self, gpu_id_list, n_processes):
         current_process().gpu_id_list = gpu_id_list
+        current_process().n_processes = n_processes
 
     def _perform_segmentation(self, shard_list):
         # get GPU status
@@ -921,12 +925,13 @@ class ShardedSegmentation(Segmentation):
             with mp.get_context(self.context).Pool(
                 processes=self.n_processes,
                 initializer=self._initializer_function,
-                initargs=[self.gpu_id_list],
+                initargs=[self.gpu_id_list, self.n_processes],
             ) as pool:
                 list(
                     tqdm(
                         pool.imap(self.method._call_as_shard, shard_list),
                         total=len(shard_list),
+                        desc="Segmenting Image Tiles",
                     )
                 )
                 pool.close()
