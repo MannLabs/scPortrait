@@ -142,7 +142,7 @@ class _HDF5SingleCellDataset(Dataset):
                 label_col = label_col.astype(dtype_label_column)
 
                 # apply any mathematical transform to label column if specified (e.g. to change scale by dividing by 1000)
-                if label_column is not None:
+                if label_column_transform is not None:
                     label_col = label_column_transform(label_col)
 
                 # generate identifiers for all single-cells
@@ -509,7 +509,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         )
 
         self.label_column = label_colum
-        self.label_dtype = label_dtype
+        self.dtype_label_column = label_dtype
         self.label_column_transform = label_column_transform
         self.read_labels_from_dataset = True
 
