@@ -190,7 +190,7 @@ class LMDSelection(ProcessingStep):
 
     def _get_centers(self, cell_ids: list[int]) -> list[tuple[int, int]]:
         _sdata = self.project.filehandler.get_sdata()
-        centers = _sdata["centers_cells"].compute()
+        centers = _sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.segmentation_channel_to_select}"].compute()
         centers = centers.loc[cell_ids, :]
         return centers[
             ["y", "x"]
