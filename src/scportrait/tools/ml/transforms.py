@@ -60,16 +60,26 @@ class GaussianNoise:
             n_channels = tensor.shape[1]
 
             fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
-            for i in range(n_channels):
-                axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
-                axs[i].axis("off")
-                axs[i].set_title(f"Input tensor index {i} sampled noise")
+            if n_channels == 1:
+                axs.imshow(tensor[0, 0], vmin=0, vmax=1)
+                axs.axis("off")
+                axs.set_title("Input tensor sampled noise")
+            else:
+                for i in range(n_channels):
+                    axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
+                    axs[i].axis("off")
+                    axs[i].set_title(f"Input tensor index {i} sampled noise")
 
             fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
-            for i in range(n_channels):
-                axs[i].imshow(sampled_noise[0, i], vmin=0, vmax=1)
-                axs[i].axis("off")
-                axs[i].set_title(f"index {i} sampled noise")
+            if n_channels == 1:
+                axs.imshow(sampled_noise[0, 0], vmin=0, vmax=1)
+                axs.axis("off")
+                axs.set_title("sampled noise")
+            else:
+                for i in range(n_channels):
+                    axs[i].imshow(sampled_noise[0, i], vmin=0, vmax=1)
+                    axs[i].axis("off")
+                    axs[i].set_title(f"index {i} sampled noise")
 
         tensor = tensor.add_(sampled_noise)
         tensor = torch.clamp(
@@ -80,10 +90,15 @@ class GaussianNoise:
             n_channels = tensor.shape[1]
 
             fig, axs = plt.subplots(1, n_channels, figsize=(n_channels * 2, 2))
-            for i in range(n_channels):
-                axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
-                axs[i].axis("off")
-                axs[i].set_title(f"Transformed tensor index {i} sampled noise")
+            if n_channels == 1:
+                axs.imshow(tensor[0, 0], vmin=0, vmax=1)
+                axs.axis("off")
+                axs.set_title("Transformed tensor sampled noise")
+            else:
+                for i in range(n_channels):
+                    axs[i].imshow(tensor[0, i], vmin=0, vmax=1)
+                    axs[i].axis("off")
+                    axs[i].set_title(f"Transformed tensor index {i} sampled noise")
 
         return tensor
 
