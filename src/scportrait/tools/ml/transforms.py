@@ -40,23 +40,39 @@ class GaussianNoise:
 
     def __init__(
         self,
+        sigma: float | tuple[float, float] = 0.1,
         mean: float = 0.5,
-        sigma: float = 0.1,
         std: float = 1,
         channels_to_exclude: list[int] | None = None,
         deep_debug: bool = False,
     ):
         if channels_to_exclude is None:
             channels_to_exclude = []
-        assert sigma > 0, "sigma must be greater than 0."
-        self.sigma = sigma
+
+        if isinstance(sigma, tuple):
+            assert isinstance(sigma[0], float) and isinstance(sigma[1], float), "sigma must be a tuple of two floats."
+            assert sigma[0] < sigma[1], "sigma min must be less than sigma max."
+            self.sigma_sample = True
+            self.sigma_range = sigma
+        elif isinstance(sigma, float):
+            assert sigma >= 0, "sigma must be a positive float."
+            self.sigma_sample = False
+            self.sigma = sigma
+
         self.mean = mean
         self.std = std
         self.channels = channels_to_exclude or []
         self.deep_debug = deep_debug  # can be set to true for debugging purposes
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        scale = self.sigma * tensor
+        # randomly sample sigma from a uniform distribution
+        if self.sigma_sample:
+            lower, upper = self.sigma_range
+            sigma = random.uniform(lower, upper)
+        else:
+            sigma = self.sigma
+
+        scale = sigma * tensor
         sampled_noise = (
             torch.tensor(0, dtype=torch.float32).repeat(*tensor.size()).normal_(mean=self.mean, std=self.std) * scale
         )
