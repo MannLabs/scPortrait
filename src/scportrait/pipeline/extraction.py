@@ -906,7 +906,7 @@ class HDF5CellExtraction(ProcessingStep):
 
         if self.threads <= 1:
             # set up for single-threaded processing
-            self._get_normalization()
+            self._setup_normalization()
             self.seg_masks = mmap_array_from_path(self.path_seg_masks)
             self.image_data = mmap_array_from_path(self.path_image_data)
 
