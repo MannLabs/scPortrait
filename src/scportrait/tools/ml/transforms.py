@@ -34,21 +34,32 @@ class GaussianNoise:
     """Add Gaussian noise to the input tensor.
 
     Args:
-        sigma: Standard deviation of the Gaussian noise.
+        sigma: Strength of the added noise.
         channels_to_exclude: List of channel indices to exclude from noise addition.
     """
 
-    def __init__(self, sigma: float = 0.1, channels_to_exclude: list[int] | None = None, deep_debug: bool = False):
+    def __init__(
+        self,
+        mean: float = 0.5,
+        sigma: float = 0.1,
+        std: float = 1,
+        channels_to_exclude: list[int] | None = None,
+        deep_debug: bool = False,
+    ):
         if channels_to_exclude is None:
             channels_to_exclude = []
         assert sigma > 0, "sigma must be greater than 0."
         self.sigma = sigma
+        self.mean = mean
+        self.std = std
         self.channels = channels_to_exclude or []
         self.deep_debug = deep_debug  # can be set to true for debugging purposes
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         scale = self.sigma * tensor
-        sampled_noise = torch.randn_like(tensor) * scale
+        sampled_noise = (
+            torch.tensor(0, dtype=torch.float32).repeat(*tensor.size()).normal_(mean=self.mean, std=self.std) * scale
+        )
 
         # Vectorized masking of excluded channels
         if tensor.ndimension() == 3:  # (C, H, W)
