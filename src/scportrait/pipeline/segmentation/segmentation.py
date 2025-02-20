@@ -759,8 +759,8 @@ class ShardedSegmentation(Segmentation):
                 Warning("Shapes do not match")
                 self.log("Shapes do not match")
                 self.log(f"window: {(window[0], window[1])}")
-                self.log("shifted_map shape: {shifted_map.shape}")
-                self.log("orig_input shape: {orig_input.shape}")
+                self.log(f"shifted_map shape: {shifted_map.shape}")
+                self.log(f"orig_input shape: {orig_input.shape}")
 
                 raise ValueError("Shapes do not match. Please send this example to the developers for troubleshooting.")
 
