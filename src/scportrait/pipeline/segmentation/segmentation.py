@@ -754,8 +754,10 @@ class ShardedSegmentation(Segmentation):
             )
 
             orig_input = hdf_labels[:, window[0], window[1]]
+            _, x, y = orig_input.shape
+            c_shifted, x_shifted, y_shifted = shifted_map.shape
 
-            if orig_input.shape != shifted_map.shape:
+            if x != x_shifted or y != y_shifted or c_shifted != self.method.N_MASKS:
                 Warning("Shapes do not match")
                 self.log("Shapes do not match")
                 self.log(f"window: {(window[0], window[1])}")
