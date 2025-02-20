@@ -380,13 +380,13 @@ class HDF5CellExtraction(ProcessingStep):
         def _check_location(id, center, width, image_width, image_height):
             x, y = center
 
-            if x < width:
+            if x <= width:
                 return id
-            if y < width:
+            if y <= width:
                 return id
-            if x > image_width - width:
+            if x >= image_width - width:
                 return id
-            if y > image_height - width:
+            if y >= image_height - width:
                 return id
 
             return None
