@@ -387,8 +387,47 @@ class HDF5CellExtraction(ProcessingStep):
             self.classes = self.centers_cell_ids
             self.px_centers = self.centers
 
+        # ensure that none of the classes are located too close to the image edges to extract
+        ids_to_discard = self._check_location_of_cells_to_extract()
+        indexes_keep = [i for i, x in enumerate(self.classes) if x not in ids_to_discard]
+
+        self.classes = self.classes[indexes_keep]
+        self.px_centers = self.px_centers[indexes_keep]
+
+        self._save_removed_classes(ids_to_discard)  # log to file
+
         # get number of classes that need to be extracted
         self.num_classes = len(self.classes)
+
+    def _check_location_of_cells_to_extract(self):
+        """Ensure that the cell_ids that are to be extracted are not too close to image edges"""
+
+        # define function for multi-threading
+        def _check_location(id, center, width, image_width, image_height):
+            x, y = center
+
+            if x < width:
+                return id
+            if y < width:
+                return id
+            if x > image_width - width:
+                return id
+            if y > image_height - width:
+                return id
+
+            return None
+
+        f = func_partial(
+            _check_location,
+            width=self.width_extraction,
+            image_width=self.input_image_width,
+            image_height=self.input_image_height,
+        )
+        results = [f(id, center) for id, center in zip(self.classes, self.px_centers, strict=True)]
+        results = set(results)
+        results.discard(None)
+
+        return list(results)
 
     def _verbalise_extraction_info(self):
         # print some output information
@@ -651,7 +690,10 @@ class HDF5CellExtraction(ProcessingStep):
         cell_ids_removed = cell_ids_removed.astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
         self.cell_ids_removed = cell_ids_removed  # save for potentially accessing at later time point
-        self._save_removed_classes(self.cell_ids_removed)
+
+        if len(self.cell_ids_removed) > 0:
+            print(self.cell_ids_removed)
+            self._save_removed_classes(self.cell_ids_removed)
 
         if self.debug:
             # visualize some cells for debugging purposes
