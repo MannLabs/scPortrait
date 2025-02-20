@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from tifffile import imread, imwrite
+from tifffile import imread, imsave
 from tqdm import tqdm
 
 
@@ -458,7 +458,7 @@ class PhenixParser:
         if len(self.missing_images) > 0:
             for missing_image in self.missing_images:
                 print(f"Creating black image with name: {missing_image}")
-                imwrite(os.path.join(self.outdir_parsed_images, missing_image), self.black_image)
+                imsave(os.path.join(self.outdir_parsed_images, missing_image), self.black_image)
 
             print(
                 f"All missing images successfully replaced with black images of the dimension {self.black_image.shape}"
