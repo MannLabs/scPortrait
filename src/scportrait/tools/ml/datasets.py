@@ -1,5 +1,6 @@
 import os
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import h5py
 import numpy as np
@@ -20,48 +21,38 @@ class _HDF5SingleCellDataset(Dataset):
 
     def __init__(
         self,
-        dir_list,
-        index_list=None,
-        select_channel=None,
+        dir_list: list[str],
+        index_list: list[list[int]] | None = None,
+        select_channel: list[int] | int | None = None,
         transform=None,
-        return_id=False,
-        return_fake_id=False,
-        max_level=5,
+        return_id: bool = True,
+        max_level: int = 5,
     ):
         """
-        Parameters
-        ----------
-        dir_list : list of str
-            List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
-            containing hdf5 files.
-        index_list : list of int, or None
-            List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
-        select_channel : int, optional
-            Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels.
-            Using this operation is more efficient than if this selection occurs via a passed transform.
-        transform : callable, optional
-            A optional user-defined function to apply transformations to the data. Default is None.
-        return_id : bool, optional
-            Whether to return the index of the cell with the data. Default is False.
-        return_fake_id : bool, optional
-            Whether to return a fake index (0) with the data. Default is False.
-        max_level : int, optional
-            Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+        Args:
+            dir_list: List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory containing hdf5 files.
+            index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
+            select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
+            transform: An optional user-defined function to apply transformations to the data. Default is None.
+            return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+                For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
+                otherwise you can no longer identify the source cell returning a specific result.
+            max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
         """
         self.dir_list = dir_list
+
+        # ensure select_channel is always a list
+        if isinstance(select_channel, int):
+            select_channel = [select_channel]
+
         self.select_channel = select_channel
         self.transform = transform
         self.return_id = return_id
-        self.return_fake_id = return_fake_id
         self.max_level = max_level
-
-        assert not (
-            self.return_id and self.return_fake_id
-        ), "Both return_id and return_fake_id cannot be True at the same time."
 
         # ensure index list is long enough for all directories
         if index_list is None:
-            index_list = [None] * len(dir_list)
+            index_list = [[None]] * len(dir_list)
         else:
             if len(index_list) < len(dir_list):
                 raise ValueError("index_list should be as long as dir_list")
@@ -71,19 +62,21 @@ class _HDF5SingleCellDataset(Dataset):
                 index_list
             ), "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
 
-        self.index_list = index_list
+        self.index_list: list[list[Any]] = index_list
+
+        # check reading of an image element and ensure that the selected channels are valid
 
         # initialize placeholders to store dataset information
-        self.handle_list = []
-        self.data_locator = []
+        self.handle_list: list[Any] = []
+        self.data_locator: list[list[int]] = []
 
-        self.bulk_labels = None
-        self.label_column = None
+        self.bulk_labels: list[int] | None = None
+        self.label_column: int | None = None
 
     def _add_hdf_to_index(
         self,
         path: str,
-        index_list: list | None = None,
+        index_list: list[int] | None = None,
         label: int | None = None,
         label_column: int | None = None,
         dtype_label_column=float,
@@ -103,7 +96,7 @@ class _HDF5SingleCellDataset(Dataset):
             input_hdf = h5py.File(path, "r")
 
             # get single cell index handle
-            if index_list is not None:
+            if index_list != [None]:
                 index_handle = np.zeros((len(index_list), 2), dtype=np.int64)
 
                 # ensure that no out of bound elements are provided for the dataset
@@ -119,6 +112,13 @@ class _HDF5SingleCellDataset(Dataset):
 
             else:
                 index_handle = input_hdf.get("single_cell_index")
+
+            # ensure that selected channels are within range
+            if self.select_channel is not None:
+                max_channels = input_hdf.get("single_cell_data").shape[1]
+                assert np.all(
+                    [channel_ix < max_channels for channel_ix in self.select_channel]
+                ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
 
             # add connection to singe cell datasets
             handle_id = len(self.handle_list)
@@ -142,7 +142,7 @@ class _HDF5SingleCellDataset(Dataset):
                 label_col = label_col.astype(dtype_label_column)
 
                 # apply any mathematical transform to label column if specified (e.g. to change scale by dividing by 1000)
-                if label_column is not None:
+                if label_column_transform is not None:
                     label_col = label_column_transform(label_col)
 
                 # generate identifiers for all single-cells
@@ -165,10 +165,11 @@ class _HDF5SingleCellDataset(Dataset):
     def _add_dataset(
         self,
         path: str,
-        current_index_list: list,
+        current_index_list: list[int],
         id: int,
         read_label_from_dataset: bool,
     ):
+        """Adds a dataset to the index."""
         if read_label_from_dataset:
             assert (
                 self.label_column is not None
@@ -186,6 +187,7 @@ class _HDF5SingleCellDataset(Dataset):
             assert (
                 self.bulk_labels is not None
             ), "trying to apply bulk labels to all cells from dataset but no label provided"
+
             self._add_hdf_to_index(
                 path=path,
                 index_list=current_index_list,
@@ -200,25 +202,19 @@ class _HDF5SingleCellDataset(Dataset):
         self,
         path: str,
         levels_left: int,
-        current_index_list: list | None = None,
+        current_index_list: list[int] | None = None,
         read_label_from_dataset: bool = False,
-    ):
+    ) -> None:
         """
         iterates over all files and folders in the directory provided by path and adds all found hdf5 files to the index.
         Subfolders are recursively scanned.
 
-        Parameters
-        ----------
-        path : str
-            directory that should be searched for HDF5 files
-        label : int
-            label that should be attached to all cells found in any HDF5 files
-        label_col : int
-            column in the HDF5 file that should be used to read single-cell labels
-        levels_left : int
-            how many subfolder levels should be recurisively scanned for additional files
-        current_index_list : Union[List, None], optional
-            List of indices to select from the dataset. If set to None all cells are taken, by default None
+        Args:
+            path: directory that should be searched for HDF5 files
+            label: label that should be attached to all cells found in any HDF5 files
+            label_col: column in the HDF5 file that should be used to read single-cell labels
+            levels_left: how many subfolder levels should be recurisively scanned for additional files
+            current_index_list: List of indices to select from the dataset. If set to None all cells are taken, by default None
         """
 
         # iterates over all files and folders in a directory
@@ -257,15 +253,22 @@ class _HDF5SingleCellDataset(Dataset):
         else:
             return
 
-    def _add_all_datasets(self, read_label_from_dataset: bool = False):
+    def _add_all_datasets(
+        self, read_label_from_dataset: bool = False, label_column_transform: None | Callable = None
+    ) -> None:
         """
         iterate through all provided directories and add all found HDF5 files.
 
-        Parameters
-        ----------
-        read_label_from_dataset: bool
-            boolean value indicating if single-cell labels are read from file or provided in bulk for the entire dataset
+        Args:
+            read_label_from_dataset: indicates if single-cell labels are read from file or provided in bulk for the entire dataset
+            label_column_transform: Optional function to apply a mathematical transformation to the read labels.
         """
+        # ensure that label_column_transform is not set to a value if read_label_from_dataset is False
+        if not read_label_from_dataset:
+            assert (
+                label_column_transform is None
+            ), "label_column_transform should be None if read_label_from_dataset is False"
+        self.label_column_transform = label_column_transform
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
@@ -294,21 +297,27 @@ class _HDF5SingleCellDataset(Dataset):
                     current_index_list=current_index_list,
                 )
 
-    def stats(self):  # print dataset statistics
-        """Print dataset statistics."""
+    def stats(self, detailed: bool = False):  # print dataset statistics
+        """Print dataset statistics.
+        Args:
+            detailed: Whether to print detailed statistics. Default is False.
+        """
         labels = [el[0] for el in self.data_locator]
 
-        print(f"Total: {len(labels)}")
+        print(f"Total single cell records: {len(labels)}")
 
-        for label in set(labels):
-            print(f"{label}: {labels.count(label)}")
+        if detailed:
+            for label in set(labels):
+                print(f"single cell records with label {label} : {labels.count(label)}")
 
-    def __len__(self):
+    def __len__(self) -> int:
         """get number of elements contained in the dataset"""
         return len(self.data_locator)
 
-    def __getitem__(self, idx):
-        "get item from dataset with the specified index `idx`"
+    def __getitem__(
+        self, idx: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor]:
+        """get item from dataset with the specified index `idx`"""
 
         if torch.is_tensor(idx):
             idx = idx.tolist()  # convert tensor to list
@@ -345,90 +354,77 @@ class _HDF5SingleCellDataset(Dataset):
         if self.transform:
             t = self.transform(t)  # apply transformation
 
+        if self.label_column_transform is not None:
+            label = self.label_column_transform(label)
+
         if self.return_id:
             # return data, label, and cell_id
             id = int(cell_id)  # ensure the cell_id is transformed to an int
-            sample = (
+            return (
                 t,
                 torch.tensor(label),
                 torch.tensor(id),
             )
 
-        elif self.return_fake_id:
-            # return data, label, and fake id
-            sample = (
-                t,
-                torch.tensor(label),
-                torch.tensor(0),
-            )
-
         else:
             # return data and label
-            sample = (t, torch.tensor(label))
-
-        return sample
+            return (t, torch.tensor(label))
 
 
 class HDF5SingleCellDataset(_HDF5SingleCellDataset):
     """
-    Class for handling scPortrait single cell datasets stored in HDF5 files.
+    Dataset reader for scPortraits single cell datasets stored in HDF5 files.
 
     This class provides a convenient interface for scPortrait formatted hdf5 files containing single cell datasets. It supports loading data
     from multiple hdf5 files within specified directories, applying transformations on the data, and returning
     the required information, such as label or id, along with the single cell data.
 
-    Attributes
-    ----------
-    dir_list : list of str
-        List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
-        containing hdf5 files.
-    dir_labels : list of int
-        List of bulk labels that should be applied to all cells contained within each dataset in dir_list.
-    index_list : list of int, or None
-        List of indices to select from the dataset. If set to None all cells are taken. Default is None.
-    select_channel : int, optional
-        Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels.
-        Using this operation is more efficient than if this selection occurs via a passed transform.
-    transform : callable, optional
-        A optional user-defined function to apply transformations to the data. Default is None.
-    return_id : bool, optional
-        Whether to return the index of the cell with the data. Default is False.
-    return_fake_id : bool, optional
-        Whether to return a fake index (0) with the data. Default is False.
-    max_level : int, optional
-        Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+    It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Methods
-    -------
-    stats()
-        Prints dataset statistics including total count and count per label.
-    len()
-        Returns the total number of single cells in the dataset.
-    getitem(idx)
-        Returns the data, label, and optional id/fake_id of the single cell specified by the index `idx`.
+    Attributes:
+        dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
+        dir_labels: List of bulk labels applied to all cells within each dataset in `dir_list`.
+        index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
+        select_channel: Specific channel or list of channels to retrieve from the data. Default is `None`, which returns all channels.
+            This is more efficient than performing selection via a transform function as the data is never read in the first place.
+        transform: User-defined function to apply transformations to the data. Default is `None`.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `False`.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`, otherwise
+            you can no longer identify the source cell returning a specific result.
+        max_level (int, optional):
+            Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
-    Examples
-    --------
-    >>> hdf5_data = HDF5SingleCellDataset(
-    ...     dir_list=["path/to/data/data1.hdf5", "path/to/data2/data2.hdf5"],
-    ...     dir_labels=[0, 1],
-    ...     transform=None,
-    ...     return_id=True,
-    ... )
-    >>> len(hdf5_data)
-    2000
+    Methods:
+        stats():
+            Prints dataset statistics, including the total count and count per label.
+        __len__():
+            Returns the total number of single cells in the dataset.
+        __getitem__(idx):
+            Retrieves the data, label, and optionally an ID or fake ID for the single cell at index `idx`.
+
+    Examples:
+        ```python
+        hdf5_data = HDF5SingleCellDataset(
+            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+            dir_labels=[0, 1],
+            transform=None,
+            return_id=True,
+        )
+
+        print(len(hdf5_data))  # Output: 2000
+        ```
     """
 
     def __init__(
         self,
-        dir_list,
-        dir_labels,
-        index_list=None,  # list of indices to select from the index
+        dir_list: list[str],
+        dir_labels: list[int],
+        index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform=None,
-        max_level=5,
-        return_id=False,
-        return_fake_id=False,
-        select_channel=None,
+        max_level: int = 5,
+        return_id: bool = True,
+        select_channel: int | list[int] | None = None,
     ):
         super().__init__(
             dir_list=dir_list,
@@ -436,11 +432,10 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
             select_channel=select_channel,
             transform=transform,
             return_id=return_id,
-            return_fake_id=return_fake_id,
             max_level=max_level,
         )
 
-        self.bulk_labels = dir_labels
+        self.bulk_labels: list[int] = dir_labels
         self.read_labels_from_dataset = False
 
         self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
@@ -449,72 +444,60 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
 
 class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
     """
-    Class for handling scPortrait single cell datasets stored in HDF5 files.
-    Single-cell labels are read directly from the HDF5 file.
+    Dataset reader for scPortraits single cell datasets stored in HDF5 files. Single-cell labels are read directly from the HDF5 file.
 
-    This class provides a convenient interface for scPortrait formatted hdf5 files containing single cell datasets. It supports loading data
-    from multiple hdf5 files within specified directories, applying transformations on the data, and returning
-    the required information, such as label or id, along with the single cell data.
+    This class provides an interface for scPortrait-formatted HDF5 files containing single-cell datasets. It supports loading data
+    from multiple HDF5 files within specified directories, applying transformations, and returning relevant information such as labels or IDs along with the single-cell data.
 
-    Attributes
-    ----------
-    dir_list : list of str
-        List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory
-        containing hdf5 files.
-    label_colum: int
-        index of column from single_cell_index_labelled from which single-cell labels should be read
-    label_dtype: dtype | None
-        dtype to which the read labels should be converted
-    label_column_transform: function| None
-        optional function that can define a mathematical transform on the read labels. E.g. if the labels are saved as seconds
-        in the HDF5 dataset you can set this value to `lambda x: x/3600` to have the labels returned in hours instead.
-    index_list : list of int, or None
-        List of indices to select from the dataset. If set to None all cells are taken. Default is None.
-    select_channel : int, optional
-        Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels.
-        Using this operation is more efficient than if this selection occurs via a passed transform.
-    transform : callable, optional
-        A optional user-defined function to apply transformations to the data. Default is None.
-    return_id : bool, optional
-        Whether to return the index of the cell with the data. Default is False.
-    return_fake_id : bool, optional
-        Whether to return a fake index (0) with the data. Default is False.
-    max_level : int, optional
-        Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+    It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Methods
-    -------
-    stats()
-        Prints dataset statistics including total count and count per label.
-    len()
-        Returns the total number of single cells in the dataset.
-    getitem(idx)
-        Returns the data, label, and optional id/fake_id of the single cell specified by the index `idx`.
+    Attributes:
+        dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
+        label_column: Index of the column from `single_cell_index_labelled` from which single-cell labels should be read.
+        label_dtype: Data type to which the read labels should be converted.
+        label_column_transform: Optional function to apply a mathematical transformation to the read labels.
+            For example, if the labels are stored as seconds in the HDF5 dataset, set this value to `lambda x: x / 3600` to return labels in hours.
+        index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
+        select_channel: Specific channel or list of channels to retrieve from the data. Default is `None`, which returns all channels.
+            This is more efficient than performing selection via a transform function as the data is never read in the first place.
+        transform: Optional user-defined function to apply transformations to the data. Default is `None`.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`, otherwise
+            you can no longer identify the source cell returning a specific result.
+        max_level: Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
-    Examples
-    --------
-    >>> hdf5_data = HDF5SingleCellDataset(
-    ...     dir_list=["path/to/data/data1.hdf5", "path/to/data2/data2.hdf5"],
-    ...     dir_labels=[0, 1],
-    ...     transform=None,
-    ...     return_id=True,
-    ... )
-    >>> len(hdf5_data)
-    2000
+    Methods:
+        stats():
+            Prints dataset statistics, including the total count and count per label.
+        __len__():
+            Returns the total number of single cells in the dataset.
+        __getitem__(idx):
+            Retrieves the data, label, and optionally a unique ID for the single cell at index `idx`.
+
+    Examples:
+        ```python
+        hdf5_data = HDF5SingleCellDataset(
+            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+            dir_labels=[0, 1],
+            transform=None,
+            return_id=True,
+        )
+
+        print(len(hdf5_data))  # Output: 2000
+        ```
     """
 
     def __init__(
         self,
-        dir_list,
-        label_colum,
-        label_dtype,
-        label_column_transform,
-        index_list=None,  # list of indices to select from the index
-        transform=None,
-        max_level=5,
-        return_id=False,
-        return_fake_id=False,
-        select_channel=None,
+        dir_list: list[str],
+        label_colum: int,
+        label_dtype: type,
+        label_column_transform: Callable | None = None,
+        index_list: list[list[int]] | None = None,  # list of indices to select from the index
+        transform: Callable | None = None,
+        max_level: int = 5,
+        return_id: bool = True,
+        select_channel: list[int] | None | int = None,
     ):
         super().__init__(
             dir_list=dir_list,
@@ -522,14 +505,13 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
             select_channel=select_channel,
             transform=transform,
             return_id=return_id,
-            return_fake_id=return_fake_id,
             max_level=max_level,
         )
 
         self.label_column = label_colum
-        self.label_dtype = label_dtype
+        self.dtype_label_column = label_dtype
         self.label_column_transform = label_column_transform
         self.read_labels_from_dataset = True
 
-        self._add_all_dataset(read_label_from_dataset=self.read_labels_from_dataset)
+        self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
         self.stats()
