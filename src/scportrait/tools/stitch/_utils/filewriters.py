@@ -9,7 +9,7 @@ from ome_zarr.writer import write_image
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations.transformations import Identity
-from tifffile import imsave
+from tifffile import imwrite
 from yattag import Doc, indent
 
 
@@ -26,7 +26,7 @@ def write_tif(image_path: str, image: np.array, dtype="uint16"):
         datatype to save the image as, by default "uint16"
     """
     # save using tifffile library to ensure compatibility with very large tif files
-    imsave(image_path, image.astype(dtype))
+    imwrite(image_path, image.astype(dtype))
 
 
 def write_ome_zarr(
