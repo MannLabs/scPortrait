@@ -56,6 +56,8 @@ class GaussianNoise:
         elif tensor.ndimension() == 4:  # (N, C, H, W)
             sampled_noise[:, self.channels, :, :] = 0
 
+        sampled_noise = torch.clamp(sampled_noise, 0, 1)  # clip to 0,1 (don't want to reset the scale of our values)
+
         if self.deep_debug:
             n_channels = tensor.shape[1]
 
@@ -82,9 +84,7 @@ class GaussianNoise:
                     axs[i].set_title(f"index {i} sampled noise")
 
         tensor = tensor.add_(sampled_noise)
-        tensor = torch.clamp(
-            tensor, 0, 1
-        )  # clip any negative values to 0 (don't want to reset the scale of our values)
+        tensor = torch.clamp(tensor, 0, 1)  # clip to 0,1 (also after addition of noise)
 
         if self.deep_debug:
             n_channels = tensor.shape[1]
