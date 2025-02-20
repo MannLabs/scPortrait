@@ -301,6 +301,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_extraction_f(self, extraction_f):
+        self._setup_extraction_f(extraction_f)
+
     def _setup_featurization_f(self, featurization_f):
         """Configure the featurization method for the project.
 
