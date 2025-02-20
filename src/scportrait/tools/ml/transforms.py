@@ -34,8 +34,11 @@ class GaussianNoise:
     """Add Gaussian noise to the input tensor.
 
     Args:
-        sigma: Strength of the added noise.
+        sigma: Strength of the added noise. If a range is provided a random value will be sampled form this range.
         channels_to_exclude: List of channel indices to exclude from noise addition.
+        mean: Mean of the Gaussian distribution from which the noise is sampled.
+        std: Standard deviation of the Gaussian distribution from which the noise is sampled.
+        deep_debug: If True, the input tensor, the sampled noise, and the transformed tensor are plotted for debugging.
     """
 
     def __init__(
