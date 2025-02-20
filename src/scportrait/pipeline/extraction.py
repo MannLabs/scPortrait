@@ -196,32 +196,6 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
-    def _initialize_tempmmap_array(self, index_len=2):
-        # determine shapes of the temporary mmap arrays that need to be created
-        single_cell_index_shape = (self.num_classes, index_len)
-        single_cell_data_shape = (
-            self.num_classes,
-            (self.n_masks + self.n_image_channels),
-            self.image_size,
-            self.image_size,
-        )
-
-        # generate container for single_cell_data
-        self._tmp_single_cell_data_path = create_empty_mmap(
-            shape=single_cell_data_shape,
-            dtype=np.float16,
-            tmp_dir_abs_path=self._tmp_dir_path,
-        )
-
-        # generate container for single_cell_index
-        fixed_length = 200  # this is the maximum length of string that can be stored in the mmap array for the cell_ids
-        dt = np.dtype(f"S{fixed_length}")
-        self._tmp_single_cell_index_path = create_empty_mmap(
-            shape=single_cell_index_shape,
-            dtype=dt,
-            tmp_dir_abs_path=self._tmp_dir_path,
-        )
-
     def _set_up_extraction(self):
         if self.partial_processing:
             output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_ncells_{self.n_cells}_seed_{self.seed}"
@@ -244,8 +218,8 @@ class HDF5CellExtraction(ProcessingStep):
         self._get_centers()
         self._get_classes_to_extract()
 
-        # initialize temporary mmap arrays for saving results
-        self._initialize_tempmmap_array()
+        # create output files for saving results to
+        self._create_output_files()
 
         self._verbalise_extraction_info()
 
@@ -442,12 +416,13 @@ class HDF5CellExtraction(ProcessingStep):
     def _generate_save_index_lookup(self, class_list):
         self.save_index_lookup = pd.DataFrame(index=class_list)
 
-    def _get_arg(self, cell_ids):
+    def _get_arg(self, cell_ids, centers):
         args = list(
             zip(
                 range(len(cell_ids)),
                 [self.save_index_lookup.index.get_loc(x) for x in cell_ids],
                 cell_ids,
+                centers,
                 strict=False,
             )
         )
@@ -479,10 +454,10 @@ class HDF5CellExtraction(ProcessingStep):
         return [args[i : i + self.batch_size] for i in range(0, len(args), self.batch_size)]
 
     def _get_label_info(self, arg):
-        index, save_index, cell_id = arg
+        index, save_index, cell_id, px_center = arg
 
         # no additional labelling required
-        return (index, save_index, cell_id, None, None)
+        return (index, save_index, cell_id, px_center, None, None)
 
     def _save_removed_classes(self, classes):
         # define path where classes should be saved
@@ -501,50 +476,21 @@ class HDF5CellExtraction(ProcessingStep):
             f"A total of {len(classes)} cells were too close to the image border to be extracted. Their cell_ids were saved to file {filtered_path}."
         )
 
-    def _save_cell_info(self, save_index, cell_id, image_index, label_info, stack):
-        """helper function to save the extracted cell information to the temporary datastructures
-
-        Parameters
-        ----------
-        save_index : int
-            index location in the temporary datastructures where the cell in question needs to be saved
-        cell_id : int
-            unique identifier of extracted cell
-        image_index : int | None
-            index of the source image that was processed. Only relevant for TimecourseProjects. Otherwise None.
-        label_info : str | None
-            additional information that is to be saved with the extracted cell. Only relevant for TimecourseProjects. Otherwise None.
-        stack : np.array
-            extracted single cell images that are too be saved
-        """
-        # label info is None so just ignore for the base case
-        # image_index is none so just ignore for the base case
-
-        # save single cell images
-        self._tmp_single_cell_data[save_index] = stack
-        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
-
-    def _save_failed_cell_info(self, save_index, cell_id, image_index, label_info):
-        """save the relevant information for cells that are too close to the image edges to extract
-
-        Parameters
-        ----------
-        save_index : int
-            index location in the temporary datastructures where the cell in question should have been saved, this index
-            location will later be deleted
-        cell_id : int
-            unique identifier of the cell which was unable to be extracted
-
-        """
-
-        # image index and label_info can be ignored for the base case is only relevant for the timecourse extraction
-        self._tmp_single_cell_index[save_index] = [save_index, cell_id]
-
-    def _extract_classes(self, px_center, arg, return_failed_ids=False):
+    def _extract_classes(self, arg, return_results: bool = False):
         """
         Processing for each individual cell that needs to be run for each center.
+
+        Args:
+            px_center (tuple): The pixel center of the cell.
+            arg (tuple): The arguments that are passed to the function.
+            return_results (bool): Whether to return the results or save them to the HDF5 file.
+
+        Returns:
+            None: If return_results is False.
+            tuple: If return_results is True. The tuple contains the save_index, the stack of images, and the cell_id.
+
         """
-        index, save_index, cell_id, image_index, label_info = self._get_label_info(
+        index, save_index, cell_id, px_center, image_index, label_info = self._get_label_info(
             arg
         )  # label_info not used in base case but relevant for flexibility for other classes
 
@@ -563,158 +509,124 @@ class HDF5CellExtraction(ProcessingStep):
             ids.append(cytosol_id)
 
         # get region that should be extracted
-        _px_center = px_center[index]
-        window_y = slice(_px_center[1] - self.width_extraction, _px_center[1] + self.width_extraction)
-        window_x = slice(_px_center[0] - self.width_extraction, _px_center[0] + self.width_extraction)
+        window_y = slice(px_center[1] - self.width_extraction, px_center[1] + self.width_extraction)
+        window_x = slice(px_center[0] - self.width_extraction, px_center[0] + self.width_extraction)
 
         # ensure that the cell is not too close to the image edge to be extracted
         condition = [
-            self.width_extraction < _px_center[0],
-            _px_center[0] < self.input_image_width - self.width_extraction,
-            self.width_extraction < _px_center[1],
-            _px_center[1] < self.input_image_height - self.width_extraction,
+            self.width_extraction < px_center[0],
+            px_center[0] < self.input_image_width - self.width_extraction,
+            self.width_extraction < px_center[1],
+            px_center[1] < self.input_image_height - self.width_extraction,
         ]
-        if np.all(condition):
-            extraction_status = True
-        else:
-            extraction_status = False
+        assert np.all(condition), "Cell is too close to the image edge to be extracted."
 
-        if extraction_status:
-            masks = []
+        masks = []
 
-            # get the segmentation masks
-            for mask_ix in range(self.n_masks):
-                if image_index is None:
-                    # nuclei_mask = self.sdata[self.nucleus_key].data[window_y, window_x].compute()
-                    mask = self.seg_masks[mask_ix, window_y, window_x]
-                else:
-                    # nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
-                    mask = self.seg_masks[image_index, mask_ix, window_y, window_x]
-
-                # modify nucleus mask to only contain the nucleus of interest and perform some morphological operations
-                mask = np.where(mask == ids[mask_ix], 1, 0)
-                mask = binary_fill_holes(mask)
-                mask = gaussian(mask, preserve_range=True, sigma=1)
-
-                masks.append(mask)
-
-            # get the image data
+        # get the segmentation masks
+        for mask_ix in range(self.n_masks):
             if image_index is None:
-                image_data = self.image_data[:, window_y, window_x]
+                # nuclei_mask = self.sdata[self.nucleus_key].data[window_y, window_x].compute()
+                mask = self.seg_masks[mask_ix, window_y, window_x]
             else:
-                image_data = self.image_data[image_index, :, window_y, window_x]
+                # nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
+                mask = self.seg_masks[image_index, mask_ix, window_y, window_x]
 
-            image_data = (
-                image_data * masks[-1]
-            )  # always uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
+            # modify nucleus mask to only contain the nucleus of interest and perform some morphological operations
+            mask = np.where(mask == ids[mask_ix], 1, 0)
+            mask = binary_fill_holes(mask)
+            mask = gaussian(mask, preserve_range=True, sigma=1)
 
-            # this needs to be performed on a per channel basis!
-            images = []
-            for i in range(image_data.shape[0]):
-                ix = self.norm_function(image_data[i])
-                images.append(ix)
+            masks.append(mask)
 
-            inputs = masks + images
-            stack = np.stack(inputs, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
-
-            self._save_cell_info(save_index, cell_id, image_index, label_info, stack)
-
-            if self.deep_debug:
-                # visualize some cells for debugging purposes
-                if index % 1000 == 0:
-                    print(f"Cell ID: {cell_id} has center at [{_px_center[0]}, {_px_center[1]}]")
-
-                    fig, axs = plt.subplots(1, stack.shape[0], figsize=(2 * stack.shape[0], 2))
-                    for i, img in enumerate(stack):
-                        axs[i].imshow(img, vmin=0, vmax=1)
-                        axs[i].axis("off")
-                    fig.tight_layout()
-                    fig.show()
-
-            if return_failed_ids:
-                return []
-            else:
-                return None
-
+        # get the image data
+        if image_index is None:
+            image_data = self.image_data[:, window_y, window_x]
         else:
-            if self.deep_debug:
-                print(f"cell id {cell_id} is too close to the image edge to extract. Skipping this cell.")
+            image_data = self.image_data[image_index, :, window_y, window_x]
 
-            self.save_index_to_remove.append(save_index)
-            self._save_failed_cell_info(
-                save_index,
-                nucleus_id,
-                image_index,
-                label_info,
-            )
+        image_data = (
+            image_data * masks[-1]
+        )  # always uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
 
-            if return_failed_ids:
-                return [save_index]
-            else:
-                return None
+        # this needs to be performed on a per channel basis!
+        images = []
+        for i in range(image_data.shape[0]):
+            ix = self.norm_function(image_data[i])
+            images.append(ix)
 
-    def _extract_classes_multi(self, px_centers, arg_list):
-        self._setup_normalization()
+        inputs = masks + images
+        stack = np.stack(inputs, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
 
-        self.seg_masks = mmap_array_from_path(self.path_seg_masks)
-        self.image_data = mmap_array_from_path(self.path_image_data)
-
-        self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
-
-        results = []
-        for arg in arg_list:
-            x = self._extract_classes(px_centers, arg, return_failed_ids=True)
-            results.append(x)
-
-        return flatten(results)
-
-    def _transfer_tempmmap_to_hdf5(self):
-        self.log("Transferring results to final HDF5 data container.")
-
-        # reconnect to memory mapped temp arrays
-        _tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-        _tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
-
-        self.log(f"number of cells too close to image edges to extract: {len(self.save_index_to_remove)}")
-
-        # generate final index of all of the rows that we wish to keep out of the original array
-        keep_index = np.setdiff1d(np.arange(_tmp_single_cell_index.shape[0]), self.save_index_to_remove)
-
-        # get cell_ids of the cells that were successfully extracted
-        _, cell_ids = _tmp_single_cell_index[keep_index].T
-        _, cell_ids_removed = _tmp_single_cell_index[self.save_index_to_remove].T
-
-        # convert to correct type
-        cell_ids = cell_ids.astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        cell_ids_removed = cell_ids_removed.astype(self.DEFAULT_SEGMENTATION_DTYPE)
-
-        self.cell_ids_removed = cell_ids_removed  # save for potentially accessing at later time point
-
-        if len(self.cell_ids_removed) > 0:
-            print(self.cell_ids_removed)
-            self._save_removed_classes(self.cell_ids_removed)
-
-        if self.debug:
+        if self.deep_debug:
             # visualize some cells for debugging purposes
-            # visualize a random cell for every 100 contained in the dataset
-            n_cells = 100
-            n_cells_to_visualize = len(keep_index) // n_cells
-
-            rng = np.random.default_rng()
-            random_indexes = rng.choice(keep_index, n_cells_to_visualize, replace=False)
-
-            for index in random_indexes:
-                stack = _tmp_single_cell_data[index]
+            if index % 1000 == 0:
+                print(f"Cell ID: {cell_id} has center at [{px_center[0]}, {px_center[1]}]")
 
                 fig, axs = plt.subplots(1, stack.shape[0], figsize=(2 * stack.shape[0], 2))
                 for i, img in enumerate(stack):
                     axs[i].imshow(img, vmin=0, vmax=1)
                     axs[i].axis("off")
                 fig.tight_layout()
-                plt.show(fig)
+                fig.show()
 
-        self.log("Transferring extracted single cells to .hdf5")
+        if return_results:
+            return save_index, stack, cell_id
+        else:
+            self._single_cell_data[save_index] = stack
+            self._single_cell_index[save_index] = [save_index, cell_id]
+            return None
+
+    def _extract_classes_multi(
+        self,
+        arg_list,
+    ):
+        self._setup_normalization()
+
+        self.seg_masks = mmap_array_from_path(self.path_seg_masks)
+        self.image_data = mmap_array_from_path(self.path_image_data)
+
+        # get processing results
+        results = [self._extract_classes(arg, return_results=True) for arg in arg_list]
+
+        return results
+
+    def _write_to_hdf5(self, results, hdf5_lock):
+        """Function for writing results to HDF5 file in a thread-safe manner."""
+        with hdf5_lock:
+            with h5py.File(self.output_path, "a") as hf:
+                self._single_cell_data = hf["single_cell_data"]
+                self._single_cell_index = hf["single_cell_index"]
+
+                for res in results:
+                    save_index, stack, cell_id = res
+                    self._single_cell_data[save_index] = stack
+                    self._single_cell_index[save_index] = [save_index, cell_id]
+
+    def _create_output_files(self):
+        single_cell_index_shape = (self.num_classes, 2)
+        single_cell_data_shape = (
+            self.num_classes,
+            (self.n_masks + self.n_image_channels),
+            self.image_size,
+            self.image_size,
+        )
+
+        # generate container for single_cell_data
+        self._tmp_single_cell_data_path = create_empty_mmap(
+            shape=single_cell_data_shape,
+            dtype=np.float16,
+            tmp_dir_abs_path=self._tmp_dir_path,
+        )
+
+        # generate container for single_cell_index
+        fixed_length = 200  # this is the maximum length of string that can be stored in the mmap array for the cell_ids
+        dt = np.dtype(f"S{fixed_length}")
+        self._tmp_single_cell_index_path = create_empty_mmap(
+            shape=single_cell_index_shape,
+            dtype=dt,
+            tmp_dir_abs_path=self._tmp_dir_path,
+        )
 
         # create name for output file
         self.output_path = os.path.join(self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE)
@@ -722,50 +634,20 @@ class HDF5CellExtraction(ProcessingStep):
         with h5py.File(self.output_path, "w") as hf:
             hf.create_dataset(
                 "single_cell_index",
-                data=list(zip(list(range(len(cell_ids))), cell_ids, strict=False)),
+                shape=single_cell_index_shape,
                 dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )  # increase to 64 bit otherwise information may become truncated
 
-            self.log("single-cell index created.")
-            del cell_ids
-            # self._clear_cache(vars_to_delete=[cell_ids]) # this is not working as expected so we will just delete the variable directly
+            self.log("Container for single-cell index created.")
 
-            _, c, x, y = _tmp_single_cell_data.shape
-            single_cell_data = hf.create_dataset(
+            hf.create_dataset(
                 "single_cell_data",
-                shape=(len(keep_index), c, x, y),
+                shape=single_cell_data_shape,
                 chunks=(1, 1, self.image_size, self.image_size),
                 compression=self.compression_type,
                 dtype=np.float16,
             )
-
-            # populate dataset in loop to prevent loading of entire dataset into memory
-            # this is required to process large datasets to not run into memory issues
-            for ix, i in tqdm(
-                enumerate(keep_index), total=len(keep_index), desc="Transferring single cell images to HDF5"
-            ):
-                single_cell_data[ix] = _tmp_single_cell_data[i]
-
-            self.log("single-cell data created")
-            del single_cell_data
-            # self._clear_cache(vars_to_delete=[single_cell_data]) # this is not working as expected so we will just delete the variable directly
-
-            # also transfer labelled index to HDF5
-            index_labelled = _tmp_single_cell_index[keep_index]
-            index_labelled = (
-                pd.DataFrame(index_labelled).iloc[:, 1:].reset_index(drop=True)
-            )  # need to reset the lookup index so that it goes up sequentially
-            index_labelled = (
-                index_labelled.reset_index()
-            )  # do this twice to get the index to be the first column of values
-            index_labelled = np.char.encode(index_labelled.values.astype(str))
-
-            dt = h5py.special_dtype(vlen=str)
-            hf.create_dataset("single_cell_index_labelled", data=index_labelled, chunks=None, dtype=dt)
-
-            self.log("single-cell index labelled created.")
-            del index_labelled
-            # self._clear_cache(vars_to_delete=[index_labelled]) # this is not working as expected so we will just delete the variable directly
+            self.log("Container for single-cell data created.")
 
             hf.create_dataset(
                 "channel_information",
@@ -780,13 +662,6 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             self.log("channel information created.")
-
-        # cleanup memory
-        del _tmp_single_cell_index
-        # self._clear_cache(vars_to_delete=[_tmp_single_cell_index]) # this is not working as expected so we will just delete the variable directly
-
-        os.remove(self._tmp_single_cell_data_path)
-        os.remove(self._tmp_single_cell_index_path)
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
         # remove normalization functions becuase other subsequent multiprocessing calls will fail
@@ -922,7 +797,7 @@ class HDF5CellExtraction(ProcessingStep):
         start_arg_generation = timeit.default_timer()
 
         self._generate_save_index_lookup(self.classes)
-        args = self._get_arg(self.classes)
+        args = self._get_arg(self.classes, self.px_centers)
         stop_arg_generation = timeit.default_timer()
         time_arg_generation = stop_arg_generation - start_arg_generation
 
@@ -949,43 +824,45 @@ class HDF5CellExtraction(ProcessingStep):
         if self.threads <= 1:
             # set up for single-threaded processing
             self._setup_normalization()
+
             self.seg_masks = mmap_array_from_path(self.path_seg_masks)
             self.image_data = mmap_array_from_path(self.path_image_data)
 
-            self._tmp_single_cell_index = mmap_array_from_path(self._tmp_single_cell_index_path)
-            self._tmp_single_cell_data = mmap_array_from_path(self._tmp_single_cell_data_path)
+            with h5py.File(
+                self.output_path,
+                "a",
+            ) as hf:
+                # connect to final containers for saving computed results
+                self._single_cell_data = hf["single_cell_data"]
+                self._single_cell_index = hf["single_cell_index"]
 
-            f = func_partial(self._extract_classes, self.px_centers)
-
-            self.log("Running in single threaded mode.")
-            results = []
-            for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
-                x = f(arg)
-                results.append(x)
+                self.log("Running in single threaded mode.")
+                for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
+                    self._extract_classes(arg)
         else:
-            # set up function for multi-threaded processing
-            f = func_partial(self._extract_classes_multi, self.px_centers)
             args = self._generate_batched_args(args)
 
             self.log(f"Running in multiprocessing mode with {self.threads} threads.")
-            with mp.get_context("fork").Pool(
-                processes=self.threads
-            ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
-                results = list(
-                    tqdm(
-                        pool.imap(f, args),
-                        total=len(args),
-                        desc="Extracting cell batches",
-                    )
-                )
-                pool.close()
-                pool.join()
 
-            self.save_index_to_remove = flatten(results)
+            with mp.Manager() as manager:
+                lock = manager.Lock()  # Create lock via Manager to enable sharing
+
+                with mp.get_context("fork").Pool(
+                    processes=self.threads
+                ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
+                    for result in list(
+                        tqdm(
+                            pool.imap(self._extract_classes_multi, args),
+                            total=len(args),
+                            desc="Extracting cell batches",
+                        )
+                    ):
+                        self._write_to_hdf5(result, lock)
+                    pool.close()
+                    pool.join()
 
         # cleanup memory and remove any no longer required variables
-        del results, args
-        # self._clear_cache(vars_to_delete=["results", "args"]) # this is not working as expected at the moment so need to manually delete the variables
+        del args
         stop_extraction = timeit.default_timer()
 
         # calculate duration
@@ -994,9 +871,6 @@ class HDF5CellExtraction(ProcessingStep):
 
         # generate final log entries
         self.log(f"Finished extraction in {time_extraction:.2f} seconds ({rate:.2f} cells / second)")
-
-        # transfer results to hdf5
-        self._transfer_tempmmap_to_hdf5()
 
         if self.partial_processing:
             self.DEFAULT_LOG_NAME = "processing.log"  # change log name back to default
