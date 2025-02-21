@@ -758,6 +758,9 @@ class ShardedSegmentation(Segmentation):
             c_shifted, x_shifted, y_shifted = shifted_map.shape
 
             if x != x_shifted or y != y_shifted or c_shifted != self.method.N_MASKS:
+                self.log(f"x: {x}, {x_shifted}")
+                self.log(f"y: {y}, {y_shifted}")
+                self.log(f"c: {self.method.N_MASKS}, {c_shifted}")
                 Warning("Shapes do not match")
                 self.log("Shapes do not match")
                 self.log(f"window: {(window[0], window[1])}")
