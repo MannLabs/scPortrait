@@ -130,6 +130,8 @@ class Segmentation(ProcessingStep):
     def _check_config(self):
         """Check if the configuration is valid."""
 
+        DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING = 0.95
+
         # optional config parameters that can be overridden through the config file
         if "chunk_size" in self.config.keys():
             self.chunk_size = self.config["chunk_size"]
@@ -140,11 +142,12 @@ class Segmentation(ProcessingStep):
             self.match_masks = self.config["match_masks"]
         else:
             self.match_masks = True
+            self.filtering_threshold_mask_matching = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
 
         if "filtering_threshold_mask_matching" in self.config.keys():
             self.filtering_threshold_mask_matching = self.config["filtering_threshold_mask_matching"]
         else:
-            self.filtering_threshold_mask_matching = 0.95
+            self.filtering_threshold_mask_matching = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
 
     def _check_gpu_status(self):
         if torch.cuda.is_available():
