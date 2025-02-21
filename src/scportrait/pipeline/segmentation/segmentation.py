@@ -18,6 +18,7 @@ from dask.array.core import Array as daskArray
 from PIL import Image
 from tqdm.auto import tqdm
 
+from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.segmentation import _return_edge_labels, sc_any, shift_labels
 
@@ -119,7 +120,6 @@ class Segmentation(ProcessingStep):
         self.is_shard = False
 
         # additional parameters to configure level of debugging for developers
-        self.deep_debug = False
         self.save_filter_results = False
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
@@ -301,6 +301,24 @@ class Segmentation(ProcessingStep):
 
         self.log("=== Finished segmentation of shard ===")
 
+    def _save_segmentation_sdata_from_memmap(self, temp_file_path, masks=None):
+        if masks is None:
+            masks = ["nuclei", "cytosol"]
+
+        # connect to the temp file as a dask array
+        labels = dask_array_from_path(temp_file_path)
+
+        if "nuclei" in masks:
+            ix = masks.index("nuclei")
+
+            self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
+            self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
+
+        if "cytosol" in masks:
+            ix = masks.index("cytosol")
+            self.filehandler._write_segmentation_sdata(labels[ix], self.cyto_seg_name, overwrite=self.overwrite)
+            self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
+
     def _save_segmentation_sdata(self, labels, classes, masks=None):
         if masks is None:
             masks = ["nuclei", "cytosol"]
@@ -310,16 +328,12 @@ class Segmentation(ProcessingStep):
             if "nuclei" in masks:
                 ix = masks.index("nuclei")
 
-                self.filehandler._write_segmentation_sdata(
-                    labels[ix], self.nuc_seg_name, classes=classes, overwrite=self.overwrite
-                )
+                self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
                 self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
 
             if "cytosol" in masks:
                 ix = masks.index("cytosol")
-                self.filehandler._write_segmentation_sdata(
-                    labels[ix], self.cyto_seg_name, classes=classes, overwrite=self.overwrite
-                )
+                self.filehandler._write_segmentation_sdata(labels[ix], self.cyto_seg_name, overwrite=self.overwrite)
                 self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
 
     def save_map(self, map_name):
@@ -904,7 +918,8 @@ class ShardedSegmentation(Segmentation):
         self.log("resolved sharding plan.")
 
         # save final segmentation to sdata
-        self._save_segmentation_sdata(hdf_labels, list(filtered_classes_combined), masks=self.method.MASK_NAMES)
+        del hdf_labels
+        self._save_segmentation_sdata_from_memmap(hdf_labels_path, masks=self.method.MASK_NAMES)
 
         self.log("finished saving segmentation results to sdata object for sharded segmentation.")
 
