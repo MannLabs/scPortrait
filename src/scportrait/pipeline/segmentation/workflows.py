@@ -656,11 +656,14 @@ class _BaseSegmentation(Segmentation):
         else:
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
+            self.mask_matching_filtering_threshold = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
 
-        # ensure that filtering threshold is set if no value is provided
+        # sanity check provided values
+        assert isinstance(self.filter_match_masks, bool), "`match_masks` must be a boolean value."
         if self.filter_match_masks:
-            if "mask_matching_filtering_threshold" not in self.__dict__.keys():
-                self.mask_matching_filtering_threshold = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
+            assert isinstance(
+                self.mask_matching_filtering_threshold, float
+            ), "`filtering_threshold_mask_matching` for mask matching must be a float."
 
     def _perform_mask_matching_filtering(
         self,
