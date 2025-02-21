@@ -543,6 +543,9 @@ class ShardedSegmentation(Segmentation):
         )
         self.segmentation_channels = test_method.segmentation_channels
 
+        if not hasattr(self, "_tmp_dir_path"):
+            self.create_temp_dir()
+
     def _check_config(self):
         super()._check_config()
 
