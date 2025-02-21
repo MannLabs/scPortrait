@@ -725,7 +725,7 @@ class _BaseSegmentation(Segmentation):
                 plot_results = True
 
             if plot_results:
-                if input_image is not None:
+                if input_image is None:
                     if "input_image" in self.__dict__.keys():
                         input_image = self.input_image
 
