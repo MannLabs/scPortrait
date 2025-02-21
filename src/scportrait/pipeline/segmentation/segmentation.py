@@ -912,15 +912,12 @@ class ShardedSegmentation(Segmentation):
             # save newly generated class list
             self._save_classes(list(filtered_classes_combined))
 
-            # ensure cleanup
-            self.clear_temp_dir()
-
         self.log("resolved sharding plan.")
+        del hdf_labels  # ensure that memory is freed up
 
         # save final segmentation to sdata
-        del hdf_labels
         self._save_segmentation_sdata_from_memmap(hdf_labels_path, masks=self.method.MASK_NAMES)
-
+        self.clear_temp_dir()  # ensure cleanup
         self.log("finished saving segmentation results to sdata object for sharded segmentation.")
 
         if not self.deep_debug:
