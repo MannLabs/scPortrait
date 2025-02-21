@@ -642,25 +642,28 @@ class _BaseSegmentation(Segmentation):
     def _check_for_mask_matching_filtering(self) -> None:
         """Check to see if the masks should be filtered for matching nuclei/cytosols within the segmentation run."""
 
+        DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING = 0.95
         # check to see if the cells should be filtered for matching nuclei/cytosols within the segmentation run
         if "match_masks" in self.config.keys():
             self.filter_match_masks = self.config["match_masks"]
             if "filtering_threshold_mask_matching" in self.config.keys():
                 self.mask_matching_filtering_threshold = self.config["filtering_threshold_mask_matching"]
             else:
-                self.mask_matching_filtering_threshold = 0.95  # set default parameter
-
-        else:
-            # add deprecation warning for old config setup
-            if "filter_status" in self.config.keys():
-                self.filter_match_masks = True
-                self.mask_matching_filtering_threshold = 0.95
-                Warning(
-                    "filter_status is deprecated, please use match_masks instead. Will use default settings for mask matching."
+                self.mask_matching_filtering_threshold = (
+                    DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING  # set default parameter
                 )
 
+        else:
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
+            self.mask_matching_filtering_threshold = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
+
+        # sanity check provided values
+        assert isinstance(self.filter_match_masks, bool), "`match_masks` must be a boolean value."
+        if self.filter_match_masks:
+            assert isinstance(
+                self.mask_matching_filtering_threshold, float
+            ), "`filtering_threshold_mask_matching` for mask matching must be a float."
 
     def _perform_mask_matching_filtering(
         self,
