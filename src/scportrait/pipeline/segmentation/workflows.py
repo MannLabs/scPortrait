@@ -654,14 +654,6 @@ class _BaseSegmentation(Segmentation):
                 )
 
         else:
-            # add deprecation warning for old config setup
-            if "filter_status" in self.config.keys():
-                self.filter_match_masks = True
-                self.mask_matching_filtering_threshold = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
-                Warning(
-                    "filter_status is deprecated, please use match_masks instead. Will use default settings for mask matching."
-                )
-
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
 
