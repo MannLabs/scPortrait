@@ -272,6 +272,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_segmentation_f(self, segmentation_f):
+        self._setup_segmentation_f(segmentation_f)
+
     def _setup_extraction_f(self, extraction_f):
         """Configure the extraction method for the project.
 
@@ -332,6 +335,25 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def update_featurization_f(self, featurization_f):
+        """Update the featurization method chosen for the project without reinitializing the entire project.
+
+        Args:
+            featurization_f : The featurization method that should be used for the project.
+
+        Returns:
+            None : the featurization method is updated in the project object.
+
+        Examples:
+            Update the featurization method for a project::
+
+                from scportrait.pipeline.featurization import CellFeaturizer
+
+                project.update_featurization_f(CellFeaturizer)
+        """
+        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
+        self._setup_featurization_f(featurization_f)
+
     def _setup_selection(self, selection_f):
         """Configure the selection method for the project.
 
@@ -359,25 +381,6 @@ class Project(Logable):
                 filehandler=self.filehandler,
                 from_project=True,
             )
-
-    def update_featurization_f(self, featurization_f):
-        """Update the featurization method chosen for the project without reinitializing the entire project.
-
-        Args:
-            featurization_f : The featurization method that should be used for the project.
-
-        Returns:
-            None : the featurization method is updated in the project object.
-
-        Examples:
-            Update the featurization method for a project::
-
-                from scportrait.pipeline.featurization import CellFeaturizer
-
-                project.update_featurization_f(CellFeaturizer)
-        """
-        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
-        self._setup_featurization_f(featurization_f)
 
     ##### General small helper functions ####
 
