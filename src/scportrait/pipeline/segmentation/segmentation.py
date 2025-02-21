@@ -422,7 +422,6 @@ class Segmentation(ProcessingStep):
         input_image = input_image[
             :, self.window[0], self.window[1]
         ]  # for some segmentation workflows potentially only the first channel is required this is further selected down in that segmentation workflow
-        self.input_image = input_image  # track for potential plotting of intermediate results
 
         if self.deep_debug:
             self.log(
