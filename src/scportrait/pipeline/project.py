@@ -1109,8 +1109,8 @@ class Project(Logable):
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
-        elif self.input_image is not None:
-            self.segmentation_f(self.input_image)
+        if self.input_image is not None:
+            self.segmentation_f.process(self.input_image)
 
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
