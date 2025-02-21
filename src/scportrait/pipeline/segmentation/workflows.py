@@ -642,25 +642,28 @@ class _BaseSegmentation(Segmentation):
     def _check_for_mask_matching_filtering(self) -> None:
         """Check to see if the masks should be filtered for matching nuclei/cytosols within the segmentation run."""
 
+        DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING = 0.95
         # check to see if the cells should be filtered for matching nuclei/cytosols within the segmentation run
         if "match_masks" in self.config.keys():
             self.filter_match_masks = self.config["match_masks"]
             if "filtering_threshold_mask_matching" in self.config.keys():
                 self.mask_matching_filtering_threshold = self.config["filtering_threshold_mask_matching"]
             else:
-                self.mask_matching_filtering_threshold = 0.95  # set default parameter
-
-        else:
-            # add deprecation warning for old config setup
-            if "filter_status" in self.config.keys():
-                self.filter_match_masks = True
-                self.mask_matching_filtering_threshold = 0.95
-                Warning(
-                    "filter_status is deprecated, please use match_masks instead. Will use default settings for mask matching."
+                self.mask_matching_filtering_threshold = (
+                    DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING  # set default parameter
                 )
 
+        else:
             # default behaviour that this filtering should be performed, otherwise another additional step is required before extraction
             self.filter_match_masks = True
+            self.mask_matching_filtering_threshold = DEFAULT_FILTERING_THRESHOLD_MASK_MATCHING
+
+        # sanity check provided values
+        assert isinstance(self.filter_match_masks, bool), "`match_masks` must be a boolean value."
+        if self.filter_match_masks:
+            assert isinstance(
+                self.mask_matching_filtering_threshold, float
+            ), "`filtering_threshold_mask_matching` for mask matching must be a float."
 
     def _perform_mask_matching_filtering(
         self,
@@ -2003,123 +2006,3 @@ class CytosolOnlySegmentationDownsamplingCellpose(CytosolOnlySegmentationCellpos
 
 class ShardedCytosolOnlySegmentationDownsamplingCellpose(ShardedSegmentation):
     method = CytosolOnlySegmentationDownsamplingCellpose
-
-
-#### TIMECOURSE SEGMENTATION METHODS #####
-#### THIS SHOULD BE SWITCHED TO THE BATCHED CLASS IMPLEMENTED BY TIM ####
-# currently these are not functional with the new spatialdata format
-
-# class WGA_TimecourseSegmentation(TimecourseSegmentation):
-#     """
-#     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
-#     No intermediate results are saved and everything is written to one .hdf5 file.
-#     """
-
-#     class WGASegmentation_Timecourse(WGASegmentation, TimecourseSegmentation):
-#         method = WGASegmentation
-
-#     method = WGASegmentation_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Multithreaded_WGA_TimecourseSegmentation(MultithreadedSegmentation):
-#     class WGASegmentation_Timecourse(WGASegmentation, TimecourseSegmentation):
-#         method = WGASegmentation
-
-#     method = WGASegmentation_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Cytosol_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
-#     """
-#     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
-#     No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
-#     """
-
-#     class CytosolSegmentationCellpose_Timecourse(
-#         CytosolSegmentationCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolSegmentationCellpose
-
-#     method = CytosolSegmentationCellpose_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Cytosol_Cellpose_Downsampling_TimecourseSegmentation(TimecourseSegmentation):
-#     """
-#     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
-#     No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
-#     """
-
-#     class Cytosol_Segmentation_Downsampling_Cellpose_Timecourse(
-#         CytosolSegmentationDownsamplingCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolSegmentationDownsamplingCellpose
-
-#     method = Cytosol_Segmentation_Downsampling_Cellpose_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class CytosolOnly_Cellpose_TimecourseSegmentation(TimecourseSegmentation):
-#     """
-#     Specialized Processing for Timecourse segmentation (i.e. smaller tiles not stitched together from many different wells and or timepoints).
-#     No intermediate results are saved and everything is written to one .hdf5 file. Uses Cellpose segmentation models.
-#     """
-
-#     class CytosolOnly_Cellpose_TimecourseSegmentation(
-#         CytosolOnlySegmentationCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolOnlySegmentationCellpose
-
-#     method = CytosolOnly_Cellpose_TimecourseSegmentation
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Multithreaded_Cytosol_Cellpose_TimecourseSegmentation(MultithreadedSegmentation):
-#     class CytosolSegmentationCellpose_Timecourse(
-#         CytosolSegmentationCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolSegmentationCellpose
-
-#     method = CytosolSegmentationCellpose_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Multithreaded_Cytosol_Cellpose_Downsampling_TimecourseSegmentation(
-#     MultithreadedSegmentation
-# ):
-#     class Cytosol_Segmentation_Downsampling_Cellpose_Timecourse(
-#         CytosolSegmentationDownsamplingCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolSegmentationDownsamplingCellpose
-
-#     method = Cytosol_Segmentation_Downsampling_Cellpose_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-
-# class Multithreaded_CytosolOnly_Cellpose_TimecourseSegmentation(
-#     MultithreadedSegmentation
-# ):
-#     class CytosolOnly_SegmentationCellpose_Timecourse(
-#         CytosolOnlySegmentationCellpose, TimecourseSegmentation
-#     ):
-#         method = CytosolOnlySegmentationCellpose
-
-#     method = CytosolOnly_SegmentationCellpose_Timecourse
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
