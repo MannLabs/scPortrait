@@ -213,6 +213,10 @@ class PhenixParser:
         planes = [str(x).zfill(2) for x in planes]
         timepoints = [int(x) + 1 for x in timepoints]
 
+        # get channelnames
+        lookup_dict = self.channel_lookup.set_index("id").to_dict()["label"]
+        channel_names = [lookup_dict[channel_id] for channel_id in channel_ids]
+
         image_names = []
         for row, col, field, plane, channel_id, timepoint, flim_id in zip(
             rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
