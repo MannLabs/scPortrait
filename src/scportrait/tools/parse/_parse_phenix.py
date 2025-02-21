@@ -196,8 +196,6 @@ class PhenixParser:
                     planes.append(child.text)
                 if tag == "ChannelID":
                     channel_ids.append(child.text)
-                if tag == "ChannelName":
-                    channel_names.append(child.text)
                 if tag == "FlimID":
                     flim_ids.append(child.text)
                 if tag == "TimepointID":
