@@ -188,24 +188,36 @@ class PhenixParser:
                 tag = _get_child_name(child.tag)
                 if tag == "Row":
                     rows.append(child.text)
-                if tag == "Col":
+                    continue
+                elif tag == "Col":
                     cols.append(child.text)
-                if tag == "FieldID":
+                    continue
+                elif tag == "FieldID":
                     fields.append(child.text)
-                if tag == "PlaneID":
+                    continue
+                elif tag == "PlaneID":
                     planes.append(child.text)
-                if tag == "ChannelID":
+                    continue
+                elif tag == "ChannelID":
                     channel_ids.append(child.text)
-                if tag == "FlimID":
+                    continue
+                elif tag == "FlimID":
                     flim_ids.append(child.text)
-                if tag == "TimepointID":
+                    continue
+                elif tag == "TimepointID":
                     timepoints.append(child.text)
-                if tag == "PositionX":
+                    continue
+                elif tag == "PositionX":
                     x_positions.append(child.text)
-                if tag == "PositionY":
+                    continue
+                elif tag == "PositionY":
                     y_positions.append(child.text)
-                if tag == "AbsTime":
+                    continue
+                elif tag == "AbsTime":
                     times.append(child.text)
+                    continue
+                else:
+                    pass
 
         rows = [str(x).zfill(2) for x in rows]
         cols = [str(x).zfill(2) for x in cols]
