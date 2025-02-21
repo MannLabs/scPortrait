@@ -632,6 +632,8 @@ class ShardedSegmentation(Segmentation):
 
         # save sharding plan to file to be able to reload later
         self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+
+        sharding_plan = list(enumerate(sharding_plan))
         with open(f"{self.directory}/sharding_plan.csv", "w") as f:
             for shard in sharding_plan:
                 f.write(f"{shard}\n")
@@ -643,7 +645,8 @@ class ShardedSegmentation(Segmentation):
 
         self.input_path = self.filehandler.sdata_path
 
-        for i, window in enumerate(sharding_plan):
+        for window in sharding_plan:
+            i, window = window
             local_shard_directory = os.path.join(self.shard_directory, str(i))
 
             current_shard = self.method(
@@ -716,7 +719,8 @@ class ShardedSegmentation(Segmentation):
         class_id_shift = 0
         filtered_classes_combined = set()
 
-        for i, window in enumerate(sharding_plan):
+        for window in sharding_plan:
+            i, window = window
             timer = time.time()
 
             self.log(f"Stitching tile {i}")
@@ -761,6 +765,7 @@ class ShardedSegmentation(Segmentation):
                 self.log(f"x: {x}, {x_shifted}")
                 self.log(f"y: {y}, {y_shifted}")
                 self.log(f"c: {self.method.N_MASKS}, {c_shifted}")
+
                 Warning("Shapes do not match")
                 self.log("Shapes do not match")
                 self.log(f"window: {(window[0], window[1])}")
@@ -1110,7 +1115,7 @@ class ShardedSegmentation(Segmentation):
 
         if len(incomplete_indexes) > 0:
             # adjust current sharding plan to only contain incomplete elements
-            sharding_plan = [shard for i, shard in enumerate(sharding_plan) if i in incomplete_indexes]
+            sharding_plan = [(i, shard) for i, shard in sharding_plan if i in incomplete_indexes]
 
             self.log(f"Adjusted sharding plan to only proceed with the {len(incomplete_indexes)} incomplete shards.")
 
