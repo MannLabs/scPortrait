@@ -1121,6 +1121,7 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1134,7 +1135,7 @@ class Project(Logable):
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
-        elif self.input_image is not None:
+        if self.input_image is not None:
             self.segmentation_f.complete_segmentation(self.input_image)
 
         self.get_project_status()
