@@ -612,10 +612,6 @@ class _BaseSegmentation(Segmentation):
 
             if plot_results:
                 # get input image for visualization
-                if input_image is None:
-                    if "input_image" in self.__dict__.keys():
-                        input_image = self.input_image
-
                 if input_image is not None:
                     if len(input_image.shape) == 2:
                         image_map = input_image
@@ -725,10 +721,6 @@ class _BaseSegmentation(Segmentation):
                 plot_results = True
 
             if plot_results:
-                if input_image is None:
-                    if "input_image" in self.__dict__.keys():
-                        input_image = self.input_image
-
                 if input_image is not None:
                     # convert input image from uint16 to uint8
                     input_image = (input_image / 256).astype(np.uint8)
