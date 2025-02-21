@@ -254,7 +254,7 @@ class PhenixParser:
             ):
                 image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
         elif version == "HarmonyV7":
-            _timepoints = [str(x).zfill(2) for x in timepoints]
+            _timepoints = [str(x - 1).zfill(2) for x in timepoints]
             for (
                 row,
                 col,
