@@ -179,6 +179,19 @@ class PhenixParser:
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
+        # get Harmony Version number
+        namespace = root.tag.split("}")[0].strip("{")
+        if "HarmonyV5" in namespace:
+            version = "HarmonyV5"
+        elif "HarmonyV7" in namespace:
+            version = "HarmonyV7"
+        else:
+            raise ValueError(
+                f"Found a currently unsupported version number {namespace}. Please contact the developers with this example."
+            )
+
+        print(f"Parsing XML file from {version} version.")
+
         for i, child in enumerate(root):
             if _get_child_name(child.tag) == "Images":
                 images = root[i]
@@ -228,16 +241,28 @@ class PhenixParser:
         # get channelnames
         lookup_dict = self.channel_lookup.set_index("id").to_dict()["label"]
         channel_names = [lookup_dict[channel_id] for channel_id in channel_ids]
+        channel_names = [
+            x.replace(" ", "") for x in channel_names
+        ]  # ensure no extra spaces are contained in the generated files
 
-        # generated image names have a different syntax between Harmony Versions
+        # get file names of single-tif files on disk
+        # the structure of the file names is dependent on the Harmony Version used to export them
         image_names = []
-        for row, col, field, plane, channel_id, timepoint, flim_id in zip(
-            rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
-        ):
-            image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
-
-        # remove extra spaces from channel names
-        channel_names = [x.replace(" ", "") for x in channel_names]
+        if version == "HarmonyV5":
+            for row, col, field, plane, channel_id, timepoint, flim_id in zip(
+                rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
+            ):
+                image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
+        elif version == "HarmonyV7":
+            for (
+                row,
+                col,
+                field,
+                plane,
+                channel_id,
+                timepoint,
+            ) in zip(rows, cols, fields, planes, channel_ids, timepoints, strict=False):
+                image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{timepoint}.tiff")
 
         # convert date/time into useful format
         dates = [x.split("T")[0] for x in times]
