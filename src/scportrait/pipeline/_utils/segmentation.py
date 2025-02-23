@@ -671,3 +671,21 @@ def sc_all(array: NDArray) -> bool:
         if not x:
             return False
     return True
+
+
+def remap_mask(input_mask: np.ndarray) -> np.ndarray:
+    # Create lookup table as an array
+    max_label = np.max(input_mask)
+    lookup_array = np.zeros(max_label + 1, dtype=np.int32)
+
+    cell_ids = np.unique(input_mask)[1:]
+    lookup_table = dict(zip(cell_ids, range(1, len(cell_ids)), strict=True))
+
+    # Populate lookup array based on the dictionary
+    for old_id, new_id in lookup_table.items():
+        lookup_array[old_id] = new_id
+
+    # Apply the mapping using NumPy indexing
+    remapped_mask = lookup_array[input_mask]
+
+    return remapped_mask
