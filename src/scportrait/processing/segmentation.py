@@ -1028,7 +1028,7 @@ def remap_mask(input_mask: np.ndarray) -> np.ndarray:
     lookup_array = np.zeros(max_label + 1, dtype=np.int32)
 
     cell_ids = np.unique(input_mask)[1:]
-    lookup_table = dict(zip(cell_ids, range(1, len(cell_ids)), strict=True))
+    lookup_table = dict(zip(cell_ids, range(1, len(cell_ids) + 1), strict=True))
 
     # Populate lookup array based on the dictionary
     for old_id, new_id in lookup_table.items():
