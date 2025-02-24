@@ -1118,15 +1118,21 @@ class Project(Logable):
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def complete_segmentation(self, overwrite: bool | None = None):
+    def complete_segmentation(self, overwrite: bool | None = None, force_run: bool = False):
         """If a sharded Segmentation was run but individual tiles failed to segment properly, this method can be called to repeat the segmentation on the failed tiles only.
         Already calculated segmentation masks will not be recalculated.
+
+        Args:
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            force_run: If set to ``True``, will force complete_segmentation to run even if a finalized segmentation mask is already found in the spatialdata object.
         """
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1138,10 +1144,10 @@ class Project(Logable):
 
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
+                raise ValueError("Segmentation already exists. Set overwrite = True to overwrite.")
 
-        elif self.input_image is not None:
-            self.segmentation_f.complete_segmentation(self.input_image)
+        if self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image, force_run=force_run)
 
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
