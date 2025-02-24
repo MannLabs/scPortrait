@@ -242,7 +242,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation_object: Labels2DModel,
         segmentation_label: str,
-        classes: set[str] | None = None,
         overwrite: bool = False,
     ) -> None:
         """Write segmentation object to SpatialData.
@@ -268,7 +267,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation: xarray.DataArray | np.ndarray,
         segmentation_label: str,
-        classes: set[str] | None = None,
         chunks: ChunkSize2D = (1000, 1000),
         overwrite: bool = False,
     ) -> None:
@@ -292,7 +290,7 @@ class sdata_filehandler(Logable):
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite=overwrite)
+        self._write_segmentation_object_sdata(mask, segmentation_label, overwrite=overwrite)
 
     def _write_points_object_sdata(self, points: PointsModel, points_name: str, overwrite: bool = False) -> None:
         """Write points object to SpatialData.
