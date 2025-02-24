@@ -175,9 +175,9 @@ class _BaseSegmentation(Segmentation):
         self.transform_time = stop_transform - start_transform
         return input_image
 
-    def return_empty_mask(self, input_image: np.ndarray):
+    def return_empty_mask(self, input_image):
         _, x, y = input_image.shape
-        self._save_segmentation_sdata(np.zeros((2, x, y)), [])
+        self._save_segmentation_sdata(np.zeros((self.N_MASKS, x, y)), [])
 
     def _check_seg_dtype(self, mask: np.ndarray, mask_name: str) -> np.ndarray:
         if not isinstance(mask, self.DEFAULT_SEGMENTATION_DTYPE):

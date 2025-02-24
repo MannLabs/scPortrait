@@ -651,6 +651,8 @@ class ShardedSegmentation(Segmentation):
 
         # save sharding plan to file to be able to reload later
         self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+
+        sharding_plan = list(enumerate(sharding_plan))
         with open(f"{self.directory}/sharding_plan.csv", "w") as f:
             for shard in sharding_plan:
                 f.write(f"{shard}\n")
@@ -662,7 +664,8 @@ class ShardedSegmentation(Segmentation):
 
         self.input_path = self.filehandler.sdata_path
 
-        for i, window in enumerate(sharding_plan):
+        for window in sharding_plan:
+            i, window = window
             local_shard_directory = os.path.join(self.shard_directory, str(i))
 
             current_shard = self.method(
@@ -735,7 +738,8 @@ class ShardedSegmentation(Segmentation):
         class_id_shift = 0
         filtered_classes_combined = set()
 
-        for i, window in enumerate(sharding_plan):
+        for window in sharding_plan:
+            i, window = window
             timer = time.time()
 
             self.log(f"Stitching tile {i}")
@@ -773,16 +777,21 @@ class ShardedSegmentation(Segmentation):
             )
 
             orig_input = hdf_labels[:, window[0], window[1]]
+            _, x, y = orig_input.shape
+            c_shifted, x_shifted, y_shifted = shifted_map.shape
 
-            if orig_input.shape != shifted_map.shape:
+            if x != x_shifted or y != y_shifted or c_shifted != self.method.N_MASKS:
+                self.log(f"x: {x}, {x_shifted}")
+                self.log(f"y: {y}, {y_shifted}")
+                self.log(f"c: {self.method.N_MASKS}, {c_shifted}")
+
                 Warning("Shapes do not match")
                 self.log("Shapes do not match")
-                self.log("window", window[0], window[1])
-                self.log("shifted_map shape:", shifted_map.shape)
-                self.log("orig_input shape:", orig_input.shape)
+                self.log(f"window: {(window[0], window[1])}")
+                self.log(f"shifted_map shape: {shifted_map.shape}")
+                self.log(f"orig_input shape: {orig_input.shape}")
 
-                # dirty fix to get this to run until we can implement a better solution
-                shifted_map = np.zeros(orig_input.shape)
+                raise ValueError("Shapes do not match. Please send this example to the developers for troubleshooting.")
 
             # since shards are computed with overlap there potentially already exist segmentations in the selected area that we wish to keep
             # if orig_input has a value that is not 0 (i.e. background) and the new map would replace this with 0 then we should keep the original value, in all other cases we should overwrite the values with the
@@ -798,7 +807,7 @@ class ShardedSegmentation(Segmentation):
                 np.unique(orig_input[np.where((orig_input != 0) & (shifted_map != 0))])
             )  # gets all ids that potentially need to be discarded over both masks
 
-            # we dont want to discard any ideas that touch the edge of the image
+            # we dont want to discard any id's' that touch the edge of the image
             # for these ids we can not ensure when processing this shard that the entire cell is present in the shard
             # if we would delete these ids we would potentially be deleting half of a cell
             edge_labels = set(_return_edge_labels(orig_input))
@@ -1123,7 +1132,7 @@ class ShardedSegmentation(Segmentation):
 
         if len(incomplete_indexes) > 0:
             # adjust current sharding plan to only contain incomplete elements
-            sharding_plan = [shard for i, shard in enumerate(sharding_plan) if i in incomplete_indexes]
+            sharding_plan = [(i, shard) for i, shard in sharding_plan if i in incomplete_indexes]
 
             self.log(f"Adjusted sharding plan to only proceed with the {len(incomplete_indexes)} incomplete shards.")
 
