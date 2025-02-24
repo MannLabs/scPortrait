@@ -595,13 +595,13 @@ class HDF5CellExtraction(ProcessingStep):
         """Function for writing results to HDF5 file in a thread-safe manner."""
         with hdf5_lock:
             with h5py.File(self.output_path, "a") as hf:
-                self._single_cell_data = hf["single_cell_data"]
-                self._single_cell_index = hf["single_cell_index"]
+                self._single_cell_data_container = hf["single_cell_data"]
+                self._single_cell_index_container = hf["single_cell_index"]
 
                 for res in results:
                     save_index, stack, cell_id = res
-                    self._single_cell_data[save_index] = stack
-                    self._single_cell_index[save_index] = [save_index, cell_id]
+                    self._single_cell_data_container[save_index] = stack
+                    self._single_cell_index_container[save_index] = [save_index, cell_id]
 
     def _create_output_files(self):
         single_cell_index_shape = (self.num_classes, 2)
