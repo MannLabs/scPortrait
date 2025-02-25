@@ -18,7 +18,7 @@ from alphabase.io.tempmmap import (
     mmap_array_from_path,
     redefine_temp_location,
 )
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.processing.images._image_processing import rescale_image
