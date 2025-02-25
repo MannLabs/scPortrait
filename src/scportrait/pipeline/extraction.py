@@ -587,7 +587,7 @@ class HDF5CellExtraction(ProcessingStep):
                 # nuclei_mask = self.sdata[self.nucleus_key].data[image_index, window_y, window_x].compute()
                 mask = self.seg_masks[image_index, mask_ix, window_y, window_x]
 
-            # modify nucleus mask to only contain the nucleus of interest and perform some morphological operations
+            # modify nucleus mask to only contain the nucleus of interest and perform some morphological operations to generate a good image representation of the mask
             mask = np.where(mask == ids[mask_ix], 1, 0)
             mask = binary_fill_holes(mask)
             mask = gaussian(mask, preserve_range=True, sigma=1)
@@ -611,6 +611,9 @@ class HDF5CellExtraction(ProcessingStep):
             images.append(ix)
 
         inputs = masks + images
+        # masks and images have the same dtype here as both have been converted to images scaled between 0 and 1
+        # ensuring the same dtype for all images is essential as otherwise they can not be saved into the same HDF5 container
+        # the masks have also been slighly modified from the original binary masks to include a slight gaussian blur at the mask edges to smooth the masking of the image data
         stack = np.stack(inputs, axis=0).astype(self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE)
 
         if self.deep_debug:
