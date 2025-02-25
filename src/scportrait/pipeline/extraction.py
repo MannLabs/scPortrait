@@ -575,8 +575,8 @@ class HDF5CellExtraction(ProcessingStep):
         if return_results:
             return save_index, stack, cell_id
         else:
-            self._single_cell_data[save_index] = stack
-            self._single_cell_index[save_index] = [save_index, cell_id]
+            self._single_cell_data_container[save_index] = stack
+            self._single_cell_index_container[save_index] = [save_index, cell_id]
             return None
 
     def _extract_classes_multi(
