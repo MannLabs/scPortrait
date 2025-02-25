@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
+from pathlib import Path, PosixPath
 
 import numpy as np
 import torch
@@ -203,7 +204,7 @@ class ProcessingStep(Logable):
             self.project = None
             self.filehandler = None
 
-        if isinstance(config, str):
+        if isinstance(config, str | PosixPath):
             config = read_config(config)
             if self.__class__.__name__ in config.keys():
                 self.config = config[self.__class__.__name__]
