@@ -20,6 +20,7 @@ from tqdm.auto import tqdm
 
 from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.pipeline._base import ProcessingStep
+from scportrait.pipeline._utils.constants import DEFAULT_CHANNELS_NAME, DEFAULT_FILTER_ADDTIONAL_FILE, DEFAULT_MASK_NAME
 from scportrait.pipeline._utils.segmentation import _return_edge_labels, sc_any, shift_labels
 
 
@@ -56,11 +57,14 @@ class Segmentation(ProcessingStep):
 
     """
 
+    # setup log and plotting behaviour
     CLEAN_LOG = True
-    DEFAULT_FILTER_ADDTIONAL_FILE = "needs_additional_filtering.txt"
     PRINT_MAPS_ON_DEBUG = True
-    DEFAULT_CHANNELS_NAME = "channels"
-    DEFAULT_MASK_NAME = "labels"
+
+    # load default values from constants.py
+    DEFAULT_FILTER_ADDTIONAL_FILE = DEFAULT_FILTER_ADDTIONAL_FILE
+    DEFAULT_CHANNELS_NAME = DEFAULT_CHANNELS_NAME
+    DEFAULT_MASK_NAME = DEFAULT_MASK_NAME
 
     channel_colors = [
         "#0000FF",
@@ -532,8 +536,6 @@ class Segmentation(ProcessingStep):
 
 class ShardedSegmentation(Segmentation):
     """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together."""
-
-    DEFAULT_MASK_NAME = "labels"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
