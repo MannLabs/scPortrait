@@ -642,18 +642,12 @@ class ParallelStitcher(Stitcher):
         for i, channel in enumerate(self.channels):
             args.append((channel, i, hdf5_path))
 
-        tqdm_args = {
-            "file": sys.stdout,
-            "desc": "assembling mosaic",
-            "total": len(self.channels),
-        }
-
         # threading over channels is safe as the channels are written to different postions in the hdf5 file and do not interact with one another
         # threading over the writing of a single channel is not safe and leads to inconsistent results
         workers = np.min([self.threads, self.n_channels])
         print(f"assembling channels with {workers} workers")
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            list(tqdm(executor.map(self._assemble_channel, args), **tqdm_args))
+            list(executor.map(self._assemble_channel, args))
 
         # conver to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
