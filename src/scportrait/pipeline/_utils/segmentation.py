@@ -674,12 +674,27 @@ def sc_all(array: NDArray) -> bool:
 
 
 def remap_mask(input_mask: np.ndarray) -> np.ndarray:
+    """Remap mask to have consecutive labels starting from 1.
+
+    Args:
+        input_mask: Input mask with non-consecutive labels
+
+    Returns:
+        Remapped mask with consecutive labels
+
+    Example:
+        >>> input_mask = np.array([[5, 6, 6], [5, 3, 6], [5, 5, 3]])
+        >>> remap_mask(input_mask)
+        array([[2, 3, 3],
+               [2, 1, 3],
+               [2, 2, 1]])
+    """
     # Create lookup table as an array
     max_label = np.max(input_mask)
     lookup_array = np.zeros(max_label + 1, dtype=np.int32)
 
     cell_ids = np.unique(input_mask)[1:]
-    lookup_table = dict(zip(cell_ids, range(1, len(cell_ids)), strict=True))
+    lookup_table = dict(zip(cell_ids, range(1, len(cell_ids) + 1), strict=True))
 
     # Populate lookup array based on the dictionary
     for old_id, new_id in lookup_table.items():
