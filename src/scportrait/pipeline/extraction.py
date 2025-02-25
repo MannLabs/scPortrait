@@ -614,23 +614,6 @@ class HDF5CellExtraction(ProcessingStep):
             self.image_size,
         )
 
-        # generate container for single_cell_data
-        self._tmp_single_cell_data_path = create_empty_mmap(
-            shape=single_cell_data_shape,
-            dtype=np.float16,
-            tmp_dir_abs_path=self._tmp_dir_path,
-        )
-
-        # generate container for single_cell_index
-        fixed_length = 200  # this is the maximum length of string that can be stored in the mmap array for the cell_ids
-        dt = np.dtype(f"S{fixed_length}")
-        self._tmp_single_cell_index_path = create_empty_mmap(
-            shape=single_cell_index_shape,
-            dtype=dt,
-            tmp_dir_abs_path=self._tmp_dir_path,
-        )
-
-        # create name for output file
         self.output_path = os.path.join(self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE)
 
         with h5py.File(self.output_path, "w") as hf:
