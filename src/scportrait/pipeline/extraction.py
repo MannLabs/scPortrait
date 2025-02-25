@@ -228,6 +228,8 @@ class HDF5CellExtraction(ProcessingStep):
 
         segmentation_keys = list(_sdata.labels.keys())
 
+        # specific segmentation masks can be extracted that do not need to conform to the default naming convention in scportrait
+        # this behaviour can be achieved by passing a segmentation_key in the config file.
         if "segmentation_key" in self.config.keys():
             self.segmentation_key = self.config["segmentation_key"]
         else:
@@ -257,25 +259,28 @@ class HDF5CellExtraction(ProcessingStep):
                 if "nucleus" in self.config["segmentation_mask"]:
                     self.nucleus_key = self.config["segmentation_mask"]
                     self.extract_nucleus_mask = True
-
                 elif "cytosol" in self.config["segmentation_mask"]:
                     self.cytosol_key = self.config["segmentation_mask"]
                     self.extract_cytosol_mask = True
                 else:
-                    raise ValueError(
-                        f"Segmentation mask {self.config['segmentation_mask']} is not a valid mask to extract from."
+                    Warning(
+                        "Unclear if the singular provided segmentation mask is a nucleus or cytosol mask. Will proceed assuming cytosol like behaviour."
                     )
+                    self.cytosol_key = self.config["segmentation_mask"]
+                    self.extract_cytosol_mask = True
 
             elif isinstance(self.config["segmentation_mask"], list):
-                assert all(x in allowed_mask_values for x in self.config["segmentation_mask"])
-
                 for x in self.config["segmentation_mask"]:
                     if "nucleus" in x:
                         self.nucleus_key = x
                         self.extract_nucleus_mask = True
-                    if "cytosol" in x:
+                    elif "cytosol" in x:
                         self.cytosol_key = x
                         self.extract_cytosol_mask = True
+                    else:
+                        raise ValueError(
+                            f"Segmentation mask {self.config['segmentation_mask']} does not indicate which mask is the nucleus and which is the cytosol. Cannot proceed with extraction."
+                        )
 
         else:
             # get relevant segmentation masks to perform extraction on
