@@ -22,3 +22,7 @@ warnings.filterwarnings("ignore", message="ignoring keyword argument 'read_only'
 warnings.filterwarnings(
     "ignore", message=r"You are using `torch.load` with `weights_only=False`.*", category=FutureWarning
 )
+
+
+# silence warning
+warnings.filterwarnings("ignore", category=FutureWarning, message="The plugin infrastructure in")

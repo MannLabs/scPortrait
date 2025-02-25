@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from tifffile import imread, imwrite
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 def _get_child_name(elem):

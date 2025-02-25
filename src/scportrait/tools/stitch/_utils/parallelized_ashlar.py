@@ -370,7 +370,15 @@ class ParallelMosaic(Mosaic):
 
         self.n_threads = n_threads
 
-    def assemble_channel_parallel(self, channel, ch_index, out=None, hdf5_path=None, tqdm_args=None):
+    def assemble_channel_parallel(
+        self,
+        channel,
+        ch_index: int,
+        out: np.ndarray | None = None,
+        hdf5_path: str | None = None,
+        tqdm_args=None,
+        n_percent: int = 10,
+    ):
         """This function assembles a single channel of the mosaic writing to the same HDF5 file being used as a mmap array in the backend."""
         if out is None:
             if hdf5_path is not None:
@@ -379,29 +387,42 @@ class ParallelMosaic(Mosaic):
                 out = np.zeros(self.shape, self.dtype)
         else:
             if out.shape != self.shape:
-                raise ValueError(f"out array shape {out.shape} does not match Mosaic" f" shape {self.shape}")
+                raise ValueError(f"out array shape {out.shape} does not match Mosaic shape {self.shape}")
             if hdf5_path is None:
                 raise ValueError(
                     "if specifying an out array, you also need to pass the HDF5 path of the memory mapped temparray"
                 )
 
-        tqdm_args = {
-            "file": sys.stdout,
-            "disable": not self.verbose,
-            "desc": f"assembling channel {ch_index}",
-            "total": len(self.aligner.positions),
-        }
+        # Set up tqdm arguments if not provided
+        if tqdm_args is None:
+            tqdm_args = {
+                "file": sys.stdout,
+                "disable": not self.verbose,
+                "desc": f"assembling channel {ch_index}",
+                "total": len(self.aligner.positions),
+            }
 
-        # this can not be multi-threaded as it leads to inconsistent results in the overlap array
-        # threading over the channels was the easiest and most robust way to implement
-        for si, position in tqdm(
-            enumerate(self.aligner.positions), **tqdm_args
-        ):  # potentially may want to disable tqdm output for this as this runs in an individual thread and it could get confusing
-            img = self.aligner.reader.read(c=channel, series=si)
-            img = self.correct_illumination(img, channel)
-            utils.paste(out[ch_index, :, :], img, position, func=utils.pastefunc_blend)
+        total_positions = len(self.aligner.positions)
+        update_interval = int(total_positions * (n_percent / 100))
+        last_update = 0
 
-        # Memory-conserving axis flips.
+        # Assemble channel with progress updates every n%
+        with tqdm(**tqdm_args) as pbar:
+            for si, position in enumerate(self.aligner.positions):
+                img = self.aligner.reader.read(c=channel, series=si)
+                img = self.correct_illumination(img, channel)
+                utils.paste(out[ch_index, :, :], img, position, func=utils.pastefunc_blend)
+
+                # Update progress bar every n%
+                if si >= last_update + update_interval:
+                    pbar.update(update_interval)
+                    last_update = si
+
+            # Ensure the progress bar reaches 100% at the end
+            if pbar.n < total_positions:
+                pbar.update(total_positions - pbar.n)
+
+        # Memory-conserving axis flips
         if self.flip_mosaic_x:
             for i in range(len(out)):
                 out[i] = out[i, ::-1]
