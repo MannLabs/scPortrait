@@ -308,8 +308,8 @@ class Segmentation(ProcessingStep):
         # connect to the temp file as a dask array
         labels = dask_array_from_path(temp_file_path)
 
-        if "nuclei" in masks:
-            ix = masks.index("nuclei")
+        if "nucleus" in masks:
+            ix = masks.index("nucleus")
 
             self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
             self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
@@ -321,12 +321,12 @@ class Segmentation(ProcessingStep):
 
     def _save_segmentation_sdata(self, labels, classes, masks=None):
         if masks is None:
-            masks = ["nuclei", "cytosol"]
+            masks = ["nucleus", "cytosol"]
         if self.is_shard:
             self._save_segmentation(labels, classes)
         else:
-            if "nuclei" in masks:
-                ix = masks.index("nuclei")
+            if "nucleus" in masks:
+                ix = masks.index("nucleus")
 
                 self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
                 self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
