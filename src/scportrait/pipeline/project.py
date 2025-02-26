@@ -471,13 +471,12 @@ class Project(Logable):
 
         if os.path.exists(self.sdata_path):
             if self.overwrite:
-                self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
+                if not self.filehandler._check_empty_sdata():
+                    self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
+                    shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
-                if self.filehandler._check_empty_sdata():
-                    shutil.rmtree(self.sdata_path, ignore_errors=True)
-                else:
+                if not self.filehandler._check_empty_sdata():
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )

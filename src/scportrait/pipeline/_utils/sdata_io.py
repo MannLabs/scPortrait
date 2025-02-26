@@ -92,12 +92,7 @@ class sdata_filehandler(Logable):
             SpatialData object
         """
         if os.path.exists(self.sdata_path):
-            if self._check_empty_sdata():
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = self._create_empty_sdata()
-                _sdata.write(self.sdata_path, overwrite=True)
-            else:
-                _sdata = SpatialData.read(self.sdata_path)
+            _sdata = SpatialData.read(self.sdata_path)
 
         else:
             _sdata = self._create_empty_sdata()
