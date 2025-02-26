@@ -35,10 +35,8 @@ from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.helper import read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
-    calculate_centroids,
     generate_region_annotation_lookuptable,
     get_chunk_size,
-    get_unique_cell_ids,
     rechunk_image,
     remap_region_annotation_table,
 )
@@ -477,10 +475,7 @@ class Project(Logable):
                 shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
-                if len(os.listdir(self.sdata_path)) == 0:
-                    self.log(
-                        f"Output location {self.sdata_path} already exists but does not contain any data. Overwriting."
-                    )
+                if self.filehandler._check_empty_sdata():
                     shutil.rmtree(self.sdata_path, ignore_errors=True)
                 else:
                     raise ValueError(
