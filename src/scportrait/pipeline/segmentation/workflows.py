@@ -1516,15 +1516,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
 
         self._check_input_image_dtype(input_image)
 
-        # initialize location to save masks to
-        self.maps = {
-            "nucleus_segmentation": tempmmap.array(
-                shape=(1, input_image.shape[1], input_image.shape[2]),
-                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            ),
-        }
-
         start_segmentation = timeit.default_timer()
         nucleus_mask = self.cellpose_segmentation(input_image)
         stop_segmentation = timeit.default_timer()
