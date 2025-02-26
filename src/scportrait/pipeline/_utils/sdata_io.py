@@ -54,6 +54,22 @@ class sdata_filehandler(Logable):
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
 
+    def _check_empty_sdata(self) -> bool:
+        """Check if SpatialData object is empty.
+
+        Returns:
+            Whether SpatialData object is empty
+        """
+        empty_sdata_keys = {".zattrs", ".zgroup", "zmetadata"}
+        if os.path.exists(self.sdata_path):
+            keys = set(os.listdir(self.sdata_path))
+            if keys == empty_sdata_keys:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def _create_empty_sdata(self) -> SpatialData:
         """Create an empty SpatialData object.
 
@@ -76,12 +92,7 @@ class sdata_filehandler(Logable):
             SpatialData object
         """
         if os.path.exists(self.sdata_path):
-            if len(os.listdir(self.sdata_path)) == 0:
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = self._create_empty_sdata()
-                _sdata.write(self.sdata_path, overwrite=True)
-            else:
-                _sdata = SpatialData.read(self.sdata_path)
+            _sdata = SpatialData.read(self.sdata_path)
 
         else:
             _sdata = self._create_empty_sdata()
