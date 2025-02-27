@@ -4,9 +4,16 @@ from numba import jit
 from skimage.exposure import rescale_intensity
 
 
-def rescale_image(image, rescale_range, outrange=(0, 1), dtype="uint16", cutoff_threshold=None, return_float=False):
+def rescale_image(
+    image: np.ndarray,
+    rescale_range: tuple[int, int],
+    outrange: tuple[float, float] = (0, 1),
+    dtype="uint16",
+    cutoff_threshold: int = None,
+    return_float: bool = False,
+):
     # convert to float for better percentile calculation
-    img = image.astype("float")
+    img = image.astype(float)
 
     # define factor to rescale image to uints
     if dtype == "uint16":
@@ -36,17 +43,17 @@ def rescale_image(image, rescale_range, outrange=(0, 1), dtype="uint16", cutoff_
         return (rescale_intensity(img, (p1, p99), outrange) * factor).astype(dtype)
 
 
-def _normalize_image(im, lower_value, upper_value):
+def _normalize_image(im: np.ndarray, lower_value: int, upper_value: int) -> np.ndarray:
     """
     Normalize an input 2D image (np.array) based on input values.
 
     Args:
-        im (np.array): Numpy array of shape (height, width).
-        lower_value (int): Lower image value used for normalization, all lower values will be clipped to 0.
-        upper_value (int): Upper image value used for normalization, all higher values will be clipped to 1.
+        im: Numpy array of shape (height, width).
+        lower_value: Lower image value used for normalization, all lower values will be clipped to 0.
+        upper_value: Upper image value used for normalization, all higher values will be clipped to 1.
 
     Returns:
-        out_im (np.array): Normalized Numpy array.
+        out_im (np.array): Normalized Numpy array. Values are clipped to [0, 1].
 
     Example:
     >>> img = np.random.rand(4, 4)
@@ -68,19 +75,19 @@ def _normalize_image(im, lower_value, upper_value):
     return out_im
 
 
-def _percentile_norm(im, lower_percentile, upper_percentile):
+def _percentile_norm(im: np.ndarray, lower_percentile: float, upper_percentile: float) -> np.ndarray:
     """
     Normalize an input 2D image (np.array) based on the defined percentiles.
 
     This is an helper function used in the percentile_normalization function.
 
     Args:
-        im (np.array): Numpy array of shape (height, width).
-        lower_percentile (float): Lower percentile used for normalization, all lower values will be clipped to 0.
-        upper_percentile (float): Upper percentile used for normalization, all higher values will be clipped to 1.
+        im: Numpy array of shape (height, width).
+        lower_percentile: Lower percentile used for normalization, all lower values will be clipped to 0.
+        upper_percentile: Upper percentile used for normalization, all higher values will be clipped to 1.
 
     Returns:
-        out_im (np.array): Normalized Numpy array.
+        Normalized numpy array.
 
     Example:
     >>> img = np.random.rand(4, 4)
@@ -96,7 +103,9 @@ def _percentile_norm(im, lower_percentile, upper_percentile):
     return out_im
 
 
-def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999, return_copy=True):
+def percentile_normalization(
+    im: np.ndarray, lower_percentile: float = 0.001, upper_percentile: float = 0.999, return_copy: bool = True
+) -> np.ndarray:
     """
     Normalize an input image channel-wise based on defined percentiles.
 
@@ -104,9 +113,9 @@ def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999,
     based on the lower and upper percentile.
 
     Args:
-        im (np.array): Numpy array of shape (height, width) or (channels, height, width).
-        lower_percentile (float, optional): Lower percentile used for normalization, all lower values will be clipped to 0. Defaults to 0.001.
-        upper_percentile (float, optional): Upper percentile used for normalization, all higher values will be clipped to 1. Defaults to 0.999.
+        im: Numpy array of shape (height, width) or (channels, height, width).
+        lower_percentile: Lower percentile used for normalization, all lower values will be clipped to 0. Defaults to 0.001.
+        upper_percentile: Upper percentile used for normalization, all higher values will be clipped to 1. Defaults to 0.999.
 
     Returns:
         im (np.array): Normalized Numpy array with dtype == float
@@ -137,54 +146,60 @@ def percentile_normalization(im, lower_percentile=0.001, upper_percentile=0.999,
     return im
 
 
-def downsample_img(img, N=2, return_dtype=np.uint16):
+def downsample_img(img: np.ndarray, N: int = 2, return_dtype=np.uint16) -> np.ndarray:
     """
     Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels.
     Takes a numpy array image as input and returns a numpy array as uint16.
 
-    Parameters
-    ----------
-    img : array
-        image to downsample
-    N : int, default = 2
-        number of pixels that should be binned together using mean between pixels
+    Args:
+        img : image to downsample
+        N : number of pixels that should be binned together using mean between pixels
+
+    Returns:
+        downsampled array
     """
     downsampled = xr.DataArray(img, dims=["c", "x", "y"]).coarsen(c=1, x=N, y=N, boundary="exact").mean()
     downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(return_dtype)
     return np.array(downsampled)
 
 
-def downsample_img_pxs(img, N=2):
+def downsample_img_pxs(img: np.ndarray, N: int = 2) -> np.ndarray:
     """
     Function to downsample an image in shape CXY equivalent to taking every N'th pixel from each dimension.
     Channels are preserved as is. This does not use any interpolation and is therefore faster than the mean
     method but is less precise.
 
-    Parameters
-    ----------
-    img : array
-        image to downsample
-    N : int, default = 2
-        the nth pixel to take from each dimension
+    Args:
+        img : image to downsample
+        N : the nth pixel to take from each dimension
+
+    Returns:
+        downsampled array
+
+    Example:
+    >>> img = np.random.rand(10, 10)
+    >>> downsampled_img = downsample_img
     """
 
     downsampled = img[:, 0:-1:N, 0:-1:N]
     return downsampled
 
 
-def downsample_img_padding(img, N=2):
+def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     """
     Downsample image by a factor of N by taking every Nth pixel.
     Before downsampling this function will pad the image to ensure its compatible with the selected kernel size.
 
-    Parameters
-    ----------
-    img
-        image to be downsampled
+    Args:
+        img: image to be downsampled
+        N: factor by which the image should be downsampled
 
-    Returns
-    -------
-    downsampled image
+    Returns:
+        downsampled image
+
+    Example:
+    >>> img = np.random.rand(11, 11)
+    >>> downsampled_img = downsample_img_padding(img)
 
     """
 
@@ -218,7 +233,7 @@ def downsample_img_padding(img, N=2):
 
 
 @jit(nopython=True, parallel=True)  # Set "nopython" mode for best performance, equivalent to @njit
-def rolling_window_mean(array, size, scaling=False):
+def rolling_window_mean(array: np.ndarray, size: int, scaling: bool = False) -> np.ndarray:
     """
     Compute rolling window mean and normalize the input 2D array.
 
@@ -229,12 +244,12 @@ def rolling_window_mean(array, size, scaling=False):
     Function is numba optimized.
 
     Args:
-        array (np.array): Input 2D numpy array.
-        size (int): Size of the rolling window.
-        scaling (bool, optional): If True, normalizes the chunk by dividing it by standard deviation, by default False.
+        array: Input 2D numpy array.
+        size: Size of the rolling window.
+        scaling: If True, normalizes the chunk by dividing it by standard deviation, by default False.
 
     Returns:
-        array (np.array): Processed 2D numpy array.
+        Processed 2D numpy array.
 
     Example:
     >>> array = np.random.rand(10, 10)
@@ -284,7 +299,7 @@ def rolling_window_mean(array, size, scaling=False):
     return array
 
 
-def MinMax(inarr):
+def MinMax(inarr: np.ndarray) -> np.ndarray:
     """
     Perform Min-Max normalization on the input array.
     The function scales the input array values to the range [0, 1] using Min-Max
@@ -292,10 +307,10 @@ def MinMax(inarr):
     the original array is returned unchanged.
 
     Args:
-        inarr (np.array): Input 2D numpy array.
+        inarr: Input 2D numpy array.
 
     Returns:
-        np.array: Min-Max normalized numpy array.
+        Min-Max normalized numpy array.
 
     Example:
     >>> array = np.random.rand(10, 10)

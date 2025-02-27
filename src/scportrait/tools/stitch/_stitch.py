@@ -314,9 +314,7 @@ class Stitcher:
         )
 
         # rescale thumbnail to 0-1 range
-        # if all channels should be rescaled to the same range, initialize dictionary with all channels
         if type(self.rescale_range) is tuple:
-            rescale_range = {k: self.rescale_range for k in self.channel_names}
             rescale = True
         elif type(self.rescale_range) is dict:
             rescale_range = self.rescale_range[self.stitching_channel]  # type: ignore
