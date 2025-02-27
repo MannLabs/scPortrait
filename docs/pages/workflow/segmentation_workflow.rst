@@ -9,6 +9,7 @@ Segmentation frameworks are implemented as so-called `segmentation classes` and 
 Each segmentation class is optimized for a given input data format and level of parallelization, and each workflow implements a different segmentation algorithm (e.g. thresholding based segmentation or deep learning based segmentation).
 
 .. _segmentation_classes:
+
 Segmentation classes
 --------------------
 
@@ -76,6 +77,7 @@ The following parameters for a sharded segmentation need to be specified in the 
 ..         ... additional workflow specific parameters...
 
 .. _segmentation_workflows:
+
 Segmentation Workflows
 ----------------------
 
@@ -186,19 +188,19 @@ Depending on the segmentation method, either 1 or 2 input channels will be requi
    * - Segmentation Method
      - Number of Input Channels
      - Number of Generated Output Masks
-   * - `WGA Segmentation <#wga-segmentation>`_
+   * - `WGA Segmentation <WGA_segmentation>`_
      - 2
      - 2
-   * - `DAPI Segmentation <#dapi-segmentation>`_
+   * - `DAPI Segmentation <DAPI_segmentation>`_
      - 1
      - 1
-   * - `Cytosol Segmentation Cellpose <#cytosol-segmentation-cellpose>`_
+   * - `Cytosol Segmentation Cellpose <Cytosol_segmentation_cellpose>`_
      - 2
      - 2
-   * - `DAPI Segmentation Cellpose <#dapi-segmentation-cellpose>`_
+   * - `DAPI Segmentation Cellpose <DAPI_segmentation_cellpose>`_
      - 1
      - 1
-   * - `Cytosol Only Segmentation Cellpose <#cytosol-only-segmentation-cellpose>`_
+   * - `Cytosol Only Segmentation Cellpose <cytosol_only_segmentation_cellpose>`_
      - 2
      - 1
 
@@ -334,6 +336,7 @@ Detailed Workflow Descriptions
 
 
 .. _WGA_segmentation:
+
 WGA segmentation
 ^^^^^^^^^^^^^^^^^
 
