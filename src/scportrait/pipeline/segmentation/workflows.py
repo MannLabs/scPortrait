@@ -78,8 +78,8 @@ class _BaseSegmentation(Segmentation):
         self.segmentation_channels = []
 
         if "nucleus" in self.MASK_NAMES:
-            if "segmentation_channels_nuclei" in self.config.keys():
-                self.nucleus_segmentation_channel = self.config["segmentation_channels_nuclei"]
+            if "segmentation_channel_nuclei" in self.config.keys():
+                self.nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
             elif "combine_nucleus_channels" in self.config.keys():
                 self.nucleus_segmentation_channel = self.combine_nucleus_channels
             else:
@@ -88,8 +88,8 @@ class _BaseSegmentation(Segmentation):
             self.segmentation_channels.extend(self.nucleus_segmentation_channel)
 
         if "cytosol" in self.MASK_NAMES:
-            if "segmentation_channels_cytosol" in self.config.keys():
-                self.cytosol_segmentation_channel = self.config["segmentation_channels_cytosol"]
+            if "segmentation_channel_cytosol" in self.config.keys():
+                self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
             elif "combine_cytosol_channels" in self.config.keys():
                 self.cytosol_segmentation_channel = self.combine_cytosol_channels
             else:
@@ -106,7 +106,7 @@ class _BaseSegmentation(Segmentation):
             len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
         ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
 
-        if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
+        if len(self.segmentation_channels) > self.N_INPUT_CHANNELS:
             assert (
                 self.maximum_project_nucleus or self.maximum_project_cytosol
             ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
