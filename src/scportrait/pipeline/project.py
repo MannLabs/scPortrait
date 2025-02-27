@@ -575,13 +575,13 @@ class Project(Logable):
             self.interactive_sdata.write_element(name)  # replace with correct function once pulled in from sdata
 
     def close_interactive_viewer(self):
-        assert self.interactive is not None, "No interactive session found."
-        assert self.interactive_sdata is not None, "No interactive sdata object found."
-        self._save_interactive_sdata()
-        self.interactive._viewer.close()
-        # reset to none values to track next call of view_sdata
-        self.interactive_sdata = None
-        self.interactive = None
+        if self.interactive is not None:
+            self._save_interactive_sdata()
+            self.interactive._viewer.close()
+
+            # reset to none values to track next call of view_sdata
+            self.interactive_sdata = None
+            self.interactive = None
 
     #### Functions to load input data ####
     def load_input_from_array(
