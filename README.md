@@ -38,7 +38,7 @@ bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
 
 ## Contributing
 
-If you like this software, consider giving us a star to boost our visibility! For detailed guidelines on how to contribute, please refer to our [CONTRIBUTING.md](./docs/CONTRIBUTING.md).
+If you like this software, consider giving us a star to boost our visibility! For detailed guidelines on how to contribute, please refer to our [contributing guide](./docs/CONTRIBUTING.md).
 
 We welcome all types of contributions! You can:
 
