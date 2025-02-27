@@ -111,12 +111,17 @@ class HDF5CellExtraction(ProcessingStep):
                 normalization_range = None
 
             if normalization_range is not None:
-                assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
-                assert len(normalization_range) == 2, "Normalization range must be a tuple of length 2."
+                assert len(normalization_range) == 2, "Normalization range must be a tuple or list of length 2."
                 assert all(
                     isinstance(x, (float)) and (0 <= x <= 1) for x in normalization_range
                 ), "Normalization range must be defined as a float between 0 and 1."
+
+                # conver to tuple to ensure consistency
+                if isinstance(normalization_range, list):
+                    normalization_range = tuple(normalization_range)
+            else:
                 normalization_range = (0.01, 0.99)
+
             self.normalization_range = normalization_range
 
         else:
@@ -752,6 +757,11 @@ class HDF5CellExtraction(ProcessingStep):
             del self.seg_masks
         if "image_data" in self.__dict__:
             del self.image_data
+
+        if "_single_cell_data_container" in self.__dict__:
+            del self._single_cell_data_container
+        if "_single_cell_index_container" in self.__dict__:
+            del self._single_cell_index_container
 
         # remove no longer required variables
         if vars_to_delete is not None:

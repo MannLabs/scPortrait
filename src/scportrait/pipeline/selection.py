@@ -1,14 +1,10 @@
 import multiprocessing as mp
 import os
-import pickle
 import timeit
 from functools import partial as func_partial
 
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from alphabase.io import tempmmap
 from lmd.lib import SegmentationLoader
 from scipy.sparse import coo_array
 from tqdm.auto import tqdm
@@ -200,10 +196,6 @@ class LMDSelection(ProcessingStep):
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete=vars_to_delete)
 
-        # remove temporary files
-        if hasattr(self, "path_seg_mask"):
-            os.remove(self.path_seg_mask)
-
         self._clear_cache()
 
     def process(
@@ -318,6 +310,7 @@ class LMDSelection(ProcessingStep):
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
+
         coord_index = self._get_coords(
             cell_ids=cell_ids, centers=centers, width=self.cell_radius, batch_size=self.batch_size, threads=self.threads
         )

@@ -403,6 +403,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_selection_f(self, selection_f):
+        self._setup_selection(selection_f)
+
     ##### General small helper functions ####
 
     def _check_memory(self, item):
@@ -572,13 +575,18 @@ class Project(Logable):
             self.interactive_sdata.write_element(name)  # replace with correct function once pulled in from sdata
 
     def close_interactive_viewer(self):
-        assert self.interactive is not None, "No interactive session found."
-        assert self.interactive_sdata is not None, "No interactive sdata object found."
-        self._save_interactive_sdata()
-        self.interactive._viewer.close()
-        # reset to none values to track next call of view_sdata
-        self.interactive_sdata = None
-        self.interactive = None
+        if self.interactive is not None:
+            self._save_interactive_sdata()
+            self.interactive._viewer.close()
+
+            # reset to none values to track next call of view_sdata
+            self.interactive_sdata = None
+            self.interactive = None
+
+    def _check_for_interactive_session(self):
+        if self.interactive is not None:
+            Warning("Interactive viewer is still open. Will automatically close before proceeding with processing.")
+            self.close_interactive_viewer()
 
     #### Functions to load input data ####
     def load_input_from_array(
@@ -1116,6 +1124,8 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1149,6 +1159,7 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
 
         # ensure that an input image has been loaded
         if not self.input_image_status:
@@ -1175,6 +1186,7 @@ class Project(Logable):
 
         # ensure that a segmentation has been stored that can be extracted
         self.get_project_status()
+        self._check_for_interactive_session()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1197,6 +1209,7 @@ class Project(Logable):
             raise ValueError("No featurization method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
@@ -1264,6 +1277,8 @@ class Project(Logable):
             raise ValueError("No selection method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
