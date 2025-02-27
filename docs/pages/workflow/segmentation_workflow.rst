@@ -187,7 +187,7 @@ Depending on the segmentation method, either 1 or 2 input channels will be requi
 
    * - Segmentation Method
      - Number of Input Channels
-     - Number of Generated Output Masks
+     - Number of Output Masks
    * - `WGA Segmentation <WGA_segmentation>`_
      - 2
      - 2
@@ -290,7 +290,7 @@ You can customize the specific behaviour of all cellpose models via the method s
 The indicated keys are wrappers for the parameters of `cellpose.models.CellposeModel.eval <https://cellpose.readthedocs.io/en/latest/api.html#id0>`_ and have the same function.
 
 .. list-table::
-   :widths: 20 40 15 25
+   :widths: 20 40 20 20
    :header-rows: 1
 
    * - Parameter
