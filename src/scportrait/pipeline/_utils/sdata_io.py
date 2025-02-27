@@ -10,7 +10,7 @@ import xarray
 from alphabase.io import tempmmap
 from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel, ShapesModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, ShapesModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -390,10 +390,10 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-        
+
         if overwrite:
             self._force_delete_object(_sdata, shapes_name, "shapes")
-        
+
         _sdata.shapes[shapes_name] = shapes
         _sdata.write_element(shapes_name, overwrite=True)
 
