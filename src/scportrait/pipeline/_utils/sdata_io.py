@@ -10,7 +10,7 @@ import xarray
 from alphabase.io import tempmmap
 from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel, ShapesModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -21,7 +21,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
-ObjectType: TypeAlias = Literal["images", "labels", "points", "tables"]
+ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
 class sdata_filehandler(Logable):
@@ -114,7 +114,7 @@ class sdata_filehandler(Logable):
         Args:
             sdata: SpatialData object
             name: Name of object to delete
-            type: Type of object ("images", "labels", "points", "tables")
+            type: Type of object ("images", "labels", "points", "tables", "shapes")
         """
         if name in sdata:
             del sdata[name]
@@ -380,6 +380,24 @@ class sdata_filehandler(Logable):
         _sdata.write_element(table_name, overwrite=True)
 
         self.log(f"Table {table_name} written to sdata object.")
+
+    def _write_shapes_object_sdata(self, shapes: ShapesModel, shapes_name: str, overwrite: bool = False) -> None:
+        """Write shapes object to SpatialData.
+
+        Args:
+            shapes: Shapes object to write
+            shapes_name: Name for the shapes object
+            overwrite: Whether to overwrite existing data
+        """
+        _sdata = self._read_sdata()
+        
+        if overwrite:
+            self._force_delete_object(_sdata, shapes_name, "shapes")
+        
+        _sdata.shapes[shapes_name] = shapes
+        _sdata.write_element(shapes_name, overwrite=True)
+
+        self.log(f"Shapes {shapes_name} written to sdata object.")
 
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
