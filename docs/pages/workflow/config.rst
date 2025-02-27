@@ -11,29 +11,41 @@ methods chosen in a specific scPortrait Project run.
 
     ---
     name: "Cellpose Segmentation"
-    CytosolSegmentationCellpose:
+    ShardedCytosolSegmentationCellpose:
+        shard_size: 2000000 # maxmimum number of pixel per tile
+        overlap_px: 100
+        nGPUs: 1
+        threads: 2 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
         cache: "."
         nucleus_segmentation:
             model: "nuclei"
         cytosol_segmentation:
             model: "cyto2"
+        match_masks: True
+        filter_masks_size: False
     HDF5CellExtraction:
         threads: 80 # threads used in multithreading
-        image_size: 400 # image size in pixel
-        normalization_range: None #turn of percentile normalization for cells -> otherwise normalise out differences for the alexa647 channel
+        image_size: 128 # image size in pixel
+        normalize_output: True
+        normalization_range: (0.01, 0.99)
         cache: "."
     CellFeaturizer:
-        channel_selection: 4
         batch_size: 900
-        dataloader_worker_number: 0 #needs to be 0 if using cpu
+        dataloader_worker_number: 10 #needs to be 0 if using cpu
         inference_device: "cpu"
-        label: "Ch3_Featurization"
     LMDSelection:
-        processes: 20
-        segmentation_channel: 0
+        threads: 20
+        cache: "."
+        processes_cell_sets: 10
+        # defines the channel used for generating cutting masks
+        # segmentation.hdf5 => labels => segmentation_channel
+        # When using WGA segmentation:
+        #    0 corresponds to nuclear masks
+        #    1 corresponds to cytosolic masks.
+        segmentation_channel: "seg_all_nucleus"
         shape_dilation: 16
         smoothing_filter_size: 25
-        poly_compression_factor: 30
+        rdp: 0.6
         path_optimization: "hilbert"
         greedy_k: 15
         hilbert_p: 7
