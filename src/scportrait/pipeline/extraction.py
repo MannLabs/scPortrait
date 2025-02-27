@@ -449,6 +449,8 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Number of generated output images per cell: {self.n_output_channels}")
         self.log(f"Number of unique cells to extract: {self.num_classes}")
         self.log(f"Extracted Image Dimensions: {self.extracted_image_size} x {self.extracted_image_size}")
+        self.log(f"Normalization of extracted images: {self.normalization}")
+        self.log(f"Percentile normalization range for single-cell images: {self.normalization_range}")
 
     def _generate_save_index_lookup(self, class_list: list) -> None:
         """Create a lookup index indicating at which save_index each cell_id should be saved to in the HDF5 file."""
