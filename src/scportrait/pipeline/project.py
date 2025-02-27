@@ -583,6 +583,11 @@ class Project(Logable):
             self.interactive_sdata = None
             self.interactive = None
 
+    def _check_for_interactive_session(self):
+        if self.interactive is not None:
+            Warning("Interactive viewer is still open. Will automatically close before proceeding with processing.")
+            self.close_interactive_viewer()
+
     #### Functions to load input data ####
     def load_input_from_array(
         self, array: np.ndarray, channel_names: list[str] = None, overwrite: bool | None = None, remap: list[int] = None
@@ -1119,6 +1124,8 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1152,6 +1159,7 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
 
         # ensure that an input image has been loaded
         if not self.input_image_status:
@@ -1178,6 +1186,7 @@ class Project(Logable):
 
         # ensure that a segmentation has been stored that can be extracted
         self.get_project_status()
+        self._check_for_interactive_session()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1200,6 +1209,7 @@ class Project(Logable):
             raise ValueError("No featurization method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
@@ -1267,6 +1277,8 @@ class Project(Logable):
             raise ValueError("No selection method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
