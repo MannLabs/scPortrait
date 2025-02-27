@@ -408,19 +408,15 @@ class _BaseSegmentation(Segmentation):
     def _normalize_image(
         self,
         input_image: np.array,
-        lower: float | dict,
-        upper: float | dict,
+        lower: float | list,
+        upper: float | list,
         debug: bool = False,
     ) -> np.array:
-        # check that both are specified as the same type
-        assert isinstance(lower, float) == isinstance(upper, float)
-        assert isinstance(lower, dict) == isinstance(upper, dict)
-
-        if isinstance(lower, float):
+        if isinstance(lower, float) and isinstance(upper, float):
             self.log("Normalizing each channel to the same range")
             norm_image = percentile_normalization(input_image, lower, upper)
 
-        elif isinstance(lower, dict):
+        elif isinstance(lower, list) and isinstance(upper, list):
             norm_image = []
 
             for i in range(input_image.shape[0]):
@@ -430,7 +426,10 @@ class _BaseSegmentation(Segmentation):
                 norm_image.append(percentile_normalization(input_image[i], _lower, _upper))
 
             norm_image = np.array(norm_image)
-
+        else:
+            raise ValueError(
+                "Lower and upper quantile normalization values must be either floats or dictionary of floats."
+            )
         if debug:
             if len(norm_image.shape) == 2:
                 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
