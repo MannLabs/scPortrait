@@ -747,6 +747,11 @@ class HDF5CellExtraction(ProcessingStep):
         if "image_data" in self.__dict__:
             del self.image_data
 
+        if "_single_cell_data_container" in self.__dict__:
+            del self._single_cell_data_container
+        if "_single_cell_index_container" in self.__dict__:
+            del self._single_cell_index_container
+
         # remove no longer required variables
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete=vars_to_delete)
