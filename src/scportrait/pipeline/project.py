@@ -403,6 +403,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_selection_f(self, selection_f):
+        self._setup_selection(selection_f)
+
     ##### General small helper functions ####
 
     def _check_memory(self, item):
