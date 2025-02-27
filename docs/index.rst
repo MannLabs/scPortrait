@@ -16,7 +16,7 @@ Check out the installation instructions :ref:`here<installation>`. You can valid
 Getting Started
 ===============
 
-You can check out our :ref:`introduction<introduction>` to get started with scPortrait. For more detailed information on the package, we have written an in depth :ref:`computational workflow <pipeline>` guide. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
+You can check out our :ref:`worfklow overview<workflow>` to get started with scPortrait. For more detailed information on the package, checkout the more detailed guides :ref:`here<detailed_guide>`. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
 
 Citing our Work
 ================
@@ -42,16 +42,8 @@ Documentation
    :caption: Ecosystem
 
    pages/installation/
-   pages/introduction/
-   pages/pipeline/
+   pages/workflow/
    pages/tutorials
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Tools
-
-   pages/tools/parsing/parsing
-   pages/tools/stitching/stitching
 
 .. toctree::
    :maxdepth: 2
@@ -63,8 +55,11 @@ Documentation
    pages/example_notebooks.ipynb
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :includehidden:
    :caption: Module API
 
-   pages/module
+   pages/module/pipeline
+   pages/module/processing
+   pages/module/io
+   pages/module/tools

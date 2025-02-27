@@ -108,7 +108,10 @@ class BioformatsMetadataRescale(BioformatsMetadata):
 
 
 class BioformatsReaderRescale(BioformatsReader):
-    """Class for reading images from Bioformats files (e.g. nd2). If desired the images can be rescaled to a certain range while reading."""
+    """Class for reading images from Bioformats files (e.g. nd2).
+
+    If desired the images can be rescaled to a certain range while reading.
+    """
 
     def __init__(self, path, plate=None, well=None, do_rescale=False, no_rescale_channel=None, rescale_range=(1, 99)):
         self.path = path

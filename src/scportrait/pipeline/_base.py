@@ -5,9 +5,41 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
+from pathlib import Path, PosixPath
 
 import numpy as np
 import torch
+
+from scportrait.pipeline._utils.constants import (
+    DEFAULT_BENCHMARKING_FILE,
+    DEFAULT_CENTERS_NAME,
+    DEFAULT_CHUNK_SIZE_2D,
+    DEFAULT_CHUNK_SIZE_3D,
+    DEFAULT_CLASSES_FILE,
+    DEFAULT_CONFIG_NAME,
+    DEFAULT_DATA_DIR,
+    DEFAULT_EXTRACTION_DIR_NAME,
+    DEFAULT_EXTRACTION_FILE,
+    DEFAULT_FEATURIZATION_DIR_NAME,
+    DEFAULT_FORMAT,
+    DEFAULT_IMAGE_DTYPE,
+    DEFAULT_INPUT_IMAGE_NAME,
+    DEFAULT_LOG_NAME,
+    DEFAULT_PREFIX_FILTERED_SEG,
+    DEFAULT_PREFIX_MAIN_SEG,
+    DEFAULT_PREFIX_SELECTED_SEG,
+    DEFAULT_REMOVED_CLASSES_FILE,
+    DEFAULT_SDATA_FILE,
+    DEFAULT_SEG_NAME_0,
+    DEFAULT_SEG_NAME_1,
+    DEFAULT_SEGMENTATION_DIR_NAME,
+    DEFAULT_SEGMENTATION_DTYPE,
+    DEFAULT_SEGMENTATION_FILE,
+    DEFAULT_SELECTION_DIR_NAME,
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+    DEFAULT_TILES_FOLDER,
+)
+from scportrait.pipeline._utils.helper import read_config
 
 
 class Logable:
@@ -22,8 +54,8 @@ class Logable:
         DEFAULT_FORMAT (str): Date and time format used for logging. See `datetime.strftime <https://docs.python.org/3/library/datetime.html#datetime.date.strftime>`_.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_FORMAT = "%d/%m/%Y %H:%M:%S"
+    DEFAULT_LOG_NAME = DEFAULT_LOG_NAME
+    DEFAULT_FORMAT = DEFAULT_FORMAT
 
     def __init__(self, directory, debug=False):
         self.directory = directory
@@ -92,6 +124,27 @@ class Logable:
         if os.path.exists(log_file_path):
             os.remove(log_file_path)
 
+    # def _clear_cache(self, vars_to_delete=None):
+    #     """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations.
+
+    #     Args:
+    #         vars_to_delete (list): List of variable names (as strings) to delete.
+    #     """
+
+    #     # delete all specified variables
+    #     if vars_to_delete is not None:
+    #         for var_name in vars_to_delete:
+    #             if var_name in globals():
+    #                 del globals()[var_name]
+
+    #     if torch.cuda.is_available():
+    #         torch.cuda.empty_cache()
+
+    #     if torch.backends.mps.is_available():
+    #         torch.mps.empty_cache()
+
+    #     gc.collect()
+
     def _clear_cache(self, vars_to_delete=None):
         """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
 
@@ -119,54 +172,77 @@ class ProcessingStep(Logable):
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
 
-    DEFAULT_CONFIG_NAME = "config.yml"
-    DEFAULT_INPUT_IMAGE_NAME = "input_image"
-    DEFAULT_SDATA_FILE = "sparcs.sdata"
+    DEFAULT_CONFIG_NAME = DEFAULT_CONFIG_NAME
+    DEFAULT_INPUT_IMAGE_NAME = DEFAULT_INPUT_IMAGE_NAME
+    DEFAULT_SDATA_FILE = DEFAULT_SDATA_FILE
 
-    DEFAULT_PREFIX_MAIN_SEG = "seg_all"
-    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
-    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected"
+    DEFAULT_PREFIX_MAIN_SEG = DEFAULT_PREFIX_MAIN_SEG
+    DEFAULT_PREFIX_FILTERED_SEG = DEFAULT_PREFIX_FILTERED_SEG
+    DEFAULT_PREFIX_SELECTED_SEG = DEFAULT_PREFIX_SELECTED_SEG
 
-    DEFAULT_SEG_NAME_0 = "nucleus"
-    DEFAULT_SEG_NAME_1 = "cytosol"
+    DEFAULT_SEG_NAME_0 = DEFAULT_SEG_NAME_0
+    DEFAULT_SEG_NAME_1 = DEFAULT_SEG_NAME_1
 
-    DEFAULT_CENTERS_NAME = "centers_cells"
+    DEFAULT_CENTERS_NAME = DEFAULT_CENTERS_NAME
 
-    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_3D = DEFAULT_CHUNK_SIZE_3D
+    DEFAULT_CHUNK_SIZE_2D = DEFAULT_CHUNK_SIZE_2D
 
-    DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
-    DEFAULT_TILES_FOLDER = "tiles"
+    DEFAULT_SEGMENTATION_DIR_NAME = DEFAULT_SEGMENTATION_DIR_NAME
+    DEFAULT_TILES_FOLDER = DEFAULT_TILES_FOLDER
 
-    DEFAULT_EXTRACTIN_DIR_NAME = "extraction"
-    DEFAULT_DATA_DIR = "data"
+    DEFAULT_EXTRACTION_DIR_NAME = DEFAULT_EXTRACTION_DIR_NAME
+    DEFAULT_DATA_DIR = DEFAULT_DATA_DIR
 
-    DEFAULT_IMAGE_DTYPE = np.uint16
-    DEFAULT_SEGMENTATION_DTYPE = np.uint32
-    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
+    DEFAULT_IMAGE_DTYPE = DEFAULT_IMAGE_DTYPE
+    DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
 
-    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
-    DEFAULT_CLASSES_FILE = "classes.csv"
-    DEFAULT_REMOVED_CLASSES_FILE = "removed_classes.csv"
-    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
+    DEFAULT_SEGMENTATION_FILE = DEFAULT_SEGMENTATION_FILE
+    DEFAULT_CLASSES_FILE = DEFAULT_CLASSES_FILE
+    DEFAULT_REMOVED_CLASSES_FILE = DEFAULT_REMOVED_CLASSES_FILE
+    DEFAULT_EXTRACTION_FILE = DEFAULT_EXTRACTION_FILE
 
-    DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
+    DEFAULT_BENCHMARKING_FILE = DEFAULT_BENCHMARKING_FILE
 
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
-    DEFAULT_SELECTION_DIR_NAME = "selection"
+    DEFAULT_FEATURIZATION_DIR_NAME = DEFAULT_FEATURIZATION_DIR_NAME
+    DEFAULT_SELECTION_DIR_NAME = DEFAULT_SELECTION_DIR_NAME
 
     def __init__(
-        self, config, directory, project_location, debug=False, overwrite=False, project=None, filehandler=None
+        self,
+        config,
+        directory=None,
+        project_location=None,
+        debug=False,
+        overwrite=False,
+        project=None,
+        filehandler=None,
+        from_project: bool = False,
     ):
         super().__init__(directory=directory)
 
         self.debug = debug
         self.overwrite = overwrite
-        self.project_location = project_location
-        self.config = config
-        self.overwrite = overwrite
+        if from_project:
+            self.project_run = True
+            self.project_location = project_location
+            self.project = project
+            self.filehandler = filehandler
+        else:
+            self.project_run = False
+            self.project_location = None
+            self.project = None
+            self.filehandler = None
 
-        self.project = project
-        self.filehandler = filehandler
+        if isinstance(config, str | PosixPath):
+            config = read_config(config)
+            if self.__class__.__name__ in config.keys():
+                self.config = config[self.__class__.__name__]
+            else:
+                self.config = config
+        else:
+            self.config = config
+        self.overwrite = overwrite
 
         self.get_context()
 
@@ -313,4 +389,4 @@ class ProcessingStep(Logable):
         elif platform.system() == "Darwin":
             self.context = "spawn"
         elif platform.system() == "Linux":
-            self.context = "fork"
+            self.context = "spawn"

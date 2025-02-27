@@ -1,4 +1,4 @@
-[![Python package](https://img.shields.io/badge/version-v1.0.0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
+[![Python package](https://img.shields.io/badge/version-v1.1.0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 
 ![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
@@ -9,7 +9,7 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in particular:
 
-- [Introduction](https://mannlabs.github.io/scPortrait/pages/introduction.html)
+- [Introduction](https://mannlabs.github.io/scPortrait/pages/workflow.html)
 - [Tutorials](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
 
 ## Installation from Github
