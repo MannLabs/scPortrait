@@ -112,10 +112,17 @@ class HDF5CellExtraction(ProcessingStep):
 
             if normalization_range is not None:
                 assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
-
+                assert len(normalization_range) == 2, "Normalization range must be a tuple of length 2."
+                assert all(
+                    isinstance(x, (float)) and (0 <= x <= 1) for x in normalization_range
+                ), "Normalization range must be defined as a float between 0 and 1."
+                normalization_range = (0.01, 0.99)
             self.normalization_range = normalization_range
 
         else:
+            self.normalization_range = (0.01, 0.99)
+
+        if not self.normalization:
             self.normalization_range = None
 
         ## parameters for HDF5 file creates
@@ -153,25 +160,22 @@ class HDF5CellExtraction(ProcessingStep):
         If normalization is set to False, the images will be converted to a float between 0 and 1 without any normalization where the highest value is the maximum value of the image datatype.
         """
         if self.normalization:
-            if self.normalization_range is None:
+            lower, upper = self.normalization_range
 
-                def norm_function(img):
-                    return percentile_normalization(img)
-            else:
-                lower, upper = self.normalization_range
+            def percentile_norm(img: np.ndarray, lower: float = lower, upper: float = upper) -> np.ndarray:
+                return percentile_normalization(img, lower, upper)
 
-                def norm_function(img, lower=lower, upper=upper):  # type: ignore
-                    return percentile_normalization(img, lower, upper)
+            self.norm_function = percentile_norm
 
-        elif not self.normalization:
+        else:
 
-            def norm_function(img):
+            def min_max(img: np.ndarray, lower=None, upper=None) -> np.ndarray:
                 img = (
                     img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
                 )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
                 return img
 
-        self.norm_function = norm_function
+            self.norm_function = min_max
 
     def _get_output_path(self) -> str | PosixPath:
         """Get the output path for the extraction results."""
