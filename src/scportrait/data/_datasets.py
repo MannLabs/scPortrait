@@ -1,10 +1,17 @@
 from pathlib import Path
+from typing import Literal
 
 from scportrait.data._dataloader import _download
 from scportrait.tools.ml.pretrained_models import get_data_dir
 
 
-def _get_remote_dataset(dataset: str, url: str, name: str | None = None) -> Path:
+def _get_remote_dataset(
+    dataset: str,
+    url: str,
+    name: str | None = None,
+    archive_format: Literal["zip", "tar", "tar.gz", "tgz"] | None = "zip",
+    outfile_name: None | str = None,
+) -> Path:
     """Download and extract a dataset from a remote location.
 
     Args:
@@ -18,11 +25,23 @@ def _get_remote_dataset(dataset: str, url: str, name: str | None = None) -> Path
     data_dir = get_data_dir()
     save_path = data_dir / dataset
     if not save_path.exists():
-        _download(url=url, output_path=str(save_path), archive_format="zip")
+        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
     if name is None:
         return save_path
     else:
         return save_path / name
+
+
+def custom_cellpose_model() -> Path:
+    """Download the example custom cellpose model.
+
+    Returns:
+        Path to the downloaded and extracted custom cellpose model
+    """
+    DATASET = "custom_cellpose_model"
+    URL = "https://zenodo.org/records/14931602/files/custom_cellpose_model.cpkt?download=1"
+    NAME = "custom_cellpose_model.cpkt"
+    return _get_remote_dataset(DATASET, URL, NAME, archive_format=None, outfile_name=NAME)
 
 
 def dataset_1() -> Path:

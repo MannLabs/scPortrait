@@ -78,8 +78,8 @@ class _BaseSegmentation(Segmentation):
         self.segmentation_channels = []
 
         if "nucleus" in self.MASK_NAMES:
-            if "segmentation_channels_nuclei" in self.config.keys():
-                self.nucleus_segmentation_channel = self.config["segmentation_channels_nuclei"]
+            if "segmentation_channel_nuclei" in self.config.keys():
+                self.nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
             elif "combine_nucleus_channels" in self.config.keys():
                 self.nucleus_segmentation_channel = self.combine_nucleus_channels
             else:
@@ -88,8 +88,8 @@ class _BaseSegmentation(Segmentation):
             self.segmentation_channels.extend(self.nucleus_segmentation_channel)
 
         if "cytosol" in self.MASK_NAMES:
-            if "segmentation_channels_cytosol" in self.config.keys():
-                self.cytosol_segmentation_channel = self.config["segmentation_channels_cytosol"]
+            if "segmentation_channel_cytosol" in self.config.keys():
+                self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
             elif "combine_cytosol_channels" in self.config.keys():
                 self.cytosol_segmentation_channel = self.combine_cytosol_channels
             else:
@@ -106,7 +106,7 @@ class _BaseSegmentation(Segmentation):
             len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
         ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
 
-        if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
+        if len(self.segmentation_channels) > self.N_INPUT_CHANNELS:
             assert (
                 self.maximum_project_nucleus or self.maximum_project_cytosol
             ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
@@ -408,19 +408,15 @@ class _BaseSegmentation(Segmentation):
     def _normalize_image(
         self,
         input_image: np.array,
-        lower: float | dict,
-        upper: float | dict,
+        lower: float | list,
+        upper: float | list,
         debug: bool = False,
     ) -> np.array:
-        # check that both are specified as the same type
-        assert isinstance(lower, float) == isinstance(upper, float)
-        assert isinstance(lower, dict) == isinstance(upper, dict)
-
-        if isinstance(lower, float):
+        if isinstance(lower, float) and isinstance(upper, float):
             self.log("Normalizing each channel to the same range")
             norm_image = percentile_normalization(input_image, lower, upper)
 
-        elif isinstance(lower, dict):
+        elif isinstance(lower, list) and isinstance(upper, list):
             norm_image = []
 
             for i in range(input_image.shape[0]):
@@ -430,7 +426,10 @@ class _BaseSegmentation(Segmentation):
                 norm_image.append(percentile_normalization(input_image[i], _lower, _upper))
 
             norm_image = np.array(norm_image)
-
+        else:
+            raise ValueError(
+                "Lower and upper quantile normalization values must be either floats or dictionary of floats."
+            )
         if debug:
             if len(norm_image.shape) == 2:
                 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
@@ -1515,15 +1514,6 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         input_image = self._transform_input_image(input_image)
 
         self._check_input_image_dtype(input_image)
-
-        # initialize location to save masks to
-        self.maps = {
-            "nucleus_segmentation": tempmmap.array(
-                shape=(1, input_image.shape[1], input_image.shape[2]),
-                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
-                tmp_dir_abs_path=self._tmp_dir_path,
-            ),
-        }
 
         start_segmentation = timeit.default_timer()
         nucleus_mask = self.cellpose_segmentation(input_image)

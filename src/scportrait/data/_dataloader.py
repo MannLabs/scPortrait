@@ -82,5 +82,7 @@ def _download(
         if archive_format:
             shutil.unpack_archive(download_to_path, output_path, format=archive_format)
             os.remove(download_to_path)
+        else:
+            download_to_path.with_name(output_file_name)
 
     Path(lock_path).unlink()

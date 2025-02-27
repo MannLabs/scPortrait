@@ -112,10 +112,17 @@ class HDF5CellExtraction(ProcessingStep):
 
             if normalization_range is not None:
                 assert isinstance(normalization_range, tuple), "Normalization range must be a tuple."
-
+                assert len(normalization_range) == 2, "Normalization range must be a tuple of length 2."
+                assert all(
+                    isinstance(x, (float)) and (0 <= x <= 1) for x in normalization_range
+                ), "Normalization range must be defined as a float between 0 and 1."
+                normalization_range = (0.01, 0.99)
             self.normalization_range = normalization_range
 
         else:
+            self.normalization_range = (0.01, 0.99)
+
+        if not self.normalization:
             self.normalization_range = None
 
         ## parameters for HDF5 file creates
@@ -153,25 +160,22 @@ class HDF5CellExtraction(ProcessingStep):
         If normalization is set to False, the images will be converted to a float between 0 and 1 without any normalization where the highest value is the maximum value of the image datatype.
         """
         if self.normalization:
-            if self.normalization_range is None:
+            lower, upper = self.normalization_range
 
-                def norm_function(img):
-                    return percentile_normalization(img)
-            else:
-                lower, upper = self.normalization_range
+            def percentile_norm(img: np.ndarray, lower: float = lower, upper: float = upper) -> np.ndarray:
+                return percentile_normalization(img, lower, upper)
 
-                def norm_function(img, lower=lower, upper=upper):  # type: ignore
-                    return percentile_normalization(img, lower, upper)
+            self.norm_function = percentile_norm
 
-        elif not self.normalization:
+        else:
 
-            def norm_function(img):
+            def min_max(img: np.ndarray, lower=None, upper=None) -> np.ndarray:
                 img = (
                     img / np.iinfo(self.DEFAULT_IMAGE_DTYPE).max
                 )  # convert 16bit unsigned integer image to float between 0 and 1 without adjusting for the pixel values we have in the extracted single cell image
                 return img
 
-        self.norm_function = norm_function
+            self.norm_function = min_max
 
     def _get_output_path(self) -> str | PosixPath:
         """Get the output path for the extraction results."""
@@ -445,6 +449,8 @@ class HDF5CellExtraction(ProcessingStep):
         self.log(f"Number of generated output images per cell: {self.n_output_channels}")
         self.log(f"Number of unique cells to extract: {self.num_classes}")
         self.log(f"Extracted Image Dimensions: {self.extracted_image_size} x {self.extracted_image_size}")
+        self.log(f"Normalization of extracted images: {self.normalization}")
+        self.log(f"Percentile normalization range for single-cell images: {self.normalization_range}")
 
     def _generate_save_index_lookup(self, class_list: list) -> None:
         """Create a lookup index indicating at which save_index each cell_id should be saved to in the HDF5 file."""
@@ -921,8 +927,8 @@ class HDF5CellExtraction(ProcessingStep):
                 "a",
             ) as hf:
                 # connect to final containers for saving computed results
-                self._single_cell_data: h5py.Dataset = hf["single_cell_data"]
-                self._single_cell_index: h5py.Dataset = hf["single_cell_index"]
+                self._single_cell_data_container = hf["single_cell_data"]
+                self._single_cell_index_container = hf["single_cell_index"]
 
                 self.log("Running in single threaded mode.")
                 for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
