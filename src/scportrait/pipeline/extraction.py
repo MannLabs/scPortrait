@@ -916,8 +916,8 @@ class HDF5CellExtraction(ProcessingStep):
                 "a",
             ) as hf:
                 # connect to final containers for saving computed results
-                self._single_cell_data: h5py.Dataset = hf["single_cell_data"]
-                self._single_cell_index: h5py.Dataset = hf["single_cell_index"]
+                self._single_cell_data_container = hf["single_cell_data"]
+                self._single_cell_index_container = hf["single_cell_index"]
 
                 self.log("Running in single threaded mode.")
                 for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
