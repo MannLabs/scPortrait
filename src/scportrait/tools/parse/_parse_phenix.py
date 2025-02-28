@@ -81,6 +81,7 @@ class PhenixParser:
         self.image_dir = self._get_input_dir()
         self.channel_lookup = self._get_channel_metadata(self.xml_path)
         self.metadata = None
+        self.missing_images_copy: list[str] = []
 
     def _get_xml_path(self):
         # directory depends on if flatfield images were exported or not
@@ -174,6 +175,7 @@ class PhenixParser:
         x_positions = []
         y_positions = []
         times = []
+        url = []
 
         # extract information from XML file
         tree = ET.parse(xml_path)
@@ -183,8 +185,10 @@ class PhenixParser:
         namespace = root.tag.split("}")[0].strip("{")
         if "HarmonyV5" in namespace:
             version = "HarmonyV5"
+            self.harmony_version = version
         elif "HarmonyV7" in namespace:
             version = "HarmonyV7"
+            self.harmony_version = version
         else:
             raise ValueError(
                 f"Found a currently unsupported version number {namespace}. Please contact the developers with this example."
@@ -229,8 +233,11 @@ class PhenixParser:
                 elif tag == "AbsTime":
                     times.append(child.text)
                     continue
+                elif tag == "URL":
+                    url.append(child.text)
+                    continue
                 else:
-                    pass
+                    continue
 
         rows = [str(x).zfill(2) for x in rows]
         cols = [str(x).zfill(2) for x in cols]
@@ -483,7 +490,14 @@ class PhenixParser:
                                 _x_pos, [y_pos], timepoint, row, well, channels, zstacks
                             )
 
-        if len(missing_tiles) == 0:
+        if self.harmony_version == "HarmonyV7":
+            missing_tiles.extend(self.missing_images_copy)  # add additional missing images from copy process
+            self.missing_images = missing_tiles
+
+        elif self.harmony_version == "HarmonyV5":
+            self.missing_images = missing_tiles
+
+        if len(self.missing_images) == 0:
             print("No missing tiles found.")
         else:
             # get size of missing images that need to be replaced
@@ -491,9 +505,7 @@ class PhenixParser:
             image[:] = 0
             self.black_image = image
 
-            print(f"The found missing tiles need to be replaced with black images of the size {image.shape}.")
-
-        self.missing_images = missing_tiles
+            print(f"The found missing tiles that need to be replaced with black images of the size {image.shape}.")
 
         if return_values:
             return missing_tiles
@@ -582,7 +594,10 @@ class PhenixParser:
             if os.path.exists(old_path):
                 self.copyfunction(old_path, new_path)
             else:
-                print("Error: ", old_path, "not found.")
+                if self.harmony_version == "HarmonyV5":
+                    print("Error: ", old_path, "not found.")
+                elif self.harmony_version == "HarmonyV7":
+                    self.missing_images_copy.append(new)
         print("Copy process completed.")
 
     def _save_metadata(self, metadata):
