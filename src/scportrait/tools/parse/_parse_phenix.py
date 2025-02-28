@@ -406,7 +406,7 @@ class PhenixParser:
 
         # check if metadata has been passed or is already calculated, else repeat calculation
         if metadata is None:
-            if "metdata" in self.__dict__:
+            if "metadata" in self.__dict__:
                 metadata = self.metadata
             else:
                 metadata = self.generate_metadata()
