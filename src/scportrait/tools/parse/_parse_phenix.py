@@ -789,9 +789,17 @@ class CombinedPhenixParser(PhenixParser):
         # these generated folder structures are hard coded during phenix export, do not change
         # get index file of the first phenix dir(this is our main experiment!)
         if self.flatfield_status:
-            index_file = f"{self.phenix_dirs[0]}/Images/Index.ref.xml"
+            index_file_names = ["index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            index_file = f"{self.phenix_dirs[0]}/Index.idx.xml"
+            index_file_names = ["index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
