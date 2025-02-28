@@ -324,7 +324,6 @@ class PhenixParser:
         Y_values = metadata.Y.value_counts().index.to_list()
         Y_values.sort()  # ensure that the values are numeric and not string
 
-        print(Y_values)
         for i, y in enumerate(Y_values):
             metadata.loc[metadata.Y == y, "Y_pos"] = i
 
@@ -334,9 +333,6 @@ class PhenixParser:
 
         wells.sort()
         rows.sort(reverse=True)  # invert because we need to start assembling from bottom left
-
-        print("wells: ", wells)
-        print("rows: ", rows)
 
         if self.compress_rows:
             metadata["orig_Row"] = metadata["Row"]
@@ -348,15 +344,12 @@ class PhenixParser:
                     else:
                         # get current highest index
                         max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == select_row_name))].Y_pos.max()
-                        print(max_y)
                         # add current highest index to existing index
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
                         # update row name
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = select_row_name
-                        max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == select_row_name))].Y_pos.max()
-                        print("After update:", max_y)
 
                 metadata.loc[:, "Row"] = rows[-1]  # update nomenclature to start with the row 01
 
