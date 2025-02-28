@@ -408,8 +408,11 @@ class PhenixParser:
         if metadata is None:
             if "metadata" in self.__dict__:
                 metadata = self.metadata
+                if "new_file_name" not in metadata.columns:
+                    metadata = self._generate_new_filenames(metadata)
             else:
                 metadata = self.generate_metadata()
+                metadata = self._generate_new_filenames(metadata)
 
         # get unique values for each category describing the imaging experiment
         channels = np.unique(metadata.Channel)
