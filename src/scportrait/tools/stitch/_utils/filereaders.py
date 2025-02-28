@@ -39,7 +39,7 @@ class FilePatternReaderRescale(FilePatternReader):
         self.do_rescale = do_rescale
         self.no_rescale_channel = no_rescale_channel
         self.rescale_range = rescale_range
-        self.dtype = dtype
+        self.dtype_image = dtype
 
     @staticmethod
     def rescale(
@@ -82,14 +82,14 @@ class FilePatternReaderRescale(FilePatternReader):
         img = super().read(series, c)
 
         # check to ensure we are always using the same dtype
-        if self.dtype is not None:
-            if not isinstance(img.dtype, self.dtype):
-                Warning(f"Found image with dtype {img.dtype}. Automatically converting to {self.dtype}")
-                img = img.astype(self.dtype)
+        if self.dtype_image is not None:
+            if not isinstance(img.dtype, self.dtype_image):
+                Warning(f"Found image with dtype {img.dtype}. Automatically converting to {self.dtype_image}")
+                img = img.astype(self.dtype_image)
         else:
             # first time reading an image set dtype if none is supplied
             print("Setting dtype to", img.dtype)
-            self.dtype = img.dtype
+            self.dtype_image = img.dtype
 
         if not self.do_rescale:
             return img
