@@ -45,7 +45,7 @@ methods chosen in a specific scPortrait Project run.
         segmentation_channel: "seg_all_nucleus"
         shape_dilation: 16
         smoothing_filter_size: 25
-        rdp: 0.6
+        rdp_epsilon: 0.6
         path_optimization: "hilbert"
         greedy_k: 15
         hilbert_p: 7
