@@ -1180,7 +1180,7 @@ class Project(Logable):
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
+    def extract(self, partial=False, n_cells=None, seed: int = 42, overwrite: bool | None = None) -> None:
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
@@ -1195,7 +1195,7 @@ class Project(Logable):
         if overwrite is not None:
             self.extraction_f.overwrite_run_path = overwrite
 
-        self.extraction_f(partial=partial, n_cells=n_cells)
+        self.extraction_f(partial=partial, n_cells=n_cells, seed=seed)
         self.get_project_status()
 
     def featurize(
