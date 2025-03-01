@@ -1181,6 +1181,18 @@ class Project(Logable):
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
     def extract(self, partial=False, n_cells=None, seed: int = 42, overwrite: bool | None = None) -> None:
+        """Extract single-cell images from the input image using the defined extraction method.
+
+        Args:
+            partial: If set to ``True``, will run the extraction on a subset of the image. Default is ``False``.
+            n_cells: Number of cells to extract if partial is ``True``
+            seed: Seed for the random number generator during a partial extraction. Default is ``42``.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading
+
+        Returns:
+            None: Single-cell images are written to HDF5 files in the project associated extraction directory. File path can be accessed via ``project.extraction_f.output_path``.
+        """
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
