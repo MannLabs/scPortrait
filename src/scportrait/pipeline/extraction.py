@@ -113,7 +113,7 @@ class HDF5CellExtraction(ProcessingStep):
             if normalization_range is not None:
                 assert len(normalization_range) == 2, "Normalization range must be a tuple or list of length 2."
                 assert all(
-                    isinstance(x, (float)) and (0 <= x <= 1) for x in normalization_range
+                    isinstance(x, float | int) and (0 <= x <= 1) for x in normalization_range
                 ), "Normalization range must be defined as a float between 0 and 1."
 
                 # conver to tuple to ensure consistency
