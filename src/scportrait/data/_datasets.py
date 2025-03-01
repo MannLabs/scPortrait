@@ -122,6 +122,17 @@ def dataset_6() -> Path:
     return _get_remote_dataset(DATASET, URL)
 
 
+def dataset_7() -> Path:
+    """Download and extract the example dataset 7 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "example_7_images"
+    URL = "https://zenodo.org/records/14951047/files/example_7_images.zip?download=1"
+    return _get_remote_dataset(DATASET, URL)
+
+
 def dataset_stitching_example() -> Path:
     """Download and extract the example dataset for stitching images.
 
