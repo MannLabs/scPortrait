@@ -1131,6 +1131,187 @@ class EnsembleClassifier(_FeaturizationBase):
             return None
 
 
+class ConvNeXtFeaturizer(_FeaturizationBase):
+    CLEAN_LOG = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.CLEAN_LOG:
+            self._clean_log_file()
+
+        self._check_config()
+
+        # assert that the correct transformers version is installed
+        try:
+            import transformers
+        except ImportError:
+            raise ImportError(
+                "transformers is not installed. Please install it via pip install 'transformers==4.26.0'"
+            ) from None
+
+        assert (
+            transformers.__version__ == "4.26.0"
+        ), "Please install transformers version 4.26.0 via pip install --force 'transformers==4.26.0'"
+
+        assert len(self.channel_selection) in [1, 3], "channel_selection should be either 1 or 3 channels"
+
+    def _load_model(self):
+        # lazy imports
+        from transformers import ConvNextModel
+
+        # silence warnings from transformers that are not relevant here
+        # we do actually just want to load some of the weights to access the convnext features
+
+        model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
+        model.eval()
+        model.to(self.inference_device)
+
+        self._assign_model(model)
+
+    def _silence_warnings(self):
+        import logging
+
+        from transformers import logging as hf_logging
+
+        # Create a custom filter class to suppress specific warnings from huggingfaces transformers
+        class SpecificMessageFilter(logging.Filter):
+            def __init__(self, suppressed_keywords):
+                super().__init__()
+                self.suppressed_keywords = suppressed_keywords
+
+            def filter(self, record):
+                return not any(keyword in record.getMessage() for keyword in self.suppressed_keywords)
+
+        # Keywords to suppress
+        suppressed_keywords = [
+            "Some weights of the model checkpoint at facebook",
+            "Could not find image processor class in the image processor config",
+        ]
+
+        transformers_logger = hf_logging.get_logger()
+        for handler in transformers_logger.handlers:
+            handler.addFilter(SpecificMessageFilter(suppressed_keywords))
+
+    def _setup_transforms(self) -> None:
+        # lazy imports
+        from transformers import AutoImageProcessor
+
+        from scportrait.tools.ml.transforms import ChannelMultiplier
+
+        feature_extractor = AutoImageProcessor.from_pretrained("facebook/convnext-xlarge-224-22k")
+
+        # custom transform to properly pass images to model
+        def get_pixel_values(in_tensor):
+            in_tensor["pixel_values"] = in_tensor["pixel_values"][0]
+            return in_tensor
+
+        if len(self.channel_selection) == 1:
+            self.transforms = transforms.Compose(
+                [
+                    ChannelMultiplier(3),
+                    feature_extractor,
+                    get_pixel_values,
+                ]
+            )
+        elif len(self.channel_selection) == 3:
+            self.transforms = transforms.Compose([feature_extractor, get_pixel_values])
+        else:
+            raise ValueError("channel_selection should be either 1 or 3 channels")
+
+    def _generate_column_names(self) -> list:
+        N_CONVNEXT_FEATURES = 2048
+        column_names = [f"convnext_feature_{i}" for i in range(N_CONVNEXT_FEATURES)]
+        return column_names
+
+    def _setup(self, extraction_paths: str | list[str], return_results: bool) -> None:
+        self._silence_warnings()
+        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._load_model()
+        self._setup_transforms()
+        self._load_model()
+
+    def process(
+        self,
+        extraction_paths: str | list[str],
+        labels: int | list[int] = 0,
+        size: int = 0,
+        return_results: bool = False,
+    ) -> None | pd.DataFrame:
+        """
+        Perform ConvNeXt inference on the provided HDF5 dataset.
+
+        Args
+            extraction_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            labels: labels for the provided single-cell image datasets
+            size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
+            return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
+
+        Returns:
+            None if return_results is False, otherwise a pandas DataFrame containing the results.
+
+        Important
+        ---------
+        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
+        class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
+        The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
+
+        Examples
+        --------
+        .. code-block:: python
+            project.classify()
+
+        Notes
+        -----
+        The following parameters are required in the config file:
+
+        .. code-block:: yaml
+
+            MLClusterClassifier:
+                # Channel index on which the classification should be performed
+                channel_selection: 4
+
+                # Number of threads to use for dataloader
+                dataloader_worker_number: 24
+
+                # Batch size to pass to GPU
+                batch_size: 100
+
+                # On which device inference should be performed
+                # For speed, should be "cuda"
+                inference_device: "cuda"
+        """
+
+        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+
+        self.dataloader = self.generate_dataloader(
+            extraction_paths,
+            labels=labels,
+            selected_transforms=self.transforms,
+            size=size,
+            dataset_class=self.DEFAULT_DATA_LOADER,
+        )
+
+        results = self.inference(
+            self.dataloader, self.model, pooler_output=True, column_names=self._generate_column_names()
+        )
+
+        if return_results:
+            self._clear_cache()
+            return results
+        else:
+            output_name = "calculated_image_features"
+            path = os.path.join(self.run_path, f"{output_name}.csv")
+
+            self._write_results_csv(results, path)
+            self._write_results_sdata(results, label="ConvNeXt")
+
+            # perform post processing cleanup
+            if not self.deep_debug:
+                self._post_processing_cleanup()
+            return None
+
+
 ####### CellFeaturization based on Classic Featurecalculation #######
 class _cellFeaturizerBase(_FeaturizationBase):
     CLEAN_LOG = True
