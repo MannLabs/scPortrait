@@ -176,3 +176,18 @@ class ChannelSelector:
 
     def __call__(self, tensor):
         return tensor[self.channels, :, :]
+
+
+class ChannelMultiplier:
+    """
+    duplicate the input tensor
+
+    Args:
+        n_reps: how often to duplicate the tensor
+    """
+
+    def __init__(self, n_reps: int = 3):
+        self.n_reps = n_reps
+
+    def __call__(self, tensor):
+        return torch.zeros((self.n_reps, 1, 1)) + tensor
