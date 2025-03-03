@@ -2,6 +2,7 @@ import io
 import os
 import platform
 import shutil
+from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
 
@@ -20,6 +21,8 @@ from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
 class _FeaturizationBase(ProcessingStep):
+    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
+    DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",
     ]
@@ -47,7 +50,7 @@ class _FeaturizationBase(ProcessingStep):
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
-    def _check_config(self):
+    def _check_config(self) -> None:
         """Check if all required parameters are present in the config file."""
 
         assert "label" in self.config.keys(), "No label specified in config file."
@@ -85,19 +88,30 @@ class _FeaturizationBase(ProcessingStep):
                     f"Directory for featurization results already exists at {self.run_path}. Please set the overwrite flag to True if you wish to overwrite the existing directory."
                 )
 
-    def _setup_log_transform(self):
+    def _setup_log_transform(self) -> None:
         if "log_transform" in self.config.keys():
             self.log_transform = self.config["log_transform"]
         else:
             self.log_transform = False  # default value
 
-    def _setup_channel_selection(self):
+    def _setup_channel_selection(self) -> None:
         if "channel_selection" in self.config.keys():
-            self.channel_selection = self.config["channel_selection"]
+            channel_selection = self.config["channel_selection"]
+            if isinstance(channel_selection, list):
+                assert all(
+                    isinstance(x, int) for x in channel_selection
+                ), "channel_selection should be a list of integers"
+                self.channel_selection = channel_selection
+
+            elif isinstance(channel_selection, int):
+                self.channel_selection = [channel_selection]
+            else:
+                raise ValueError("channel_selection should be an integer or a list of integers.")
+
         else:
             self.channel_selection = None
 
-    def _detect_automatic_inference_device(self):
+    def _detect_automatic_inference_device(self) -> str:
         """Automatically detect the best inference device available on the system."""
 
         if torch.cuda.is_available():
@@ -109,7 +123,7 @@ class _FeaturizationBase(ProcessingStep):
 
         return inference_device
 
-    def _get_nmasks(self):
+    def _get_nmasks(self) -> None:
         if "n_masks" not in self.__dict__.keys():
             if isinstance(self.extraction_file, str):
                 with h5py.File(self.extraction_file, "r") as f:
@@ -128,7 +142,7 @@ class _FeaturizationBase(ProcessingStep):
             except Exception as e:
                 raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
 
-    def _setup_inference_device(self):
+    def _setup_inference_device(self) -> None:
         """
         Configure the featurization run to use the specified inference device.
         If no device is specified, the device is automatically detected.
@@ -190,17 +204,17 @@ class _FeaturizationBase(ProcessingStep):
             self.inference_device = self._detect_automatic_inference_device()
             self.log(f"Automatically configured inferece device to {self.inference_device}")
 
-    def _general_setup(self, extraction_dir: str | list[str], return_results: bool = False):
+    def _general_setup(self, extraction_paths: str | list[str], return_results: bool = False) -> None:
         """Helper function to execute all setup functions that are common to all featurization steps."""
 
-        self.extraction_file = extraction_dir
+        self.extraction_file = extraction_paths
         if not return_results:
             self._setup_output()
         self._get_nmasks()
         self._setup_log_transform()
         self._setup_inference_device()
 
-    def _get_model_specs(self):
+    def _get_model_specs(self) -> None:
         # model location
         self.network_dir = self.config["network"]
 
@@ -269,14 +283,15 @@ class _FeaturizationBase(ProcessingStep):
 
     ### Functions for model loading and setup
 
-    def _assign_model(self, model):
+    def _assign_model(self, model) -> None:
         self.model = model
 
         # check if the hparams specify an expected image size
-        if "expected_imagesize" in model.hparams.keys():
-            self.expected_imagesize = model.hparams["expected_imagesize"]
+        if "hparams" in model.__dict__.keys():
+            if "expected_imagesize" in model.hparams.keys():
+                self.expected_imagesize = model.hparams["expected_imagesize"]
 
-    def define_model_class(self, model_class, force_load=False):
+    def define_model_class(self, model_class, force_load=False) -> None:
         if isinstance(model_class, str):
             model_class = eval(model_class)  # convert string to class by evaluating it
 
@@ -299,7 +314,7 @@ class _FeaturizationBase(ProcessingStep):
         self.model_class = model_class
         self.log(f"Model class defined as {model_class}")
 
-    def _load_pretrained_model(self, model_name: str):
+    def _load_pretrained_model(self, model_name: str) -> pl.LightningModule:
         """
         Load a pretrained model from the SPARCScore library.
 
@@ -405,19 +420,19 @@ class _FeaturizationBase(ProcessingStep):
         ckpt_path,
         hparams_path: str | None = None,
         model_type: str | None = None,
-    ):
+    ) -> None:
         model = self._load_model(ckpt_path, hparams_path, model_type)
         model.eval()
         self._assign_model(model)
 
     ### Functions regarding dataloading and transforms ####
-    def configure_transforms(self, selected_transforms: list):
+    def configure_transforms(self, selected_transforms: list) -> None:
         self.transforms = transforms.Compose(selected_transforms)
         self.log(f"The following transforms were applied: {self.transforms}")
 
     def generate_dataloader(
         self,
-        extraction_dir: str | list[str],
+        extraction_paths: str | list[str],
         labels: int | list[int] = 0,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
@@ -428,7 +443,7 @@ class _FeaturizationBase(ProcessingStep):
 
         Parameters
         ----------
-        extraction_dir : str
+        extraction_paths : str
             Path to the directory containing the extracted single-cell images.
         selected_transforms : list of torchvision.transforms
             List of transforms to apply to the images.
@@ -444,7 +459,7 @@ class _FeaturizationBase(ProcessingStep):
 
         """
         # generate dataset
-        self.log(f"Reading data from path: {extraction_dir}")
+        self.log(f"Reading data from path: {extraction_paths}")
 
         assert isinstance(
             self.transforms, transforms.Compose
@@ -455,13 +470,13 @@ class _FeaturizationBase(ProcessingStep):
             self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
-        if isinstance(extraction_dir, list):
+        if isinstance(extraction_paths, list):
             assert isinstance(labels, list), "If multiple directories are provided, multiple labels must be provided."
-            paths = extraction_dir
+            paths = extraction_paths
             labels = labels
-        elif isinstance(extraction_dir, str):
+        elif isinstance(extraction_paths, str):
             assert isinstance(labels, int), "If only one directory is provided, only one label must be provided."
-            paths = [extraction_dir]
+            paths = [extraction_paths]
             labels = [labels]
 
         f = io.StringIO()
@@ -530,7 +545,13 @@ class _FeaturizationBase(ProcessingStep):
         return dataloader
 
     #### Inference functions ####
-    def inference(self, dataloader, model_fun, column_names=None) -> pd.DataFrame:
+    def inference(
+        self,
+        dataloader: torch.utils.data.DataLoader,
+        model_fun: Callable,
+        pooler_output: bool = False,
+        column_names: list | None = None,
+    ) -> pd.DataFrame:
         """
         # 1. performs inference for a dataloader and a given network call
         # 2. saves the results to file
@@ -540,8 +561,12 @@ class _FeaturizationBase(ProcessingStep):
         data_iter = iter(dataloader)
         with torch.no_grad():
             x, label, class_id = next(data_iter)
-            r = model_fun(x.to(self.inference_device))
-            result = r.cpu().detach()
+            if pooler_output:
+                r = model_fun(**x.to(self.inference_device))
+                result = r.pooler_output.cpu().detach()
+            else:
+                r = model_fun(x.to(self.inference_device))
+                result = r.cpu().detach()
 
             # add check to ensure this only runs if we have more than one batch in the dataset
             if len(dataloader) > 1:
@@ -550,8 +575,13 @@ class _FeaturizationBase(ProcessingStep):
                         self.log(f"processing batch {i}")
                     x, _label, id = next(data_iter)
 
-                    r = model_fun(x.to(self.inference_device))
-                    result = torch.cat((result, r.cpu().detach()), 0)
+                    if pooler_output:
+                        r = model_fun(**x.to(self.inference_device))
+                        r = r.pooler_output.cpu().detach()
+                    else:
+                        r = model_fun(x.to(self.inference_device))
+                        r = r.cpu().detach()
+                    result = torch.cat((result, r), 0)
                     label = torch.cat((label, _label), 0)
                     class_id = torch.cat((class_id, id), 0)
 
@@ -580,11 +610,11 @@ class _FeaturizationBase(ProcessingStep):
 
     #### Results writing functions ####
 
-    def _write_results_csv(self, results, path):
+    def _write_results_csv(self, results, path) -> None:
         results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")
 
-    def _write_results_sdata(self, results, label, mask_type="seg_all"):
+    def _write_results_sdata(self, results, label, mask_type="seg_all") -> None:
         results.set_index("cell_id", inplace=True)
         results.drop(columns=["label"], inplace=True)
 
@@ -707,8 +737,6 @@ class MLClusterClassifier(_FeaturizationBase):
 
     CLEAN_LOG = True
     DEFAULT_LOG_NAME = "processing_MLClusterClassifier.log"
-    DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
-    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
     def __init__(self, *args, **kwargs):
         """
@@ -816,8 +844,8 @@ class MLClusterClassifier(_FeaturizationBase):
 
         return
 
-    def _setup(self, extraction_dir: str, return_results: bool):
-        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
+    def _setup(self, extraction_paths: str, return_results: bool):
+        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
 
@@ -835,13 +863,15 @@ class MLClusterClassifier(_FeaturizationBase):
         self._setup_encoders()
         self._setup_transforms()
 
-    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
+    def process(
+        self, extraction_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+    ) -> None | list[pd.DataFrame]:
         """
         Perform classification on the provided HDF5 dataset.
 
         Parameters
         ----------
-        extraction_dir : str
+        extraction_paths : str
             Directory containing the extracted HDF5 files from the project. If this class is used as part of
             a project processing workflow, this argument will be provided automatically.
         size : int, optional
@@ -912,10 +942,10 @@ class MLClusterClassifier(_FeaturizationBase):
         self.log("Started MLClusterClassifier classification.")
 
         # perform setup
-        self._setup(extraction_dir=extraction_dir, return_results=return_results)
+        self._setup(extraction_paths=extraction_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_dir,
+            extraction_paths,
             labels=labels,
             selected_transforms=self.transforms,
             size=size,
@@ -945,6 +975,7 @@ class MLClusterClassifier(_FeaturizationBase):
             # perform post processing cleanup
             if not self.deep_debug:
                 self._post_processing_cleanup()
+            return None
 
 
 class EnsembleClassifier(_FeaturizationBase):
@@ -954,8 +985,6 @@ class EnsembleClassifier(_FeaturizationBase):
 
     CLEAN_LOG = True
     DEFAULT_LOG_NAME = "processing_EnsembleClassifier.log"
-    DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
-    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -996,8 +1025,8 @@ class EnsembleClassifier(_FeaturizationBase):
         memory_usage = self._get_gpu_memory_usage()
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-    def _setup(self, extraction_dir: str, return_results: bool):
-        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
+    def _setup(self, extraction_paths: str, return_results: bool):
+        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
         self._get_model_specs()
         self._setup_transforms()
 
@@ -1009,12 +1038,14 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self._load_models()
 
-    def process(self, extraction_dir: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False):
+    def process(
+        self, extraction_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+    ) -> None | dict:
         """
         Function called to perform classification on the provided HDF5 dataset.
 
         Args:
-            extraction_dir (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
+            extraction_paths (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
             a project processing workflow this argument will be provided automatically.
 
         Returns:
@@ -1064,10 +1095,10 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self.log("Starting Ensemble Classification")
 
-        self._setup(extraction_dir=extraction_dir, return_results=return_results)
+        self._setup(extraction_paths=extraction_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_dir,
+            extraction_paths,
             labels=labels,
             selected_transforms=self.transforms,
             size=size,
@@ -1097,12 +1128,12 @@ class EnsembleClassifier(_FeaturizationBase):
             # perform post processing cleanup
             if not self.deep_debug:
                 self._post_processing_cleanup()
+            return None
 
 
 ####### CellFeaturization based on Classic Featurecalculation #######
 class _cellFeaturizerBase(_FeaturizationBase):
     CLEAN_LOG = True
-    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
 
     # define the output column names
     MASK_NAMES = ["nucleus", "cytosol", "cytosol_only"]
@@ -1326,41 +1357,33 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self, extraction_dir: str | list[str], return_results: bool):
-        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
+    def _setup(self, extraction_paths: str | list[str], return_results: bool):
+        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
         self._setup_transforms()
         self._get_channel_specs()
 
     def process(
-        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size: int = 0, return_results: bool = False
-    ):
+        self,
+        extraction_paths: str | list[str],
+        labels: int | list[int] = 0,
+        size: int = 0,
+        return_results: bool = False,
+    ) -> None | pd.DataFrame:
         """
         Perform featurization on the provided HDF5 dataset.
 
-        Parameters
-        ----------
-        extraction_dir : str
-            Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow this argument will be provided automatically.
-        size : int, optional, default=0
-            How many cells should be selected for inference. Default is 0, meaning all cells are selected.
+        Args:
+            extraction_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            labels: labels for the provided single-cell image datasets
+            size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
+            return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
 
-        Returns
-        -------
-        None
-            Results are written to CSV files located in the project directory.
+        Returns:
+            None if return_results is False, otherwise a pandas DataFrame containing the results.
 
         Important
         ---------
         If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.
-
-        Examples
-        --------
-        .. code-block:: python
-
-            # Define accessory dataset: additional HDF5 datasets that you want to perform an inference on
-            # Leave empty if you only want to infer on all extracted cells in the current project
-
-            project.classify()
 
         Notes
         -----
@@ -1388,10 +1411,10 @@ class CellFeaturizer(_cellFeaturizerBase):
         self.log("Started CellFeaturization of all available channels.")
 
         # perform setup
-        self._setup(extraction_dir=extraction_dir, return_results=return_results)
+        self._setup(extraction_paths=extraction_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_dir,
+            extraction_paths,
             labels=labels,
             selected_transforms=self.transforms,
             size=size,
@@ -1432,6 +1455,8 @@ class CellFeaturizer(_cellFeaturizerBase):
             # perform post processing cleanup
             if not self.deep_debug:
                 self._post_processing_cleanup()
+            self._clear_cache()
+            return None
 
 
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
@@ -1447,22 +1472,22 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self, extraction_dir: str | list[str], return_results: bool):
-        self._general_setup(extraction_dir=extraction_dir, return_results=return_results)
+    def _setup(self, extraction_paths: str | list[str], return_results: bool):
+        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()
         self._get_channel_specs()
 
     def process(
-        self, extraction_dir: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
-    ):
+        self, extraction_paths: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
+    ) -> None | pd.DataFrame:
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
-        self._setup(extraction_dir=extraction_dir, return_results=return_results)
+        self._setup(extraction_paths=extraction_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_dir,
+            extraction_paths,
             labels=labels,
             selected_transforms=self.transforms,
             size=size,
@@ -1481,13 +1506,18 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             f,
             column_names=self.column_names,
         )
+        if return_results:
+            self._clear_cache()
+            return results
+        else:
+            output_name = f"calculated_image_features_Channel_{channel_name}"
+            path = os.path.join(self.run_path, f"{output_name}.csv")
 
-        output_name = f"calculated_image_features_Channel_{channel_name}"
-        path = os.path.join(self.run_path, f"{output_name}.csv")
+            self._write_results_csv(results, path)
+            self._write_results_sdata(results)
 
-        self._write_results_csv(results, path)
-        self._write_results_sdata(results)
-
-        # perform post processing cleanup
-        if not self.deep_debug:
-            self._post_processing_cleanup()
+            # perform post processing cleanup
+            if not self.deep_debug:
+                self._post_processing_cleanup()
+            self._clear_cache()
+            return None
