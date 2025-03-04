@@ -265,16 +265,22 @@ class PhenixParser:
             ):
                 image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
         elif version == "HarmonyV7":
-            timepoints = [str(x - 1).zfill(2) for x in timepoints]
-            for (
-                row,
-                col,
-                field,
-                plane,
-                channel_id,
-                timepoint,
-            ) in zip(rows, cols, fields, planes, channel_ids, timepoints, strict=False):
-                image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{timepoint}.tiff")
+            timepoints = [(x - 1) for x in timepoints]
+            if self.flatfield_status:
+                for (
+                    row,
+                    col,
+                    field,
+                    plane,
+                    channel_id,
+                    timepoint,
+                ) in zip(rows, cols, fields, planes, channel_ids, timepoints, strict=False):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{str(timepoint).zfill(2)}.tiff")
+            else:
+                for row, col, field, plane, channel_id, timepoint, flim_id in zip(
+                    rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
+                ):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
 
         # convert date/time into useful format
         dates = [x.split("T")[0] for x in times]
@@ -288,7 +294,8 @@ class PhenixParser:
 
         # update file name if flatfield exported images are to be used
         if self.flatfield_status:
-            image_names = [f"flex_{x}" for x in image_names]
+            if version == "HarmonyV5":
+                image_names = [f"flex_{x}" for x in image_names]
 
         df = pd.DataFrame(
             {
