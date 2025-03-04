@@ -512,7 +512,10 @@ class PhenixParser:
             print("No missing tiles found.")
         else:
             # get size of missing images that need to be replaced
-            image = imread(os.path.join(metadata["source"][0], metadata["filename"][0]))
+            for source, file in zip(metadata["source"], metadata["filename"], strict=True):
+                if os.path.exists(os.path.join(source, file)):
+                    image = imread(os.path.join(source, file))
+                    break
             image[:] = 0
             self.black_image = image
 
