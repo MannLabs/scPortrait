@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+from alphabase.io import tempmmap
 from anndata import AnnData
 from spatialdata.models import TableModel
 from torchvision import transforms
@@ -507,6 +508,10 @@ class _FeaturizationBase(ProcessingStep):
             # randomly select n elements from the dataset to process
             dataset = torch.utils.data.Subset(dataset, range(size))
 
+        # save length of dataset for reaccess during inference
+        self.dataset_size = len(dataset)
+        self.log(f"Processing dataset with {self.dataset_size} cells")
+
         # check operating system
         if platform.system() == "Windows":
             context = "spawn"
@@ -551,6 +556,7 @@ class _FeaturizationBase(ProcessingStep):
         model_fun: Callable,
         pooler_output: bool = False,
         column_names: list | None = None,
+        out_of_memory: bool = True,
     ) -> pd.DataFrame:
         """
         # 1. performs inference for a dataloader and a given network call
@@ -560,49 +566,73 @@ class _FeaturizationBase(ProcessingStep):
 
         data_iter = iter(dataloader)
         with torch.no_grad():
+            # create id to track which index positions have already been filled in the results container
+            ix: int = 0
+
+            # perform first pass to get size of the returned inference results
             x, label, class_id = next(data_iter)
             if pooler_output:
-                r = model_fun(**x.to(self.inference_device))
-                result = r.pooler_output.cpu().detach()
+                result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
             else:
-                r = model_fun(x.to(self.inference_device))
-                result = r.cpu().detach()
+                result = model_fun(x.to(self.inference_device)).cpu().detach()
+
+            # initialize a datastructure for saving the results
+            n_entries, n_features = result.shape
+            shape_features = (self.dataset_size, n_features)
+            shape_labels = (self.dataset_size, 1)
+
+            if out_of_memory:
+                # use memory-mapped temp arrays to provide out-of-memory support
+                features_path = tempmmap.create_empty_mmap(shape_features, dtype=np.float32)
+                cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+                labels_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+
+                features = tempmmap.mmap_array_from_path(features_path)
+                cell_ids = tempmmap.mmap_array_from_path(cell_ids_path)
+                labels = tempmmap.mmap_array_from_path(labels_path)
+
+            else:
+                # use numpy arrays
+                features = np.zeros(shape_features, dtype=np.float32)
+                cell_ids = np.zeros(shape_labels, dtype=np.int64)
+                labels = np.zeros(shape_labels, dtype=np.int64)
+
+            # save the results for each batch into the storage container at the specified indices
+            features[ix : (ix + result.shape[0])] = result.numpy()
+            cell_ids[ix : (ix + result.shape[0])] = class_id.unsqueeze(1)
+            labels[ix : (ix + result.shape[0])] = label.unsqueeze(1)
+            ix += result.shape[0]  # update id to track filled positions
 
             # add check to ensure this only runs if we have more than one batch in the dataset
             if len(dataloader) > 1:
                 for i in range(len(dataloader) - 1):
                     if i % 10 == 0:
                         self.log(f"processing batch {i}")
-                    x, _label, id = next(data_iter)
 
+                    x, label, class_id = next(data_iter)
                     if pooler_output:
-                        r = model_fun(**x.to(self.inference_device))
-                        r = r.pooler_output.cpu().detach()
+                        result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
                     else:
-                        r = model_fun(x.to(self.inference_device))
-                        r = r.cpu().detach()
-                    result = torch.cat((result, r), 0)
-                    label = torch.cat((label, _label), 0)
-                    class_id = torch.cat((class_id, id), 0)
+                        result = model_fun(x.to(self.inference_device)).cpu().detach()
 
-        result = result.detach().numpy()
+                    # save the results for each batch into the storage container at the specified indices
+                    features[ix : (ix + result.shape[0])] = result.numpy()
+                    cell_ids[ix : (ix + result.shape[0])] = class_id.unsqueeze(1)
+                    labels[ix : (ix + result.shape[0])] = label.unsqueeze(1)
+                    ix += result.shape[0]  # update id to track filled positions
 
         if self.log_transform:
             self.log("Applying log transformation to results.")
             sigma = 1e-9  # to avoid log(0)
-            result = np.log(result + sigma)
-
-        label = label.numpy()
-        class_id = class_id.numpy()
+            features = np.log(features + sigma)
 
         # save inferred activations / predictions
-
         if column_names is None:
             column_names = [f"result_{i}" for i in range(result.shape[1])]
 
-        dataframe = pd.DataFrame(data=result, columns=column_names)
-        dataframe["label"] = label
-        dataframe["cell_id"] = class_id.astype("int")
+        dataframe = pd.DataFrame(data=features, columns=column_names)
+        dataframe["label"] = labels
+        dataframe["cell_id"] = cell_ids.astype("int")
 
         self.log("finished processing.")
 
@@ -703,6 +733,9 @@ class _FeaturizationBase(ProcessingStep):
 
         if "column_names" in self.__dict__.keys():
             del self.column_names
+
+        if "dataset_size" in self.__dict__.keys():
+            del self.dataset_size
 
         # reset to init values to ensure that subsequent runs are not affected by previous runs
         self.model_class = None
