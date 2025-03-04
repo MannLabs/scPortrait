@@ -81,19 +81,24 @@ class PhenixParser:
         self.image_dir = self._get_input_dir()
         self.channel_lookup = self._get_channel_metadata(self.xml_path)
         self.metadata = None
+        self.missing_images_copy: list[str] = []
 
     def _get_xml_path(self):
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
+
         if self.flatfield_status:
-            index_file = os.path.join(self.experiment_dir, "Images", "Index.ref.xml")
+            index_file_names = ["Index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            if os.path.isfile(os.path.join(self.experiment_dir, "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Index.idx.xml")
-            if os.path.isfile(os.path.join(self.experiment_dir, "Images", "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Images", "Index.idx.xml")
-            else:
-                sys.exit("Can not find index file in the experiment directory.")
+            index_file_names = ["Index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
@@ -174,6 +179,7 @@ class PhenixParser:
         x_positions = []
         y_positions = []
         times = []
+        url = []
 
         # extract information from XML file
         tree = ET.parse(xml_path)
@@ -183,8 +189,10 @@ class PhenixParser:
         namespace = root.tag.split("}")[0].strip("{")
         if "HarmonyV5" in namespace:
             version = "HarmonyV5"
+            self.harmony_version = version
         elif "HarmonyV7" in namespace:
             version = "HarmonyV7"
+            self.harmony_version = version
         else:
             raise ValueError(
                 f"Found a currently unsupported version number {namespace}. Please contact the developers with this example."
@@ -229,8 +237,11 @@ class PhenixParser:
                 elif tag == "AbsTime":
                     times.append(child.text)
                     continue
+                elif tag == "URL":
+                    url.append(child.text)
+                    continue
                 else:
-                    pass
+                    continue
 
         rows = [str(x).zfill(2) for x in rows]
         cols = [str(x).zfill(2) for x in cols]
@@ -254,16 +265,22 @@ class PhenixParser:
             ):
                 image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
         elif version == "HarmonyV7":
-            _timepoints = [str(x - 1).zfill(2) for x in timepoints]
-            for (
-                row,
-                col,
-                field,
-                plane,
-                channel_id,
-                timepoint,
-            ) in zip(rows, cols, fields, planes, channel_ids, _timepoints, strict=False):
-                image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{timepoint}.tiff")
+            timepoints = [(x - 1) for x in timepoints]
+            if self.flatfield_status:
+                for (
+                    row,
+                    col,
+                    field,
+                    plane,
+                    channel_id,
+                    timepoint,
+                ) in zip(rows, cols, fields, planes, channel_ids, timepoints, strict=False):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{str(timepoint).zfill(2)}.tiff")
+            else:
+                for row, col, field, plane, channel_id, timepoint, flim_id in zip(
+                    rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
+                ):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
 
         # convert date/time into useful format
         dates = [x.split("T")[0] for x in times]
@@ -277,7 +294,8 @@ class PhenixParser:
 
         # update file name if flatfield exported images are to be used
         if self.flatfield_status:
-            image_names = [f"flex_{x}" for x in image_names]
+            if version == "HarmonyV5":
+                image_names = [f"flex_{x}" for x in image_names]
 
         df = pd.DataFrame(
             {
@@ -322,7 +340,8 @@ class PhenixParser:
         # get y positions
         metadata["Y_pos"] = None
         Y_values = metadata.Y.value_counts().index.to_list()
-        Y_values = np.sort(Y_values)  # ensure that the values are numeric and not string
+        Y_values.sort()  # ensure that the values are numeric and not string
+
         for i, y in enumerate(Y_values):
             metadata.loc[metadata.Y == y, "Y_pos"] = i
 
@@ -331,21 +350,29 @@ class PhenixParser:
         rows = metadata.Row.value_counts().index.to_list()
 
         wells.sort()
-        rows.sort(reverse=True)  # invert because the image quadrant beginns in the bottom left
+        rows.sort(reverse=True)  # invert because we need to start assembling from bottom left
 
         if self.compress_rows:
+            metadata["orig_Row"] = metadata["Row"]
             for well in wells:
+                select_row_name = rows[0]
                 for i, row in enumerate(rows):
                     if i == 0:
                         continue
                     else:
-                        max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == rows[0]))].Y_pos.max()
+                        # get current highest index
+                        max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == select_row_name))].Y_pos.max()
+                        # add current highest index to existing index
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
-                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[-1]
+                        # update row name
+                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = select_row_name
+
+                metadata.loc[:, "Row"] = rows[-1]  # update nomenclature to start with the row 01
 
         if self.compress_cols:
+            metadata["orig_Well"] = metadata["Well"]
             for i, well in enumerate(wells):
                 if i == 0:
                     continue
@@ -406,10 +433,13 @@ class PhenixParser:
 
         # check if metadata has been passed or is already calculated, else repeat calculation
         if metadata is None:
-            if "metdata" in self.__dict__:
+            if "metadata" in self.__dict__:
                 metadata = self.metadata
+                if "new_file_name" not in metadata.columns:
+                    metadata = self._generate_new_filenames(metadata)
             else:
                 metadata = self.generate_metadata()
+                metadata = self._generate_new_filenames(metadata)
 
         # get unique values for each category describing the imaging experiment
         channels = np.unique(metadata.Channel)
@@ -471,17 +501,25 @@ class PhenixParser:
                                 _x_pos, [y_pos], timepoint, row, well, channels, zstacks
                             )
 
-        if len(missing_tiles) == 0:
+        if self.harmony_version == "HarmonyV7":
+            missing_tiles.extend(self.missing_images_copy)  # add additional missing images from copy process
+            self.missing_images = missing_tiles
+
+        elif self.harmony_version == "HarmonyV5":
+            self.missing_images = missing_tiles
+
+        if len(self.missing_images) == 0:
             print("No missing tiles found.")
         else:
             # get size of missing images that need to be replaced
-            image = imread(os.path.join(metadata["source"][0], metadata["filename"][0]))
+            for source, file in zip(metadata["source"], metadata["filename"], strict=True):
+                if os.path.exists(os.path.join(source, file)):
+                    image = imread(os.path.join(source, file))
+                    break
             image[:] = 0
             self.black_image = image
 
-            print(f"The found missing tiles need to be replaced with black images of the size {image.shape}.")
-
-        self.missing_images = missing_tiles
+            print(f"The found missing tiles that need to be replaced with black images of the size {image.shape}.")
 
         if return_values:
             return missing_tiles
@@ -570,7 +608,10 @@ class PhenixParser:
             if os.path.exists(old_path):
                 self.copyfunction(old_path, new_path)
             else:
-                print("Error: ", old_path, "not found.")
+                if self.harmony_version == "HarmonyV5":
+                    print("Error: ", old_path, "not found.")
+                elif self.harmony_version == "HarmonyV7":
+                    self.missing_images_copy.append(new)
         print("Copy process completed.")
 
     def _save_metadata(self, metadata):
@@ -777,9 +818,17 @@ class CombinedPhenixParser(PhenixParser):
         # these generated folder structures are hard coded during phenix export, do not change
         # get index file of the first phenix dir(this is our main experiment!)
         if self.flatfield_status:
-            index_file = f"{self.phenix_dirs[0]}/Images/Index.ref.xml"
+            index_file_names = ["Index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            index_file = f"{self.phenix_dirs[0]}/Index.idx.xml"
+            index_file_names = ["Index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
