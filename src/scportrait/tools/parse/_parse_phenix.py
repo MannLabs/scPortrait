@@ -86,15 +86,19 @@ class PhenixParser:
     def _get_xml_path(self):
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
+
         if self.flatfield_status:
-            index_file = os.path.join(self.experiment_dir, "Images", "Index.ref.xml")
+            index_file_names = ["Index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            if os.path.isfile(os.path.join(self.experiment_dir, "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Index.idx.xml")
-            if os.path.isfile(os.path.join(self.experiment_dir, "Images", "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Images", "Index.idx.xml")
-            else:
-                sys.exit("Can not find index file in the experiment directory.")
+            index_file_names = ["Index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
@@ -804,13 +808,13 @@ class CombinedPhenixParser(PhenixParser):
         # these generated folder structures are hard coded during phenix export, do not change
         # get index file of the first phenix dir(this is our main experiment!)
         if self.flatfield_status:
-            index_file_names = ["index.xml", "Index.ref.xml"]
+            index_file_names = ["Index.xml", "Index.ref.xml"]
             for index_file_name in index_file_names:
                 index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
                 if os.path.isfile(index_file):
                     break
         else:
-            index_file_names = ["index.xml", "Index.idx.xml"]
+            index_file_names = ["Index.xml", "Index.idx.xml"]
             for index_file_name in index_file_names:
                 index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
                 if os.path.isfile(index_file):
