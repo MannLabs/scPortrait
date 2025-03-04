@@ -5,6 +5,7 @@ import shutil
 from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
+from pathlib import PosixPath
 
 import h5py
 import numpy as np
@@ -126,22 +127,25 @@ class _FeaturizationBase(ProcessingStep):
 
     def _get_nmasks(self) -> None:
         if "n_masks" not in self.__dict__.keys():
-            if isinstance(self.extraction_file, str):
-                with h5py.File(self.extraction_file, "r") as f:
-                    self.n_masks = f["n_masks"][()].item()
+            if isinstance(self.extraction_file, str | PosixPath):
+                try:
+                    with h5py.File(self.extraction_file, "r") as f:
+                        self.n_masks = f["n_masks"][()].item()
+                except Exception as e:
+                    raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
+
             if isinstance(self.extraction_file, list):
-                n_masks = []
-                for file in self.extraction_file:
-                    with h5py.File(file, "r") as f:
-                        n_masks.append(f["n_masks"][()].item())
-                assert (
-                    x == n_masks[0] for x in n_masks
-                ), "number of masks are not consistent over all passed HDF5 files."
-                self.n_masks = n_masks[0]
-            try:
-                self.n_masks = h5py.File(self.extraction_file, "r")["n_masks"][()].item()
-            except Exception as e:
-                raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
+                try:
+                    n_masks = []
+                    for file in self.extraction_file:
+                        with h5py.File(file, "r") as f:
+                            n_masks.append(f["n_masks"][()].item())
+                    assert (
+                        x == n_masks[0] for x in n_masks
+                    ), "number of masks are not consistent over all passed HDF5 files."
+                    self.n_masks = n_masks[0]
+                except Exception as e:
+                    raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
 
     def _setup_inference_device(self) -> None:
         """
