@@ -38,6 +38,11 @@ class _FeaturizationBase(ProcessingStep):
         self.num_workers = self.config["dataloader_worker_number"]
         self.batch_size = self.config["batch_size"]
 
+        self.channel_names = None
+        self.column_names = None
+        self.dataset_size = None
+        self.channel_selection = None
+        self.inference_device = None
         self.model_class = None
         self.model = None
         self.transforms = None
@@ -60,7 +65,7 @@ class _FeaturizationBase(ProcessingStep):
         assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
         assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
 
-    def _setup_output(self):
+    def _setup_output(self) -> None:
         """Helper function to generate the output directory for the featurization results."""
 
         if not os.path.isdir(self.directory):
@@ -91,12 +96,14 @@ class _FeaturizationBase(ProcessingStep):
                 )
 
     def _setup_log_transform(self) -> None:
+        """Setup if log transformation should be applied to the inference results."""
         if "log_transform" in self.config.keys():
             self.log_transform = self.config["log_transform"]
         else:
             self.log_transform = False  # default value
 
     def _setup_channel_selection(self) -> None:
+        """Setup which channels should be used for inference. Default is that all channels available are used."""
         if "channel_selection" in self.config.keys():
             channel_selection = self.config["channel_selection"]
             if isinstance(channel_selection, list):
@@ -111,7 +118,7 @@ class _FeaturizationBase(ProcessingStep):
                 raise ValueError("channel_selection should be an integer or a list of integers.")
 
         else:
-            self.channel_selection = None
+            self.channel_selection = None  # default value
 
     def _detect_automatic_inference_device(self) -> str:
         """Automatically detect the best inference device available on the system."""
@@ -126,6 +133,7 @@ class _FeaturizationBase(ProcessingStep):
         return inference_device
 
     def _get_nmasks(self) -> None:
+        """Get Number of segmentation Masks from the HDF5 file."""
         if "n_masks" not in self.__dict__.keys():
             if isinstance(self.extraction_file, str | PosixPath):
                 try:
@@ -207,10 +215,18 @@ class _FeaturizationBase(ProcessingStep):
 
         else:
             self.inference_device = self._detect_automatic_inference_device()
-            self.log(f"Automatically configured inferece device to {self.inference_device}")
+            self.log(f"Automatically configured inference device to {self.inference_device}")
 
     def _general_setup(self, extraction_paths: str | list[str], return_results: bool = False) -> None:
-        """Helper function to execute all setup functions that are common to all featurization steps."""
+        """Helper function to execute all setup functions that are common to all featurization steps.
+
+        Args:
+            extraction_paths: Path to the extraction file or a list of paths.
+            return_results: If True, the results are returned instead of being written to file
+
+        Returns:
+            None
+        """
 
         self.extraction_file = extraction_paths
         if not return_results:
@@ -220,16 +236,17 @@ class _FeaturizationBase(ProcessingStep):
         self._setup_inference_device()
 
     def _get_model_specs(self) -> None:
+        """Get the model"""
         # model location
         self.network_dir = self.config["network"]
 
-        # hparams locatoin
+        # get hyperparameters for loading model
         if "hparams_path" in self.config.keys():
             self.hparams_path = self.config["hparams_path"]
         else:
             self.hparams_path = None
 
-        # model loading strategy
+        # model loading strategy: how to select which checkpoint to load if not a specific checkpoint is specified
         if "model_loading_strategy" in self.config.keys():
             strategy = self.config["model_loading_strategy"]
             if strategy not in ("max", "min", "latest", "path"):
@@ -239,9 +256,9 @@ class _FeaturizationBase(ProcessingStep):
 
             self.model_loading_strategy = self.config["model_loading_strategy"]
         else:
-            self.model_loading_strategy = "max"
+            self.model_loading_strategy = "max"  # default behvaiour is that the checkpoint with the highest epoch is used, in general it is highly recommended though to pass the path to a specific checkpoint file instead
 
-        # modelclass
+        # Initiate the pytorch Lightning model class to which the checkpoing should be loaded
         if self.model_class is None:
             if "model_class" in self.config.keys():
                 self.define_model_class(eval(self.config["model_class"]))
@@ -258,6 +275,7 @@ class _FeaturizationBase(ProcessingStep):
             self.model_type = None
 
     def _get_gpu_memory_usage(self):
+        """Print the current memory usage on the GPU."""
         if self.inference_device == "cpu":
             return None
 
@@ -289,6 +307,7 @@ class _FeaturizationBase(ProcessingStep):
     ### Functions for model loading and setup
 
     def _assign_model(self, model) -> None:
+        """Save the model to the featurization object."""
         self.model = model
 
         # check if the hparams specify an expected image size
@@ -323,14 +342,10 @@ class _FeaturizationBase(ProcessingStep):
         """
         Load a pretrained model from the SPARCScore library.
 
-        Parameters
-        ----------
-        model_name : str
-            Name of the pretrained model to load.
+        Args:
+            model_name : Name of the pretrained model to load.
 
-        Returns
-        -------
-        MultilabelSupervisedModel
+        Returns:
             The loaded model.
         """
 
@@ -358,18 +373,12 @@ class _FeaturizationBase(ProcessingStep):
     ) -> pl.LightningModule:
         """Load a model from a checkpoint file and transfer it to the inference device.
 
-        Parameters
-        ----------
-        ckpt_path : str
-            Path to the checkpoint file.
-        hparams_path : str, optional
-            Path to the hparams file. If not provided, the hparams file is assumed to be in the same directory as the checkpoint file.
-        model_type : str, optional
-            Type of the model architecture to load. Default is None. For MultiLabelSupervisedModel, this can also be specified in the hparams file under the key model_type.
+        Args:
+            ckpt_path: Path to the checkpoint file.
+            hparams_path: Path to the hparams file. If not provided, the hparams file is assumed to be in the same directory as the checkpoint file.
+            model_type: Type of the model architecture to load. Default is None. For MultiLabelSupervisedModel, this can also be specified in the hparams file under the key model_type.
 
-        Returns
-        -------
-        pl.LightningModule
+        Returns:
             The loaded model.
         """
 
@@ -446,20 +455,13 @@ class _FeaturizationBase(ProcessingStep):
     ) -> torch.utils.data.DataLoader:
         """Create a pytorch dataloader from the provided single-cell image dataset.
 
-        Parameters
-        ----------
-        extraction_paths : str
-            Path to the directory containing the extracted single-cell images.
-        selected_transforms : list of torchvision.transforms
-            List of transforms to apply to the images.
-        size : int, optional
-            Number of cells to select from the dataset. Default is 0, which means all samples are selected.
-        seed : int, optional
-            Seed for the random number generator if splitting the dataset and only using a subset. Default is 42.
+        Args:
+            extraction_paths: paths to the single-cell image datasets.
+            selected_transforms:  List of transforms to apply to the images.
+            size (optional):  Number of cells to select from the dataset. Default is 0, which means all samples are selected.
+            seed (optional): Seed for the random number generator if splitting the dataset and only using a subset. Default is 42.
 
-        Returns
-        -------
-        torch.utils.data.DataLoader
+        Returns:
             The generated dataloader.
 
         """
@@ -562,9 +564,17 @@ class _FeaturizationBase(ProcessingStep):
         column_names: list | None = None,
         out_of_memory: bool = True,
     ) -> pd.DataFrame:
-        """
-        # 1. performs inference for a dataloader and a given network call
-        # 2. saves the results to file
+        """performs inference on a specific provided model and dataloader.
+
+        Args:
+            dataloader: Dataloader containing the data to perform inference on.
+            model_fun: Model function to use for inference.
+            pooler_output: If True, the args are passed as a ** call and the pooler output is returned. Defaults to False.
+            column_names: Column names for the results dataframe. Defaults to None.
+
+
+        Returns:
+            pd.DataFrame: Dataframe containing the results of the inference.
         """
         self.log(f"Started processing of {len(dataloader)} batches.")
 
@@ -644,11 +654,19 @@ class _FeaturizationBase(ProcessingStep):
 
     #### Results writing functions ####
 
-    def _write_results_csv(self, results, path) -> None:
+    def _write_results_csv(self, results: pd.DataFrame, path: str | PosixPath) -> None:
+        """Write results to a CSV file."""
         results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")
 
-    def _write_results_sdata(self, results, label, mask_type="seg_all") -> None:
+    def _write_results_sdata(self, results: pd.DataFrame, label: str, mask_type: str = "seg_all") -> None:
+        """Add results to the spatialdata object.
+
+        Args:
+            results: Results to add to the spatialdata object.
+            label: Label for the results.
+            mask_type: Type of mask used for the results. Defaults to "seg_all".
+        """
         results.set_index("cell_id", inplace=True)
         results.drop(columns=["label"], inplace=True)
 
@@ -706,42 +724,35 @@ class _FeaturizationBase(ProcessingStep):
 
     #### Cleanup Functions ####
 
-    def _post_processing_cleanup(self):
+    def _post_processing_cleanup(self) -> None:
+        """reset all attribute values to the default parameters."""
         if self.debug:
             memory_usage = self._get_gpu_memory_usage()
             self.log(f"GPU memory before performing cleanup: {memory_usage}")
 
         if "dataloader" in self.__dict__.keys():
-            del self.dataloader
+            del self.dataloader  # type: ignore
 
         if "models" in self.__dict__.keys():
-            del self.models
+            del self.models  # type: ignore
 
         if "model" in self.__dict__.keys():
-            del self.model
+            del self.model  # type: ignore
 
         if "overwrite_run_path" in self.__dict__.keys():
-            del self.overwrite_run_path
+            del self.overwrite_run_path  # type: ignore
 
         if "n_masks" in self.__dict__.keys():
-            del self.n_masks
+            del self.n_masks  # type: ignore
 
         if "data_type" in self.__dict__.keys():
-            del self.data_type
-
-        if "log_transform" in self.__dict__.keys():
-            del self.log_transform
-
-        if "channel_names" in self.__dict__.keys():
-            del self.channel_names
-
-        if "column_names" in self.__dict__.keys():
-            del self.column_names
-
-        if "dataset_size" in self.__dict__.keys():
-            del self.dataset_size
+            del self.data_type  # type: ignore
 
         # reset to init values to ensure that subsequent runs are not affected by previous runs
+        self.log_transform = None
+        self.channel_names = None
+        self.column_names = None
+        self.dataset_size = None
         self.model_class = None
         self.transforms = None
         self.channel_selection = None
@@ -779,19 +790,11 @@ class MLClusterClassifier(_FeaturizationBase):
         """
         Class is initiated to classify extracted single cells.
 
-        Parameters
-        ----------
-        config : dict
-            Configuration for the extraction passed over from the :class:`pipeline.Project`.
-
-        directory : str
-            Directory for the extraction log and results. Will be created if not existing yet.
-
-        debug : bool, optional, default=False
-            Flag used to output debug information and map images.
-
-        overwrite : bool, optional, default=False
-            Flag used to overwrite existing results.
+        Args:
+            config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+            directory: Directory for the extraction log and results. Will be created if not existing yet.
+            debug : Flag used to output debug information and map images.
+            overwrite : Flag used to overwrite existing results.
         """
         super().__init__(*args, **kwargs)
 
@@ -852,7 +855,7 @@ class MLClusterClassifier(_FeaturizationBase):
                             f"Invalid model loading strategy {self.model_loading_strategy} specified. Please use one of ['max', 'min', 'latest'] if not provding a path to a model cpkt."
                         )
 
-    def _setup_encoders(self):
+    def _setup_encoders(self) -> None:
         # extract which inferences to make from config file
         if "encoders" in self.config.keys():
             encoders = self.config["encoders"]
@@ -872,16 +875,13 @@ class MLClusterClassifier(_FeaturizationBase):
             self.log(
                 "Transforms already configured manually. Will not overwrite. If this behaviour was unintended please set the transforms to None by executing 'project.featurization_f.transforms = None'"
             )
-            return
 
         if "transforms" in self.config.keys():
             self.transforms = eval(self.config["transforms"])
         else:
             self.transforms = transforms.Compose([])  # default is no transforms
 
-        return
-
-    def _setup(self, extraction_paths: str, return_results: bool):
+    def _setup(self, extraction_paths: str, return_results: bool) -> None:
         self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
@@ -906,37 +906,28 @@ class MLClusterClassifier(_FeaturizationBase):
         """
         Perform classification on the provided HDF5 dataset.
 
-        Parameters
-        ----------
-        extraction_paths : str
-            Directory containing the extracted HDF5 files from the project. If this class is used as part of
-            a project processing workflow, this argument will be provided automatically.
-        size : int, optional
-            How many cells should be selected for inference. Default is 0, which means all cells are selected.
+        Args:
+            extraction_paths : Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+            size : How many cells should be selected for inference. Default is 0, which means all cells are selected.
 
-        Returns
-        -------
-        None
-            Results are written to CSV files located in the project directory.
+        Returns:
+            None unless return_results is True, the results are returned as a list of pandas DataFrames. Otherwise, the results are written to CSV files located in the project directory.
 
-        Important
-        ---------
-        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
-        class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
-        The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the
+            `Project` class based on the previous single-cell extraction. Therefore, only the second and third arguments
+            need to be provided. The `Project` class will automatically provide the most recent extracted single-cell
+            dataset together with the supplied parameters.
 
-        Examples
-        --------
-        .. code-block:: python
-
+        Examples:
+            ```python
             project.classify()
+            ```
 
-        Notes
-        -----
-        The following parameters are required in the config file:
+        Notes:
+            The following parameters are required in the config file:
 
-        .. code-block:: yaml
-
+            ```yaml
             MLClusterClassifier:
                 # Channel number on which the classification should be performed
                 channel_selection: 4
@@ -974,7 +965,7 @@ class MLClusterClassifier(_FeaturizationBase):
                 #define dataset transforms
                 transforms:
                     resize: 128
-
+            ```
         """
         self.log("Started MLClusterClassifier classification.")
 
@@ -1438,21 +1429,16 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
         self.column_names = column_names
 
-    def calculate_statistics(self, img, n_masks=2):
+    def calculate_statistics(self, img: torch.Tensor, n_masks: int = 2):
         """
         Calculate statistics for an image batch.
 
-        Parameters
-        ----------
-        img : torch.Tensor
-            Tensor containing the image batch.
-        n_masks : int
-            Number of masks in the image. Masks are always the first images in the image stack. Default is 2.
+        Args:
+            img : Tensor containing the image batch.
+            n_masks : Number of masks in the image. Masks are always the first images in the image stack. Default is 2.
 
-        Returns
-        -------
-        torch.Tensor
-            Tensor containing the calculated statistics.
+        Returns:
+            The calculated image statistics
         """
         N, _, _, _ = img.shape
 
