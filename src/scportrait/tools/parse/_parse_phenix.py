@@ -15,7 +15,7 @@ import tempfile
 import warnings
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PosixPath
 
 import numpy as np
 import pandas as pd
@@ -30,43 +30,32 @@ def _get_child_name(elem):
 class PhenixParser:
     """
     A class to parse and manage image data from Phenix experiments.
-
-    Parameters
-    ----------
-    experiment_dir : str
-        The directory containing the experiment data.
-    export_symlinks : bool
-        Whether to use symbolic links for exported images.
-    flatfield_status : bool
-        Whether flatfield images were exported.
-    compress_rows : bool
-        Whether to compress rows in the parsed images.
-    compress_cols : bool
-        Whether to compress columns in the parsed images.
-    xml_path : str
-        The path to the XML file containing metadata.
-    image_dir : str
-        The directory containing the input images.
-    channel_lookup : pd.DataFrame
-        A DataFrame containing channel metadata.
-    metadata : pd.DataFrame or None
-        A DataFrame containing parsed image metadata.
-    black_image : np.ndarray
-        A black image used to replace missing images.
-    missing_images : list
-        A list of missing image filenames.
-    copyfunction : function
-        The function used to copy or link files.
     """
 
     def __init__(
-        self, experiment_dir, flatfield_exported=True, export_symlinks=True, compress_rows=False, compress_cols=False
+        self,
+        experiment_dir: str | PosixPath,
+        flatfield_exported: bool = True,
+        use_symlinks: bool = True,
+        compress_rows: bool = False,
+        compress_cols: bool = False,
+        overwrite: bool = False,
     ) -> None:
+        """
+        Args:
+            experiment_dir: The directory containing the exported phenxi experiment
+            flatfield_exported: Whether flatfield corrected images were exported.
+            use_symlinks: Whether to use symbolic links for parsed images.
+            compress_rows: Whether to compress rows in the parsed images.
+            compress_cols: Whether to compress columns in the parsed images.
+            overwrite: Whether to overwrite existing files during the parsing process.
+        """
         self.experiment_dir = experiment_dir
-        self.export_symlinks = export_symlinks
+        self.export_symlinks = use_symlinks
         self.flatfield_status = flatfield_exported
         self.compress_rows = compress_rows
         self.compress_cols = compress_cols
+        self.overwrite = overwrite
 
         if self.compress_rows:
             print(
@@ -80,20 +69,28 @@ class PhenixParser:
         self.xml_path = self._get_xml_path()
         self.image_dir = self._get_input_dir()
         self.channel_lookup = self._get_channel_metadata(self.xml_path)
-        self.metadata = None
+        self.metadata: None | pd.DataFrame = None
+        self.missing_images_copy: list[str] = []
+        self.outdirs: dict[str, str] = {}
 
-    def _get_xml_path(self):
+    def _get_xml_path(self) -> str | PosixPath:
+        """Automatically gets the path to the XML file containing metadata."""
+
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
+
         if self.flatfield_status:
-            index_file = os.path.join(self.experiment_dir, "Images", "Index.ref.xml")
+            index_file_names = ["Index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            if os.path.isfile(os.path.join(self.experiment_dir, "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Index.idx.xml")
-            if os.path.isfile(os.path.join(self.experiment_dir, "Images", "Index.idx.xml")):
-                index_file = os.path.join(self.experiment_dir, "Images", "Index.idx.xml")
-            else:
-                sys.exit("Can not find index file in the experiment directory.")
+            index_file_names = ["Index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
@@ -101,7 +98,8 @@ class PhenixParser:
 
         return index_file
 
-    def _get_input_dir(self):
+    def _get_input_dir(self) -> str | PosixPath:
+        """Automatically get the subfolder where the exported image files are located."""
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
         if self.flatfield_status:
@@ -115,15 +113,28 @@ class PhenixParser:
 
         return input_dir
 
-    def _define_outdir(self, name="parsed_images"):
-        setattr(self, f"outdir_{name}", f"{self.experiment_dir}/{name}")
+    def _define_outdir(self, name: str = "parsed_images") -> None:
+        """Create output directory for parsed images.
+
+        Args:
+            name: Name of the output directory.
+        """
+
+        self.outdirs[name] = f"{self.experiment_dir}/{name}"
 
         # if output directory did not exist create it
-        if not os.path.isdir(getattr(self, f"outdir_{name}")):
-            os.makedirs(getattr(self, f"outdir_{name}"))
+        if not os.path.isdir(self.outdirs[name]):
+            os.makedirs(self.outdirs[name])
 
-    def _get_channel_metadata(self, xml_path) -> pd.DataFrame:
-        """Parse channel metadata from Index.ref.xml"""
+    def _get_channel_metadata(self, xml_path: str | PosixPath) -> pd.DataFrame:
+        """Parse channel metadata from Index.ref.xml.
+
+        Args:
+            xml_path: Path to the XML file containing metadata.
+
+        Returns:
+            a lookup table for channel names and IDs
+        """
         index_file = xml_path
 
         # Read and parse the XML file
@@ -161,7 +172,16 @@ class PhenixParser:
 
         return lookup
 
-    def _read_phenix_xml(self, xml_path):
+    def _read_phenix_xml(self, xml_path: str | PosixPath) -> pd.DataFrame:
+        """Read and parse the XML file containing metadata from a Phenix experiment.
+        Returns the relevant metadata in a DataFrame.
+
+        Args:
+            xml_path: Path to the XML file containing metadata.
+
+        Returns:
+            a Dataframe containing the metadata of the experiment.
+        """
         # initialize lists to save results into
         rows = []
         cols = []
@@ -174,6 +194,7 @@ class PhenixParser:
         x_positions = []
         y_positions = []
         times = []
+        url = []
 
         # extract information from XML file
         tree = ET.parse(xml_path)
@@ -183,8 +204,10 @@ class PhenixParser:
         namespace = root.tag.split("}")[0].strip("{")
         if "HarmonyV5" in namespace:
             version = "HarmonyV5"
+            self.harmony_version = version
         elif "HarmonyV7" in namespace:
             version = "HarmonyV7"
+            self.harmony_version = version
         else:
             raise ValueError(
                 f"Found a currently unsupported version number {namespace}. Please contact the developers with this example."
@@ -229,8 +252,11 @@ class PhenixParser:
                 elif tag == "AbsTime":
                     times.append(child.text)
                     continue
+                elif tag == "URL":
+                    url.append(child.text)
+                    continue
                 else:
-                    pass
+                    continue
 
         rows = [str(x).zfill(2) for x in rows]
         cols = [str(x).zfill(2) for x in cols]
@@ -254,30 +280,36 @@ class PhenixParser:
             ):
                 image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
         elif version == "HarmonyV7":
-            _timepoints = [str(x - 1).zfill(2) for x in timepoints]
-            for (
-                row,
-                col,
-                field,
-                plane,
-                channel_id,
-                timepoint,
-            ) in zip(rows, cols, fields, planes, channel_ids, _timepoints, strict=False):
-                image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{timepoint}.tiff")
+            timepoints = [(x - 1) for x in timepoints]
+            if self.flatfield_status:
+                for (
+                    row,
+                    col,
+                    field,
+                    plane,
+                    channel_id,
+                    timepoint,
+                ) in zip(rows, cols, fields, planes, channel_ids, timepoints, strict=False):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}t{str(timepoint).zfill(2)}.tiff")
+            else:
+                for row, col, field, plane, channel_id, timepoint, flim_id in zip(
+                    rows, cols, fields, planes, channel_ids, timepoints, flim_ids, strict=False
+                ):
+                    image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
 
         # convert date/time into useful format
         dates = [x.split("T")[0] for x in times]
         _times = [x.split("T")[1] for x in times]
         _times = [(x.split("+")[0].split(".")[0] + "+" + x.split("+")[1].replace(":", "")) for x in _times]
-        time_final = [x + " " + y for x, y in zip(dates, _times, strict=False)]
+        time_final: list[str] = [x + " " + y for x, y in zip(dates, _times, strict=False)]
 
         datetime_format = "%Y-%m-%d %H:%M:%S%z"
-        time_unix = [datetime.strptime(x, datetime_format) for x in time_final]
-        time_unix = [datetime.timestamp(x) for x in time_unix]
+        time_unix: list[float] = [datetime.timestamp(datetime.strptime(x, datetime_format)) for x in time_final]
 
         # update file name if flatfield exported images are to be used
         if self.flatfield_status:
-            image_names = [f"flex_{x}" for x in image_names]
+            if version == "HarmonyV5":
+                image_names = [f"flex_{x}" for x in image_names]
 
         df = pd.DataFrame(
             {
@@ -304,10 +336,19 @@ class PhenixParser:
 
         return df
 
-    def _get_phenix_metadata(self):
+    def _get_phenix_metadata(self) -> pd.DataFrame:
+        """Helper function to get metadata from Phenix XML file."""
         return self._read_phenix_xml(self.xml_path)
 
-    def _generate_new_filenames(self, metadata):
+    def _generate_new_filenames(self, metadata: pd.DataFrame) -> pd.DataFrame:
+        """Generate the new files names for each image post parsing.
+
+        Args:
+            metadata: DataFrame containing the metadata of the experiment. Generated by _get_phenix_metadata.
+
+        Returns:
+            an updated version of the input metadata which contains the new file names.
+        """
         # convert position values to numeric to ensure proper sorting
         metadata["X"] = [float(x) for x in metadata.X]
         metadata["Y"] = [float(x) for x in metadata.Y]
@@ -322,7 +363,8 @@ class PhenixParser:
         # get y positions
         metadata["Y_pos"] = None
         Y_values = metadata.Y.value_counts().index.to_list()
-        Y_values = np.sort(Y_values)  # ensure that the values are numeric and not string
+        Y_values.sort()  # ensure that the values are numeric and not string
+
         for i, y in enumerate(Y_values):
             metadata.loc[metadata.Y == y, "Y_pos"] = i
 
@@ -331,21 +373,29 @@ class PhenixParser:
         rows = metadata.Row.value_counts().index.to_list()
 
         wells.sort()
-        rows.sort(reverse=True)  # invert because the image quadrant beginns in the bottom left
+        rows.sort(reverse=True)  # invert because we need to start assembling from bottom left
 
         if self.compress_rows:
+            metadata["orig_Row"] = metadata["Row"]
             for well in wells:
+                select_row_name = rows[0]
                 for i, row in enumerate(rows):
                     if i == 0:
                         continue
                     else:
-                        max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == rows[0]))].Y_pos.max()
+                        # get current highest index
+                        max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == select_row_name))].Y_pos.max()
+                        # add current highest index to existing index
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
                         )
-                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = rows[-1]
+                        # update row name
+                        metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = select_row_name
+
+                metadata.loc[:, "Row"] = rows[-1]  # update nomenclature to start with the row 01
 
         if self.compress_cols:
+            metadata["orig_Well"] = metadata["Well"]
             for i, well in enumerate(wells):
                 if i == 0:
                     continue
@@ -370,7 +420,15 @@ class PhenixParser:
 
         return metadata
 
-    def _get_tile_id(self, string):
+    def _get_tile_id(self, string: str) -> str:
+        """Helper function to extract tile id from filename.
+
+        Args:
+            string: Filename of the image.
+
+        Returns:
+            The tile id extracted from the filename in the format r<row>_c<col>.
+        """
         pattern = r"_r(\d+)_c(\d+)\.tif"
         match = re.search(pattern, string)
         if match:
@@ -380,7 +438,8 @@ class PhenixParser:
         else:
             return None
 
-    def generate_metadata(self):
+    def generate_metadata(self) -> pd.DataFrame:
+        """Helper function to generate metadata for the phenix experiment. Includes generating new file names for each image."""
         metadata = self._get_phenix_metadata()
         metadata_new = self._generate_new_filenames(metadata)
 
@@ -389,11 +448,23 @@ class PhenixParser:
 
         return metadata_new
 
-    def check_for_missing_files(self, metadata=None, return_values=False):
+    def check_for_missing_files(self, metadata: pd.DataFrame = None, return_values: bool = False) -> list | None:
+        """Check for missing images in the experiment.
+        Stitching always requires a full rectangular grid of images, so any missing images (e.g. due to focus failures need to be identifed and replaced with black images).
+
+        Args:
+            metadata: DataFrame containing the metadata of the experiment. Generated by _get_phenix_metadata.
+            return_values: Whether to return the list of missing images or only save them in self.missing_images
+
+        Returns:
+            List of missing images in the experiment if return_values is True. Otherwise saves the missing images in self.missing_images.
+
+        """
+
         def _generate_missing_file_names(x_positions, y_positions, timepoint, row, well, channels, zstacks):
             """Helper function to generate missing file names given x_positions and y_positions."""
 
-            _missing_tiles = []
+            _missing_tiles: list[str] = []
 
             for channel in channels:
                 for zstack in zstacks:
@@ -406,10 +477,13 @@ class PhenixParser:
 
         # check if metadata has been passed or is already calculated, else repeat calculation
         if metadata is None:
-            if "metdata" in self.__dict__:
+            if "metadata" in self.__dict__:
                 metadata = self.metadata
+                if "new_file_name" not in metadata.columns:
+                    metadata = self._generate_new_filenames(metadata)
             else:
                 metadata = self.generate_metadata()
+                metadata = self._generate_new_filenames(metadata)
 
         # get unique values for each category describing the imaging experiment
         channels = np.unique(metadata.Channel)
@@ -429,7 +503,7 @@ class PhenixParser:
         x_range = [str(x).zfill(3) for x in np.arange(min(_x_range), max(_x_range) + 1)]
 
         # this will not catch missing tiles were an entire row or column is missing
-        missing_tiles = []
+        missing_tiles: list[str] = []
         print("Checking for missing images...")
 
         for timepoint in timepoints:
@@ -471,41 +545,52 @@ class PhenixParser:
                                 _x_pos, [y_pos], timepoint, row, well, channels, zstacks
                             )
 
-        if len(missing_tiles) == 0:
+        if self.harmony_version == "HarmonyV7":
+            missing_tiles.extend(self.missing_images_copy)  # add additional missing images from copy process
+            self.missing_images = missing_tiles
+
+        elif self.harmony_version == "HarmonyV5":
+            self.missing_images = missing_tiles
+
+        if len(self.missing_images) == 0:
             print("No missing tiles found.")
         else:
             # get size of missing images that need to be replaced
-            image = imread(os.path.join(metadata["source"][0], metadata["filename"][0]))
+            for source, file in zip(metadata["source"], metadata["filename"], strict=True):
+                if os.path.exists(os.path.join(source, file)):
+                    image = imread(os.path.join(source, file))
+                    break
             image[:] = 0
             self.black_image = image
 
-            print(f"The found missing tiles need to be replaced with black images of the size {image.shape}.")
-
-        self.missing_images = missing_tiles
+            print(f"The found missing tiles that need to be replaced with black images of the size {image.shape}.")
 
         if return_values:
             return missing_tiles
+        else:
+            return None
 
-    def replace_missing_images(self):
+    def replace_missing_images(self) -> None:
+        """Replace missing images with black images of the same size."""
         # calculate missing images if not already done
         if "missing_images" not in self.__dict__:
             self.check_for_missing_files()
 
         # initialize output directory if not already done
-        if "outdir_parsed_images" not in self.__dict__:
+        if self.outdirs["parsed_images"] not in self.__dict__:
             self._define_outdir(name="parsed_images")
 
         # if there are missing images replace them with black images
         if len(self.missing_images) > 0:
             for missing_image in self.missing_images:
                 print(f"Creating black image with name: {missing_image}")
-                imwrite(os.path.join(self.outdir_parsed_images, missing_image), self.black_image)
+                imwrite(os.path.join(self.outdirs["parsed_images"], missing_image), self.black_image)
 
             print(
                 f"All missing images successfully replaced with black images of the dimension {self.black_image.shape}"
             )
 
-    def _define_copy_functions(self):
+    def _define_copy_functions(self) -> None:
         """Define function for copying depending on if symlinks should be used or not"""
         if self.export_symlinks:
 
@@ -538,16 +623,12 @@ class PhenixParser:
 
         self.copyfunction = copyfunction
 
-    def _copy_files(self, metadata):
+    def _copy_files(self, metadata: pd.DataFrame) -> None:
         """
         Copy files from the source directory to the output directory. The new file names are defined in the metadata.
-        Parameters
-        ----------
-        metadata : pd.DataFrame
-            Expected columns are: filename, new_file_name, source, dest
-        Returns
-        -------
-        None
+
+        Args:
+            metadata : parsed metadata with at least the following expected columns: filename, new_file_name, source, dest
         """
         print("Starting copy process...")
         self._define_copy_functions()
@@ -568,17 +649,28 @@ class PhenixParser:
             new_path = os.path.join(dest, new)
             # check if old path exists
             if os.path.exists(old_path):
-                self.copyfunction(old_path, new_path)
+                if os.path.exists(new_path):
+                    if self.overwrite:
+                        os.remove(new_path)
+                        self.copyfunction(old_path, new_path)
+                    else:
+                        self.copyfunction(old_path, new_path)
+                else:
+                    self.copyfunction(old_path, new_path)
+
             else:
-                print("Error: ", old_path, "not found.")
+                if self.harmony_version == "HarmonyV5":
+                    print("Error: ", old_path, "not found.")
+                elif self.harmony_version == "HarmonyV7":
+                    self.missing_images_copy.append(new)
         print("Copy process completed.")
 
-    def _save_metadata(self, metadata):
-        # save to csv file
+    def _save_metadata(self, metadata: pd.DataFrame) -> None:
+        """Save metadata used to parse images to a csv file."""
         metadata.to_csv(f"{self.experiment_dir}/metadata_image_parsing.csv")
         print(f"Metadata used to parse images saved to file {self.experiment_dir}/metadata_image_parsing.csv")
 
-    def parse(self):
+    def parse(self) -> None:
         """Complete parsing of phenix experiment including checking for and replacing missing images."""
         # create output directory
         self._define_outdir(name="parsed_images")
@@ -587,7 +679,7 @@ class PhenixParser:
         metadata = self.generate_metadata()
 
         # set destination for copying
-        metadata["dest"] = self.outdir_parsed_images
+        metadata["dest"] = self.outdirs["parsed_images"]
 
         # copy/link the images to their new names
         self._copy_files(metadata=metadata)
@@ -597,16 +689,14 @@ class PhenixParser:
         self.replace_missing_images()
         self._save_metadata(metadata)
 
-    def sort_wells(self, sort_tiles=False):
+    def sort_wells(self, sort_tiles: bool = False) -> None:
         """Sorts parsed images according to their well.
 
         Generates a folder tree where each well has its own folder containing all images from that well.
         If sort_tiles = True an additional layer will be added to the tree where all images obtained from the same FOV are sorted into a unique subfolder.
 
-        Parameters
-        ----------
-        sort_tiles : bool, optional
-            if the images should be sorted into individual directories according to FOV in addition to well, by default False
+        Args:
+            sort_tiles: if the images should be sorted into individual directories according to FOV in addition to well, by default False
         """
 
         # create output directory
@@ -634,12 +724,12 @@ class PhenixParser:
             print("\t Tiles: ", tiles)  # only print if these folders should be created
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}", tile)
+                os.path.join(self.outdirs["sorted_wells"], f"row{row}_well{well}", tile)
                 for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(self.outdir_sorted_wells, f"row{row}_well{well}")
+                os.path.join(self.outdirs["sorted_wells"], f"row{row}_well{well}")
                 for row, well in zip(metadata.Row, metadata.Well, strict=False)
             ]
 
@@ -653,16 +743,14 @@ class PhenixParser:
         # copy/link the images to their new names
         self._copy_files(metadata=metadata)
 
-    def sort_timepoints(self, sort_wells=False):
+    def sort_timepoints(self, sort_wells: bool = False) -> None:
         """Sorts parsed images according to their timepoint.
 
         Generates a folder tree where each timepoint has its own folder containing all images captured at that timepoint.
         If sort_wells = True an additional layer will be added to the tree where all images obtained from the same well are sorted into a unique subfolder according to timepoint.
 
-        Parameters
-        ----------
-        sort_wells : bool, optional
-            if the images should be sorted into individual directories according to well in addition to timepoint, by default False
+        Args:
+            sort_wells: if the images should be sorted into individual directories according to well in addition to timepoint, by default False
         """
 
         # create output directory
@@ -691,12 +779,12 @@ class PhenixParser:
         if sort_wells:
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(self.outdir_sorted_timepoints, timepoint, f"{row}_{well}")
+                os.path.join(self.outdirs["sorted_timepoints"], timepoint, f"{row}_{well}")
                 for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(self.outdir_sorted_timepoints, timepoint) for timepoint in metadata.Timepoint
+                os.path.join(self.outdirs["sorted_timepoints"], timepoint) for timepoint in metadata.Timepoint
             ]
 
         # unique directories for each tile
@@ -734,52 +822,51 @@ class CombinedPhenixParser(PhenixParser):
 
     The experiments will be combined in the order of their creation date and time.
     If two experiments contain images in the same position, the parser will keep the images from the first experiment.
-
-    Parameters
-    ----------
-    experiment_dir : str
-        The directory containing the experiment data.
-    export_symlinks : bool
-        Whether to use symbolic links for exported images.
-    flatfield_status : bool
-        Whether flatfield images were exported.
-    compress_rows : bool
-        Whether to compress rows in the parsed images.
-    compress_cols : bool
-        Whether to compress columns in the parsed images.
-    xml_path : str
-        The path to the XML file containing metadata.
-    image_dir : str
-        The directory containing the input images.
-    channel_lookup : pd.DataFrame
-        A DataFrame containing channel metadata.
-    metadata : pd.DataFrame or None
-        A DataFrame containing parsed image metadata.
-    black_image : np.ndarray
-        A black image used to replace missing images.
-    missing_images : list
-        A list of missing image filenames.
-    copyfunction : function
-        The function used to copy or link files.
     """
 
     directory_combined_measurements = "experiments_to_combine"
 
     def __init__(
-        self, experiment_dir, flatfield_exported=True, export_symlinks=True, compress_rows=False, compress_cols=False
+        self,
+        experiment_dir: str,
+        flatfield_exported: bool = True,
+        use_symlinks: bool = True,
+        compress_rows: bool = False,
+        compress_cols: bool = False,
+        overwrite: bool = False,
     ) -> None:
-        super().__init__(experiment_dir, flatfield_exported, export_symlinks, compress_rows, compress_cols)
+        """
+        Args:
+            experiment_dir: The directory containing the exported phenxi experiment
+            flatfield_exported: Whether flatfield corrected images were exported.
+            use_symlinks: Whether to use symbolic links for parsed images.
+            compress_rows: Whether to compress rows in the parsed images.
+            compress_cols: Whether to compress columns in the parsed images.
+            overwrite: Whether to overwrite existing files during the parsing process.
+        """
+        super().__init__(
+            experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
+        )
 
         self.get_datasets_to_combine()
 
     def _get_xml_path(self):
+        """Automatically get the XML files from all phenix experiments that should be combined."""
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
         # get index file of the first phenix dir(this is our main experiment!)
         if self.flatfield_status:
-            index_file = f"{self.phenix_dirs[0]}/Images/Index.ref.xml"
+            index_file_names = ["Index.xml", "Index.ref.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
         else:
-            index_file = f"{self.phenix_dirs[0]}/Index.idx.xml"
+            index_file_names = ["Index.xml", "Index.idx.xml"]
+            for index_file_name in index_file_names:
+                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
+                if os.path.isfile(index_file):
+                    break
 
         # perform sanity check if file exists else exit
         if not os.path.isfile(index_file):
@@ -787,7 +874,9 @@ class CombinedPhenixParser(PhenixParser):
 
         return index_file
 
-    def _get_input_dir(self):
+    def _get_input_dir(self) -> str:
+        """Automatically get the subfolder where the exported image files are located."""
+
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
         # for the combined exported the first experiment is always used (they should have the same exported XML file anyways for reading)
@@ -802,7 +891,8 @@ class CombinedPhenixParser(PhenixParser):
 
         return input_dir
 
-    def get_datasets_to_combine(self):
+    def get_datasets_to_combine(self) -> None:
+        """Get all phenix experiments from subdirectories that should be combined."""
         input_path = f"{self.experiment_dir}/{self.directory_combined_measurements}"
 
         # get phenix directories that need to be comined together
@@ -824,7 +914,8 @@ class CombinedPhenixParser(PhenixParser):
 
         self.phenix_dirs = [f"{input_path}/{phenix_dir}" for phenix_dir in sorted_phenix_dirs]
 
-    def _get_phenix_metadata(self):
+    def _get_phenix_metadata(self) -> None:
+        """Read combined metadata from all phenix experiments."""
         ###
         # read metadata from all experiments and merge into one file
         # note: if more than one image exists at a specific position then the first image aquired will be preserved based on the timestamps in the exported phenix measurement names
