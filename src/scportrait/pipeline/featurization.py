@@ -447,7 +447,7 @@ class _FeaturizationBase(ProcessingStep):
     def generate_dataloader(
         self,
         dataset_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_labels: int | list[int] = 0,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
         seed: int | None = 42,
@@ -478,19 +478,23 @@ class _FeaturizationBase(ProcessingStep):
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
         if isinstance(dataset_paths, list):
-            assert isinstance(labels, list), "If multiple directories are provided, multiple labels must be provided."
+            assert isinstance(
+                dataset_labels, list
+            ), "If multiple directories are provided, multiple labels must be provided."
             paths = dataset_paths
-            labels = labels
+            dataset_labels = dataset_labels
         elif isinstance(dataset_paths, str):
-            assert isinstance(labels, int), "If only one directory is provided, only one label must be provided."
+            assert isinstance(
+                dataset_labels, int
+            ), "If only one directory is provided, only one label must be provided."
             paths = [dataset_paths]
-            labels = [labels]
+            dataset_labels = [dataset_labels]
 
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = dataset_class(
                 dir_list=paths,
-                dir_labels=labels,
+                dir_labels=dataset_labels,
                 transform=t,
                 return_id=True,
                 select_channel=self.channel_selection,
@@ -511,6 +515,7 @@ class _FeaturizationBase(ProcessingStep):
                 else:
                     self.log("Using a random generator to split dataset.")
                     dataset, _ = torch.utils.data.random_split(dataset, [size, residual_size])
+
             # randomly select n elements from the dataset to process
             dataset = torch.utils.data.Subset(dataset, range(size))
 
@@ -901,7 +906,11 @@ class MLClusterClassifier(_FeaturizationBase):
         self._setup_transforms()
 
     def process(
-        self, dataset_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+        self,
+        dataset_paths: str,
+        dataset_labels: int | list[int] = 0,
+        size: int = 0,
+        return_results: bool = False,
     ) -> None | list[pd.DataFrame]:
         """
         Perform classification on the provided HDF5 dataset.
@@ -974,7 +983,7 @@ class MLClusterClassifier(_FeaturizationBase):
 
         self.dataloader = self.generate_dataloader(
             dataset_paths,
-            labels=labels,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1067,7 +1076,7 @@ class EnsembleClassifier(_FeaturizationBase):
         self._load_models()
 
     def process(
-        self, dataset_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+        self, dataset_paths: str, dataset_labels: int | list[int] = 0, size: int = 0, return_results: bool = False
     ) -> None | dict:
         """
         Function called to perform classification on the provided HDF5 dataset.
@@ -1127,7 +1136,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self.dataloader = self.generate_dataloader(
             dataset_paths,
-            labels=labels,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1262,7 +1271,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
     def process(
         self,
         dataset_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
     ) -> None | pd.DataFrame:
@@ -1271,7 +1280,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
 
         Args
             dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            labels: labels for the provided single-cell image datasets
+            dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
 
@@ -1314,7 +1323,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
 
         self.dataloader = self.generate_dataloader(
             dataset_paths,
-            labels=labels,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1569,7 +1578,7 @@ class CellFeaturizer(_cellFeaturizerBase):
     def process(
         self,
         dataset_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
     ) -> None | pd.DataFrame:
@@ -1578,7 +1587,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         Args:
             dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            labels: labels for the provided single-cell image datasets
+            dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
 
@@ -1619,7 +1628,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.dataloader = self.generate_dataloader(
             dataset_paths,
-            labels=labels,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1683,7 +1692,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         self._get_channel_specs()
 
     def process(
-        self, dataset_paths: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
+        self, dataset_paths: str | list[str], dataset_labels: int | list[int] = 0, size=0, return_results: bool = False
     ) -> None | pd.DataFrame:
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
@@ -1692,7 +1701,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
 
         self.dataloader = self.generate_dataloader(
             dataset_paths,
-            labels=labels,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
