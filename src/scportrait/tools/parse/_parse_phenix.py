@@ -39,6 +39,7 @@ class PhenixParser:
         use_symlinks: bool = True,
         compress_rows: bool = False,
         compress_cols: bool = False,
+        overwrite: bool = False,
     ) -> None:
         """
         Args:
@@ -47,12 +48,14 @@ class PhenixParser:
             use_symlinks: Whether to use symbolic links for parsed images.
             compress_rows: Whether to compress rows in the parsed images.
             compress_cols: Whether to compress columns in the parsed images.
+            overwrite: Whether to overwrite existing files during the parsing process.
         """
         self.experiment_dir = experiment_dir
         self.export_symlinks = use_symlinks
         self.flatfield_status = flatfield_exported
         self.compress_rows = compress_rows
         self.compress_cols = compress_cols
+        self.overwrite = overwrite
 
         if self.compress_rows:
             print(
@@ -646,7 +649,15 @@ class PhenixParser:
             new_path = os.path.join(dest, new)
             # check if old path exists
             if os.path.exists(old_path):
-                self.copyfunction(old_path, new_path)
+                if os.path.exists(new_path):
+                    if self.overwrite:
+                        os.remove(new_path)
+                        self.copyfunction(old_path, new_path)
+                    else:
+                        self.copyfunction(old_path, new_path)
+                else:
+                    self.copyfunction(old_path, new_path)
+
             else:
                 if self.harmony_version == "HarmonyV5":
                     print("Error: ", old_path, "not found.")
@@ -822,6 +833,7 @@ class CombinedPhenixParser(PhenixParser):
         use_symlinks: bool = True,
         compress_rows: bool = False,
         compress_cols: bool = False,
+        overwrite: bool = False,
     ) -> None:
         """
         Args:
@@ -830,8 +842,11 @@ class CombinedPhenixParser(PhenixParser):
             use_symlinks: Whether to use symbolic links for parsed images.
             compress_rows: Whether to compress rows in the parsed images.
             compress_cols: Whether to compress columns in the parsed images.
+            overwrite: Whether to overwrite existing files during the parsing process.
         """
-        super().__init__(experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols)
+        super().__init__(
+            experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
+        )
 
         self.get_datasets_to_combine()
 
