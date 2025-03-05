@@ -131,3 +131,27 @@ def dataset_stitching_example() -> Path:
     DATASET = "stitching_example"
     URL = "https://zenodo.org/records/13742379/files/example_stitching.zip?download=1"
     return _get_remote_dataset(DATASET, URL)
+
+
+def dataset_parsing_example() -> Path:
+    """Download and extract the example dataset for parsing Harmony exported imaging experiments.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "parsing_example_basic"
+    URL = "https://zenodo.org/records/14193689/files/harmony_export_V7_basic.zip?download=1"
+    NAME = "basic_export"
+    return _get_remote_dataset(DATASET, URL, NAME)
+
+
+def dataset_parsing_example_flatfield_corrected() -> Path:
+    """Download and extract the example dataset for parsing Harmony exported imaging experiments.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "parsing_example_flatfield"
+    URL = "https://zenodo.org/records/14973295/files/harmony_export_V7_flatfield_corrected.zip?download=1"
+    NAME = "flat_field_corrected"
+    return _get_remote_dataset(DATASET, URL, NAME)
