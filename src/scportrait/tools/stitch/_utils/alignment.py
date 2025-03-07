@@ -40,7 +40,7 @@ def get_registered_img(
             Usually the DAPI staining of a cycle.
         target_img: The image to be registered to the source image. 
             Usually the DAPI staining of another cycle.
-        normalize_images (bool, optional): If True, normalize images to the range [0, 1] before registration. 
+        normalize_images: If True, normalize images to the range [0, 1] before registration. 
             Defaults to True.
 
     Returns:
