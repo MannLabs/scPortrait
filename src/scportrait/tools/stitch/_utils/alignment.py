@@ -36,7 +36,7 @@ def get_registered_img(
     https://scikit-image.org/docs/0.23.x/auto_examples/registration/plot_register_translation.html
 
     Args:
-        source_img (np.ndarray): The reference image to which the target image will be aligned. 
+        source_img: The reference image to which the target image will be aligned. 
             Usually the DAPI staining of a cycle.
         target_img (np.ndarray): The image to be registered to the source image. 
             Usually the DAPI staining of another cycle.
