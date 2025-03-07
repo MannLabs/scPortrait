@@ -46,7 +46,7 @@ def get_registered_img(
     Returns:
         A tuple containing:
             corrected_image: The registered (shifted) target image.
-            shift (np.ndarray): The shift vector that was applied to align the target image.
+            shift: The shift vector that was applied to align the target image.
     """
     if normalize_images:
         source_img = (source_img - source_img.min()) / (source_img.max() - source_img.min())
