@@ -14,7 +14,7 @@ def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
         shift (np.ndarray): The amount of shift to apply.
 
     Returns:
-        corrected_image (np.ndarray): The shifted image.
+        corrected_image: The shifted image.
     """
     corrected_image = fourier_shift(np.fft.fftn(target_img), np.array(shift))
     corrected_image = np.fft.ifftn(corrected_image).real  # Take real part
