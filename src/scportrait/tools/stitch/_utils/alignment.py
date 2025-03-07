@@ -44,7 +44,7 @@ def get_registered_img(
             Defaults to True.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]: A tuple containing:
+        A tuple containing:
             corrected_image (np.ndarray): The registered (shifted) target image.
             shift (np.ndarray): The shift vector that was applied to align the target image.
     """
