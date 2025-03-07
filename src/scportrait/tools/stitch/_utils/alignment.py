@@ -10,7 +10,7 @@ def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
     and returns the corrected image. This image is usually another staining from another cycle.
 
     Args:
-        target_img (np.ndarray): The input image to be shifted.
+        target_img: The input image to be shifted.
         shift (np.ndarray): The amount of shift to apply.
 
     Returns:
