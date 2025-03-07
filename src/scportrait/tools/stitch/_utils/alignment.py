@@ -11,7 +11,7 @@ def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
 
     Args:
         target_img: The input image to be shifted.
-        shift (np.ndarray): The amount of shift to apply.
+        shift: The amount of shift to apply.
 
     Returns:
         corrected_image: The shifted image.
