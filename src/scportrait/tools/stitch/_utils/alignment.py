@@ -38,7 +38,7 @@ def get_registered_img(
     Args:
         source_img: The reference image to which the target image will be aligned. 
             Usually the DAPI staining of a cycle.
-        target_img (np.ndarray): The image to be registered to the source image. 
+        target_img: The image to be registered to the source image. 
             Usually the DAPI staining of another cycle.
         normalize_images (bool, optional): If True, normalize images to the range [0, 1] before registration. 
             Defaults to True.
