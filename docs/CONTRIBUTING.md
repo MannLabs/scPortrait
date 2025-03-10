@@ -40,9 +40,10 @@ While the [pre-commit.ci][] is useful, we strongly encourage installing and runn
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
 
 -   Google-style docstrings, where the __init__ method should be documented in its own docstring, not at the class level.
+-   there should be no specification of type in the docstrings (this should be done in the function call with mypy style type hints instead)
+-   add type hints for use with mypy
 -   example code
 -   automatic building with Sphinx
--   add type hints for use with mypy
 
 Refer to [sphinx google style docstrings][] for detailed information on writing documentation.
 
