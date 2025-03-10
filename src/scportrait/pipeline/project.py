@@ -907,6 +907,7 @@ class Project(Logable):
         keep_all: bool = True,
         remove_duplicates: bool = True,
         rechunk: bool = False,
+        overwrite_transform: bool = True,
     ) -> None:
         """
         Load input image from a spatialdata object.
@@ -920,6 +921,7 @@ class Project(Logable):
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
             remove_duplicates: If keep_all and remove_duplicates is True then only one copy of the spatialdata elements selected for use with scportrait processing steps will be kept. Otherwise, the element will be saved both under the original as well as the new name.
+            overwrite_transform: if any transforms found applied to images/masks should be kept or replaced.
 
         Returns:
             None: Image is written to the project associated sdata object and self.sdata is updated.
@@ -969,8 +971,9 @@ class Project(Logable):
 
         # Reset all transformations
         if image.attrs.get("transform"):
-            self.log("Image contained transformations which which were removed.")
-            image.attrs["transform"] = None
+            if overwrite_transform:
+                self.log("Image contained transformations which which were removed.")
+                image.attrs["transform"] = None
 
         # check coordinate system of input image
         ### PLACEHOLDER
