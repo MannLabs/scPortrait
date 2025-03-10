@@ -1,7 +1,6 @@
 from skimage.registration import phase_cross_correlation
 from scipy.ndimage import fourier_shift
 import numpy as np
-from typing import Tuple, Union
 
 def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
     """Applies a Fourier shift to the target image.
@@ -25,7 +24,7 @@ def get_registered_img(
     source_img: np.ndarray, 
     target_img: np.ndarray, 
     normalize_images: bool = True
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Registers the target image to the source image using phase cross-correlation.
 
     This function calculates the shift required to align the target image with the source image 
@@ -52,5 +51,5 @@ def get_registered_img(
         source_img = (source_img - source_img.min()) / (source_img.max() - source_img.min())
         target_img = (target_img - target_img.min()) / (target_img.max() - target_img.min())
     shift, error, diffphase = phase_cross_correlation(source_img, target_img, upsample_factor=100)
-    corrected_image, _ = apply_shift(target_img, shift)  # Apply shift
+    corrected_image = apply_shift(target_img, shift)  # Apply shift
     return corrected_image, shift
