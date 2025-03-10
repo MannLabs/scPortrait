@@ -1,22 +1,16 @@
-import os
-import sys
-
 import numpy as np
 import pytest
 from scipy.ndimage import fourier_shift
 
-sys.path.append(
-    os.path.abspath("/ictstr01/home/icb/alioguz.can/projects/scPortrait/src/scportrait/tools/stitch/_utils")
-)
-from alignment import apply_shift, get_aligned_img
+from scportrait.tools.stitch._utils.alignment import apply_shift, get_aligned_img
 
 
 @pytest.fixture
 def sample_images():
     """Generates synthetic images for testing."""
-    np.random.Generator(42)
+    rng = np.random.Generator(np.random.PCG64(42))  # Using PCG64 algorithm
     img_size = (100, 100)
-    source_img = np.random.Generator(*img_size)
+    source_img = rng.random(img_size)  # Use the Generator's random method
     target_img = np.copy(source_img)
     known_shift = np.array([5, -3])  # (y, x) shift
     target_img = np.fft.ifftn(fourier_shift(np.fft.fftn(target_img), -known_shift)).real
