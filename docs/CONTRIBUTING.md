@@ -102,7 +102,7 @@ To do this manually, first make a fork of the repository by clicking the "fork" 
 $ # Clone your fork of the repository (substitute in your username)
 $ git clone https://github.com/{your-username}/scPortrait.git
 $ # Enter the cloned repository
-$ cd scanpy
+$ cd scPortrait
 $ # Add our repository as a remote
 $ git remote add upstream https://github.com/mannlabs/scPortrait.git
 $ # git branch --set-upstream-to "upstream/main"
