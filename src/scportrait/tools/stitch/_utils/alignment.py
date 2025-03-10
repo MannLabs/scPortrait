@@ -1,6 +1,7 @@
-from skimage.registration import phase_cross_correlation
-from scipy.ndimage import fourier_shift
 import numpy as np
+from scipy.ndimage import fourier_shift
+from skimage.registration import phase_cross_correlation
+
 
 def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
     """Applies a Fourier shift to the target image.
@@ -20,26 +21,24 @@ def apply_shift(target_img: np.ndarray, shift: np.ndarray) -> np.ndarray:
     return corrected_image
 
 
-def get_registered_img(
-    source_img: np.ndarray, 
-    target_img: np.ndarray, 
-    normalize_images: bool = True
+def get_aligned_img(
+    source_img: np.ndarray, target_img: np.ndarray, normalize_images: bool = True
 ) -> tuple[np.ndarray, np.ndarray]:
     """Registers the target image to the source image using phase cross-correlation.
 
-    This function calculates the shift required to align the target image with the source image 
-    using phase cross-correlation and applies that shift. The shift can also be used for 
+    This function calculates the shift required to align the target image with the source image
+    using phase cross-correlation and applies that shift. The shift can also be used for
     aligning other stainings of the same cycle as the target image.
 
     Based on:
     https://scikit-image.org/docs/0.23.x/auto_examples/registration/plot_register_translation.html
 
     Args:
-        source_img: The reference image to which the target image will be aligned. 
+        source_img: The reference image to which the target image will be aligned.
             Usually the DAPI staining of a cycle.
-        target_img: The image to be registered to the source image. 
+        target_img: The image to be registered to the source image.
             Usually the DAPI staining of another cycle.
-        normalize_images: If True, normalize images to the range [0, 1] before registration. 
+        normalize_images: If True, normalize images to the range [0, 1] before registration.
             Defaults to True.
 
     Returns:
