@@ -217,18 +217,18 @@ class _FeaturizationBase(ProcessingStep):
             self.inference_device = self._detect_automatic_inference_device()
             self.log(f"Automatically configured inference device to {self.inference_device}")
 
-    def _general_setup(self, extraction_paths: str | list[str], return_results: bool = False) -> None:
+    def _general_setup(self, dataset_paths: str | list[str], return_results: bool = False) -> None:
         """Helper function to execute all setup functions that are common to all featurization steps.
 
         Args:
-            extraction_paths: Path to the extraction file or a list of paths.
+            dataset_paths: Path to the extraction file or a list of paths.
             return_results: If True, the results are returned instead of being written to file
 
         Returns:
             None
         """
 
-        self.extraction_file = extraction_paths
+        self.extraction_file = dataset_paths
         if not return_results:
             self._setup_output()
         self._get_nmasks()
@@ -446,8 +446,8 @@ class _FeaturizationBase(ProcessingStep):
 
     def generate_dataloader(
         self,
-        extraction_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_paths: str | list[str],
+        dataset_labels: int | list[int] = 0,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
         seed: int | None = 42,
@@ -456,7 +456,7 @@ class _FeaturizationBase(ProcessingStep):
         """Create a pytorch dataloader from the provided single-cell image dataset.
 
         Args:
-            extraction_paths: paths to the single-cell image datasets.
+            dataset_paths: paths to the single-cell image datasets.
             selected_transforms:  List of transforms to apply to the images.
             size (optional):  Number of cells to select from the dataset. Default is 0, which means all samples are selected.
             seed (optional): Seed for the random number generator if splitting the dataset and only using a subset. Default is 42.
@@ -466,7 +466,7 @@ class _FeaturizationBase(ProcessingStep):
 
         """
         # generate dataset
-        self.log(f"Reading data from path: {extraction_paths}")
+        self.log(f"Reading data from path: {dataset_paths}")
 
         assert isinstance(
             self.transforms, transforms.Compose
@@ -477,20 +477,24 @@ class _FeaturizationBase(ProcessingStep):
             self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
-        if isinstance(extraction_paths, list):
-            assert isinstance(labels, list), "If multiple directories are provided, multiple labels must be provided."
-            paths = extraction_paths
-            labels = labels
-        elif isinstance(extraction_paths, str):
-            assert isinstance(labels, int), "If only one directory is provided, only one label must be provided."
-            paths = [extraction_paths]
-            labels = [labels]
+        if isinstance(dataset_paths, list):
+            assert isinstance(
+                dataset_labels, list
+            ), "If multiple directories are provided, multiple labels must be provided."
+            paths = dataset_paths
+            dataset_labels = dataset_labels
+        elif isinstance(dataset_paths, str):
+            assert isinstance(
+                dataset_labels, int
+            ), "If only one directory is provided, only one label must be provided."
+            paths = [dataset_paths]
+            dataset_labels = [dataset_labels]
 
         f = io.StringIO()
         with redirect_stdout(f):
             dataset = dataset_class(
                 dir_list=paths,
-                dir_labels=labels,
+                dir_labels=dataset_labels,
                 transform=t,
                 return_id=True,
                 select_channel=self.channel_selection,
@@ -511,6 +515,7 @@ class _FeaturizationBase(ProcessingStep):
                 else:
                     self.log("Using a random generator to split dataset.")
                     dataset, _ = torch.utils.data.random_split(dataset, [size, residual_size])
+
             # randomly select n elements from the dataset to process
             dataset = torch.utils.data.Subset(dataset, range(size))
 
@@ -881,8 +886,8 @@ class MLClusterClassifier(_FeaturizationBase):
         else:
             self.transforms = transforms.Compose([])  # default is no transforms
 
-    def _setup(self, extraction_paths: str, return_results: bool) -> None:
-        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+    def _setup(self, dataset_paths: str, return_results: bool) -> None:
+        self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
 
@@ -901,13 +906,17 @@ class MLClusterClassifier(_FeaturizationBase):
         self._setup_transforms()
 
     def process(
-        self, extraction_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+        self,
+        dataset_paths: str,
+        dataset_labels: int | list[int] = 0,
+        size: int = 0,
+        return_results: bool = False,
     ) -> None | list[pd.DataFrame]:
         """
         Perform classification on the provided HDF5 dataset.
 
         Args:
-            extraction_paths : Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+            dataset_paths : Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
             size : How many cells should be selected for inference. Default is 0, which means all cells are selected.
 
         Returns:
@@ -970,11 +979,11 @@ class MLClusterClassifier(_FeaturizationBase):
         self.log("Started MLClusterClassifier classification.")
 
         # perform setup
-        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._setup(dataset_paths=dataset_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_paths,
-            labels=labels,
+            dataset_paths,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1053,8 +1062,8 @@ class EnsembleClassifier(_FeaturizationBase):
         memory_usage = self._get_gpu_memory_usage()
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-    def _setup(self, extraction_paths: str, return_results: bool):
-        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+    def _setup(self, dataset_paths: str, return_results: bool):
+        self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._get_model_specs()
         self._setup_transforms()
 
@@ -1067,13 +1076,13 @@ class EnsembleClassifier(_FeaturizationBase):
         self._load_models()
 
     def process(
-        self, extraction_paths: str, labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+        self, dataset_paths: str, dataset_labels: int | list[int] = 0, size: int = 0, return_results: bool = False
     ) -> None | dict:
         """
         Function called to perform classification on the provided HDF5 dataset.
 
         Args:
-            extraction_paths (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
+            dataset_paths (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
             a project processing workflow this argument will be provided automatically.
 
         Returns:
@@ -1123,11 +1132,11 @@ class EnsembleClassifier(_FeaturizationBase):
 
         self.log("Starting Ensemble Classification")
 
-        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._setup(dataset_paths=dataset_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_paths,
-            labels=labels,
+            dataset_paths,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1252,17 +1261,17 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         column_names = [f"convnext_feature_{i}" for i in range(N_CONVNEXT_FEATURES)]
         return column_names
 
-    def _setup(self, extraction_paths: str | list[str], return_results: bool) -> None:
+    def _setup(self, dataset_paths: str | list[str], return_results: bool) -> None:
         self._silence_warnings()
-        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._load_model()
         self._setup_transforms()
         self._load_model()
 
     def process(
         self,
-        extraction_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_paths: str | list[str],
+        dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
     ) -> None | pd.DataFrame:
@@ -1270,8 +1279,8 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         Perform ConvNeXt inference on the provided HDF5 dataset.
 
         Args
-            extraction_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            labels: labels for the provided single-cell image datasets
+            dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
 
@@ -1310,11 +1319,11 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
                 inference_device: "cuda"
         """
 
-        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._setup(dataset_paths=dataset_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_paths,
-            labels=labels,
+            dataset_paths,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1561,15 +1570,15 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self, extraction_paths: str | list[str], return_results: bool):
-        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+    def _setup(self, dataset_paths: str | list[str], return_results: bool):
+        self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._setup_transforms()
         self._get_channel_specs()
 
     def process(
         self,
-        extraction_paths: str | list[str],
-        labels: int | list[int] = 0,
+        dataset_paths: str | list[str],
+        dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
     ) -> None | pd.DataFrame:
@@ -1577,8 +1586,8 @@ class CellFeaturizer(_cellFeaturizerBase):
         Perform featurization on the provided HDF5 dataset.
 
         Args:
-            extraction_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            labels: labels for the provided single-cell image datasets
+            dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
 
@@ -1615,11 +1624,11 @@ class CellFeaturizer(_cellFeaturizerBase):
         self.log("Started CellFeaturization of all available channels.")
 
         # perform setup
-        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._setup(dataset_paths=dataset_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_paths,
-            labels=labels,
+            dataset_paths,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
@@ -1676,23 +1685,23 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self, extraction_paths: str | list[str], return_results: bool):
-        self._general_setup(extraction_paths=extraction_paths, return_results=return_results)
+    def _setup(self, dataset_paths: str | list[str], return_results: bool):
+        self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()
         self._get_channel_specs()
 
     def process(
-        self, extraction_paths: str | list[str], labels: int | list[int] = 0, size=0, return_results: bool = False
+        self, dataset_paths: str | list[str], dataset_labels: int | list[int] = 0, size=0, return_results: bool = False
     ) -> None | pd.DataFrame:
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
-        self._setup(extraction_paths=extraction_paths, return_results=return_results)
+        self._setup(dataset_paths=dataset_paths, return_results=return_results)
 
         self.dataloader = self.generate_dataloader(
-            extraction_paths,
-            labels=labels,
+            dataset_paths,
+            dataset_labels=dataset_labels,
             selected_transforms=self.transforms,
             size=size,
             dataset_class=self.DEFAULT_DATA_LOADER,
