@@ -30,6 +30,8 @@ DEFAULT_FILTER_ADDTIONAL_FILE: str = "needs_additional_filtering.txt"
 
 DEFAULT_EXTRACTION_DIR_NAME: str = "extraction"
 DEFAULT_DATA_DIR: str = "data"
+IMAGE_DATACONTAINTER_NAME = "obsm/single_cell_data"
+INDEX_DATACONTAINER_NAME = "obs/_index"
 
 DEFAULT_IMAGE_DTYPE: np.dtype = np.uint16
 DEFAULT_SEGMENTATION_DTYPE: np.dtype = np.uint32

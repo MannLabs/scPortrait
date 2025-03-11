@@ -31,8 +31,6 @@ class HDF5CellExtraction(ProcessingStep):
     """
 
     CLEAN_LOG = False
-    IMAGE_DATACONTAINTER_NAME = "obsm/single_cell_data"
-    INDEX_DATACONTAINER_NAME = "obs/_index"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
