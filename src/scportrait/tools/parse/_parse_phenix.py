@@ -307,9 +307,18 @@ class PhenixParser:
         time_unix: list[float] = [datetime.timestamp(datetime.strptime(x, datetime_format)) for x in time_final]
 
         # update file name if flatfield exported images are to be used
+        # syntax here is somewhat complicated because export from harmony is not consistent even within the same version,
+        # sometimes flex_ is prepended sometimes not (this has to do with which level of flatfield correction is available due to the number of tiles images)
         if self.flatfield_status:
-            if version == "HarmonyV5":
-                image_names = [f"flex_{x}" for x in image_names]
+            _image_names = [f"flex_{x}" for x in image_names]
+            status = False
+            for img in _image_names:
+                path = os.path.join(self.image_dir, img)
+                if os.path.exists(path):
+                    status = True
+                    break
+            if status:
+                image_names = _image_names
 
         df = pd.DataFrame(
             {
