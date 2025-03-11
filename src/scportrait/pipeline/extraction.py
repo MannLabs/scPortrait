@@ -701,7 +701,7 @@ class HDF5CellExtraction(ProcessingStep):
     def _initialize_empty_anndata(self) -> None:
         """Initialize an AnnData object to store the extracted single-cell images."""
         # create var object with channel names
-        mask_names = ["mask_" + str(i) for i in range(self.n_masks)]
+        mask_names = self.masks
         channel_names = self.channel_names
         vars = pd.DataFrame(columns=list(mask_names) + list(channel_names))
 
@@ -745,6 +745,7 @@ class HDF5CellExtraction(ProcessingStep):
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(
                 [x.encode("utf-8") for x in self.channel_names]
             )
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["mask_names"] = np.array([x.encode("utf-8") for x in self.masks])
             self.log("Container for single-cell data created.")
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
