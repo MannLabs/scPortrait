@@ -738,6 +738,15 @@ class HDF5CellExtraction(ProcessingStep):
                 compression=self.compression_type,
                 dtype=self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
             )
+
+            # add relevant attrs to the single-cell image container
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"] = self.n_masks
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["image_size"] = self.image_size
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization"] = self.normalization
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization_range"] = self.normalization_range
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(
+                [x.encode("utf-8") for x in self.channel_names]
+            )
             self.log("Container for single-cell data created.")
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
