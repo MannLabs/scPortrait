@@ -738,14 +738,16 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             # add relevant attrs to the single-cell image container
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_cells"] = self.num_classes
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_channels"] = self.n_masks + self.n_image_channels
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"] = self.n_masks
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_image_channels"] = self.n_image_channels
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["image_size"] = self.image_size
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization"] = self.normalization
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization_range"] = self.normalization_range
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(
-                [x.encode("utf-8") for x in self.channel_names]
-            )
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["mask_names"] = np.array([x.encode("utf-8") for x in self.masks])
+            masks = [x.encode("utf-8") for x in self.masks]
+            channel_names = [x.encode("utf-8") for x in self.channel_names]
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(masks + channel_names)
             self.log("Container for single-cell data created.")
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
