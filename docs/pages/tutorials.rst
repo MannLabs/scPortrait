@@ -32,6 +32,7 @@ This notebook walks you through using scportrait's `parse` module to prepare ima
    notebooks/example_parsing_notebook.ipynb
 
 .. _example_stitching:
+
 Stitching Workflow
 ------------------
 

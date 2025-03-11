@@ -9,12 +9,12 @@ scPortrait is a scalable toolkit to generate single-cell representations from ra
 
 Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in particular:
 
-- [Introduction](https://mannlabs.github.io/scPortrait/pages/introduction.html)
+- [Introduction](https://mannlabs.github.io/scPortrait/pages/workflow.html)
 - [Tutorials](https://mannlabs.github.io/scPortrait/pages/tutorials.html)
 
 ## Installation from Github
 
-Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.10 and 3.11.
+Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.10, 3.11 and 3.12.
 
 To get started you can install scPortrait via pip:
 
@@ -38,4 +38,10 @@ bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
 
 ## Contributing
 
-If you like this software, you can give us a star to boost our visibility! All direct contributions are also welcome. Feel free to post a new [issue](https://github.com/MannLabs/alphapeptstats/issues) or clone the repository and create a [pull request](https://github.com/MannLabs/scPortrait/pulls) with a new branch. For an even more interactive participation, check out the [discussions](https://github.com/MannLabs/scPortrait/discussions).
+If you like this software, consider giving us a star to boost our visibility! For detailed guidelines on how to contribute, please refer to our [contributing guide](./docs/CONTRIBUTING.md).
+
+We welcome all types of contributions! You can:
+
+- Post a new [issue](https://github.com/MannLabs/alphapeptstats/issues) if you encounter a bug or have a feature request.
+- Clone the repository, create a new branch, and submit a [pull request](https://github.com/MannLabs/scPortrait/pulls).
+- Join the conversation in our [discussions](https://github.com/MannLabs/scPortrait/discussions) for more interactive participation.

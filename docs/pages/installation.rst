@@ -4,7 +4,7 @@
 Installation
 ************
 
-We recommended installing the library within a separate conda environment running Python 3.10 or 3.11. Python 3.12 is currently **not** supported.
+We recommended installing the library within a separate conda environment running Python 3.10, 3.11 or 3.12.
 
 .. code::
 

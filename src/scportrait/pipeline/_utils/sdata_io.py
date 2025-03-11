@@ -10,7 +10,7 @@ import xarray
 from alphabase.io import tempmmap
 from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, ShapesModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -21,7 +21,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
-ObjectType: TypeAlias = Literal["images", "labels", "points", "tables"]
+ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
 class sdata_filehandler(Logable):
@@ -54,6 +54,22 @@ class sdata_filehandler(Logable):
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
 
+    def _check_empty_sdata(self) -> bool:
+        """Check if SpatialData object is empty.
+
+        Returns:
+            Whether SpatialData object is empty
+        """
+        empty_sdata_keys = {".zattrs", ".zgroup", "zmetadata"}
+        if os.path.exists(self.sdata_path):
+            keys = set(os.listdir(self.sdata_path))
+            if keys == empty_sdata_keys:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def _create_empty_sdata(self) -> SpatialData:
         """Create an empty SpatialData object.
 
@@ -76,12 +92,7 @@ class sdata_filehandler(Logable):
             SpatialData object
         """
         if os.path.exists(self.sdata_path):
-            if len(os.listdir(self.sdata_path)) == 0:
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = self._create_empty_sdata()
-                _sdata.write(self.sdata_path, overwrite=True)
-            else:
-                _sdata = SpatialData.read(self.sdata_path)
+            _sdata = SpatialData.read(self.sdata_path)
 
         else:
             _sdata = self._create_empty_sdata()
@@ -103,7 +114,7 @@ class sdata_filehandler(Logable):
         Args:
             sdata: SpatialData object
             name: Name of object to delete
-            type: Type of object ("images", "labels", "points", "tables")
+            type: Type of object ("images", "labels", "points", "tables", "shapes")
         """
         if name in sdata:
             del sdata[name]
@@ -242,7 +253,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation_object: Labels2DModel,
         segmentation_label: str,
-        classes: set[str] | None = None,
         overwrite: bool = False,
     ) -> None:
         """Write segmentation object to SpatialData.
@@ -268,7 +278,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation: xarray.DataArray | np.ndarray,
         segmentation_label: str,
-        classes: set[str] | None = None,
         chunks: ChunkSize2D = (1000, 1000),
         overwrite: bool = False,
     ) -> None:
@@ -292,7 +301,7 @@ class sdata_filehandler(Logable):
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite=overwrite)
+        self._write_segmentation_object_sdata(mask, segmentation_label, overwrite=overwrite)
 
     def _write_points_object_sdata(self, points: PointsModel, points_name: str, overwrite: bool = False) -> None:
         """Write points object to SpatialData.
@@ -371,6 +380,24 @@ class sdata_filehandler(Logable):
         _sdata.write_element(table_name, overwrite=True)
 
         self.log(f"Table {table_name} written to sdata object.")
+
+    def _write_shapes_object_sdata(self, shapes: ShapesModel, shapes_name: str, overwrite: bool = False) -> None:
+        """Write shapes object to SpatialData.
+
+        Args:
+            shapes: Shapes object to write
+            shapes_name: Name for the shapes object
+            overwrite: Whether to overwrite existing data
+        """
+        _sdata = self._read_sdata()
+
+        if overwrite:
+            self._force_delete_object(_sdata, shapes_name, "shapes")
+
+        _sdata.shapes[shapes_name] = shapes
+        _sdata.write_element(shapes_name, overwrite=True)
+
+        self.log(f"Shapes {shapes_name} written to sdata object.")
 
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
