@@ -17,7 +17,7 @@ def _check_type_input_list(var):
 class _HDF5SingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files."""
 
-    HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
+    HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5", "h5adsc"]  # supported hdf5 filetypes
 
     def __init__(
         self,
@@ -73,6 +73,17 @@ class _HDF5SingleCellDataset(Dataset):
         self.bulk_labels: list[int] | None = None
         self.label_column: int | None = None
 
+    def _configure_datacontainer_names(self, input_hdf):
+        if "encoding-type" in input_hdf.attrs:
+            if input_hdf.attrs["encoding-type"] == "anndata":
+                index_data_container = "obs/_index"
+                iamge_data_container = "obsm/single_cell_data"
+        else:
+            index_data_container = "single_cell_index"
+            iamge_data_container = "single_cell_data"
+
+        return index_data_container, iamge_data_container
+
     def _add_hdf_to_index(
         self,
         path: str,
@@ -95,12 +106,14 @@ class _HDF5SingleCellDataset(Dataset):
             # connect to h5py file
             input_hdf = h5py.File(path, "r")
 
+            index_data_container, image_data_container = self._configure_datacontainer_names(input_hdf)
+
             # get single cell index handle
             if index_list != [None]:
                 index_handle = np.zeros((len(index_list), 2), dtype=np.int64)
 
                 # ensure that no out of bound elements are provided for the dataset
-                max_elements = input_hdf.get("single_cell_index").shape[0]
+                max_elements = input_hdf.get(index_data_container).shape[0]
                 max_index = max(index_list)
 
                 assert (
@@ -108,23 +121,25 @@ class _HDF5SingleCellDataset(Dataset):
                 ), f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
 
                 for i, ix in enumerate(index_list):
-                    index_handle[i] = input_hdf.get("single_cell_index")[ix]
+                    index_handle[i] = input_hdf.get(index_data_container)[ix]
 
             else:
-                index_handle = input_hdf.get("single_cell_index")
+                index_handle = input_hdf.get(index_data_container)
 
             # ensure that selected channels are within range
             if self.select_channel is not None:
-                max_channels = input_hdf.get("single_cell_data").shape[1]
+                max_channels = input_hdf.get(image_data_container).shape[1]
                 assert np.all(
                     [channel_ix < max_channels for channel_ix in self.select_channel]
                 ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
 
             # add connection to singe cell datasets
             handle_id = len(self.handle_list)
-            self.handle_list.append(input_hdf.get("single_cell_data"))  # add new dataset to list of datasets
+            self.handle_list.append(input_hdf.get(image_data_container))  # add new dataset to list of datasets
 
             # add single-cell labelling
+
+            ### FIX ME!!!!
             if read_label:
                 assert label_column is not None, "Label column must be provided if read_label is set to True."
 
