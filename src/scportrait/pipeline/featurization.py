@@ -134,26 +134,38 @@ class _FeaturizationBase(ProcessingStep):
 
     def _get_nmasks(self) -> None:
         """Get Number of segmentation Masks from the HDF5 file."""
-        if "n_masks" not in self.__dict__.keys():
-            if isinstance(self.extraction_file, str | PosixPath):
-                try:
-                    with h5py.File(self.extraction_file, "r") as f:
-                        self.n_masks = f["n_masks"][()].item()
-                except Exception as e:
-                    raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
+        if isinstance(self.extraction_file, str | PosixPath):
+            with h5py.File(self.extraction_file, "r") as f:
+                self.n_masks = f[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"]
 
-            if isinstance(self.extraction_file, list):
-                try:
-                    n_masks = []
-                    for file in self.extraction_file:
-                        with h5py.File(file, "r") as f:
-                            n_masks.append(f["n_masks"][()].item())
-                    assert (
-                        x == n_masks[0] for x in n_masks
-                    ), "number of masks are not consistent over all passed HDF5 files."
-                    self.n_masks = n_masks[0]
-                except Exception as e:
-                    raise ValueError(f"Could not extract number of masks from HDF5 file. Error: {e}") from e
+        if isinstance(self.extraction_file, list):
+            n_masks = []
+            for file in self.extraction_file:
+                with h5py.File(file, "r") as f:
+                    n_masks.append(f[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"])
+            assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed HDF5 files."
+            self.n_masks = n_masks[0]
+
+    def _get_channel_specs(self) -> None:
+        """Get single-cell image channel names from the extraction file"""
+        # no longer support reading from project as this can cause discrepancies between whats in the HDF5 and what is in the project
+
+        if isinstance(self.extraction_file, str | PosixPath):
+            with h5py.File(self.extraction_file, "r") as f:
+                images_container = f[self.IMAGE_DATACONTAINTER_NAME]
+                channel_names = list(images_container.attrs["channel_names"].asstr())
+                self.channel_names = channel_names
+        if isinstance(self.extraction_file, list):
+            channel_names = []
+            for file in self.extraction_file:
+                with h5py.File(file, "r") as f:
+                    images_container = f[self.IMAGE_DATACONTAINTER_NAME]
+                    _channel_names = list(images_container.attrs["channel_names"].asstr())
+                    channel_names.append(_channel_names)
+            assert (
+                x == channel_names[0] for x in channel_names
+            ), "Channel names are not consistent over all passed HDF5 files."
+            self.channel_names = channel_names[0]
 
     def _setup_inference_device(self) -> None:
         """
@@ -1380,26 +1392,6 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
         self.transforms = transforms.Compose([])
         return
-
-    def _get_channel_specs(self):
-        if self.project is None:
-            if isinstance(self.extraction_file, str):
-                with h5py.File(self.extraction_file, "r") as f:
-                    self.channel_names = list(f["channel_information"][:].astype(str))
-            if isinstance(self.extraction_file, list):
-                channel_names = []
-                for file in self.extraction_file:
-                    with h5py.File(file, "r") as f:
-                        channel_names.append(list(f["channel_information"][:].astype(str)))
-                assert (
-                    x == channel_names[0] for x in channel_names
-                ), "Channel names are not consistent over all passed HDF5 files."
-                self.channel_names = channel_names[0]
-        else:
-            if "channel_names" in self.project.__dict__.keys():
-                self.channel_names = self.project.channel_names
-            else:
-                self.channel_names = self.project.input_image.c.values
 
     def _generate_column_names(
         self,
