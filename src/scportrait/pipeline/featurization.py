@@ -153,14 +153,16 @@ class _FeaturizationBase(ProcessingStep):
         if isinstance(self.extraction_file, str | PosixPath):
             with h5py.File(self.extraction_file, "r") as f:
                 images_container = f[self.IMAGE_DATACONTAINTER_NAME]
-                channel_names = list(images_container.attrs["channel_names"].asstr())
+                channel_names = list(images_container.attrs["channel_names"])
+                channel_names = [str(x) for x in channel_names]
                 self.channel_names = channel_names
         if isinstance(self.extraction_file, list):
             channel_names = []
             for file in self.extraction_file:
                 with h5py.File(file, "r") as f:
                     images_container = f[self.IMAGE_DATACONTAINTER_NAME]
-                    _channel_names = list(images_container.attrs["channel_names"].asstr())
+                    _channel_names = list(images_container.attrs["channel_names"])
+                    _channel_names = [str(x) for x in _channel_names]
                     channel_names.append(_channel_names)
             assert (
                 x == channel_names[0] for x in channel_names
