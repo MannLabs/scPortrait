@@ -1,8 +1,18 @@
+import itertools
+
+import numpy as np
 import pandas as pd
 import torch
 import wandb
 from pytorch_lightning.callbacks import Callback
-from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_curve
+from sklearn.metrics import (
+    auc,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    precision_score,
+    roc_curve,
+)
 
 
 class BatchAccumulatedMetricsCallback(Callback):
@@ -147,3 +157,144 @@ class BatchAccumulatedMetricsCallback(Callback):
         trainer.logger.experiment.log(
             {"precision_recall_curve/test_accumulated": table, "t_epoch": trainer.current_epoch}
         )
+
+
+class MulticlassBatchAccumulatedMetricsCallback(Callback):
+    """
+    Multiclass variant of the callback to calculate metrics on the accumulated predictions of a batch.
+
+    The following metrics are calculated:
+    - Precision per class
+    - Confusion matrix
+
+    The confusion matrix is only calculated after a complete epoch to reduce the amount of data that needs to be saved.
+    """
+
+    def __init__(self, downsampling_factor=4, n_epochs_for_big_calcs=1):
+        self.iteration = 1
+        self.n_epochs_big_calcs = n_epochs_for_big_calcs
+        self.downsampling_factor = downsampling_factor
+        pass
+
+    def _calculate_confusion_table(self, y_true, y_pred, labels=None, normalize=False):
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        cm = confusion_matrix(y_true, y_pred)
+
+        if labels is None:
+            classes = np.unique((y_true, y_pred))
+        else:
+            classes = np.asarray(labels)
+
+        if normalize:
+            cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
+            cm = np.around(cm, decimals=2)
+            cm[np.isnan(cm)] = 0.0
+
+        np.isin(classes, y_true)
+        true_classes = classes
+
+        np.isin(classes, y_pred)
+        pred_classes = classes
+
+        data = []
+        for j, i in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            if labels is not None and (isinstance(pred_classes[i], int) or isinstance(pred_classes[0], np.integer)):
+                pred_dict = labels[pred_classes[i]]
+                true_dict = labels[true_classes[j]]
+            else:
+                pred_dict = pred_classes[i]
+                true_dict = true_classes[j]
+
+            data.append([pred_dict, true_dict, cm[i, j]])
+
+        return wandb.Table(columns=["Predicted_Label", "Actual_Label", "Count"], data=data)
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        self.train_actual_labels = torch.tensor([])
+        self.train_probabilities = torch.tensor([])
+
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+        self.train_actual_labels = torch.cat((self.train_actual_labels, outputs["actual_labels"].detach().cpu()))
+        self.train_probabilities = torch.cat((self.train_probabilities, outputs["probabilities"].detach().cpu()))
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        probabilities = self.train_probabilities.numpy()
+        predictions = np.argmax(probabilities, axis=1).astype(int)
+
+        labels = self.train_actual_labels.numpy()
+        np.sort(np.unique(labels))
+
+        precision_per_class = precision_score(labels, predictions, average=None)
+        precision_dict = {f"precision_class_{i}/train": p for i, p in enumerate(precision_per_class)}
+        trainer.logger.experiment.log(precision_dict)
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        self.val_actual_labels = torch.tensor([])
+        self.val_probabilities = torch.tensor([])
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+        self.val_actual_labels = torch.cat((self.val_actual_labels, outputs["actual_labels"].detach().cpu()))
+        self.val_probabilities = torch.cat((self.val_probabilities, outputs["probabilities"].detach().cpu()))
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        probabilities = self.val_probabilities.numpy()
+        predictions = np.argmax(probabilities, axis=1).astype(int)
+
+        labels = self.val_actual_labels.numpy()
+        label_overview = np.sort(np.unique(labels))
+
+        precision_per_class = precision_score(labels, predictions, average=None)
+        precision_dict = {f"precision_class_{i}/val": p for i, p in enumerate(precision_per_class)}
+        trainer.logger.experiment.log(precision_dict)
+
+        if self.iteration % (1 / trainer.val_check_interval) * self.n_epochs_big_calcs == 0:
+            for label in label_overview:
+                filtered = probabilities[labels == label]
+                means = np.mean(filtered, axis=0)
+
+                data = [[label, val] for (label, val) in zip(label_overview, means, strict=False)]
+                table = wandb.Table(data=data, columns=["label", "mean prediction"])
+                trainer.logger.experiment.log(
+                    {f"prediction distribution true class {label}/val": table, "t_epoch": trainer.current_epoch}
+                )
+
+            table = self._calculate_confusion_table(y_true=labels, y_pred=predictions)
+            trainer.logger.experiment.log({"confusion matrix/val": table, "t_epoch": trainer.current_epoch})
+
+        self.iteration = self.iteration + 1
+
+    def on_test_epoch_start(self, trainer, pl_module):
+        self.test_actual_labels = torch.tensor([])
+        self.test_probabilities = torch.tensor([])
+
+    def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+        self.test_actual_labels = torch.cat((self.test_actual_labels, outputs["actual_labels"].detach().cpu()))
+        self.test_probabilities = torch.cat((self.test_probabilities, outputs["probabilities"].detach().cpu()))
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        probabilities = self.test_probabilities.numpy()
+        predictions = np.argmax(probabilities, axis=1).astype(int)
+
+        labels = self.test_actual_labels.numpy()
+        label_overview = np.sort(np.unique(labels))
+
+        precision_per_class = precision_score(labels, predictions, average=None)
+        precision_dict = {
+            f"precision_class_{i}/val": p for i, p in zip(label_overview, precision_per_class, strict=False)
+        }
+        trainer.logger.experiment.log(precision_dict)
+
+        if self.iteration % (1 / trainer.val_check_interval) * self.n_epochs_big_calcs == 0:
+            for label in label_overview:
+                filtered = probabilities[labels == label]
+                means = np.mean(filtered, axis=0)
+
+                data = [[label, val] for (label, val) in zip(label_overview, means, strict=False)]
+                table = wandb.Table(data=data, columns=["label", "mean prediction"])
+                trainer.logger.experiment.log(
+                    {f"prediction distribution true class {label}/val": table, "t_epoch": trainer.current_epoch}
+                )
+
+            table = self._calculate_confusion_table(y_true=labels, y_pred=predictions)
+            trainer.logger.experiment.log({"confusion matrix/test": table, "t_epoch": trainer.current_epoch})
