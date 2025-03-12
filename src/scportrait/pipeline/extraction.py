@@ -655,7 +655,7 @@ class HDF5CellExtraction(ProcessingStep):
             return save_index, stack, cell_id
         else:
             self._single_cell_data_container[save_index] = stack
-            self._single_cell_index_container[save_index] = [save_index, cell_id]
+            self._single_cell_index_container[save_index] = cell_id
             return None
 
     def _extract_classes_multi(
@@ -696,7 +696,7 @@ class HDF5CellExtraction(ProcessingStep):
                 for res in results:
                     save_index, stack, cell_id = res
                     self._single_cell_data_container[save_index] = stack
-                    self._single_cell_index_container[save_index] = str(cell_id)
+                    self._single_cell_index_container[save_index] = cell_id
 
     def _initialize_empty_anndata(self) -> None:
         """Initialize an AnnData object to store the extracted single-cell images."""
