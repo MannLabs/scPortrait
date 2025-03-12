@@ -18,12 +18,12 @@ from spatialdata.models import TableModel
 from torchvision import transforms
 
 from scportrait.pipeline._base import ProcessingStep
-from scportrait.tools.ml.datasets import HDF5SingleCellDataset
+from scportrait.tools.ml.datasets import H5ADSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
 class _FeaturizationBase(ProcessingStep):
-    DEFAULT_DATA_LOADER = HDF5SingleCellDataset
+    DEFAULT_DATA_LOADER = H5ADSingleCellDataset
     DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",
@@ -465,7 +465,7 @@ class _FeaturizationBase(ProcessingStep):
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
         seed: int | None = 42,
-        dataset_class=HDF5SingleCellDataset,
+        dataset_class=DEFAULT_DATA_LOADER,
     ) -> torch.utils.data.DataLoader:
         """Create a pytorch dataloader from the provided single-cell image dataset.
 
