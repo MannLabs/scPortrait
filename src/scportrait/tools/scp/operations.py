@@ -24,4 +24,9 @@ def get_scp_images(adata, cell_id: list[int]) -> np.ndarray:
         idx = lookup[_id]
         image = image_container[idx][:]
         images.append(image)
-    return np.array(images)
+
+    array = np.array(images)
+    if array.shape[0] == 1:  # Check if the first dimension is 1
+        return array.squeeze(axis=0)  # Remove the first dimension
+    else:
+        return array
