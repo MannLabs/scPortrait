@@ -48,6 +48,7 @@ class BatchAccumulatedMetricsCallback(Callback):
     - ROC curve
 
     The precision-recall curve and ROC curve are only calculated after a complete epoch to reduce the amount of data that needs to be saved.
+    This metric relies on wandb for logging the data.
     """
 
     def __init__(self, downsampling_factor: int = 4, n_epochs_for_big_calcs: int = 1) -> None:
@@ -61,15 +62,17 @@ class BatchAccumulatedMetricsCallback(Callback):
         self.n_epochs_big_calcs = n_epochs_for_big_calcs
         self.downsampling_factor = downsampling_factor
 
-    def on_train_epoch_start(self, trainer, pl_module):
+    def on_train_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.train_actual_labels = torch.tensor([])
         self.train_probabilities = torch.tensor([])
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_train_batch_end(
+        self, trainer: Trainer, pl_module: LightningModule, outputs: dict, batch, batch_idx, dataloader_idx=0
+    ) -> None:
         self.train_actual_labels = torch.cat((self.train_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.train_probabilities = torch.cat((self.train_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_train_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         # calculate f1-score
         probabilities = self.train_probabilities.numpy()
         probs_1d = probabilities[:, 1]  # only get the predictions for the true-class
@@ -83,11 +86,13 @@ class BatchAccumulatedMetricsCallback(Callback):
         self.val_actual_labels = torch.tensor([])
         self.val_probabilities = torch.tensor([])
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_validation_batch_end(
+        self, trainer: Trainer, pl_module: LightningModule, outputs: dict, batch, batch_idx, dataloader_idx=0
+    ) -> None:
         self.val_actual_labels = torch.cat((self.val_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.val_probabilities = torch.cat((self.val_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_validation_epoch_end(self, trainer, pl_module):
+    def on_validation_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         # calculate f1-score
         probabilities = self.val_probabilities.numpy()
         probs_1d = probabilities[:, 1]  # only get the predictions for the true-class
@@ -113,8 +118,7 @@ class BatchAccumulatedMetricsCallback(Callback):
         # other metrics should be logged at all val checks though
         if self.iteration % (1 / trainer.val_check_interval) * self.n_epochs_big_calcs == 0:
             # plot roc curve
-            data = [[x, y] for (x, y) in zip(tpr, fpr, strict=True)]
-            data = pd.DataFrame(data)
+            data = pd.DataFrame([[x, y] for (x, y) in zip(tpr, fpr, strict=True)])
             data = data.iloc[
                 :: self.downsampling_factor, :
             ]  # subsample to every second entry to make amount of data that needs to be saved smaller
@@ -136,15 +140,17 @@ class BatchAccumulatedMetricsCallback(Callback):
 
         self.iteration = self.iteration + 1
 
-    def on_test_epoch_start(self, trainer, pl_module):
+    def on_test_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.test_actual_labels = torch.tensor([])
         self.test_probabilities = torch.tensor([])
 
-    def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_test_batch_end(
+        self, trainer: Trainer, pl_module: LightningModule, outputs: dict, batch, batch_idx, dataloader_idx: int = 0
+    ) -> None:
         self.test_actual_labels = torch.cat((self.test_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.test_probabilities = torch.cat((self.test_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_test_epoch_end(self, trainer, pl_module):
+    def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         # calculate f1-score
         probabilities = self.test_probabilities.numpy()
         probs_1d = probabilities[:, 1]  # only get the predictions for the true-class
@@ -201,7 +207,20 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
         self.downsampling_factor = downsampling_factor
         pass
 
-    def _calculate_confusion_table(self, y_true, y_pred, labels=None, normalize=False):
+    def _calculate_confusion_table(
+        self, y_true: torch.Tensor, y_pred: torch.Tensor, labels: torch.Tensor | None = None, normalize: bool = False
+    ) -> wandb.Table:
+        """Calculate a confusion matrix using the given true and predicted labels.
+
+        Args:
+            y_true: True labels.
+            y_pred: Predicted labels.
+            labels: Labels to use for the confusion matrix. Defaults to None.
+            normalize: Whether to normalize the confusion matrix. Defaults to False.
+
+        Returns:
+            Table containing the confusion matrix data.
+        """
         y_true = np.asarray(y_true)
         y_pred = np.asarray(y_pred)
         cm = confusion_matrix(y_true, y_pred)
@@ -235,15 +254,23 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
 
         return wandb.Table(columns=["Predicted_Label", "Actual_Label", "Count"], data=data)
 
-    def on_train_epoch_start(self, trainer, pl_module):
+    def on_train_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.train_actual_labels = torch.tensor([])
         self.train_probabilities = torch.tensor([])
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_train_batch_end(
+        self,
+        trainer: Trainer,
+        pl_module: LightningModule,
+        outputs: dict,
+        batch: torch.Tensor,
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ):
         self.train_actual_labels = torch.cat((self.train_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.train_probabilities = torch.cat((self.train_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_train_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         probabilities = self.train_probabilities.numpy()
         predictions = np.argmax(probabilities, axis=1).astype(int)
 
@@ -254,15 +281,23 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
         precision_dict = {f"precision_class_{i}/train": p for i, p in enumerate(precision_per_class)}
         trainer.logger.experiment.log(precision_dict)
 
-    def on_validation_epoch_start(self, trainer, pl_module):
+    def on_validation_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.val_actual_labels = torch.tensor([])
         self.val_probabilities = torch.tensor([])
 
-    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_validation_batch_end(
+        self,
+        trainer: Trainer,
+        pl_module: LightningModule,
+        outputs: dict,
+        batch: torch.Tensor,
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
         self.val_actual_labels = torch.cat((self.val_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.val_probabilities = torch.cat((self.val_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_validation_epoch_end(self, trainer, pl_module):
+    def on_validation_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         probabilities = self.val_probabilities.numpy()
         predictions = np.argmax(probabilities, axis=1).astype(int)
 
@@ -289,15 +324,17 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
 
         self.iteration = self.iteration + 1
 
-    def on_test_epoch_start(self, trainer, pl_module):
+    def on_test_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.test_actual_labels = torch.tensor([])
         self.test_probabilities = torch.tensor([])
 
-    def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_test_batch_end(
+        self, trainer: Trainer, pl_module: LightningModule, outputs: dict, batch, batch_idx, dataloader_idx: int = 0
+    ) -> None:
         self.test_actual_labels = torch.cat((self.test_actual_labels, outputs["actual_labels"].detach().cpu()))
         self.test_probabilities = torch.cat((self.test_probabilities, outputs["probabilities"].detach().cpu()))
 
-    def on_test_epoch_end(self, trainer, pl_module):
+    def on_test_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         probabilities = self.test_probabilities.numpy()
         predictions = np.argmax(probabilities, axis=1).astype(int)
 
