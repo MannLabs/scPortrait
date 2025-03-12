@@ -3,11 +3,33 @@
 import matplotlib.pyplot as plt
 from anndata import AnnData
 
+from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME
 from scportrait.tools.scp.operations import get_scp_images
 
 
-def cell_images(adata: AnnData, cell_ids: list[int], cmap="viridis", return_fig: bool = False):
-    n_cells = len(cell_ids)
+def cell_images(
+    adata: AnnData, n_cells: int | None = 5, cell_ids: list[int] | None = None, cmap="viridis", return_fig: bool = False
+):
+    """Visualize single-cell images of cells in an AnnData object.
+
+    Args:
+        adata: An scPortrait single-cell image dataset.
+        n_cells: The number of cells to visualize. This number of cells will randomly be selected. If `None`, `cell_ids` must be provided.
+        cell_ids: cell IDs for the specific cells that should be visualized. If `None`, `n_cells` must be provided.
+        cmap: The colormap to use for the images.
+        return_fig: If `True`, the function returns the figure object instead of displaying it.
+
+    Returns:
+        If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
+    """
+
+    if n_cells is None:
+        assert cell_ids is not None, "Either `n_cells` or `cell_ids` must be provided."
+        n_cells = len(cell_ids)
+    else:
+        # get random cells if no specific IDs are provided
+        cell_ids = adata.obs[DEFAULT_CELL_ID_NAME].sample(n_cells).values
+
     n_channels = adata.uns["single_cell_images"]["n_channels"]
     channel_names = adata.uns["single_cell_images"]["channel_names"]
 
