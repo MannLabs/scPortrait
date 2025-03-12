@@ -737,7 +737,11 @@ class HDF5CellExtraction(ProcessingStep):
                 dtype=self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
             )
 
-            # add relevant attrs to the single-cell image container
+            # add required metadata from anndata package
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["encoding-type"] = "array"
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["encoding-version"] = "0.2.0"
+
+            # add relevant metadata to the single-cell image container
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_cells"] = self.num_classes
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_channels"] = self.n_masks + self.n_image_channels
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"] = self.n_masks
