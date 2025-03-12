@@ -690,7 +690,7 @@ class HDF5CellExtraction(ProcessingStep):
         """
         with hdf5_lock:
             with h5py.File(self.output_path, "a") as hf:
-                self._single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINTER_NAME]
+                self._single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
                 self._single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
 
                 for res in results:
@@ -749,7 +749,7 @@ class HDF5CellExtraction(ProcessingStep):
         # add an empty HDF5 dataset to the obsm group of the anndata object
         with h5py.File(self.output_path, "a") as hf:
             hf.create_dataset(
-                self.IMAGE_DATACONTAINTER_NAME,
+                self.IMAGE_DATACONTAINER_NAME,
                 shape=single_cell_data_shape,
                 chunks=(1, 1, self.image_size, self.image_size),
                 compression=self.compression_type,
@@ -757,25 +757,25 @@ class HDF5CellExtraction(ProcessingStep):
             )
 
             # add required metadata from anndata package
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["encoding-type"] = "array"
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["encoding-version"] = "0.2.0"
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["encoding-type"] = "array"
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["encoding-version"] = "0.2.0"
 
             # add relevant metadata to the single-cell image container
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_cells"] = self.num_classes
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_channels"] = self.n_masks + self.n_image_channels
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"] = self.n_masks
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["n_image_channels"] = self.n_image_channels
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["image_size"] = self.image_size
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization"] = self.normalization
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["normalization_range"] = self.normalization_range
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_cells"] = self.num_classes
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_channels"] = self.n_masks + self.n_image_channels
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"] = self.n_masks
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"] = self.n_image_channels
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["image_size"] = self.image_size
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["normalization"] = self.normalization
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["normalization_range"] = self.normalization_range
             masks = [x.encode("utf-8") for x in self.masks]
             channel_names = [x.encode("utf-8") for x in self.channel_names]
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(masks + channel_names)
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["channel_names"] = np.array(masks + channel_names)
             mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_mapping"] = np.array(
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"] = np.array(
                 [x.encode("utf-8") for x in mapping_values]
             )
-            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["compression"] = self.compression_type
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["compression"] = self.compression_type
 
             self.log("Container for single-cell data created.")
 
@@ -965,7 +965,7 @@ class HDF5CellExtraction(ProcessingStep):
                 "a",
             ) as hf:
                 # connect to final containers for saving computed results
-                self._single_cell_data_container = hf[self.IMAGE_DATACONTAINTER_NAME]
+                self._single_cell_data_container = hf[self.IMAGE_DATACONTAINER_NAME]
                 self._single_cell_index_container = hf[self.INDEX_DATACONTAINER_NAME]
 
                 self.log("Running in single threaded mode.")

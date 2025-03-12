@@ -136,13 +136,13 @@ class _FeaturizationBase(ProcessingStep):
         """Get Number of segmentation Masks from the HDF5 file."""
         if isinstance(self.extraction_file, str | PosixPath):
             with h5py.File(self.extraction_file, "r") as f:
-                self.n_masks = f[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"]
+                self.n_masks = f[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"]
 
         if isinstance(self.extraction_file, list):
             n_masks = []
             for file in self.extraction_file:
                 with h5py.File(file, "r") as f:
-                    n_masks.append(f[self.IMAGE_DATACONTAINTER_NAME].attrs["n_masks"])
+                    n_masks.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"])
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed HDF5 files."
             self.n_masks = n_masks[0]
 
@@ -152,7 +152,7 @@ class _FeaturizationBase(ProcessingStep):
 
         if isinstance(self.extraction_file, str | PosixPath):
             with h5py.File(self.extraction_file, "r") as f:
-                images_container = f[self.IMAGE_DATACONTAINTER_NAME]
+                images_container = f[self.IMAGE_DATACONTAINER_NAME]
                 channel_names = list(images_container.attrs["channel_names"])
                 channel_names = [str(x) for x in channel_names]
                 self.channel_names = channel_names
@@ -160,7 +160,7 @@ class _FeaturizationBase(ProcessingStep):
             channel_names = []
             for file in self.extraction_file:
                 with h5py.File(file, "r") as f:
-                    images_container = f[self.IMAGE_DATACONTAINTER_NAME]
+                    images_container = f[self.IMAGE_DATACONTAINER_NAME]
                     _channel_names = list(images_container.attrs["channel_names"])
                     _channel_names = [str(x) for x in _channel_names]
                     channel_names.append(_channel_names)
