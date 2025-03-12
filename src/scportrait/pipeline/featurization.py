@@ -664,9 +664,15 @@ class _FeaturizationBase(ProcessingStep):
 
             if out_of_memory:
                 # use memory-mapped temp arrays to provide out-of-memory support
-                features_path = tempmmap.create_empty_mmap(shape_features, dtype=np.float32)
-                cell_ids_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
-                labels_path = tempmmap.create_empty_mmap(shape_labels, dtype=np.int64)
+                features_path = tempmmap.create_empty_mmap(
+                    shape_features, dtype=np.float32, tmp_dir_abs_path=self._tmp_dir_path
+                )
+                cell_ids_path = tempmmap.create_empty_mmap(
+                    shape_labels, dtype=np.int64, tmp_dir_abs_path=self._tmp_dir_path
+                )
+                labels_path = tempmmap.create_empty_mmap(
+                    shape_labels, dtype=np.int64, tmp_dir_abs_path=self._tmp_dir_path
+                )
 
                 features = tempmmap.mmap_array_from_path(features_path)
                 cell_ids = tempmmap.mmap_array_from_path(cell_ids_path)
