@@ -708,7 +708,26 @@ class HDF5CellExtraction(ProcessingStep):
         # create empty obs object
         obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
 
+        # create anndata object
         adata = AnnData(obs=obs, var=vars)
+
+        # add additional metadata to `uns`
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = self.num_classes
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = self.n_masks + self.n_image_channels
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = self.n_masks
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = self.n_image_channels
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size"] = self.image_size
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
+        masks = np.array(self.masks, dtype="<U15")
+        channel_names = np.array(self.channel_names, dtype="<U15")
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = np.concatenate([masks, channel_names])
+        mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(mapping_values, dtype="<U15")
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = self.compression_type
+
+        # write to file
         adata.write(self.output_path)
 
     def _create_output_files(self) -> None:
