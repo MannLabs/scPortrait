@@ -706,7 +706,7 @@ class HDF5CellExtraction(ProcessingStep):
         vars = pd.DataFrame(columns=list(mask_names) + list(channel_names))
 
         # create empty obs object
-        obs = pd.DataFrame(index=range(self.num_classes))
+        obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
 
         adata = AnnData(obs=obs, var=vars)
         adata.write(self.output_path)
