@@ -752,6 +752,12 @@ class HDF5CellExtraction(ProcessingStep):
             masks = [x.encode("utf-8") for x in self.masks]
             channel_names = [x.encode("utf-8") for x in self.channel_names]
             hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_names"] = np.array(masks + channel_names)
+            mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["channel_mapping"] = np.array(
+                [x.encode("utf-8") for x in mapping_values]
+            )
+            hf[self.IMAGE_DATACONTAINTER_NAME].attrs["compression"] = self.compression_type
+
             self.log("Container for single-cell data created.")
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
