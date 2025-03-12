@@ -30,6 +30,10 @@ DEFAULT_FILTER_ADDTIONAL_FILE: str = "needs_additional_filtering.txt"
 
 DEFAULT_EXTRACTION_DIR_NAME: str = "extraction"
 DEFAULT_DATA_DIR: str = "data"
+DEFAULT_NAME_SINGLE_CELL_IMAGES = "single_cell_images"
+IMAGE_DATACONTAINER_NAME = f"obsm/{DEFAULT_NAME_SINGLE_CELL_IMAGES}"
+DEFAULT_CELL_ID_NAME = "cell_id"
+INDEX_DATACONTAINER_NAME = f"obs/{DEFAULT_CELL_ID_NAME}"
 
 DEFAULT_IMAGE_DTYPE: np.dtype = np.uint16
 DEFAULT_SEGMENTATION_DTYPE: np.dtype = np.uint32
@@ -38,7 +42,7 @@ DEFAULT_SINGLE_CELL_IMAGE_DTYPE: np.dtype = np.float16
 DEFAULT_SEGMENTATION_FILE: str = "segmentation.h5"
 DEFAULT_CLASSES_FILE: str = "classes.csv"
 DEFAULT_REMOVED_CLASSES_FILE: str = "removed_classes.csv"
-DEFAULT_EXTRACTION_FILE: str = "single_cells.h5"
+DEFAULT_EXTRACTION_FILE: str = "single_cells.h5adsc"
 DEFAULT_BENCHMARKING_FILE: str = "benchmarking.csv"
 
 DEFAULT_SELECTION_DIR_NAME: str = "selection"

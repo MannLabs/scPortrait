@@ -1233,7 +1233,7 @@ class Project(Logable):
         extraction_dir = self.extraction_f.get_directory()
 
         if data_type == "complete":
-            cells_path = f"{extraction_dir}/data/single_cells.h5"
+            cells_path = f"{extraction_dir}/data/{DEFAULT_EXTRACTION_FILE}"
 
         if data_type == "partial":
             partial_runs = [x for x in os.listdir(extraction_dir) if x.startswith("partial_data")]
@@ -1252,9 +1252,9 @@ class Project(Logable):
                     if len(selected_run) == 0:
                         raise ValueError(f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}.")
                     else:
-                        cells_path = f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
+                        cells_path = f"{extraction_dir}/{selected_run[0]}/{self.DEFAULT_EXTRACTION_FILE}"
             else:
-                cells_path = f"{extraction_dir}/{selected_runs[0]}/single_cells.h5"
+                cells_path = f"{extraction_dir}/{selected_runs[0]}/{self.DEFAULT_EXTRACTION_FILE}"
 
         if data_type == "filtered":
             raise ValueError("Filtered data not yet implemented.")

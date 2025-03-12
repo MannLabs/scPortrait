@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray
 from alphabase.io.tempmmap import create_empty_mmap, mmap_array_from_path
+from anndata import AnnData
 from scipy.ndimage import binary_fill_holes
 from skimage.filters import gaussian
 from spatialdata import SpatialData
@@ -654,7 +655,7 @@ class HDF5CellExtraction(ProcessingStep):
             return save_index, stack, cell_id
         else:
             self._single_cell_data_container[save_index] = stack
-            self._single_cell_index_container[save_index] = [save_index, cell_id]
+            self._single_cell_index_container[save_index] = cell_id
             return None
 
     def _extract_classes_multi(
@@ -689,22 +690,52 @@ class HDF5CellExtraction(ProcessingStep):
         """
         with hdf5_lock:
             with h5py.File(self.output_path, "a") as hf:
-                self._single_cell_data_container: h5py.Dataset = hf["single_cell_data"]
-                self._single_cell_index_container: h5py.Dataset = hf["single_cell_index"]
+                self._single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
+                self._single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
 
                 for res in results:
                     save_index, stack, cell_id = res
                     self._single_cell_data_container[save_index] = stack
-                    self._single_cell_index_container[save_index] = [save_index, cell_id]
+                    self._single_cell_index_container[save_index] = cell_id
+
+    def _initialize_empty_anndata(self) -> None:
+        """Initialize an AnnData object to store the extracted single-cell images."""
+        # create var object with channel names
+        mask_names = self.masks
+        channel_names = self.channel_names
+        vars = pd.DataFrame(columns=list(mask_names) + list(channel_names))
+
+        # create empty obs object
+        obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
+
+        # create anndata object
+        adata = AnnData(obs=obs, var=vars)
+
+        # add additional metadata to `uns`
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = self.num_classes
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = self.n_masks + self.n_image_channels
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = self.n_masks
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = self.n_image_channels
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size"] = self.image_size
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
+        masks = np.array(self.masks, dtype="<U15")
+        channel_names = np.array(self.channel_names, dtype="<U15")
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = np.concatenate([masks, channel_names])
+        mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(mapping_values, dtype="<U15")
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = self.compression_type
+
+        # write to file
+        adata.write(self.output_path)
 
     def _create_output_files(self) -> None:
         """Initialize the output HDF5 results file."""
 
         # define shapes for the output containers
-        # single cell index: [save_index, cell_id]
         # single cell data: [n_cells, n_masks + n_image_channels, image_size, image_size]
 
-        single_cell_index_shape = (self.num_classes, 2)
         single_cell_data_shape = (
             self.num_classes,
             (self.n_masks + self.n_image_channels),
@@ -713,38 +744,40 @@ class HDF5CellExtraction(ProcessingStep):
         )
 
         self.output_path = os.path.join(self.extraction_data_directory, self.DEFAULT_EXTRACTION_FILE)
+        self._initialize_empty_anndata()
 
-        with h5py.File(self.output_path, "w") as hf:
+        # add an empty HDF5 dataset to the obsm group of the anndata object
+        with h5py.File(self.output_path, "a") as hf:
             hf.create_dataset(
-                "single_cell_index",
-                shape=single_cell_index_shape,
-                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
-            )
-
-            self.log("Container for single-cell index created.")
-
-            hf.create_dataset(
-                "single_cell_data",
+                self.IMAGE_DATACONTAINER_NAME,
                 shape=single_cell_data_shape,
                 chunks=(1, 1, self.image_size, self.image_size),
                 compression=self.compression_type,
                 dtype=self.DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
             )
+
+            # add required metadata from anndata package
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["encoding-type"] = "array"
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["encoding-version"] = "0.2.0"
+
+            # add relevant metadata to the single-cell image container
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_cells"] = self.num_classes
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_channels"] = self.n_masks + self.n_image_channels
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"] = self.n_masks
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"] = self.n_image_channels
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["image_size"] = self.image_size
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["normalization"] = self.normalization
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["normalization_range"] = self.normalization_range
+            masks = [x.encode("utf-8") for x in self.masks]
+            channel_names = [x.encode("utf-8") for x in self.channel_names]
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["channel_names"] = np.array(masks + channel_names)
+            mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"] = np.array(
+                [x.encode("utf-8") for x in mapping_values]
+            )
+            hf[self.IMAGE_DATACONTAINER_NAME].attrs["compression"] = self.compression_type
+
             self.log("Container for single-cell data created.")
-
-            hf.create_dataset(
-                "channel_information",
-                data=np.char.encode(self.channel_names.astype(str)),
-                dtype=h5py.special_dtype(vlen=str),
-            )
-
-            hf.create_dataset(
-                "n_masks",
-                data=self.n_masks,
-                dtype=int,
-            )
-
-            self.log("channel information created.")
 
     def _post_extraction_cleanup(self, vars_to_delete=None):
         """remove temporary directories and files created during extraction. Reset attributes that are no longer required."""
@@ -932,8 +965,8 @@ class HDF5CellExtraction(ProcessingStep):
                 "a",
             ) as hf:
                 # connect to final containers for saving computed results
-                self._single_cell_data_container = hf["single_cell_data"]
-                self._single_cell_index_container = hf["single_cell_index"]
+                self._single_cell_data_container = hf[self.IMAGE_DATACONTAINER_NAME]
+                self._single_cell_index_container = hf[self.INDEX_DATACONTAINER_NAME]
 
                 self.log("Running in single threaded mode.")
                 for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
