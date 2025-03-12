@@ -6,7 +6,7 @@ from anndata import AnnData
 from scportrait.tools.scp.operations import get_scp_images
 
 
-def cell_images(adata: AnnData, cell_ids: list[int], cmap="Greys_r", return_fig: bool = False):
+def cell_images(adata: AnnData, cell_ids: list[int], cmap="viridis", return_fig: bool = False):
     n_cells = len(cell_ids)
     n_channels = adata.uns["single_cell_images"]["n_channels"]
     channel_names = adata.uns["single_cell_images"]["channel_names"]
