@@ -1544,41 +1544,6 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
         return results
 
-    def _write_results_sdata(self, results, mask_type="seg_all"):
-        if self.project.nuc_seg_status:
-            # save nucleus segmentation
-            columns_drop = [x for x in results.columns if self.MASK_NAMES[1] in x]
-            segmentation_name = f"{mask_type}_{self.MASK_NAMES[0]}"
-
-            if self.channel_selection is not None:
-                table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[0]}"
-            else:
-                table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[0]}"
-
-        if self.project.cyto_seg_status:
-            # save cytosol segmentation
-            columns_drop = [x for x in results.columns if self.MASK_NAMES[0] in x]
-            segmentation_name = f"{mask_type}_{self.MASK_NAMES[1]}"
-
-            # define name to save table under
-            if self.channel_selection is not None:
-                table_name = f"{self.__class__.__name__ }_{self.config['channel_selection']}_{self.MASK_NAMES[1]}"
-            else:
-                table_name = f"{self.__class__.__name__ }_{self.MASK_NAMES[1]}"
-
-        _results = results.drop(columns=columns_drop)
-        _results.set_index("cell_id", inplace=True)
-        _results.drop(columns=["label"], inplace=True)
-
-        feature_matrix = _results.to_numpy()
-        var_names = _results.columns
-        obs_indices = _results.index.astype(str)
-
-        adata = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=pd.DataFrame(index=obs_indices))
-        self.filehandler._write_table_sdata(
-            adata, segmentation_mask_name=segmentation_name, table_name=table_name, overwrite=self.overwrite_run_path
-        )
-
 
 class CellFeaturizer(_cellFeaturizerBase):
     """
@@ -1688,7 +1653,7 @@ class CellFeaturizer(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results)
+            self._write_results_sdata(results, label="")
 
             # perform post processing cleanup
             if not self.deep_debug:
@@ -1753,7 +1718,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results)
+            self._write_results_sdata(results, label="")
 
             # perform post processing cleanup
             if not self.deep_debug:
