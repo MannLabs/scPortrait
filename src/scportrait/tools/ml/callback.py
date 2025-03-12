@@ -4,7 +4,19 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from pytorch_lightning.callbacks import Callback
+
+# Check if Pytorch Lightning is installed as optional dependency
+try:
+    from pytorch_lightning import LightningModule
+    from pytorch_lightning.callbacks import Callback
+    from pytorch_lightning.trainer import Trainer
+
+except ImportError as err:
+    raise ImportError(
+        "Pytorch Lightning is not installed. Please install it via `pip install pytorch_lightning` "
+        "if you want to utilize the callback metrics."
+    ) from err
+
 from sklearn.metrics import (
     auc,
     confusion_matrix,
