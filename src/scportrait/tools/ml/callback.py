@@ -39,16 +39,15 @@ class BatchAccumulatedMetricsCallback(Callback):
     - ROC curve
 
     The precision-recall curve and ROC curve are only calculated after a complete epoch to reduce the amount of data that needs to be saved.
-
-    Args:
-        downsampling_factor: Factor to downsample the roc and precision-recall curve data to reduce the amount of data that needs to be saved. Defaults to 4.
-        n_epochs_for_big_calcs: Number of epochs after which to calculate the roc and precision-recall curve data. All other data is calculated at each validation step. Defaults to 1.
-
-    Returns:
-        None
     """
 
-    def __init__(self, downsampling_factor: int = 4, n_epochs_for_big_calcs: int = 1):
+    def __init__(self, downsampling_factor: int = 4, n_epochs_for_big_calcs: int = 1) -> None:
+        """
+        Args:
+            downsampling_factor: Factor to downsample the roc and precision-recall curve data to reduce the amount of data that needs to be saved. Defaults to 4.
+            n_epochs_for_big_calcs: Number of epochs after which to calculate the roc and precision-recall curve data. All other data is calculated at each validation step. Defaults to 1.
+
+        """
         self.iteration = 1
         self.n_epochs_big_calcs = n_epochs_for_big_calcs
         self.downsampling_factor = downsampling_factor
@@ -180,16 +179,14 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
     - Confusion matrix
 
     The confusion matrix is only calculated after a complete epoch to reduce the amount of data that needs to be saved.
-
-    Args:
-        downsampling_factor (int, optional): Factor to downsample the roc and precision-recall curve data to reduce the amount of data that needs to be saved. Defaults to 4.
-        n_epochs_for_big_calcs (int, optional): Number of epochs after which to calculate the roc and precision-recall curve data. All other data is calculated at each validation step. Defaults to 1.
-
-    Returns:
-        None
     """
 
-    def __init__(self, downsampling_factor: int = 4, n_epochs_for_big_calcs: int = 1):
+    def __init__(self, downsampling_factor: int = 4, n_epochs_for_big_calcs: int = 1) -> None:
+        """
+        Args:
+            downsampling_factor (int, optional): Factor to downsample the roc and precision-recall curve data to reduce the amount of data that needs to be saved. Defaults to 4.
+            n_epochs_for_big_calcs (int, optional): Number of epochs after which to calculate the roc and precision-recall curve data. All other data is calculated at each validation step. Defaults to 1.
+        """
         self.iteration = 1
         self.n_epochs_big_calcs = n_epochs_for_big_calcs
         self.downsampling_factor = downsampling_factor
