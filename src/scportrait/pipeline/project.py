@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from anndata import AnnData
+    from matplotlib.pyplot import Figure
 
 from scportrait.io import read_h5sc
 from scportrait.pipeline._utils.constants import (
@@ -600,6 +601,274 @@ class Project(Logable):
         if self.interactive is not None:
             Warning("Interactive viewer is still open. Will automatically close before proceeding with processing.")
             self.close_interactive_viewer()
+
+    #### Functions to visualize results ####
+
+    def plot_input_image(
+        self,
+        max_size: int = 1000,
+        center_coordinates: tuple[int, int] | None = None,
+        channels: list[int] | list[str] | None = None,
+        return_fig: bool = False,
+    ) -> Figure | None:
+        """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
+
+        Args:
+            max_size: Maximum size of the image to be plotted in pixels.
+            center_coordinates: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
+            channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the input image of a project::
+
+                project.plot_input_image()
+        """
+
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
+            from spatialdata import to_polygons
+
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
+            ) from None
+
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        palette = [
+            "blue",
+            "green",
+            "red",
+            "yellow",
+            "purple",
+            "orange",
+            "pink",
+            "cyan",
+            "magenta",
+            "lime",
+            "teal",
+            "lavender",
+            "brown",
+            "beige",
+            "maroon",
+            "mint",
+            "olive",
+            "apricot",
+            "navy",
+            "grey",
+            "white",
+            "black",
+        ]
+        c, x, y = _sdata["input_image"].scale0.image.shape
+        channel_names = _sdata["input_image"].scale0.c.values
+
+        if channels is not None:
+            if isinstance(channels[0], str):
+                assert [
+                    x in channel_names for x in channels
+                ], "The specified channel names are not found in the spatialdata object."
+                channel_names = channels
+                palette = palette[:c]
+            if isinstance(channels[0], int):
+                assert [
+                    x in range(c) for x in channels
+                ], "The specified channel indices are not found in the spatialdata object."
+                channel_names = list(channel_names[channels])
+            c = len(channels)
+            palette = palette[:c]
+        else:
+            # do not plot more than 4 channels per default
+            if c > 4:
+                c = 4
+            palette = palette[:c]
+            channel_names = list(channel_names[:c])
+
+        # subset spatialdata object if its too large
+        width = max_size // 2
+        if x > max_size or y > max_size:
+            if center_coordinates is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = center_coordinates
+
+            _sdata = _sdata.query.bounding_box(
+                axes=["x", "y"],
+                min_coordinate=[center_x - width, center_y - width],
+                max_coordinate=[center_x + width, center_y + width],
+                target_coordinate_system="global",
+            )
+
+        fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
+        _sdata.pl.render_images("input_image", channel=channel_names, palette=palette).pl.show(
+            ax=axs[0], title="overlayed"
+        )
+        axs[0].axis("off")
+
+        for i, channel in enumerate(channel_names):
+            _sdata.pl.render_images("input_image", channel=channel, palette=palette[i]).pl.show(
+                ax=axs[i + 1], colorbar=False, title=channel
+            )
+            axs[i + 1].axis("off")
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            return None
+            plt.show()
+
+    def plot_segmentation_masks(
+        self, return_fig: bool = False, max_size: int = 1500, select_region: tuple[int, int] | None = None
+    ) -> None | Figure:
+        """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
+
+        Args:
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+            max_size: Maximum size of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the segmentation masks of a project::
+
+                project.plot_segmentation_masks()
+        """
+
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot
+            from spatialdata import to_polygons
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
+            ) from None
+
+        palette = [
+            "blue",
+            "green",
+            "red",
+            "yellow",
+            "purple",
+            "orange",
+            "pink",
+            "cyan",
+            "magenta",
+            "lime",
+            "teal",
+            "lavender",
+            "brown",
+            "beige",
+            "maroon",
+            "mint",
+            "olive",
+            "apricot",
+            "navy",
+            "grey",
+            "white",
+            "black",
+        ]
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        c, x, y = _sdata["input_image"].scale0.image.shape
+        channel_names = _sdata["input_image"].scale0.c.values
+
+        # do not plot more than 4 channels
+        if c > 4:
+            c = 4
+        palette = palette[:c]
+        channel_names = list(channel_names[:c])
+
+        # subset spatialdata object if its too large
+        width = max_size // 2
+        if x > max_size or y > max_size:
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
+
+            _sdata = _sdata.query.bounding_box(
+                axes=["x", "y"],
+                min_coordinate=[center_x - width, center_y - width],
+                max_coordinate=[center_x + width, center_y + width],
+                target_coordinate_system="global",
+            )
+
+        masks = []
+        if self.filehandler.nuc_seg_status:
+            masks.append("seg_all_nucleus")
+        if self.filehandler.cyto_seg_status:
+            masks.append("seg_all_cytosol")
+
+        if len(masks) == 0:
+            raise ValueError("No segmentation masks found in the sdata object.")
+
+        fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
+        _sdata.pl.render_images("input_image", channel=channel_names, palette=palette).pl.show(ax=axs[0], title="")
+
+        for _axs in axs:
+            _axs.axis("off")
+            _axs.set_title(None)
+
+        if self.filehandler.nuc_seg_status:
+            iloc = masks.index("seg_all_nucleus")
+            _sdata["seg_all_nucleus_vectorized"] = to_polygons(_sdata["seg_all_nucleus"])
+            _sdata.pl.render_shapes(
+                "seg_all_nucleus_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
+            ).pl.show(ax=axs[0])
+
+            # plot nucleus channel with overlaying mask
+            _sdata.pl.render_images("input_image", channel=0, palette=palette[0]).pl.show(
+                ax=axs[iloc + 1], colorbar=False
+            )
+            _sdata.pl.render_shapes(
+                "seg_all_nucleus_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
+            ).pl.show(ax=axs[iloc + 1])
+            axs[iloc + 1].set_title("Nucleus Segmentation")
+
+        if self.filehandler.cyto_seg_status:
+            iloc = masks.index("seg_all_cytosol")
+            _sdata["seg_all_cytosol_vectorized"] = to_polygons(_sdata["seg_all_cytosol"])
+            _sdata.pl.render_shapes(
+                "seg_all_cytosol_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
+            ).pl.show(ax=axs[0])
+
+            # plot cytosol channel with overlaying mask
+            _sdata.pl.render_images("input_image", channel=1, palette=palette[1]).pl.show(
+                ax=axs[iloc + 1], colorbar=False
+            )
+            _sdata.pl.render_shapes(
+                "seg_all_cytosol_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
+            ).pl.show(ax=axs[iloc + 1])
+            axs[iloc + 1].set_title("Cytosol Segmentation")
+
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            plt.show()
+            return None
 
     #### Functions to load input data ####
     def load_input_from_array(
