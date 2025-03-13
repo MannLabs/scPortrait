@@ -1,3 +1,5 @@
+## DEPRECATION ##
+
 from __future__ import annotations
 
 import _pickle as cPickle
@@ -26,7 +28,7 @@ DEFAULT_IMAGE_DTYPE = np.uint16
 DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 
-class convert_SPARCSproject_to_spatialdata(Logable):
+class _convert_SPARCSproject_to_scPortrait(Logable):
     def __init__(
         self,
         new_project_location: str,
@@ -36,7 +38,7 @@ class convert_SPARCSproject_to_spatialdata(Logable):
         debug: bool = False,
         overwrite: bool = True,
     ) -> None:
-        """Initialize the SPARCS project to SpatialData converter.
+        """Function to convert legacy SPARCSpy projects into the new scPortrait format.
 
         Args:
             new_project_location: Path where the new spatialdata project will be saved
