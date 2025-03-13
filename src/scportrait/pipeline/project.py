@@ -44,7 +44,9 @@ from scportrait.pipeline._utils.spatialdata_helper import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from anndata import AnnData
 
+from scportrait.io import read_h5sc
 from scportrait.pipeline._utils.constants import (
     DEFAULT_CENTERS_NAME,
     DEFAULT_CHUNK_SIZE_2D,
@@ -207,6 +209,17 @@ class Project(Logable):
     def sdata(self) -> SpatialData:
         """Shape of data matrix (:attr:`n_obs`, :attr:`n_vars`)."""
         return self.filehandler.get_sdata()
+
+    @property
+    def h5sc(self) -> AnnData:
+        if self.extraction_f is None:
+            raise ValueError("No extraction method has been set.")
+        else:
+            if self.extraction_f.output_path is None:
+                path = self.extraction_f.extraction_file
+            else:
+                path = self.extraction_f.output_path
+            return read_h5sc(path)
 
     ##### Setup Functions #####
 
