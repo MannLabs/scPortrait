@@ -1,1 +1,1 @@
-from scportrait.plotting import vis
+from .vis import generate_composite
