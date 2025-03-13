@@ -58,6 +58,9 @@ class HDF5CellExtraction(ProcessingStep):
         if "overwrite_run_path" not in self.__dict__.keys():
             self.overwrite_run_path = self.overwrite
 
+        self.extraction_file = os.path.join(self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE)
+        self.output_path = None
+
     def _get_compression_type(self) -> None:
         """setup compression of single-cell images in HDF5 file based on config."""
         # default value for compression is "lzf" is nothing else is specified
