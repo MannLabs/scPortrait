@@ -8,7 +8,7 @@ from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
 from scportrait.pipeline._utils.constants import DEFAULT_NAME_SINGLE_CELL_IMAGES, IMAGE_DATACONTAINER_NAME
 
 
-def read_h5adsc(filename: str | Path, mode: Literal["r", "r+"] = "r") -> AnnData:
+def read_h5sc(filename: str | Path, mode: Literal["r", "r+"] = "r") -> AnnData:
     """Read scportrait's single-cell image dataset format.
 
     Args:

@@ -1,1 +1,0 @@
-from .h5adsc import read_h5adsc
