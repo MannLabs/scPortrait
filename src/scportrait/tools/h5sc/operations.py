@@ -3,7 +3,7 @@ import numpy as np
 from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME, DEFAULT_NAME_SINGLE_CELL_IMAGES
 
 
-def get_image_with_cellid(adata, cell_id: list[int], select_channel: int | list[int] | None = None) -> np.ndarray:
+def get_image_with_cellid(adata, cell_id: list[int] | int, select_channel: int | list[int] | None = None) -> np.ndarray:
     """Get single cell images from the cells with the provided cell IDs. Images are returned in the order of the cell IDs.
 
     Args:
@@ -16,6 +16,9 @@ def get_image_with_cellid(adata, cell_id: list[int], select_channel: int | list[
     """
     lookup = dict(zip(adata.obs[DEFAULT_CELL_ID_NAME], adata.obs.index.astype(int), strict=True))
     image_container = adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
+
+    if isinstance(cell_id, int):
+        cell_id = [cell_id]
 
     for x in cell_id:
         assert x in lookup.keys(), f"CellID {x} is not present in the AnnData object."
