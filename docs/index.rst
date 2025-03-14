@@ -61,5 +61,6 @@ Documentation
 
    pages/module/pipeline
    pages/module/processing
+   pages/module/plotting
    pages/module/io
    pages/module/tools

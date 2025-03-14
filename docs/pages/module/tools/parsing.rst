@@ -1,2 +1,2 @@
-.. automodule:: scportrait.tools.parse._parse_phenix
+.. automodule:: scportrait.tools.parse
     :members:
