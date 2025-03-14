@@ -1552,8 +1552,6 @@ class Project(Logable):
         # setup overwrite if specified in call
         if overwrite is not None:
             self.featurization_f.overwrite_run_path = overwrite
-        if overwrite is None:
-            self.featurization_f.overwrite_run_path = True
 
         # update the number of masks that are available in the segmentation object
         self.featurization_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
