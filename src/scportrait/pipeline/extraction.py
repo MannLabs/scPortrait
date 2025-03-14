@@ -132,7 +132,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.normalization_range = (0.01, 0.99)
 
         if not self.normalization:
-            self.normalization_range = None
+            self.normalization_range = (None, None)
 
         ## parameters for HDF5 file creates
         if "compression" in self.config:
