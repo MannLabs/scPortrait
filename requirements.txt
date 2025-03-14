@@ -21,6 +21,7 @@ scikit-image>=0.22.0
 scikit-fmm
 scipy
 cellpose>=3.1.1
+anndata
 
 torch
 pytorch-lightning

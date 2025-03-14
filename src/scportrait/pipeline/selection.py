@@ -60,7 +60,7 @@ class LMDSelection(ProcessingStep):
         if "orientation_transform" in self.config:
             self.orientation_transform = self.config["orientation_transform"]
         else:
-            self.orientation_transform = np.array([[0, -1], [1, 0]])
+            self.orientation_transform = [[0, -1], [1, 0]]
             self.config["orientation_transform"] = (
                 self.orientation_transform
             )  # ensure its also in config so its passed on to the segmentation loader

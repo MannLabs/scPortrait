@@ -522,7 +522,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 class _H5ADSingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files."""
 
-    HDF_FILETYPES = ["h5adsc"]  # supported filetypes
+    HDF_FILETYPES = ["h5sc"]  # supported filetypes
 
     IMAGE_DATACONTAINTER_NAME = IMAGE_DATACONTAINER_NAME
     INDEX_DATACONTAINER_NAME = INDEX_DATACONTAINER_NAME

@@ -42,7 +42,7 @@ DEFAULT_SINGLE_CELL_IMAGE_DTYPE: np.dtype = np.float16
 DEFAULT_SEGMENTATION_FILE: str = "segmentation.h5"
 DEFAULT_CLASSES_FILE: str = "classes.csv"
 DEFAULT_REMOVED_CLASSES_FILE: str = "removed_classes.csv"
-DEFAULT_EXTRACTION_FILE: str = "single_cells.h5adsc"
+DEFAULT_EXTRACTION_FILE: str = "single_cells.h5sc"
 DEFAULT_BENCHMARKING_FILE: str = "benchmarking.csv"
 
 DEFAULT_SELECTION_DIR_NAME: str = "selection"
