@@ -1,3 +1,10 @@
+"""
+h5sc
+=======
+
+Functions to work with scPortrait's standardized single-cell data format.
+"""
+
 import numpy as np
 
 from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME, DEFAULT_NAME_SINGLE_CELL_IMAGES
