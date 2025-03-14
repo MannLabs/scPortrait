@@ -24,7 +24,7 @@ def _plot_image_grid(
     images: np.ndarray,
     nrows: int,
     ncols: int,
-    spacing: float = 0.05,
+    spacing: float = 0.01,
     image_titles: list[str] | None = None,
     image_titles_fontsize: int = 10,
     row_labels: list[str] | None = None,
@@ -38,11 +38,11 @@ def _plot_image_grid(
 ) -> None:
     """Helper function to plot an image grid with consistent spacing between rows and columns."""
 
-    # set title if specified
     ax.set_title(axs_title, fontsize=axs_title_fontsize, pad=axs_title_padding)
     ax.axis("off")
 
     # Calculate effective cell width and height considering spacing
+    spacing = spacing / max(nrows, ncols)
     cell_width = (1 - (ncols + 1) * spacing) / ncols
     cell_height = (1 - (nrows + 1) * spacing) / nrows
 
@@ -54,7 +54,7 @@ def _plot_image_grid(
             [
                 spacing + col * (cell_width + spacing),  # X position
                 1 - (spacing + (row + 1) * (cell_height + spacing)),  # Y position
-                cell_width,  # Width
+                cell_width,  # Widths
                 cell_height,  # Height
             ]
         )
@@ -64,17 +64,12 @@ def _plot_image_grid(
         ax_sub.xaxis.set_visible(False)
 
         if row_labels is not None and col == 0:
-            ax_sub.set_ylabel(row_labels[col], fontsize=image_titles_fontsize)
+            ax_sub.set_ylabel(row_labels[row], fontsize=image_titles_fontsize)
             ax_sub.yaxis.set_visible(True)
             ax_sub.tick_params(left=False, labelleft=False)
 
         if col_labels is not None and row == 0:
-            if image_titles is not None:
-                ax_sub.set_xlabel(col_labels[row], fontsize=image_titles_fontsize)
-                ax_sub.xaxis.set_visible(True)
-                ax_sub.tick_params(bottom=False, labelbottom=False)
-            else:
-                ax_sub.set_title(f"{col_labels[i]}", fontsize=image_titles_fontsize)
+            ax_sub.set_title(f"{col_labels[col]}", fontsize=image_titles_fontsize)
 
         if image_titles is not None:
             ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize)
@@ -93,7 +88,7 @@ def cell_grid_single_channel(
     ncols: int | None = None,
     nrows: int | None = None,
     single_cell_size: int = 2,
-    spacing: float = 0.01,
+    spacing: float = 0.025,
     axs: Axes = None,
     return_fig: bool = False,
 ) -> None | Figure:
@@ -104,13 +99,15 @@ def cell_grid_single_channel(
         select_channel: The channel to visualize.
         n_cells: The number of cells to visualize. This number of cells will randomly be selected. If `None`, `cell_ids` must be provided.
         cell_ids: cell IDs for the specific cells that should be visualized. If `None`, `n_cells` must be provided.
-        cmap: The colormap to use for the images.
+        cell_labels: Label to plot as title for each single-cell image if provided.
+        show_cell_id: Whether to show the cell ID as title for each single-cell image. Can not be used together with `cell_labels`.
         title: The title of the plot.
         show_title: Whether to show the title.
-        spacing: The spacing between cells in the grid.
+        cmap: The colormap to use for the images.
         ncols: The number of columns in the grid. If not specified will be automatically calculated to make a square grid.
         nrows: The number of rows in the grid. If not specified will be automatically calculated to make a square grid.
         single_cell_size: The size of each cell in the grid.
+        spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
         axs: The matplotlib axes object to plot on. If `None`, a new figure is created.
         return_fig: If `True`, the function returns the figure object instead of displaying it.
 
@@ -171,6 +168,7 @@ def cell_grid_single_channel(
     else:
         fig = axs.get_figure()
 
+    spacing = spacing * single_cell_size
     images = get_image_with_cellid(adata, _cell_ids, channel_id)
     _plot_image_grid(
         axs, images, nrows=nrows, ncols=ncols, axs_title=title, image_titles=cell_labels, cmap=cmap, spacing=spacing
@@ -187,15 +185,33 @@ def cell_grid_multi_channel(
     adata,
     n_cells: int = 5,
     cell_ids: int | list[int] | None = None,
-    cmap="viridis",
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
-    spacing: float = 0.01,
+    cmap="viridis",
+    spacing: float = 0.025,
     single_cell_size: int = 2,
     axs: Axes = None,
     return_fig: bool = False,
 ) -> None | Figure:
+    """Plot a grid of single-cell images where each row is a unique cell and each column contains a different channel.
+
+    Args:
+        adata: An scPortrait single-cell image dataset.
+        n_cells: The number of cells to visualize. This number of cells will randomly be selected. If `None`, `cell_ids` must be provided.
+        cell_ids: cell IDs for the specific cells that should be visualized. If `None`, `n_cells` must be provided.
+        title: The title of the plot.
+        show_cell_id: Whether to show the cell ID as row label for each cell in the image grid.
+        label_channels: Whether to show the channel names as titles for column in the image grid.
+        cmap: The colormap to use for the images.
+        spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
+        single_cell_size: The size of each cell in the grid.
+        axs: The matplotlib axes object to plot on. If `None`, a new figure is created.
+        return_fig: If `True`, the function returns the figure object instead of displaying it.
+
+    Returns:
+        If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
+    """
     # ensure that cell_ids are passed as a list
     if isinstance(cell_ids, int):
         _cell_ids = [cell_ids]
@@ -231,13 +247,14 @@ def cell_grid_multi_channel(
     images = _reshape_image_array(images)
 
     # Call the image grid function
+    spacing = spacing * single_cell_size
     _plot_image_grid(
         ax=axs,
         images=images,
         nrows=nrows,
         ncols=ncols,
         spacing=spacing,
-        row_labels=[f"cellID {_id}" for _id in _cell_ids] if show_cell_id else None,
+        row_labels=[f"cell ID {_id}" for _id in _cell_ids] if show_cell_id else None,
         col_labels=channel_names if label_channels else None,
         axs_title=title,
         cmap=cmap,
@@ -261,6 +278,9 @@ def cell_grid(
     return_fig: bool = False,
 ):
     """Visualize single-cell images of cells in an AnnData object.
+
+    Uses either `cell_grid_single_channel` or `cell_grid_multi_channel` depending on the input.
+    Use these functions if you would like more control over the visualization.
 
     Args:
         adata: An scPortrait single-cell image dataset.
