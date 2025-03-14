@@ -1,2 +1,2 @@
-.. automodule:: scportrait.tools.stitch._stitch
+.. automodule:: scportrait.tools.stitch
     :members:
