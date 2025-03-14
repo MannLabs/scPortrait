@@ -72,6 +72,7 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize2D,
     ChunkSize3D,
 )
+from scportrait.plotting.scp import cell_grid
 
 
 class Project(Logable):
@@ -869,6 +870,11 @@ class Project(Logable):
         else:
             plt.show()
             return None
+
+    def plot_single_cell_images(
+        self, n_cells: int | None = None, select_channel: int | None = None, return_fig: bool = False
+    ) -> None | Figure:
+        return cell_grid(self.h5sc, n_cells=n_cells, select_channel=select_channel, return_fig=return_fig)
 
     #### Functions to load input data ####
     def load_input_from_array(
