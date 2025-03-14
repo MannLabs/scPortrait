@@ -72,7 +72,7 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize2D,
     ChunkSize3D,
 )
-from scportrait.plotting.scp import cell_grid
+from scportrait.plotting.h5sc import cell_grid
 
 
 class Project(Logable):

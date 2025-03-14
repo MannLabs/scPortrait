@@ -15,8 +15,11 @@ def _reshape_image_array(arr: np.ndarray) -> np.ndarray:
     Reshape an array from (n, c, x, y) to (n*c, x, y) while maintaining the order:
     n1 c1, n1 c2, ..., n1 cy, n2 c1, ..., nx cy.
     """
-    n, c, x, y = arr.shape
-    return arr.reshape(n * c, x, y)
+    if len(arr.shape) == 3:
+        return arr
+    else:
+        n, c, x, y = arr.shape
+        return arr.reshape(n * c, x, y)
 
 
 def _plot_image_grid(
@@ -32,7 +35,7 @@ def _plot_image_grid(
     axs_title: str | None = None,
     axs_title_padding: float = 0,
     axs_title_fontsize: int = 12,
-    cmap="gray",
+    cmap="viridis",
     vmin: float = 0,
     vmax: float = 1,
 ) -> None:
@@ -89,8 +92,9 @@ def cell_grid_single_channel(
     nrows: int | None = None,
     single_cell_size: int = 2,
     spacing: float = 0.025,
-    axs: Axes = None,
+    ax: Axes = None,
     return_fig: bool = False,
+    show_fig: bool = True,
 ) -> None | Figure:
     """Visualize a single channel from h5sc object in a grid.
 
@@ -163,21 +167,23 @@ def cell_grid_single_channel(
         title = None
 
     # create figure object
-    if axs is None:
-        fig, axs = plt.subplots(1, 1, figsize=(fig_width, fig_height))
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(fig_width, fig_height))
     else:
-        fig = axs.get_figure()
+        fig = ax.get_figure()
 
     spacing = spacing * single_cell_size
     images = get_image_with_cellid(adata, _cell_ids, channel_id)
     _plot_image_grid(
-        axs, images, nrows=nrows, ncols=ncols, axs_title=title, image_titles=cell_labels, cmap=cmap, spacing=spacing
+        ax, images, nrows=nrows, ncols=ncols, axs_title=title, image_titles=cell_labels, cmap=cmap, spacing=spacing
     )
 
     if return_fig:
         return fig
-    else:
+    elif show_fig:
         plt.show()
+        return None
+    else:
         return None
 
 
@@ -193,6 +199,7 @@ def cell_grid_multi_channel(
     single_cell_size: int = 2,
     axs: Axes = None,
     return_fig: bool = False,
+    show_fig: bool = True,
 ) -> None | Figure:
     """Plot a grid of single-cell images where each row is a unique cell and each column contains a different channel.
 
@@ -264,8 +271,10 @@ def cell_grid_multi_channel(
 
     if return_fig:
         return fig
-    else:
+    elif show_fig:
         plt.show()
+        return None
+    else:
         return None
 
 
@@ -276,6 +285,7 @@ def cell_grid(
     cell_ids: int | list[int] | None = None,
     cmap="viridis",
     return_fig: bool = False,
+    show_fig: bool = True,
 ):
     """Visualize single-cell images of cells in an AnnData object.
 
@@ -297,11 +307,19 @@ def cell_grid(
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 5
-        return cell_grid_multi_channel(adata, n_cells=n_cells, cell_ids=cell_ids, cmap=cmap, return_fig=return_fig)
+        return cell_grid_multi_channel(
+            adata, n_cells=n_cells, cell_ids=cell_ids, cmap=cmap, return_fig=return_fig, show_fig=show_fig
+        )
     else:
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 16
         return cell_grid_single_channel(
-            adata, select_channel, n_cells=n_cells, cell_ids=cell_ids, cmap=cmap, return_fig=return_fig
+            adata,
+            select_channel,
+            n_cells=n_cells,
+            cell_ids=cell_ids,
+            cmap=cmap,
+            return_fig=return_fig,
+            show_fig=show_fig,
         )
