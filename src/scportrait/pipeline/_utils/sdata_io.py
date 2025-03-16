@@ -205,8 +205,6 @@ class sdata_filehandler(Logable):
         else:
             if scale_factors is None:
                 scale_factors = [2, 4, 8]
-            if scale_factors is None:
-                scale_factors = [2, 4, 8]
 
             if isinstance(image, xarray.DataArray):
                 # if so first validate the model since this means we are getting the image from a spatialdata object already
@@ -221,6 +219,7 @@ class sdata_filehandler(Logable):
                 image = Image2DModel.parse(
                     image,
                     scale_factors=scale_factors,
+                    c_coords=channel_names,
                     rgb=False,
                 )
 
