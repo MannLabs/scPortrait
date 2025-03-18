@@ -710,7 +710,8 @@ class HDF5CellExtraction(ProcessingStep):
         channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
         # create var object with channel names and their mapping to mask or image channels
-        vars = pd.DataFrame(index=channels)
+        vars = pd.DataFrame(index=range(channels))
+        vars["channels"] = channels
         vars["channel_mapping"] = channel_mapping
 
         # create empty obs object
