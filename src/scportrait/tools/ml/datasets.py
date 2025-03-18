@@ -16,6 +16,9 @@ def _check_type_input_list(var):
     )
 
 
+from pathlib import PosixPath
+
+
 class _HDF5SingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files."""
 
@@ -42,6 +45,9 @@ class _HDF5SingleCellDataset(Dataset):
             max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
         """
         self.dir_list = dir_list
+
+        if isinstance(self.dir_list[0], PosixPath):
+            self.dir_list = [str(x) for x in self.dir_list]
 
         # ensure select_channel is always a list
         if isinstance(select_channel, int):
@@ -522,7 +528,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 class _H5ADSingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files."""
 
-    HDF_FILETYPES = ["h5sc"]  # supported filetypes
+    HDF_FILETYPES = ["h5sc", "h5ad"]  # supported filetypes
 
     IMAGE_DATACONTAINTER_NAME = IMAGE_DATACONTAINER_NAME
     INDEX_DATACONTAINER_NAME = INDEX_DATACONTAINER_NAME
@@ -548,6 +554,9 @@ class _H5ADSingleCellDataset(Dataset):
             max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
         """
         self.dir_list = dir_list
+
+        if isinstance(self.dir_list[0], PosixPath):
+            self.dir_list = [str(x) for x in self.dir_list]
 
         # ensure select_channel is always a list
         if isinstance(select_channel, int):
