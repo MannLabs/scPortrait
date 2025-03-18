@@ -703,10 +703,15 @@ class HDF5CellExtraction(ProcessingStep):
 
     def _initialize_empty_anndata(self) -> None:
         """Initialize an AnnData object to store the extracted single-cell images."""
-        # create var object with channel names
-        mask_names = self.masks
-        channel_names = self.channel_names
-        vars = pd.DataFrame(columns=list(mask_names) + list(channel_names))
+
+        mask_names = np.array(self.masks, dtype="<U15")
+        channel_names = np.array(self.channel_names, dtype="<U15")
+        channels = np.concatenate([mask_names, channel_names])
+        channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
+
+        # create var object with channel names and their mapping to mask or image channels
+        vars = pd.DataFrame(index=channels)
+        vars["channel_mapping"] = channel_mapping
 
         # create empty obs object
         obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
@@ -723,11 +728,8 @@ class HDF5CellExtraction(ProcessingStep):
         adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
         adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
         adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
-        masks = np.array(self.masks, dtype="<U15")
-        channel_names = np.array(self.channel_names, dtype="<U15")
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = np.concatenate([masks, channel_names])
-        mapping_values = ["mask" for x in masks] + ["image_channel" for x in channel_names]
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(mapping_values, dtype="<U15")
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channels
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(channel_mapping, dtype="<U15")
         adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = self.compression_type
 
         # write to file
