@@ -89,7 +89,7 @@ class FilePatternReaderRescale(FilePatternReader):
         else:
             # first time reading an image set dtype if none is supplied
             print("Setting dtype to", img.dtype)
-            self.dtype_image = img.dtype
+            self.dtype_image = type(img.dtype)
 
         if not self.do_rescale:
             return img
