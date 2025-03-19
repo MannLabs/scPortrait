@@ -1,13 +1,6 @@
-try:
-    import matplotlib.pyplot as plt
-    import spatialdata
-    import spatialdata_plot
-    from spatialdata import to_polygons
-
-except ImportError:
-    raise ImportError(
-        "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
-    ) from None
+import matplotlib.pyplot as plt
+import spatialdata
+from spatialdata import to_polygons
 
 PALETTE = [
     "blue",
@@ -45,6 +38,13 @@ def plot_segmentation_mask(
     axs: plt.Axes | None = None,
     show_fig: bool = True,
 ) -> plt.Figure | None:
+    # check for spatialdata_plot
+    try:
+        import spatialdata_plot
+    except ImportError:
+        raise ImportError(
+            "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
+        ) from None
     # remove points object as this makes it
     points_keys = list(sdata.points.keys())
     if len(points_keys) > 0:
