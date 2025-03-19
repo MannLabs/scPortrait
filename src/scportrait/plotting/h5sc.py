@@ -1,5 +1,7 @@
 """Collection of plotting functions for scPortrait's standardized single-cell image format"""
 
+from collections.abc import Iterable
+
 import matplotlib.pyplot as plt
 import numpy as np
 from anndata import AnnData
@@ -227,10 +229,13 @@ def cell_grid_multi_channel(
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
     """
     # ensure that cell_ids are passed as a list
-    if isinstance(cell_ids, int):
-        _cell_ids = [cell_ids]
-    else:
+    if isinstance(cell_ids, Iterable):
         _cell_ids = cell_ids
+    else:
+        _cell_ids = [cell_ids]
+
+    if cell_ids is not None:
+        n_cells = None
 
     if n_cells is None:
         assert _cell_ids is not None, "Either `n_cells` or `cell_ids` must be provided."
