@@ -37,6 +37,9 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
 dev = {file = ["requirements_dev.txt"]}
+tests = {file = ["requirements_test.txt"]}
+extended = {file = ["requirements_optional.txt"]}
+docs = {file = ["requirements_docs.txt"]}
 
 [project.urls]
 Homepage = "https://github.com/MannLabs/scPortrait"

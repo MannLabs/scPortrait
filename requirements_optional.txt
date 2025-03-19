@@ -1,0 +1,2 @@
+napari-spatialdata
+transformers==4.26.0
