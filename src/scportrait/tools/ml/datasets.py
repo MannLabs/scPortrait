@@ -544,7 +544,7 @@ class _H5ADSingleCellDataset(Dataset):
     ):
         """
         Args:
-            dir_list: List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory containing hdf5 files.
+            dir_list: List of path(s) to the single-cell datasets. Supports specifying a path to a specific hd5c file or directory containing hd5c files.
             index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
             select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
             transform: An optional user-defined function to apply transformations to the data. Default is None.
@@ -620,7 +620,7 @@ class _H5ADSingleCellDataset(Dataset):
                 cell_id_handle = np.zeroes((len(index_list), 1), dtype=np.uint64)
 
                 # ensure that no out of bound elements are provided for the dataset
-                max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).attrs["n_cells"]
+                max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[0]
                 max_index = max(index_list)
 
                 assert (
@@ -632,13 +632,13 @@ class _H5ADSingleCellDataset(Dataset):
                     cell_id_handle[i] = input_hdf.get(self.INDEX_DATACONTAINER_NAME)[ix]
 
             else:
-                max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).attrs["n_cells"]
+                max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[0]
                 index_handle = np.arange(max_elements)
                 cell_id_handle = input_hdf.get(self.INDEX_DATACONTAINER_NAME)
 
             # ensure that selected channels are within range
             if self.select_channel is not None:
-                max_channels = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).attrs["n_channels"]
+                max_channels = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[1]
                 assert np.all(
                     [channel_ix < max_channels for channel_ix in self.select_channel]
                 ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
