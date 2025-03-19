@@ -139,18 +139,17 @@ class _FeaturizationBase(ProcessingStep):
         """
         if isinstance(self.extraction_file, str | PosixPath):
             with h5py.File(self.extraction_file, "r") as f:
-                self.n_channels: int = f[self.IMAGE_DATACONTAINER_NAME].attrs["n_channels"]
-                self.n_masks: int = f[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"]
-                self.n_image_channels: int = f[self.IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"]
-                self.n_cells.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_cells"])
+                metadata: h5py.Dataset = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
+                self.n_masks = metadata["n_masks"][()]
+                self.n_channels = metadata["n_channels"][()]
+                self.n_image_channels = metadata["n_image_channels"][()]
 
                 # strings are encoded as bytes in HDF5 files, decode them to strings
-                self.channel_names: list[str] = [
-                    x.decode("utf-8") for x in f[self.IMAGE_DATACONTAINER_NAME].attrs["channel_names"]
-                ]
-                self.channel_mapping: list[str] = [
-                    x.decode("utf-8") for x in f[self.IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"]
-                ]
+                self.channel_names = metadata["channel_names"].asstr()[:]
+                self.channel_mapping = metadata["channel_mapping"].asstr()[:]
+
+                # variable metadata can be saved directly to self
+                self.n_cells.append(metadata["n_cells"][()])
 
         if isinstance(self.extraction_file, list):
             # metadata that must be consistent across files
@@ -164,20 +163,17 @@ class _FeaturizationBase(ProcessingStep):
 
             for file in self.extraction_file:
                 with h5py.File(file, "r") as f:
-                    n_masks.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_masks"])
-                    n_channels.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_channels"])
-                    n_image_channels.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"])
+                    metadata = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
+                    n_masks.append(metadata["n_masks"][()])
+                    n_channels.append(metadata["n_channels"][()])
+                    n_image_channels.append(metadata["n_image_channels"][()])
 
                     # strings are encoded as bytes in HDF5 files, decode them to strings
-                    channel_names.append(
-                        [x.decode("utf-8") for x in f[self.IMAGE_DATACONTAINER_NAME].attrs["channel_names"]]
-                    )
-                    channel_mapping.append(
-                        [x.decode("utf-8") for x in f[self.IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"]]
-                    )
+                    channel_names.append(metadata["channel_names"].asstr()[:])
+                    channel_mapping.append(metadata["channel_mapping"].asstr()[:])
 
                     # variable metadata can be saved directly to self
-                    self.n_cells.append(f[self.IMAGE_DATACONTAINER_NAME].attrs["n_cells"])
+                    self.n_cells.append(metadata["n_cells"][()])
 
             # check to ensure that metadata that must be consistent between datasets is
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed HDF5 files."
