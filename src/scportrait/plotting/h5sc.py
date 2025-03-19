@@ -44,10 +44,13 @@ def _plot_image_grid(
     ax.set_title(axs_title, fontsize=axs_title_fontsize, pad=axs_title_padding)
     ax.axis("off")
 
+    # Adjust row spacing if image titles are provided
+    title_adjustment = 0.01 if image_titles is not None else 0
+
     # Calculate effective cell width and height considering spacing
     spacing = spacing / max(nrows, ncols)
     cell_width = (1 - (ncols + 1) * spacing) / ncols
-    cell_height = (1 - (nrows + 1) * spacing) / nrows
+    cell_height = (1 - (nrows + 1) * spacing - title_adjustment) / nrows  # Adjust height
 
     for i, img in enumerate(images):
         row = i // ncols
@@ -56,8 +59,8 @@ def _plot_image_grid(
         ax_sub = ax.inset_axes(
             [
                 spacing + col * (cell_width + spacing),  # X position
-                1 - (spacing + (row + 1) * (cell_height + spacing)),  # Y position
-                cell_width,  # Widths
+                1 - (spacing + (row + 1) * (cell_height + spacing + title_adjustment)),  # Y position
+                cell_width,  # Width
                 cell_height,  # Height
             ]
         )
@@ -75,7 +78,7 @@ def _plot_image_grid(
             ax_sub.set_title(f"{col_labels[col]}", fontsize=image_titles_fontsize)
 
         if image_titles is not None:
-            ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize)
+            ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize, pad=2)
 
 
 def cell_grid_single_channel(
@@ -123,6 +126,10 @@ def cell_grid_single_channel(
         _cell_ids = [cell_ids]
     else:
         _cell_ids = cell_ids
+
+    # ensure that this parameter does not need to be set
+    if _cell_ids is not None:
+        n_cells = None
 
     if isinstance(select_channel, str):
         channel_id = adata.uns["single_cell_images"]["channel_names"].tolist().index(select_channel)
