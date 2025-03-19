@@ -31,6 +31,7 @@ pytorch-lightning
 torchvision
 
 spatialdata>=0.3.0
+spatialdata-plot
 napari-spatialdata
 pyqt5
 lxml_html_clean
