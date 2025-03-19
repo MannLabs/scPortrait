@@ -176,19 +176,19 @@ class _FeaturizationBase(ProcessingStep):
                     self.n_cells.append(metadata["n_cells"][()])
 
             # check to ensure that metadata that must be consistent between datasets is
-            assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed HDF5 files."
+            assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
             assert (
                 x == n_channels[0] for x in n_channels
-            ), "number of channels are not consistent over all passed HDF5 files."
+            ), "number of channels are not consistent over all passed input files."
             assert (
                 x == n_image_channels[0] for x in n_image_channels
-            ), "number of image channels are not consistent over all passed HDF5 files."
+            ), "number of image channels are not consistent over all passed input files."
             assert (
                 x == channel_mapping[0] for x in channel_mapping
-            ), "channel mapping is not consistent over all passed HDF5 files."
+            ), "channel mapping is not consistent over all passed input files."
             assert (
                 x == channel_names[0] for x in channel_names
-            ), "channel names are not consistent over all passed HDF5 files."
+            ), "channel names are not consistent over all passed input files."
 
             # set variable names after assertions have passed to the first instance of each value
             self.n_masks = n_masks[0]
@@ -973,10 +973,10 @@ class MLClusterClassifier(_FeaturizationBase):
         return_results: bool = False,
     ) -> None | list[pd.DataFrame]:
         """
-        Perform classification on the provided HDF5 dataset.
+        Perform classification on the provided single-cell image dataset.
 
         Args:
-            dataset_paths : Directory containing the extracted HDF5 files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
+            dataset_paths : Directory containing the extracted single-cell image files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
             size : How many cells should be selected for inference. Default is 0, which means all cells are selected.
 
         Returns:
@@ -1140,10 +1140,10 @@ class EnsembleClassifier(_FeaturizationBase):
         self, dataset_paths: str, dataset_labels: int | list[int] = 0, size: int = 0, return_results: bool = False
     ) -> None | dict:
         """
-        Function called to perform classification on the provided HDF5 dataset.
+        Function called to perform classification on the provided single-cell image dataset.
 
         Args:
-            dataset_paths (str): Directory containing the extracted HDF5 files from the project. If this class is used as part of
+            dataset_paths (str): Directory containing the extracted single-cell image files from the project. If this class is used as part of
             a project processing workflow this argument will be provided automatically.
 
         Returns:
@@ -1338,10 +1338,10 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         return_results: bool = False,
     ) -> None | pd.DataFrame:
         """
-        Perform ConvNeXt inference on the provided HDF5 dataset.
+        Perform ConvNeXt inference on the provided single-cell  dataset.
 
         Args
-            dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_paths : Paths to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
             dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
@@ -1579,10 +1579,10 @@ class CellFeaturizer(_cellFeaturizerBase):
         return_results: bool = False,
     ) -> None | pd.DataFrame:
         """
-        Perform featurization on the provided HDF5 dataset.
+        Perform featurization on the provided dataset dataset.
 
         Args:
-            dataset_paths : Paths to the single-cell HDF5 files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_paths : Paths to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
             dataset_labels: labels for the provided single-cell image datasets
             size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
             return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
