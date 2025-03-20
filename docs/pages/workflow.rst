@@ -141,7 +141,7 @@ You can also find an example selection workflow outlined in this `notebook <http
 
 .. toctree::
    :maxdepth: 2
-   :caption: Topic Deep Dives:
+   :caption: Topic Deep Dives
 
    workflow/package_design
    workflow/project

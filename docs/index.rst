@@ -16,7 +16,7 @@ Check out the installation instructions :ref:`here<installation>`. You can valid
 Getting Started
 ===============
 
-You can check out our :ref:`worfklow overview<workflow>` to get started with scPortrait. For more detailed information on the package, checkout the more detailed guides :ref:`here<detailed_guide>`. In the github repository you can also find some `tutorial notebooks <https://github.com/MannLabs/scPortrait/tree/main/docs_source/pages/notebooks>`_ as well as `small example datasets <https://github.com/MannLabs/SPARCSspatial/tree/main/example_data>`_ to get started with. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
+You can check out our :ref:`worfklow overview<workflow>` or our `in-depth tutorial<http://127.0.0.1:5500/docs/_build/html/pages/notebooks/_notebook_workflow_walkthrough.html>`_ to get started with scPortrait. For more detailed information on the package, checkout the more detailed guides :ref:`here<detailed_guide>`. You can find a collection of example projects which run on datasets provided within scPortrait to help you get started with `here <https://github.com/MannLabs/scPortrait-notebooks/tree/main/example_projects>`_. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
 
 Citing our Work
 ================
