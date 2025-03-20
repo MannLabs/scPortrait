@@ -6,9 +6,9 @@ import copy as copy
 import sys
 
 import numpy as np
-
-# Import your utils module here
 import sklearn.linear_model
+from alphabase.io.tempmmap import mmap_array_from_path
+from tqdm.auto import tqdm
 
 # import graph algorithms
 try:
@@ -22,10 +22,15 @@ try:
 except ImportError:
     flavor = "networkx"
 
-from alphabase.io.tempmmap import mmap_array_from_path
-from ashlar import utils as utils
-from ashlar.reg import EdgeAligner, Mosaic, warn_data
-from tqdm.auto import tqdm
+# check for ashlar installation
+try:
+    from ashlar import utils as utils
+    from ashlar.reg import EdgeAligner, Mosaic, warn_data
+except ImportError:
+    raise ImportError(
+        "Ashlar not found, but required for stitching capabilities. Please install with 'pip install ashlar'"
+    ) from None
+
 
 from scportrait.tools.stitch._utils.graphs import get_center_nodes, nx2gt
 from scportrait.tools.stitch._utils.parallelilzation import execute_indexed_parallel, execute_parallel

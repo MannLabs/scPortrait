@@ -21,7 +21,6 @@ from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spa
 class Stitcher:
     """
     Class for stitching of image tiles to assemble a mosaic.
-
     """
 
     def __init__(
