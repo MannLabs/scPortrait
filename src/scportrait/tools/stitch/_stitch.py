@@ -15,7 +15,6 @@ from tqdm.auto import tqdm
 from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.processing.images._image_processing import rescale_image
 from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, plot_edge_scatter
-from scportrait.tools.stitch._utils.filewriters import write_ome_zarr, write_spatialdata, write_tif, write_xml
 
 
 class Stitcher:
@@ -112,9 +111,17 @@ class Stitcher:
 
     def _lazy_imports(self):
         """Import necessary packages for stitching."""
-        from ashlar import thumbnail
-        from ashlar.reg import EdgeAligner, Mosaic
-        from ashlar.scripts.ashlar import process_axis_flip
+        try:
+            import networkx
+            import seaborn
+            import yattag
+            from ashlar import thumbnail
+            from ashlar.reg import EdgeAligner, Mosaic
+            from ashlar.scripts.ashlar import process_axis_flip
+        except ImportError:
+            raise ImportError(
+                "To use the stitching module, please install the optional stitching dependencies with 'pip install scportrait[stitching]'."
+            ) from None
 
         from scportrait.tools.stitch._utils.filereaders import (
             BioformatsReaderRescale,
@@ -419,6 +426,9 @@ class Stitcher:
         Returns:
             The assembled mosaic are written to file as TIFF files in the specified output directory.
         """
+
+        from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
+
         filenames = []
         for i, channel in enumerate(self.channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
@@ -441,6 +451,8 @@ class Stitcher:
             n_downscaling_layers: Number of downscaling layers to generate (default is 4).
             chunk_size: Chunk size for the generated OME-Zarr file (default is (1, 1024, 1024)).
         """
+        from scportrait.tools.stitch._utils.filewriters import write_ome_zarr
+
         filepath = os.path.join(self.outdir, f"{self.slidename}.ome.zarr")
 
         write_ome_zarr(
@@ -456,6 +468,9 @@ class Stitcher:
 
     def write_thumbnail(self):
         """Write the generated thumbnail as a TIFF file."""
+
+        from scportrait.tools.stitch._utils.filewriters import write_tif
+
         # calculate thumbnail if this has not already been done
         if "thumbnail" not in self.__dict__:
             self.generate_thumbnail()
@@ -474,6 +489,8 @@ class Stitcher:
                 Defaults to [2, 4, 8]. The scale factors are used to generate downsampled versions of the
                 image for faster visualization at lower resolutions.
         """
+        from scportrait.tools.stitch._utils.filewriters import write_spatialdata
+
         if scale_factors is None:
             scale_factors = [2, 4, 8]
         filepath = os.path.join(self.outdir, f"{self.slidename}.spatialdata")
@@ -638,6 +655,7 @@ class ParallelStitcher(Stitcher):
                 This XML file is compatible with loading the generarted TIFF files into BIAS.
 
         """
+        from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
 
         filenames = []
         args = []

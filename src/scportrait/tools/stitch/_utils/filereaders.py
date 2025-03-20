@@ -2,17 +2,12 @@ import os
 
 import numpy as np
 import skimage.exposure
+from ashlar.filepattern import FilePatternReader
+from ashlar.reg import BioformatsMetadata, BioformatsReader
 from skimage.filters import gaussian
 from skimage.util import invert
 
 from scportrait.processing.images._image_processing import rescale_image
-
-try:
-    from ashlar import filepattern
-    from ashlar.filepattern import FilePatternReader
-    from ashlar.reg import BioformatsMetadata, BioformatsReader
-except ImportError:
-    print("Ashlar not found, but required for stitching capabilities. Please install with 'pip install ashlar'")
 
 
 class FilePatternReaderRescale(FilePatternReader):

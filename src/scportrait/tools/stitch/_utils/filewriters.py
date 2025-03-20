@@ -10,11 +10,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations.transformations import Identity
 from tifffile import imwrite
-
-try:
-    from yattag import Doc, indent
-except ImportError:
-    raise ImportError("yattag is required for writing XML files. Please install with 'pip install yattag'") from None
+from yattag import Doc, indent
 
 
 def write_tif(image_path: str, image: np.array, dtype="uint16"):
