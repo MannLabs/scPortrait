@@ -111,6 +111,25 @@ class Stitcher:
 
     def _lazy_imports(self):
         """Import necessary packages for stitching."""
+        # check for working java installation
+        try:
+            from jnius import JavaException, autoclass
+
+        except ImportError:
+            raise ImportError(
+                "Java is not installed or not configured correctly. Please make sure to install Java e.g. from conda by running 'conda install -c conda-forge openjdk' before trying to stitch data."
+            ) from None
+        try:
+            # Try to access the Java System class
+            System = autoclass("java.lang.System")
+
+            # Get Java version
+            System.getProperty("java.version")
+        except JavaException:
+            raise ImportError(
+                "Java is not installed or not configured correctly. Please make sure to install Java e.g. from conda by running 'conda install -c conda-forge openjdk' before trying to stitch data."
+            ) from None
+
         try:
             import networkx
             import seaborn
