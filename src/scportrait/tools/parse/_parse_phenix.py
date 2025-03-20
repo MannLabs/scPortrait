@@ -9,13 +9,11 @@ import os
 import platform
 import re
 import shutil
-import subprocess
 import sys
-import tempfile
 import warnings
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from pathlib import Path, PosixPath
+from pathlib import PosixPath
 
 import numpy as np
 import pandas as pd
