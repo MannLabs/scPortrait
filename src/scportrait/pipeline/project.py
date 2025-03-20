@@ -731,13 +731,13 @@ class Project(Logable):
             plt.show()
 
     def plot_segmentation_masks(
-        self, return_fig: bool = False, max_size: int = 1500, select_region: tuple[int, int] | None = None
+        self, return_fig: bool = False, max_width: int = 1500, select_region: tuple[int, int] | None = None
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
 
         Args:
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
-            max_size: Maximum size of the image to be plotted in pixels.
+            max_width: Maximum width of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
 
         Returns:
@@ -748,73 +748,28 @@ class Project(Logable):
 
                 project.plot_segmentation_masks()
         """
+        # import relevant functions for this method
+        import matplotlib.pyplot as plt
 
-        try:
-            import matplotlib.pyplot as plt
-            import spatialdata_plot
-            from spatialdata import to_polygons
-        except ImportError:
-            raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
-            ) from None
+        from scportrait.plotting.sdata import _bounding_box_sdata, plot_segmentation_mask
 
-        palette = [
-            "blue",
-            "green",
-            "red",
-            "yellow",
-            "purple",
-            "orange",
-            "pink",
-            "cyan",
-            "magenta",
-            "lime",
-            "teal",
-            "lavender",
-            "brown",
-            "beige",
-            "maroon",
-            "mint",
-            "olive",
-            "apricot",
-            "navy",
-            "grey",
-            "white",
-            "black",
-        ]
         _sdata = self.sdata
 
-        # remove points object as this makes it
-        points_keys = list(_sdata.points.keys())
-        if len(points_keys) > 0:
-            for x in points_keys:
-                del _sdata.points[x]
+        # get relevant information from spatialdata object
+        _, x, y = _sdata["input_image"].scale0.image.shape
 
-        c, x, y = _sdata["input_image"].scale0.image.shape
-        channel_names = _sdata["input_image"].scale0.c.values
-
-        # do not plot more than 4 channels
-        if c > 4:
-            c = 4
-        palette = palette[:c]
-        channel_names = list(channel_names[:c])
+        # get center coordinates
+        if select_region is None:
+            center_x = x // 2
+            center_y = y // 2
+        else:
+            center_x, center_y = select_region
 
         # subset spatialdata object if its too large
-        width = max_size // 2
-        if x > max_size or y > max_size:
-            if select_region is None:
-                center_x = x // 2
-                center_y = y // 2
-            else:
-                center_x, center_y = select_region
+        if x > max_width or y > max_width:
+            _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
-            _sdata = _sdata.query.bounding_box(
-                axes=["x", "y"],
-                min_coordinate=[center_x - width, center_y - width],
-                max_coordinate=[center_x + width, center_y + width],
-                target_coordinate_system="global",
-            )
-
+        # get relevant segmentation masks
         masks = []
         if self.filehandler.nuc_seg_status:
             masks.append("seg_all_nucleus")
@@ -824,44 +779,32 @@ class Project(Logable):
         if len(masks) == 0:
             raise ValueError("No segmentation masks found in the sdata object.")
 
+        # create plot
         fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
-        _sdata.pl.render_images("input_image", channel=channel_names, palette=palette).pl.show(ax=axs[0], title="")
-
-        for _axs in axs:
-            _axs.axis("off")
-            _axs.set_title(None)
+        plot_segmentation_mask(_sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", show_fig=False)
 
         if self.filehandler.nuc_seg_status:
-            iloc = masks.index("seg_all_nucleus")
-            _sdata["seg_all_nucleus_vectorized"] = to_polygons(_sdata["seg_all_nucleus"])
-            _sdata.pl.render_shapes(
-                "seg_all_nucleus_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
-            ).pl.show(ax=axs[0])
-
-            # plot nucleus channel with overlaying mask
-            _sdata.pl.render_images("input_image", channel=0, palette=palette[0]).pl.show(
-                ax=axs[iloc + 1], colorbar=False
+            idx = masks.index("seg_all_nucleus")
+            plot_segmentation_mask(
+                _sdata,
+                ["seg_all_nucleus"],
+                max_width=max_width,
+                selected_channels=0,
+                axs=axs[idx + 1],
+                title="Nucleus Segmentation",
+                show_fig=False,
             )
-            _sdata.pl.render_shapes(
-                "seg_all_nucleus_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
-            ).pl.show(ax=axs[iloc + 1])
-            axs[iloc + 1].set_title("Nucleus Segmentation")
-
         if self.filehandler.cyto_seg_status:
-            iloc = masks.index("seg_all_cytosol")
-            _sdata["seg_all_cytosol_vectorized"] = to_polygons(_sdata["seg_all_cytosol"])
-            _sdata.pl.render_shapes(
-                "seg_all_cytosol_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
-            ).pl.show(ax=axs[0])
-
-            # plot cytosol channel with overlaying mask
-            _sdata.pl.render_images("input_image", channel=1, palette=palette[1]).pl.show(
-                ax=axs[iloc + 1], colorbar=False
+            idx = masks.index("seg_all_cytosol")
+            plot_segmentation_mask(
+                _sdata,
+                ["seg_all_cytosol"],
+                max_width=max_width,
+                selected_channels=1,
+                axs=axs[idx + 1],
+                title="Cytosol Segmentation",
+                show_fig=False,
             )
-            _sdata.pl.render_shapes(
-                "seg_all_cytosol_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
-            ).pl.show(ax=axs[iloc + 1])
-            axs[iloc + 1].set_title("Cytosol Segmentation")
 
         fig.tight_layout()
 
