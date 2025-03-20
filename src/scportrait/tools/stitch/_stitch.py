@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import numpy as np
 from alphabase.io.tempmmap import (
@@ -111,6 +111,18 @@ class Stitcher:
 
     def _lazy_imports(self):
         """Import necessary packages for stitching."""
+        try:
+            import networkx
+            import seaborn
+            import yattag
+            from ashlar import thumbnail
+            from ashlar.reg import EdgeAligner, Mosaic
+            from ashlar.scripts.ashlar import process_axis_flip
+        except ImportError:
+            raise ImportError(
+                "To use the stitching module, please install the optional stitching dependencies with 'pip install scportrait[stitching]'."
+            ) from None
+
         # check for working java installation
         try:
             from jnius import JavaException, autoclass
@@ -129,19 +141,6 @@ class Stitcher:
             raise ImportError(
                 "Java is not installed or not configured correctly. Please make sure to install Java e.g. from conda by running 'conda install -c conda-forge openjdk' before trying to stitch data."
             ) from None
-
-        try:
-            import networkx
-            import seaborn
-            import yattag
-            from ashlar import thumbnail
-            from ashlar.reg import EdgeAligner, Mosaic
-            from ashlar.scripts.ashlar import process_axis_flip
-        except ImportError:
-            raise ImportError(
-                "To use the stitching module, please install the optional stitching dependencies with 'pip install scportrait[stitching]'."
-            ) from None
-
         from scportrait.tools.stitch._utils.filereaders import (
             BioformatsReaderRescale,
             FilePatternReaderRescale,
