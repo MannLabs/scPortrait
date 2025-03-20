@@ -14,6 +14,7 @@ ome-zarr
 
 scipy
 scikit-image>=0.22.0
+scikit-learn
 mahotas
 
 scikit-fmm #WGA segmentation
