@@ -6,9 +6,9 @@ import copy as copy
 import sys
 
 import numpy as np
-
-# Import your utils module here
 import sklearn.linear_model
+from alphabase.io.tempmmap import mmap_array_from_path
+from tqdm.auto import tqdm
 
 # import graph algorithms
 try:
@@ -22,12 +22,8 @@ try:
 except ImportError:
     flavor = "networkx"
 
-import networkx as nx
-from alphabase.io.tempmmap import mmap_array_from_path
 from ashlar import utils as utils
 from ashlar.reg import EdgeAligner, Mosaic, warn_data
-from networkx import Graph as nxGraph
-from tqdm.auto import tqdm
 
 from scportrait.tools.stitch._utils.graphs import get_center_nodes, nx2gt
 from scportrait.tools.stitch._utils.parallelilzation import execute_indexed_parallel, execute_parallel
@@ -188,6 +184,8 @@ class ParallelEdgeAligner(EdgeAligner):
         self.cached_errors = self._cache.copy()  # save as a backup
 
     def _build_spanning_tree_gt(self):
+        from networkx import Graph as nxGraph
+
         g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from(
@@ -221,10 +219,13 @@ class ParallelEdgeAligner(EdgeAligner):
         self.centers_spanning_tree = centers
 
     def _build_spanning_tree_nxg(self):
-        g = nx.Graph()
+        import networkx as nx
+        from networkx import Graph as nxGraph
+
+        g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from((t1, t2, error) for (t1, t2), (_, error) in self._cache.items() if np.isfinite(error))
-        spanning_tree = nx.Graph()
+        spanning_tree = nxGraph()
         spanning_tree.add_nodes_from(g)
 
         centers = []
@@ -284,6 +285,8 @@ class ParallelEdgeAligner(EdgeAligner):
             raise NotImplementedError("No images")
 
     def _calculate_positions_nxg(self):
+        import networkx as nx
+
         shifts = {}
         for c in nx.connected_components(self.spanning_tree):
             cc = self.spanning_tree.subgraph(c)
