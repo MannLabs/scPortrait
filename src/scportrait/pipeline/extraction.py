@@ -710,12 +710,13 @@ class HDF5CellExtraction(ProcessingStep):
         channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
         # create var object with channel names and their mapping to mask or image channels
-        vars = pd.DataFrame(index=np.arange(len(channels)))
+        vars = pd.DataFrame(index=np.arange(len(channels)).astype("str"))
         vars["channels"] = channels
         vars["channel_mapping"] = channel_mapping
 
         # create empty obs object
         obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
+        obs.index = obs.index.values.astype("str")
 
         # create anndata object
         adata = AnnData(obs=obs, var=vars)
