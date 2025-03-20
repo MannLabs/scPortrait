@@ -22,11 +22,9 @@ try:
 except ImportError:
     flavor = "networkx"
 
-import networkx as nx
 from alphabase.io.tempmmap import mmap_array_from_path
 from ashlar import utils as utils
 from ashlar.reg import EdgeAligner, Mosaic, warn_data
-from networkx import Graph as nxGraph
 from tqdm.auto import tqdm
 
 from scportrait.tools.stitch._utils.graphs import get_center_nodes, nx2gt
@@ -188,6 +186,13 @@ class ParallelEdgeAligner(EdgeAligner):
         self.cached_errors = self._cache.copy()  # save as a backup
 
     def _build_spanning_tree_gt(self):
+        try:
+            from networkx import Graph as nxGraph
+        except ImportError:
+            raise ImportError(
+                "networkx is required to use stitching capabilities. Please install with 'pip install networkx'"
+            ) from None
+
         g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from(
@@ -221,10 +226,18 @@ class ParallelEdgeAligner(EdgeAligner):
         self.centers_spanning_tree = centers
 
     def _build_spanning_tree_nxg(self):
-        g = nx.Graph()
+        try:
+            import networkx as nx
+            from networkx import Graph as nxGraph
+        except ImportError:
+            raise ImportError(
+                "networkx is required to use stitching capabilities. Please install with 'pip install networkx'"
+            ) from None
+
+        g = nxGraph()
         g.add_nodes_from(self.neighbors_graph)
         g.add_weighted_edges_from((t1, t2, error) for (t1, t2), (_, error) in self._cache.items() if np.isfinite(error))
-        spanning_tree = nx.Graph()
+        spanning_tree = nxGraph()
         spanning_tree.add_nodes_from(g)
 
         centers = []
@@ -284,6 +297,13 @@ class ParallelEdgeAligner(EdgeAligner):
             raise NotImplementedError("No images")
 
     def _calculate_positions_nxg(self):
+        try:
+            import networkx as nx
+        except ImportError:
+            raise ImportError(
+                "networkx is required to use stitching capabilities. Please install with 'pip install networkx'"
+            ) from None
+
         shifts = {}
         for c in nx.connected_components(self.spanning_tree):
             cc = self.spanning_tree.subgraph(c)
