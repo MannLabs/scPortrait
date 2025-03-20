@@ -2,10 +2,12 @@ tqdm
 numba
 h5py
 alphabase
-matplotlib
 anndata
 spatialdata>=0.3.0
 py-lmd>=1.3.1
+
+spatialdata-plot
+matplotlib
 
 tifffile
 zarr
