@@ -31,8 +31,14 @@ We recommended installing the library within a separate conda environment runnin
 
       conda install -c conda-forge graph-tool==2.68
 
+   The stitching capabilities require optional dependencies which you can install along with scPortrait by running:
+
+   .. code::
+
+      pip install "scportrait[stitching]""
+
 To install the latest release of scPortrait:
 
 .. code::
 
-   pip install git+https://github.com/MannLabs/scPortrait
+   pip install scportrait

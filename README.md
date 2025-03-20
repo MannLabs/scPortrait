@@ -19,7 +19,7 @@ Check out the docs for [complete installation instructions](https://mannlabs.git
 To get started you can install scPortrait via pip:
 
 ```
-pip install git+https://github.com/MannLabs/scPortrait
+pip install scportrait
 ```
 
 ### Limitations
