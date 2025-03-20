@@ -28,8 +28,6 @@ pytorch-lightning
 torchvision
 
 spatialdata>=0.3.0
-napari-spatialdata
-pyqt5
 lxml_html_clean
 ashlar>=1.19.0
 networkx

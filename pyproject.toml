@@ -33,13 +33,13 @@ classifiers = [
 ]
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+dependencies = {file = ["requirements/requirements.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
-dev = {file = ["requirements_dev.txt"]}
-tests = {file = ["requirements_test.txt"]}
-extended = {file = ["requirements_optional.txt"]}
-docs = {file = ["requirements_docs.txt"]}
+dev = {file = ["requirements/requirements_dev.txt"]}
+tests = {file = ["requirements/requirements_test.txt"]}
+extended = {file = ["requirements/requirements_optional.txt"]}
+docs = {file = ["requirements/requirements_docs.txt"]}
 
 [project.urls]
 Homepage = "https://github.com/MannLabs/scPortrait"
