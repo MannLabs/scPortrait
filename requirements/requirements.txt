@@ -1,34 +1,24 @@
 tqdm
 numba
-seaborn
 h5py
-yattag
 alphabase
+matplotlib
+anndata
+spatialdata>=0.3.0
+xarray>=2024.10.0 #requirement of spatialdata
+py-lmd>=1.3.1
 
+tifffile
 zarr
 ome-zarr
-tifffile
-aicspylibczi
 
-mahotas
-shapely
-rasterio
-imagesize
-imagecodecs
-xarray>=2024.10.0
-opencv-python
-scikit-image>=0.22.0
-scikit-fmm
 scipy
-cellpose>=3.1.1
-anndata
+scikit-image>=0.22.0
+mahotas
+
+scikit-fmm #WGA segmentation
+cellpose>=3.1.1 #cellpose segmentation
 
 torch
 pytorch-lightning
 torchvision
-
-spatialdata>=0.3.0
-lxml_html_clean
-ashlar>=1.19.0
-networkx
-py-lmd>=1.3.1

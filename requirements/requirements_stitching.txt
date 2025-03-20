@@ -1,2 +1,4 @@
 ashlar>=1.19.0
 networkx
+seaborn
+yattag
