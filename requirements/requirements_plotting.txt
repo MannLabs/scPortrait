@@ -1,0 +1,3 @@
+napari-spatialdata
+pyqt5
+spatialdata-plot
