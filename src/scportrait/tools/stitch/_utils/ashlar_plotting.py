@@ -1,7 +1,6 @@
 import os
 
 import matplotlib.pyplot as plt
-import networkx as nx  # required for plotting results
 import numpy as np
 
 from scportrait.tools.stitch._utils.graphs import gt2nx
@@ -21,6 +20,8 @@ def draw_mosaic_image(ax, aligner, img, **kwargs):
 
 
 def plot_edge_quality(aligner, outdir, img=None, show_tree=True, pos="metadata", im_kwargs=None, nx_kwargs=None):
+    import networkx as nx
+
     if pos == "metadata":
         centers = aligner.metadata.centers - aligner.metadata.origin
     elif pos == "aligner":

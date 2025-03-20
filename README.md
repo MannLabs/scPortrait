@@ -1,4 +1,4 @@
-[![Python package](https://img.shields.io/badge/version-v1.3.1-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
+[![Python package](https://img.shields.io/badge/version-v1.3.3-dev0-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml) [![Python package](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MannLabs/scPortrait/actions/workflows/python-package.yml)
 [![website](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 
 ![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)

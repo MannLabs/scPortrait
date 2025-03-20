@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import skimage.exposure
-from ashlar import filepattern
 from ashlar.filepattern import FilePatternReader
 from ashlar.reg import BioformatsMetadata, BioformatsReader
 from skimage.filters import gaussian

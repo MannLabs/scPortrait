@@ -24,7 +24,6 @@ import numpy as np
 import psutil
 import xarray
 from alphabase.io import tempmmap
-from napari_spatialdata import Interactive
 from ome_zarr.io import parse_url
 from ome_zarr.reader import Reader
 from spatialdata import SpatialData
@@ -570,6 +569,12 @@ class Project(Logable):
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari
+        try:
+            from napari_spatialdata import Interactive
+        except ImportError:
+            raise ImportError(
+                "napari-spatialdata must be installed to use the interactive viewer. Please install with `pip install scportrait[plotting]`."
+            ) from None
         self.interactive_sdata = self.filehandler.get_sdata()
         self.interactive = Interactive(self.interactive_sdata)
         self.interactive.run()
@@ -636,7 +641,7 @@ class Project(Logable):
 
         except ImportError:
             raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install spatialdata-plot`."
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
             ) from None
 
         _sdata = self.sdata
