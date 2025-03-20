@@ -41,7 +41,28 @@ def _plot_image_grid(
     vmin: float = 0,
     vmax: float = 1,
 ) -> None:
-    """Helper function to plot an image grid with consistent spacing between rows and columns."""
+    """Helper function to plot an image grid with consistent spacing between rows and columns.
+
+    Args:
+        ax: The matplotlib axes object to plot on.
+        images: The images to plot.
+        nrows: The number of rows in the grid.
+        ncols: The number of columns in the grid.
+        spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
+        image_titles: The titles for each image in the grid.
+        image_titles_fontsize: The fontsize of the image titles.
+        row_labels: The labels for each row in the grid.
+        col_labels: The labels for each column in the grid.
+        axs_title: The title of the axes.
+        axs_title_padding: The padding of the axes title.
+        axs_title_fontsize: The fontsize of the axes title.
+        cmap: The colormap to use for the images.
+        vmin: The minimum value for the colormap.
+        vmax: The maximum value for the colormap.
+
+    Returns:
+        None
+    """
 
     ax.set_title(axs_title, fontsize=axs_title_fontsize, pad=axs_title_padding)
     ax.axis("off")
