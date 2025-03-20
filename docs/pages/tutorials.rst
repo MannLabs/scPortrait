@@ -9,7 +9,7 @@ This notebook demonstrates the basic functionality of scPortrait. It shows you h
 .. toctree::
    :maxdepth: 2
 
-   notebooks/example_scPortrait_project.ipynb
+   notebooks/_notebook_workflow_walkthrough.nblink
 
 
 Segmentation Workflows
@@ -20,7 +20,7 @@ This notebook walks you through the currently implemented segmentation workflows
 .. toctree::
    :maxdepth: 2
 
-   notebooks/example_notebook_segmentation_workflows.ipynb
+   notebooks/_notebook_segmentation_workflows.nblink
 
 Parsing Workflow
 ----------------
