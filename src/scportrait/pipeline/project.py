@@ -19,13 +19,13 @@ import warnings
 from time import time
 from typing import TYPE_CHECKING, Literal
 
+import dask.array as da
 import dask.array as darray
 import numpy as np
 import psutil
 import xarray
+import zarr
 from alphabase.io import tempmmap
-from ome_zarr.io import parse_url
-from ome_zarr.reader import Reader
 from spatialdata import SpatialData
 from tifffile import imread
 
@@ -1099,12 +1099,11 @@ class Project(Logable):
 
         # read the image data
         self.log(f"trying to read file from {ome_zarr_path}")
-        loc = parse_url(ome_zarr_path, mode="r")
-        zarr_reader = Reader(loc).zarr
-        image = zarr_reader.load("0")
+        image = da.from_zarr(str(ome_zarr_path), component=0)
 
         # Access the metadata to get channel names
-        metadata = loc.root_attrs
+        zarr_store = zarr.open(ome_zarr_path, mode="r")  # Adjust the path
+        metadata = zarr_store.attrs.asdict()
 
         if "omero" in metadata and "channels" in metadata["omero"]:
             channels = metadata["omero"]["channels"]
