@@ -614,15 +614,16 @@ class Project(Logable):
     def plot_input_image(
         self,
         max_size: int = 1000,
-        center_coordinates: tuple[int, int] | None = None,
+        select_region: tuple[int, int] | None = None,
         channels: list[int] | list[str] | None = None,
         return_fig: bool = False,
+        image_name="input_image",
     ) -> Figure | None:
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
         Args:
             max_size: Maximum size of the image to be plotted in pixels.
-            center_coordinates: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
+            select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
@@ -677,7 +678,7 @@ class Project(Logable):
             "white",
             "black",
         ]
-        c, x, y = _sdata["input_image"].scale0.image.shape
+        c, x, y = _sdata[image_name].scale0.image.shape
         channel_names = _sdata["input_image"].scale0.c.values
 
         if channels is not None:
@@ -704,11 +705,11 @@ class Project(Logable):
         # subset spatialdata object if its too large
         width = max_size // 2
         if x > max_size or y > max_size:
-            if center_coordinates is None:
+            if select_region is None:
                 center_x = x // 2
                 center_y = y // 2
             else:
-                center_x, center_y = center_coordinates
+                center_x, center_y = select_region
 
             _sdata = _sdata.query.bounding_box(
                 axes=["x", "y"],
@@ -718,16 +719,90 @@ class Project(Logable):
             )
 
         fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
-        _sdata.pl.render_images("input_image", channel=channel_names, palette=palette).pl.show(
+        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(
             ax=axs[0], title="overlayed"
         )
         axs[0].axis("off")
 
         for i, channel in enumerate(channel_names):
-            _sdata.pl.render_images("input_image", channel=channel, palette=palette[i]).pl.show(
+            _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
                 ax=axs[i + 1], colorbar=False, title=channel
             )
             axs[i + 1].axis("off")
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            return None
+            plt.show()
+
+    def plot_he_image(
+        self,
+        image_name: str = "he_image",
+        max_width: int | None = None,
+        select_region: tuple[int, int] | None = None,
+        return_fig: bool = False,
+    ) -> None | Figure:
+        """Plot the hematoxylin and eosin (HE) channel of the input image.
+
+        Args:
+            image_name: Name of the element containing the H&E image in the spatialdata object.
+            max_width: Maximum width of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the HE channel of a project::
+
+                project.plot_he()
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
+            from spatialdata import to_polygons
+
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
+            ) from None
+
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        channel_names = list(_sdata[image_name].scale0.c.values)
+        assert channel_names == ["r", "g", "b"], "The image is not an RGB image."
+
+        # subset spatialdata object if its too large
+        if max_width is not None:
+            c, x, y = _sdata[image_name].scale0.image.shape
+            width = max_width // 2
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
+
+            if x > max_width or y > max_width:
+                _sdata = _sdata.query.bounding_box(
+                    axes=["x", "y"],
+                    min_coordinate=[center_x - width, center_y - width],
+                    max_coordinate=[center_x + width, center_y + width],
+                    target_coordinate_system="global",
+                )
+
+        fig, axs = plt.subplots(1, 1, figsize=(8, 8))
+        _sdata.pl.render_images(image_name).pl.show(ax=axs, title="H&E Image")
+        axs.axis("off")
         fig.tight_layout()
 
         if return_fig:
