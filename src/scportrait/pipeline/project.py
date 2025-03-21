@@ -1186,6 +1186,35 @@ class Project(Logable):
             if remove_duplicates:
                 all_elements.remove(cytosol_segmentation_name)
 
+        # set cell_id_identifier
+        if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+            cell_id_identifier = cytosol_segmentation_name
+            new_name = self.cyto_seg_name
+        elif nucleus_segmentation_name is not None:
+            cell_id_identifier = nucleus_segmentation_name
+            new_name = self.nuc_seg_name
+        elif cytosol_segmentation_name is not None:
+            cell_id_identifier = cytosol_segmentation_name
+            new_name = self.cyto_seg_name
+
+        # ensure that any annotating table objects are updated with the correct labels
+        table_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory() if x.split("/")[1] == "table"]
+
+        for table_elem in table_elements:
+            table = sdata_input[table_elem]
+            rename_columns = {}
+            if "cell_id" in table.obs:
+                rename_columns["cell_id"] = "cell_id_orig"
+                self.log(f"Renaming column `cell_id` to `cell_id_orig` in table {table_elem}")
+            if cell_id_identifier is not None:
+                rename_columns[cell_id_identifier] = "cell_id"
+                self.log(f"Renaming column `{cell_id_identifier}` to `cell_id` in table {table_elem}")
+            table.obs.rename(columns=rename_columns, inplace=True)
+            table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
+            table.uns["spatialdata_attrs"]["region"] = new_name
+            table.obs["region"] = new_name
+            table.obs["region"] = table.obs["region"].astype("category")
+
         if keep_all:
             shutil.rmtree(self.sdata_path, ignore_errors=True)
             for elem in all_elements:
@@ -1213,6 +1242,7 @@ class Project(Logable):
 
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
+        # ensure that if both an nucleus and cytosol segmentation mask are loaded that they match
         if self.nuc_seg_status and self.cyto_seg_status:
             ids_nuc = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.nuc_seg_name}"].index.values)
             ids_cyto = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.cyto_seg_name}"].index.values)
