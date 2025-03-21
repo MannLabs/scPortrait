@@ -1208,6 +1208,57 @@ class Project(Logable):
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
+    def load_input_from_dask(self, dask_array, channel_names: list[str], overwrite: bool | None = None) -> None:
+        """Load input image from a dask array.
+
+        Args:
+            dask_array: Dask array containing the input image.
+            channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from a dask array and attach them to an scportrait project::
+
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
+                dask_array = da.random.random((3, 1000, 1000))
+                channel_names = ["cytosol", "nucleus", "other_channel"]
+                project.load_input_from_dask(dask_array, channel_names=channel_names)
+
+        """
+        # setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+
+        self._cleanup_sdata_object()
+
+        assert (
+            len(channel_names) == dask_array.shape[0]
+        ), "Number of channel names does not match number of input images."
+
+        self.channel_names = channel_names
+
+        self.filehandler._write_image_sdata(
+            dask_array,
+            channel_names=self.channel_names,
+            scale_factors=[2, 4, 8],
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
+            image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+        )
+
+        self.get_project_status()
+        self.overwrite = original_overwrite
+
     def load_input_from_sdata(
         self,
         sdata_path,
