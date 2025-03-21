@@ -18,7 +18,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
-from scportrait.spdata.write._helper import add_element_sdata
+from scportrait.tools.spdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
@@ -138,13 +138,15 @@ class sdata_filehandler(Logable):
         self.input_image_status = self.input_image_name in _sdata.images
         self.nuc_seg_status = self.nuc_seg_name in _sdata.labels
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
-        self.centers_status = self.centers_name in _sdata.points
+        self.nuc_centers_status = f"{self.centers_name}_{self.nuc_seg_name}" in _sdata.points
+        self.cyto_centers_status = f"{self.centers_name}_{self.cyto_seg_name}" in _sdata.points
 
         _sdata.attrs["sdata_status"] = {
             "input_images": self.input_image_status,
             "nucleus_segmentation": self.nuc_seg_status,
             "cytosol_segmentation": self.cyto_seg_status,
-            "centers": self.centers_status,
+            "nucleus_centers": self.nuc_centers_status,
+            "cytosol_centers": self.cyto_centers_status,
         }
 
         _sdata.write_metadata()  # ensure the metadata is updated on file
