@@ -18,6 +18,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
+from scportrait.tools.spdata.write import write
 from scportrait.tools.spdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
@@ -197,52 +198,15 @@ class sdata_filehandler(Logable):
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
         _sdata = self._read_sdata()
-
-        # check if the image is already a multi-scale image
-        if isinstance(image, xarray.DataTree):
-            # if so only validate the model since this means we are getting the image from a spatialdata object already
-            # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
-            Image2DModel().validate(image)
-            if scale_factors is not None:
-                Warning("Scale factors are ignored when passing a multi-scale image.")
-        else:
-            if scale_factors is None:
-                scale_factors = [2, 4, 8]
-
-            if isinstance(image, xarray.DataArray):
-                # if so first validate the model since this means we are getting the image from a spatialdata object already
-                # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
-                Image2DModel().validate(image)
-
-                if channel_names is not None:
-                    Warning(
-                        "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
-                    )
-
-                image = Image2DModel.parse(
-                    image,
-                    scale_factors=scale_factors,
-                    c_coords=channel_names,
-                    rgb=False,
-                )
-
-            else:
-                if channel_names is None:
-                    channel_names = [f"channel_{i}" for i in range(image.shape[0])]
-
-                # transform to spatialdata image model
-                transform_original = Identity()
-                image = Image2DModel.parse(
-                    image,
-                    dims=["c", "y", "x"],
-                    chunks=chunks,
-                    c_coords=channel_names,
-                    scale_factors=scale_factors,
-                    transformations={"global": transform_original},
-                    rgb=False,
-                )
-
-        add_element_sdata(_sdata, image, image_name, overwrite=overwrite)
+        write.image(
+            _sdata,
+            image,
+            image_name,
+            channel_names=channel_names,
+            scale_factors=scale_factors,
+            chunks=chunks,
+            overwrite=overwrite,
+        )
         self.log(f"Image {image_name} written to sdata object.")
         self._check_sdata_status()
 
