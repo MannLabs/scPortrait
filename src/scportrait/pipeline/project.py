@@ -1143,7 +1143,6 @@ class Project(Logable):
         overwrite: bool | None = None,
         keep_all: bool = True,
         remove_duplicates: bool = True,
-        rechunk: bool = False,
     ) -> None:
         """
         Load input image from a spatialdata object.
