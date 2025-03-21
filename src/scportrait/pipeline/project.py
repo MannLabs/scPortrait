@@ -39,7 +39,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     rechunk_image,
     remap_region_annotation_table,
 )
-from scportrait.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
+from scportrait.tools.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -538,7 +538,8 @@ class Project(Logable):
         self.input_image_status = self.filehandler.input_image_status
         self.nuc_seg_status = self.filehandler.nuc_seg_status
         self.cyto_seg_status = self.filehandler.cyto_seg_status
-        self.centers_status = self.filehandler.centers_status
+        self.nuc_centers_status = self.filehandler.nuc_centers_status
+        self.cyto_centers_status = self.filehandler.cyto_centers_status
         extraction_file = os.path.join(
             self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE
         )
@@ -556,7 +557,8 @@ class Project(Logable):
             self.log(f"Input Image in sdata: {self.input_image_status}")
             self.log(f"Nucleus Segmentation in sdata: {self.nuc_seg_status}")
             self.log(f"Cytosol Segmentation in sdata: {self.cyto_seg_status}")
-            self.log(f"Centers in sdata: {self.centers_status}")
+            self.log(f"Nucleus Centers in sdata: {self.nuc_centers_status}")
+            self.log(f"Cytosol Centers in sdata: {self.cyto_centers_status}")
             self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
 
