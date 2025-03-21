@@ -10,6 +10,5 @@ For each cell, the extracted single-cell image dataset consists of a collection 
 
 Besides containing the images themselves, the single-cell image datasets also contain annotation information for each cell within the dataset. In the minimal form this consists of a ``cellID``, which is a unique numerical identifier assigned to each cell during segmentation. By directly linking single-cell images to the ``cellID`` of the extracted cell this allows you to trace individual extracted cells back to their original position in the input image to e.g. select them for subsequent laser microdissection or look at their localization. Depending on the extraction method used, the single-cell image dataset can also contain additional labelling information.
 
-.. image:: ../images/HDF5_data_containers.png
-    :width: 100%
-    :align: center
+The standardized format for storing single-cell image datasets in scPortrait is built around [AnnData](https://github.com/scverse/anndata). Single-cell images are stored in the `obsm['single_cell_images']` slot of the AnnData object, while annotations are stored in `obs`. This format allows for easy integration with other single-cell analysis tools and ensures that the single-cell image datasets can be easily shared and reused. By optimizing storage conditions in `obsm` and providing reading functions to lazily load images on demand we ensure that the format remains compatible even for extremely large datasets.
+We further provide functions to efficiently utilize these datasets for training in PyTorch.
