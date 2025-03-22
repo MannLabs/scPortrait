@@ -1308,6 +1308,7 @@ class Project(Logable):
         cytosol_segmentation_name: str | None = None,
         overwrite: bool | None = None,
         keep_all: bool = True,
+        cell_id_identifier: str | None = None,
         remove_duplicates: bool = True,
     ) -> None:
         """
@@ -1338,7 +1339,6 @@ class Project(Logable):
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
         all_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory()]
-
         dict_elems = {self.DEFAULT_INPUT_IMAGE_NAME: sdata_input[input_image_name]}
 
         if nucleus_segmentation_name is not None:
@@ -1352,15 +1352,27 @@ class Project(Logable):
                 all_elements.remove(cytosol_segmentation_name)
 
         # set cell_id_identifier
-        if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
-            cell_id_identifier = cytosol_segmentation_name
-            new_name = self.cyto_seg_name
-        elif nucleus_segmentation_name is not None:
-            cell_id_identifier = nucleus_segmentation_name
-            new_name = self.nuc_seg_name
-        elif cytosol_segmentation_name is not None:
-            cell_id_identifier = cytosol_segmentation_name
-            new_name = self.cyto_seg_name
+        if cell_id_identifier is None:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                cell_id_identifier = nucleus_segmentation_name
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            else:
+                cell_id_identifier = None
+        else:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            else:
+                new_name = None
 
         # ensure that any annotating table objects are updated with the correct labels
         table_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory() if x.split("/")[1] == "table"]
@@ -1374,11 +1386,11 @@ class Project(Logable):
             if cell_id_identifier is not None:
                 rename_columns[cell_id_identifier] = "cell_id"
                 self.log(f"Renaming column `{cell_id_identifier}` to `cell_id` in table {table_elem}")
+                table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
+                table.uns["spatialdata_attrs"]["region"] = new_name
+                table.obs["region"] = new_name
+                table.obs["region"] = table.obs["region"].astype("category")
             table.obs.rename(columns=rename_columns, inplace=True)
-            table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
-            table.uns["spatialdata_attrs"]["region"] = new_name
-            table.obs["region"] = new_name
-            table.obs["region"] = table.obs["region"].astype("category")
 
         if keep_all:
             shutil.rmtree(self.sdata_path, ignore_errors=True)
