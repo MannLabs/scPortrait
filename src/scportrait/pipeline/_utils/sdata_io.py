@@ -407,7 +407,6 @@ class sdata_filehandler(Logable):
 
         # initialize empty memory mapped arrays to store the data
         path_input_image = tempmmap.create_empty_mmap(shape=shape, dtype=image.dtype, tmp_dir_abs_path=tmp_dir_abs_path)
-
         input_image_mmap = tempmmap.mmap_array_from_path(path_input_image)
 
         Z: int | None = None
@@ -458,6 +457,12 @@ class sdata_filehandler(Logable):
         ), "Not all passed segmentation elements found in sdata object."
 
         seg_objects = [_sdata.labels[seg] for seg in seg_name]
+
+        # ensure we get the correct level of segmentation
+        for i, seg in enumerate(seg_objects):
+            if isinstance(seg, xarray.DataTree):
+                seg = seg.scale0.image
+                seg_objects[i] = seg
 
         shapes = [seg.shape for seg in seg_objects]
 
