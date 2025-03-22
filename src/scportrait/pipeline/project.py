@@ -73,6 +73,7 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize3D,
 )
 from scportrait.plotting.h5sc import cell_grid
+from scportrait.processing.images._image_processing import percentile_normalization
 
 
 class Project(Logable):
@@ -613,9 +614,11 @@ class Project(Logable):
 
     def plot_input_image(
         self,
-        max_size: int = 1000,
+        max_width: int = 1000,
         select_region: tuple[int, int] | None = None,
         channels: list[int] | list[str] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
         return_fig: bool = False,
         image_name="input_image",
     ) -> Figure | None:
@@ -703,8 +706,8 @@ class Project(Logable):
             channel_names = list(channel_names[:c])
 
         # subset spatialdata object if its too large
-        width = max_size // 2
-        if x > max_size or y > max_size:
+        width = max_width // 2
+        if x > max_width or y > max_width:
             if select_region is None:
                 center_x = x // 2
                 center_y = y // 2
@@ -717,6 +720,18 @@ class Project(Logable):
                 max_coordinate=[center_x + width, center_y + width],
                 target_coordinate_system="global",
             )
+
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
+
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
 
         fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
         _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(
@@ -812,7 +827,14 @@ class Project(Logable):
             plt.show()
 
     def plot_segmentation_masks(
-        self, return_fig: bool = False, max_width: int = 1500, select_region: tuple[int, int] | None = None
+        self,
+        max_width: int = 1500,
+        select_region: tuple[int, int] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        image_name: str = "input_image",
+        mask_names: list[str] | None = None,
+        return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
 
@@ -838,6 +860,7 @@ class Project(Logable):
 
         # get relevant information from spatialdata object
         _, x, y = _sdata["input_image"].scale0.image.shape
+        channel_names = list(_sdata["input_image"].scale0.c.values)
 
         # get center coordinates
         if select_region is None:
@@ -850,40 +873,58 @@ class Project(Logable):
         if x > max_width or y > max_width:
             _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
-        # get relevant segmentation masks
-        masks = []
-        if self.filehandler.nuc_seg_status:
-            masks.append("seg_all_nucleus")
-        if self.filehandler.cyto_seg_status:
-            masks.append("seg_all_cytosol")
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
 
-        if len(masks) == 0:
-            raise ValueError("No segmentation masks found in the sdata object.")
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
+
+        # get relevant segmentation masks
+        if mask_names is None:
+            masks = []
+            if self.filehandler.nuc_seg_status:
+                masks.append("seg_all_nucleus")
+            if self.filehandler.cyto_seg_status:
+                masks.append("seg_all_cytosol")
+
+            if len(masks) == 0:
+                raise ValueError("No segmentation masks found in the sdata object.")
+        else:
+            for mask in mask_names:
+                if mask not in _sdata:
+                    raise ValueError(f"Mask {mask} not found in the spatialdata object.")
+            masks = mask_names
 
         # create plot
         fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
         plot_segmentation_mask(_sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", show_fig=False)
 
-        if self.filehandler.nuc_seg_status:
-            idx = masks.index("seg_all_nucleus")
+        for mask in masks:
+            idx = masks.index(mask)
+
+            if "nucleus" in mask:
+                channel = 0
+                name = "Nucleus Mask"
+            if "cytosol" in mask:
+                channel = 1
+                name = "Cytosol Mask"
+            else:
+                channel = channel_names
+                name = mask
+
             plot_segmentation_mask(
                 _sdata,
-                ["seg_all_nucleus"],
+                [mask],
                 max_width=max_width,
-                selected_channels=0,
+                selected_channels=channel,
                 axs=axs[idx + 1],
-                title="Nucleus Segmentation",
-                show_fig=False,
-            )
-        if self.filehandler.cyto_seg_status:
-            idx = masks.index("seg_all_cytosol")
-            plot_segmentation_mask(
-                _sdata,
-                ["seg_all_cytosol"],
-                max_width=max_width,
-                selected_channels=1,
-                axs=axs[idx + 1],
-                title="Cytosol Segmentation",
+                title=name,
                 show_fig=False,
             )
 
