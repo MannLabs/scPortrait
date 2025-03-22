@@ -19,14 +19,13 @@ import warnings
 from time import time
 from typing import TYPE_CHECKING, Literal
 
+import dask.array as da
 import dask.array as darray
 import numpy as np
 import psutil
 import xarray
+import zarr
 from alphabase.io import tempmmap
-from napari_spatialdata import Interactive
-from ome_zarr.io import parse_url
-from ome_zarr.reader import Reader
 from spatialdata import SpatialData
 from tifffile import imread
 
@@ -35,21 +34,46 @@ from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.helper import read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
-    calculate_centroids,
     generate_region_annotation_lookuptable,
     get_chunk_size,
-    get_unique_cell_ids,
     rechunk_image,
     remap_region_annotation_table,
 )
+from scportrait.tools.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from typing import TypeAlias
+    from anndata import AnnData
+    from matplotlib.pyplot import Figure
 
-ChunkSize2D: TypeAlias = tuple[int, int]
-ChunkSize3D: TypeAlias = tuple[int, int, int]
+from scportrait.io import read_h5sc
+from scportrait.pipeline._utils.constants import (
+    DEFAULT_CENTERS_NAME,
+    DEFAULT_CHUNK_SIZE_2D,
+    DEFAULT_CHUNK_SIZE_3D,
+    DEFAULT_CONFIG_NAME,
+    DEFAULT_DATA_DIR,
+    DEFAULT_EXTRACTION_DIR_NAME,
+    DEFAULT_EXTRACTION_FILE,
+    DEFAULT_FEATURIZATION_DIR_NAME,
+    DEFAULT_IMAGE_DTYPE,
+    DEFAULT_INPUT_IMAGE_NAME,
+    DEFAULT_PREFIX_FILTERED_SEG,
+    DEFAULT_PREFIX_MAIN_SEG,
+    DEFAULT_PREFIX_SELECTED_SEG,
+    DEFAULT_SDATA_FILE,
+    DEFAULT_SEG_NAME_0,
+    DEFAULT_SEG_NAME_1,
+    DEFAULT_SEGMENTATION_DIR_NAME,
+    DEFAULT_SEGMENTATION_DTYPE,
+    DEFAULT_SELECTION_DIR_NAME,
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+    ChunkSize2D,
+    ChunkSize3D,
+)
+from scportrait.plotting.h5sc import cell_grid
+from scportrait.processing.images._image_processing import percentile_normalization
 
 
 class Project(Logable):
@@ -68,35 +92,37 @@ class Project(Logable):
         filehander (sdata_filehandler): Filehandler for the spatialdata object which manages all calls or updates to the spatialdata object.
     """
 
+    # define cleanup behaviour
     CLEAN_LOG: bool = True
-    DEFAULT_CONFIG_NAME = "config.yml"
-    DEFAULT_INPUT_IMAGE_NAME = "input_image"
-    DEFAULT_SDATA_FILE = "scportrait.sdata"
 
-    DEFAULT_PREFIX_MAIN_SEG = "seg_all"
-    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
-    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected"
+    # import all default values from constants
+    DEFAULT_CONFIG_NAME = DEFAULT_CONFIG_NAME
+    DEFAULT_INPUT_IMAGE_NAME = DEFAULT_INPUT_IMAGE_NAME
+    DEFAULT_SDATA_FILE = DEFAULT_SDATA_FILE
 
-    DEFAULT_SEG_NAME_0: str = "nucleus"
-    DEFAULT_SEG_NAME_1: str = "cytosol"
+    DEFAULT_PREFIX_MAIN_SEG = DEFAULT_PREFIX_MAIN_SEG
+    DEFAULT_PREFIX_FILTERED_SEG = DEFAULT_PREFIX_FILTERED_SEG
+    DEFAULT_PREFIX_SELECTED_SEG = DEFAULT_PREFIX_SELECTED_SEG
 
-    DEFAULT_CENTERS_NAME: str = "centers"
+    DEFAULT_SEG_NAME_0: str = DEFAULT_SEG_NAME_0
+    DEFAULT_SEG_NAME_1: str = DEFAULT_SEG_NAME_1
 
-    DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 1000, 1000)
-    DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (1000, 1000)
+    DEFAULT_CENTERS_NAME: str = DEFAULT_CENTERS_NAME
 
-    DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
-    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
-    DEFAULT_DATA_DIR = "data"
-    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
+    DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = DEFAULT_CHUNK_SIZE_3D
+    DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = DEFAULT_CHUNK_SIZE_2D
 
-    DEFAULT_FEATURIZATION_DIR_NAME = "featurization"
+    DEFAULT_SEGMENTATION_DIR_NAME = DEFAULT_SEGMENTATION_DIR_NAME
+    DEFAULT_EXTRACTION_DIR_NAME = DEFAULT_EXTRACTION_DIR_NAME
+    DEFAULT_DATA_DIR = DEFAULT_DATA_DIR
+    DEFAULT_EXTRACTION_FILE = DEFAULT_EXTRACTION_FILE
 
-    DEFAULT_SELECTION_DIR_NAME = "selection"
+    DEFAULT_FEATURIZATION_DIR_NAME = DEFAULT_FEATURIZATION_DIR_NAME
+    DEFAULT_SELECTION_DIR_NAME = DEFAULT_SELECTION_DIR_NAME
 
-    DEFAULT_IMAGE_DTYPE = np.uint16
-    DEFAULT_SEGMENTATION_DTYPE = np.uint32
-    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
+    DEFAULT_IMAGE_DTYPE = DEFAULT_IMAGE_DTYPE
+    DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
 
     def __init__(
         self,
@@ -134,6 +160,10 @@ class Project(Logable):
         self.extraction_f = extraction_f
         self.featurization_f = featurization_f
         self.selection_f = selection_f
+
+        # intialize containers to support interactive viewing of the spatialdata object
+        self.interactive_sdata = None
+        self.interactive = None
 
         if self.CLEAN_LOG:
             self._clean_log_file()
@@ -182,6 +212,17 @@ class Project(Logable):
     def sdata(self) -> SpatialData:
         """Shape of data matrix (:attr:`n_obs`, :attr:`n_vars`)."""
         return self.filehandler.get_sdata()
+
+    @property
+    def h5sc(self) -> AnnData:
+        if self.extraction_f is None:
+            raise ValueError("No extraction method has been set.")
+        else:
+            if self.extraction_f.output_path is None:
+                path = self.extraction_f.extraction_file
+            else:
+                path = self.extraction_f.output_path
+            return read_h5sc(path)
 
     ##### Setup Functions #####
 
@@ -268,6 +309,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_segmentation_f(self, segmentation_f):
+        self._setup_segmentation_f(segmentation_f)
+
     def _setup_extraction_f(self, extraction_f):
         """Configure the extraction method for the project.
 
@@ -297,6 +341,9 @@ class Project(Logable):
                 from_project=True,
             )
 
+    def _update_extraction_f(self, extraction_f):
+        self._setup_extraction_f(extraction_f)
+
     def _setup_featurization_f(self, featurization_f):
         """Configure the featurization method for the project.
 
@@ -324,6 +371,25 @@ class Project(Logable):
                 filehandler=self.filehandler,
                 from_project=True,
             )
+
+    def update_featurization_f(self, featurization_f):
+        """Update the featurization method chosen for the project without reinitializing the entire project.
+
+        Args:
+            featurization_f : The featurization method that should be used for the project.
+
+        Returns:
+            None : the featurization method is updated in the project object.
+
+        Examples:
+            Update the featurization method for a project::
+
+                from scportrait.pipeline.featurization import CellFeaturizer
+
+                project.update_featurization_f(CellFeaturizer)
+        """
+        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
+        self._setup_featurization_f(featurization_f)
 
     def _setup_selection(self, selection_f):
         """Configure the selection method for the project.
@@ -353,24 +419,8 @@ class Project(Logable):
                 from_project=True,
             )
 
-    def update_featurization_f(self, featurization_f):
-        """Update the featurization method chosen for the project without reinitializing the entire project.
-
-        Args:
-            featurization_f : The featurization method that should be used for the project.
-
-        Returns:
-            None : the featurization method is updated in the project object.
-
-        Examples:
-            Update the featurization method for a project::
-
-                from scportrait.pipeline.featurization import CellFeaturizer
-
-                project.update_featurization_f(CellFeaturizer)
-        """
-        self.log(f"Replacing current featurization method {self.featurization_f.__class__} with {featurization_f}")
-        self._setup_featurization_f(featurization_f)
+    def _update_selection_f(self, selection_f):
+        self._setup_selection(selection_f)
 
     ##### General small helper functions ####
 
@@ -463,16 +513,12 @@ class Project(Logable):
 
         if os.path.exists(self.sdata_path):
             if self.overwrite:
-                self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
+                if not self.filehandler._check_empty_sdata():
+                    self.log(f"Output location {self.sdata_path} already exists. Overwriting.")
+                    shutil.rmtree(self.sdata_path, ignore_errors=True)
             else:
                 # check to see if the sdata object is empty
-                if len(os.listdir(self.sdata_path)) == 0:
-                    self.log(
-                        f"Output location {self.sdata_path} already exists but does not contain any data. Overwriting."
-                    )
-                    shutil.rmtree(self.sdata_path, ignore_errors=True)
-                else:
+                if not self.filehandler._check_empty_sdata():
                     raise ValueError(
                         f"Output location {self.sdata_path} already exists. Set overwrite=True to overwrite."
                     )
@@ -493,17 +539,16 @@ class Project(Logable):
         self.input_image_status = self.filehandler.input_image_status
         self.nuc_seg_status = self.filehandler.nuc_seg_status
         self.cyto_seg_status = self.filehandler.cyto_seg_status
-        self.centers_status = self.filehandler.centers_status
+        self.nuc_centers_status = self.filehandler.nuc_centers_status
+        self.cyto_centers_status = self.filehandler.cyto_centers_status
         extraction_file = os.path.join(
             self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE
         )
         self.extraction_status = True if os.path.isfile(extraction_file) else False
 
         if self.input_image_status:
-            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            if self.DEFAULT_INPUT_IMAGE_NAME in self.sdata:
+                self.input_image = _get_image(self.sdata[self.DEFAULT_INPUT_IMAGE_NAME])
             else:
                 self.input_image = None
 
@@ -513,7 +558,8 @@ class Project(Logable):
             self.log(f"Input Image in sdata: {self.input_image_status}")
             self.log(f"Nucleus Segmentation in sdata: {self.nuc_seg_status}")
             self.log(f"Cytosol Segmentation in sdata: {self.cyto_seg_status}")
-            self.log(f"Centers in sdata: {self.centers_status}")
+            self.log(f"Nucleus Centers in sdata: {self.nuc_centers_status}")
+            self.log(f"Cytosol Centers in sdata: {self.cyto_centers_status}")
             self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
 
@@ -525,8 +571,375 @@ class Project(Logable):
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari
-        interactive = Interactive(self.sdata)
-        interactive.run()
+        try:
+            from napari_spatialdata import Interactive
+        except ImportError:
+            raise ImportError(
+                "napari-spatialdata must be installed to use the interactive viewer. Please install with `pip install scportrait[plotting]`."
+            ) from None
+        self.interactive_sdata = self.filehandler.get_sdata()
+        self.interactive = Interactive(self.interactive_sdata)
+        self.interactive.run()
+
+    def _save_interactive_sdata(self):
+        assert self.interactive_sdata is not None, "No interactive sdata object found."
+
+        in_memory_only, _ = self.interactive_sdata._symmetric_difference_with_zarr_store()
+        print(f"Writing the following manually added files to the sdata object: {in_memory_only}")
+
+        dict_lookup = {}
+        for elem in in_memory_only:
+            key, name = elem.split("/")
+            if key not in dict_lookup:
+                dict_lookup[key] = []
+            dict_lookup[key].append(name)
+        for _, name in dict_lookup.items():
+            self.interactive_sdata.write_element(name)  # replace with correct function once pulled in from sdata
+
+    def close_interactive_viewer(self):
+        if self.interactive is not None:
+            self._save_interactive_sdata()
+            self.interactive._viewer.close()
+
+            # reset to none values to track next call of view_sdata
+            self.interactive_sdata = None
+            self.interactive = None
+
+    def _check_for_interactive_session(self):
+        if self.interactive is not None:
+            Warning("Interactive viewer is still open. Will automatically close before proceeding with processing.")
+            self.close_interactive_viewer()
+
+    #### Functions to visualize results ####
+
+    def plot_input_image(
+        self,
+        max_width: int = 1000,
+        select_region: tuple[int, int] | None = None,
+        channels: list[int] | list[str] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        return_fig: bool = False,
+        image_name="input_image",
+    ) -> Figure | None:
+        """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
+
+        Args:
+            max_size: Maximum size of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
+            channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the input image of a project::
+
+                project.plot_input_image()
+        """
+
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
+            from spatialdata import to_polygons
+
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
+            ) from None
+
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        palette = [
+            "blue",
+            "green",
+            "red",
+            "yellow",
+            "purple",
+            "orange",
+            "pink",
+            "cyan",
+            "magenta",
+            "lime",
+            "teal",
+            "lavender",
+            "brown",
+            "beige",
+            "maroon",
+            "mint",
+            "olive",
+            "apricot",
+            "navy",
+            "grey",
+            "white",
+            "black",
+        ]
+        c, x, y = _sdata[image_name].scale0.image.shape
+        channel_names = _sdata["input_image"].scale0.c.values
+
+        if channels is not None:
+            if isinstance(channels[0], str):
+                assert [
+                    x in channel_names for x in channels
+                ], "The specified channel names are not found in the spatialdata object."
+                channel_names = channels
+                palette = palette[:c]
+            if isinstance(channels[0], int):
+                assert [
+                    x in range(c) for x in channels
+                ], "The specified channel indices are not found in the spatialdata object."
+                channel_names = list(channel_names[channels])
+            c = len(channels)
+            palette = palette[:c]
+        else:
+            # do not plot more than 4 channels per default
+            if c > 4:
+                c = 4
+            palette = palette[:c]
+            channel_names = list(channel_names[:c])
+
+        # subset spatialdata object if its too large
+        width = max_width // 2
+        if x > max_width or y > max_width:
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
+
+            _sdata = _sdata.query.bounding_box(
+                axes=["x", "y"],
+                min_coordinate=[center_x - width, center_y - width],
+                max_coordinate=[center_x + width, center_y + width],
+                target_coordinate_system="global",
+            )
+
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
+
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
+
+        fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
+        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(
+            ax=axs[0], title="overlayed"
+        )
+        axs[0].axis("off")
+
+        for i, channel in enumerate(channel_names):
+            _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
+                ax=axs[i + 1], colorbar=False, title=channel
+            )
+            axs[i + 1].axis("off")
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            return None
+            plt.show()
+
+    def plot_he_image(
+        self,
+        image_name: str = "he_image",
+        max_width: int | None = None,
+        select_region: tuple[int, int] | None = None,
+        return_fig: bool = False,
+    ) -> None | Figure:
+        """Plot the hematoxylin and eosin (HE) channel of the input image.
+
+        Args:
+            image_name: Name of the element containing the H&E image in the spatialdata object.
+            max_width: Maximum width of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the HE channel of a project::
+
+                project.plot_he()
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
+            from spatialdata import to_polygons
+
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
+            ) from None
+
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        channel_names = list(_sdata[image_name].scale0.c.values)
+        assert channel_names == ["r", "g", "b"], "The image is not an RGB image."
+
+        # subset spatialdata object if its too large
+        if max_width is not None:
+            c, x, y = _sdata[image_name].scale0.image.shape
+            width = max_width // 2
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
+
+            if x > max_width or y > max_width:
+                _sdata = _sdata.query.bounding_box(
+                    axes=["x", "y"],
+                    min_coordinate=[center_x - width, center_y - width],
+                    max_coordinate=[center_x + width, center_y + width],
+                    target_coordinate_system="global",
+                )
+
+        fig, axs = plt.subplots(1, 1, figsize=(8, 8))
+        _sdata.pl.render_images(image_name).pl.show(ax=axs, title="H&E Image")
+        axs.axis("off")
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            return None
+            plt.show()
+
+    def plot_segmentation_masks(
+        self,
+        max_width: int = 1500,
+        select_region: tuple[int, int] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        image_name: str = "input_image",
+        mask_names: list[str] | None = None,
+        return_fig: bool = False,
+    ) -> None | Figure:
+        """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
+
+        Args:
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+            max_width: Maximum width of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the segmentation masks of a project::
+
+                project.plot_segmentation_masks()
+        """
+        # import relevant functions for this method
+        import matplotlib.pyplot as plt
+
+        from scportrait.plotting.sdata import _bounding_box_sdata, plot_segmentation_mask
+
+        _sdata = self.sdata
+
+        # get relevant information from spatialdata object
+        _, x, y = _sdata["input_image"].scale0.image.shape
+        channel_names = list(_sdata["input_image"].scale0.c.values)
+
+        # get center coordinates
+        if select_region is None:
+            center_x = x // 2
+            center_y = y // 2
+        else:
+            center_x, center_y = select_region
+
+        # subset spatialdata object if its too large
+        if x > max_width or y > max_width:
+            _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
+
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
+
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
+
+        # get relevant segmentation masks
+        if mask_names is None:
+            masks = []
+            if self.filehandler.nuc_seg_status:
+                masks.append("seg_all_nucleus")
+            if self.filehandler.cyto_seg_status:
+                masks.append("seg_all_cytosol")
+
+            if len(masks) == 0:
+                raise ValueError("No segmentation masks found in the sdata object.")
+        else:
+            for mask in mask_names:
+                if mask not in _sdata:
+                    raise ValueError(f"Mask {mask} not found in the spatialdata object.")
+            masks = mask_names
+
+        # create plot
+        fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
+        plot_segmentation_mask(_sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", show_fig=False)
+
+        for mask in masks:
+            idx = masks.index(mask)
+
+            if "nucleus" in mask:
+                channel = 0
+                name = "Nucleus Mask"
+            if "cytosol" in mask:
+                channel = 1
+                name = "Cytosol Mask"
+            else:
+                channel = channel_names
+                name = mask
+
+            plot_segmentation_mask(
+                _sdata,
+                [mask],
+                max_width=max_width,
+                selected_channels=channel,
+                axs=axs[idx + 1],
+                title=name,
+                show_fig=False,
+            )
+
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            plt.show()
+            return None
+
+    def plot_single_cell_images(
+        self, n_cells: int | None = None, select_channel: int | None = None, return_fig: bool = False
+    ) -> None | Figure:
+        return cell_grid(self.h5sc, n_cells=n_cells, select_channel=select_channel, return_fig=return_fig)
 
     #### Functions to load input data ####
     def load_input_from_array(
@@ -802,12 +1215,11 @@ class Project(Logable):
 
         # read the image data
         self.log(f"trying to read file from {ome_zarr_path}")
-        loc = parse_url(ome_zarr_path, mode="r")
-        zarr_reader = Reader(loc).zarr
-        image = zarr_reader.load("0")
+        image = da.from_zarr(str(ome_zarr_path), component=0)
 
         # Access the metadata to get channel names
-        metadata = loc.root_attrs
+        zarr_store = zarr.open(ome_zarr_path, mode="r")  # Adjust the path
+        metadata = zarr_store.attrs.asdict()
 
         if "omero" in metadata and "channels" in metadata["omero"]:
             channels = metadata["omero"]["channels"]
@@ -837,16 +1249,67 @@ class Project(Logable):
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
+    def load_input_from_dask(self, dask_array, channel_names: list[str], overwrite: bool | None = None) -> None:
+        """Load input image from a dask array.
+
+        Args:
+            dask_array: Dask array containing the input image.
+            channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from a dask array and attach them to an scportrait project::
+
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
+                dask_array = da.random.random((3, 1000, 1000))
+                channel_names = ["cytosol", "nucleus", "other_channel"]
+                project.load_input_from_dask(dask_array, channel_names=channel_names)
+
+        """
+        # setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+
+        self._cleanup_sdata_object()
+
+        assert (
+            len(channel_names) == dask_array.shape[0]
+        ), "Number of channel names does not match number of input images."
+
+        self.channel_names = channel_names
+
+        self.filehandler._write_image_sdata(
+            dask_array,
+            channel_names=self.channel_names,
+            scale_factors=[2, 4, 8],
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
+            image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+        )
+
+        self.get_project_status()
+        self.overwrite = original_overwrite
+
     def load_input_from_sdata(
         self,
         sdata_path,
         input_image_name: str,
         nucleus_segmentation_name: str | None = None,
         cytosol_segmentation_name: str | None = None,
+        cell_id_identifier: str | None = None,
         overwrite: bool | None = None,
         keep_all: bool = True,
         remove_duplicates: bool = True,
-        rechunk: bool = False,
     ) -> None:
         """
         Load input image from a spatialdata object.
@@ -856,6 +1319,7 @@ class Project(Logable):
             input_image_name: Name of the element in the spatial data object containing the input image.
             nucleus_segmentation_name: Name of the element in the spatial data object containing the nucleus segmentation mask. Default is ``None``.
             cytosol_segmentation_name: Name of the element in the spatial data object containing the cytosol segmentation mask. Default is ``None``.
+            cell_id_identifier: column of annotating tables that contain the values that match a segmentation mask. If not provided it will assume this column carries the same name as the segmentation mask before parsing.
             overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
@@ -875,186 +1339,94 @@ class Project(Logable):
 
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
-        if keep_all:
-            shutil.rmtree(self.sdata_path, ignore_errors=True)  # remove old sdata object
-            sdata_input.write(self.sdata_path, overwrite=True)
-            del sdata_input
-            sdata_input = self.filehandler.get_sdata()
+        all_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory()]
+        dict_elems = {self.DEFAULT_INPUT_IMAGE_NAME: sdata_input[input_image_name]}
 
-        self.get_project_status()
-
-        # get input image and write it to the final sdata object
-        image = sdata_input.images[input_image_name]
-        self.log(f"Adding image {input_image_name} to sdata object as 'input_image'.")
-
-        if isinstance(image, xarray.DataTree):
-            image_c, image_x, image_y = image.scale0.image.shape
-
-            # ensure chunking is correct
-            if rechunk:
-                for scale in image:
-                    self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
-
-            # get channel names
-            channel_names = image.scale0.image.c.values
-
-        elif isinstance(image, xarray.DataArray):
-            image_c, image_x, image_y = image.shape
-
-            # ensure chunking is correct
-            if rechunk:
-                self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
-
-            channel_names = image.c.values
-
-        # Reset all transformations
-        if image.attrs.get("transform"):
-            self.log("Image contained transformations which which were removed.")
-            image.attrs["transform"] = None
-
-        # check coordinate system of input image
-        ### PLACEHOLDER
-
-        # check channel names
-        self.log(
-            f"Found the following channel names in the input image and saving in the spatialdata object: {channel_names}"
-        )
-
-        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME, channel_names=channel_names)
-
-        # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
-            mask = sdata_input.labels[nucleus_segmentation_name]
-            self.log(
-                f"Adding nucleus segmentation mask '{nucleus_segmentation_name}' to sdata object as '{self.nuc_seg_name}'."
-            )
+            dict_elems[self.nuc_seg_name] = sdata_input[nucleus_segmentation_name]
+            if remove_duplicates:
+                all_elements.remove(nucleus_segmentation_name)
 
-            # if mask is multi-scale ensure we only use the scale 0
-            if isinstance(mask, xarray.DataTree):
-                mask = mask["scale0"].image
-
-            # ensure that loaded masks are at the same scale as the input image
-            mask_x, mask_y = mask.shape
-            assert (mask_x == image_x) and (
-                mask_y == image_y
-            ), "Nucleus segmentation mask does not match input image size."
-
-            if rechunk:
-                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
-
-            self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
-            self.log(
-                f"Calculating centers for nucleus segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
-            )
-            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
-
-        # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
-            mask = sdata_input.labels[cytosol_segmentation_name]
-            self.log(
-                f"Adding cytosol segmentation mask '{cytosol_segmentation_name}' to sdata object as '{self.cyto_seg_name}'."
-            )
+            dict_elems[self.cyto_seg_name] = sdata_input[cytosol_segmentation_name]
+            if remove_duplicates:
+                all_elements.remove(cytosol_segmentation_name)
 
-            # if mask is multi-scale ensure we only use the scale 0
-            if isinstance(mask, xarray.DataTree):
-                mask = mask["scale0"].image
+        # set cell_id_identifier
+        if cell_id_identifier is None:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                cell_id_identifier = nucleus_segmentation_name
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            else:
+                cell_id_identifier = None
+        else:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            else:
+                new_name = None
 
-            # ensure that loaded masks are at the same scale as the input image
-            mask_x, mask_y = mask.shape
-            assert (mask_x == image_x) and (
-                mask_y == image_y
-            ), "Nucleus segmentation mask does not match input image size."
+        # ensure that any annotating table objects are updated with the correct labels
+        table_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory() if x.split("/")[1] == "table"]
 
-            if rechunk:
-                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+        for table_elem in table_elements:
+            table = sdata_input[table_elem]
+            rename_columns = {}
+            if "cell_id" in table.obs:
+                rename_columns["cell_id"] = "cell_id_orig"
+                self.log(f"Renaming column `cell_id` to `cell_id_orig` in table {table_elem}")
+            if cell_id_identifier is not None:
+                rename_columns[cell_id_identifier] = "cell_id"
+                self.log(f"Renaming column `{cell_id_identifier}` to `cell_id` in table {table_elem}")
+                table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
+                table.uns["spatialdata_attrs"]["region"] = new_name
+                table.obs["region"] = new_name
+                table.obs["region"] = table.obs["region"].astype("category")
+            table.obs.rename(columns=rename_columns, inplace=True)
 
-            self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
-            self.log(
-                f"Calculating centers for cytosol segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
-            )
+        if keep_all:
+            shutil.rmtree(self.sdata_path, ignore_errors=True)
+            for elem in all_elements:
+                dict_elems[elem] = sdata_input[elem]
+
+        sdata = SpatialData.init_from_elements(dict_elems)
+        sdata.write(self.sdata_path, overwrite=True)
+
+        # update project status
+        self.get_project_status()
+        _, x, y = _get_shape(sdata[self.DEFAULT_INPUT_IMAGE_NAME])
+
+        self.overwrite = original_overwrite
+
+        if self.nuc_seg_status:
+            # check input size
+            _, x_mask, y_mask = _get_shape(sdata[self.nuc_seg_name])
+            assert x == x_mask and y == y_mask, "Input image and nucleus segmentation mask do not match in size."
+
+            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
+        if self.cyto_seg_status:
+            # check input size
+            _, x_mask, y_mask = _get_shape(sdata[self.cyto_seg_name])
+            assert x == x_mask and y == y_mask, "Input image and nucleus segmentation mask do not match in size."
+
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
-        self.get_project_status()
-
-        # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
-        # requirements are:
-        # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        # if self.nuc_seg_status and self.cyto_seg_status:
-        # THIS NEEDS TO BE IMPLEMENTED HERE
-
-        # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
-        # THIS NEEDS TO BE IMPLEMENTED HERE
-
-        # check if there are any annotations that match the nucleus/cytosol segmentations
-        if self.nuc_seg_status or self.cyto_seg_status:
-            region_annotation = generate_region_annotation_lookuptable(self.sdata)
-
-            if self.nuc_seg_status:
-                region_name = self.nuc_seg_name
-
-                # add existing nucleus annotations if available
-                if nucleus_segmentation_name in region_annotation.keys():
-                    for x in region_annotation[nucleus_segmentation_name]:
-                        table_name, table = x
-
-                        new_table_name = f"annot_{region_name}_{table_name}"
-
-                        table = remap_region_annotation_table(table, region_name=region_name)
-
-                        self.filehandler._write_table_object_sdata(table, new_table_name)
-                        self.log(
-                            f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
-                        )
-
-                        if keep_all and remove_duplicates:
-                            self.log(
-                                f"Deleting original annotation {table_name} for nucleus segmentation {nucleus_segmentation_name} from sdata object to prevent information duplication."
-                            )
-                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
-                else:
-                    self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
-
-            # add cytosol segmentations if available
-            if self.cyto_seg_status:
-                if cytosol_segmentation_name in region_annotation.keys():
-                    for x in region_annotation[cytosol_segmentation_name]:
-                        table_name, table = x
-                        region_name = self.cyto_seg_name
-                        new_table_name = f"annot_{region_name}_{table_name}"
-
-                        table = remap_region_annotation_table(table, region_name=region_name)
-                        self.filehandler._write_table_object_sdata(table, new_table_name)
-
-                        self.log(
-                            f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
-                        )
-
-                        if keep_all and remove_duplicates:
-                            self.log(
-                                f"Deleting original annotation {table_name} for cytosol segmentation {cytosol_segmentation_name} from sdata object to prevent information duplication."
-                            )
-                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
-                else:
-                    self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
-
-        if keep_all and remove_duplicates:
-            # remove input image
-            self.log(f"Deleting input image '{input_image_name}' from sdata object to prevent information duplication.")
-            self.filehandler._force_delete_object(self.sdata, name=input_image_name, type="images")
-
-            if self.nuc_seg_status:
-                self.log(
-                    f"Deleting original nucleus segmentation mask '{nucleus_segmentation_name}' from sdata object to prevent information duplication."
-                )
-                self.filehandler._force_delete_object(self.sdata, name=nucleus_segmentation_name, type="labels")
-            if self.cyto_seg_status:
-                self.log(
-                    f"Deleting original cytosol segmentation mask '{cytosol_segmentation_name}' from sdata object to prevent information duplication."
-                )
-                self.filehandler._force_delete_object(self.sdata, name=cytosol_segmentation_name, type="labels")
+        # ensure that if both an nucleus and cytosol segmentation mask are loaded that they match
+        if self.nuc_seg_status and self.cyto_seg_status:
+            ids_nuc = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.nuc_seg_name}"].index.values)
+            ids_cyto = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.cyto_seg_name}"].index.values)
+            assert ids_nuc == ids_cyto, "Nucleus and cytosol segmentation masks do not match."
 
         self.get_project_status()
-        self.overwrite = original_overwrite  # reset to original value
 
     #### Functions to perform processing ####
 
@@ -1064,6 +1436,8 @@ class Project(Logable):
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1077,21 +1451,28 @@ class Project(Logable):
             if not self.segmentation_f.overwrite:
                 raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
 
-        elif self.input_image is not None:
-            self.segmentation_f(self.input_image)
+        if self.input_image is not None:
+            self.segmentation_f.process(self.input_image)
 
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def complete_segmentation(self, overwrite: bool | None = None):
+    def complete_segmentation(self, overwrite: bool | None = None, force_run: bool = False):
         """If a sharded Segmentation was run but individual tiles failed to segment properly, this method can be called to repeat the segmentation on the failed tiles only.
         Already calculated segmentation masks will not be recalculated.
+
+        Args:
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+            force_run: If set to ``True``, will force complete_segmentation to run even if a finalized segmentation mask is already found in the spatialdata object.
         """
         # check to ensure a method has been assigned
         if self.segmentation_f is None:
             raise ValueError("No segmentation method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         # ensure that an input image has been loaded
         if not self.input_image_status:
             raise ValueError("No input image loaded. Please load an input image first.")
@@ -1103,20 +1484,33 @@ class Project(Logable):
 
         if self.nuc_seg_status or self.cyto_seg_status:
             if not self.segmentation_f.overwrite:
-                raise ValueError("Segmentation already exists. Set overwrite=True to overwrite.")
+                raise ValueError("Segmentation already exists. Set overwrite = True to overwrite.")
 
-        elif self.input_image is not None:
-            self.segmentation_f.complete_segmentation(self.input_image)
+        if self.input_image is not None:
+            self.segmentation_f.complete_segmentation(self.input_image, force_run=force_run)
 
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def extract(self, partial=False, n_cells=None, overwrite: bool | None = None):
+    def extract(self, partial=False, n_cells=None, seed: int = 42, overwrite: bool | None = None) -> None:
+        """Extract single-cell images from the input image using the defined extraction method.
+
+        Args:
+            partial: If set to ``True``, will run the extraction on a subset of the image. Default is ``False``.
+            n_cells: Number of cells to extract if partial is ``True``
+            seed: Seed for the random number generator during a partial extraction. Default is ``42``.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading
+
+        Returns:
+            None: Single-cell images are written to HDF5 files in the project associated extraction directory. File path can be accessed via ``project.extraction_f.output_path``.
+        """
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")
 
         # ensure that a segmentation has been stored that can be extracted
         self.get_project_status()
+        self._check_for_interactive_session()
 
         if not (self.nuc_seg_status or self.cyto_seg_status):
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
@@ -1125,7 +1519,7 @@ class Project(Logable):
         if overwrite is not None:
             self.extraction_f.overwrite_run_path = overwrite
 
-        self.extraction_f(partial=partial, n_cells=n_cells)
+        self.extraction_f(partial=partial, n_cells=n_cells, seed=seed)
         self.get_project_status()
 
     def featurize(
@@ -1139,6 +1533,7 @@ class Project(Logable):
             raise ValueError("No featurization method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
@@ -1150,7 +1545,7 @@ class Project(Logable):
         extraction_dir = self.extraction_f.get_directory()
 
         if data_type == "complete":
-            cells_path = f"{extraction_dir}/data/single_cells.h5"
+            cells_path = f"{extraction_dir}/data/{DEFAULT_EXTRACTION_FILE}"
 
         if data_type == "partial":
             partial_runs = [x for x in os.listdir(extraction_dir) if x.startswith("partial_data")]
@@ -1169,9 +1564,9 @@ class Project(Logable):
                     if len(selected_run) == 0:
                         raise ValueError(f"No partial data found for n_cells = {n_cells} and seed = {partial_seed}.")
                     else:
-                        cells_path = f"{extraction_dir}/{selected_run[0]}/single_cells.h5"
+                        cells_path = f"{extraction_dir}/{selected_run[0]}/{self.DEFAULT_EXTRACTION_FILE}"
             else:
-                cells_path = f"{extraction_dir}/{selected_runs[0]}/single_cells.h5"
+                cells_path = f"{extraction_dir}/{selected_runs[0]}/{self.DEFAULT_EXTRACTION_FILE}"
 
         if data_type == "filtered":
             raise ValueError("Filtered data not yet implemented.")
@@ -1181,8 +1576,6 @@ class Project(Logable):
         # setup overwrite if specified in call
         if overwrite is not None:
             self.featurization_f.overwrite_run_path = overwrite
-        if overwrite is None:
-            self.featurization_f.overwrite_run_path = True
 
         # update the number of masks that are available in the segmentation object
         self.featurization_f.n_masks = sum([self.nuc_seg_status, self.cyto_seg_status])
@@ -1206,6 +1599,8 @@ class Project(Logable):
             raise ValueError("No selection method defined")
 
         self.get_project_status()
+        self._check_for_interactive_session()
+
         if not self.nuc_seg_status and not self.cyto_seg_status:
             raise ValueError("No nucleus or cytosol segmentation loaded. Please load a segmentation first.")
 
@@ -1217,1006 +1612,3 @@ class Project(Logable):
             name=name,
         )
         self.get_project_status()
-
-
-# this class has not yet been set up to be used with spatialdata
-# class TimecourseProject(Project):
-#     """
-#     TimecourseProject class used to create a scPortrait project for datasets that have multiple fields of view that should be processed and analysed together.
-#     It is also capable of handling multiple timepoints for the same field of view or a combiantion of both. Like the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>`,
-#     it manages all of the scPortrait processing steps. Because the input data has a different dimensionality than the base scPortrait :func:`Project <sparcscore.pipeline.project.Project>` class,
-#     it requires the use of specialized processing classes that are able to handle this additional dimensionality.
-
-#     Parameters
-#     ----------
-#     location_path : str
-#         Path to the folder where to project should be created. The folder is created in case the specified folder does not exist.
-#     config_path : str, optional, default ""
-#         Path pointing to a valid configuration file. The file will be copied to the project directory and renamed to the name specified in ``DEFAULT_FEATURIZATION_DIR_NAME``. If no config is specified, the existing config in the project directory will be used, if possible. See the section configuration to find out more about the config file.
-#     debug : bool, default False
-#         When set to True debug outputs will be printed where applicable.
-#     overwrite : bool, default False
-#         When set to True, the processing step directory will be completely deleted and newly created when called.
-#     segmentation_f : Class, default None
-#         Class containing segmentation workflow.
-#     extraction_f : Class, default None
-#         Class containing extraction workflow.
-#     featurization_f : Class, default None
-#         Class containing featurization workflow.
-#     selection_f : Class, default None
-#         Class containing selection workflow.
-
-#     Attributes
-#     ----------
-#     DEFAULT_CONFIG_NAME : str, default "config.yml"
-#         Default config name which is used for the config file in the project directory. This name needs to be used when no config is supplied and the config is manually created in the project folder.
-#     DEFAULT_INPUT_IMAGE_NAME: str, default "input_segmentation.h5"
-#         Default file name for loading the input image.
-#     DEFAULT_SEGMENTATION_DIR_NAME : str, default "segmentation"
-#         Default foldername for the segmentation process.
-#     DEFAULT_EXTRACTION_DIR_NAME : str, default "extraction"
-#         Default foldername for the extraction process.
-#     DEFAULT_FEATURIZATION_DIR_NAME : str, default "selection"
-#         Default foldername for the featurization process.
-#     DEFAULT_SELECTION_DIR_NAME : str, default "featurization"
-#         Default foldername for the selection process.
-#     """
-
-#     DEFAULT_INPUT_IMAGE_NAME = "input_segmentation.h5"
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#     def load_input_from_array(self, img, label, overwrite=False):
-#         """
-#         Function to load imaging data from an array into the TimecourseProject.
-
-#         The provided array needs to fullfill the following conditions:
-#         - shape: NCYX
-#         - all images need to have the same dimensions and the same number of channels
-#         - channels need to be in the following order: nucleus, cytosol other channels
-#         - dtype uint16.
-
-#         Parameters
-#         ----------
-#         img : numpy.ndarray
-#             Numpy array of shape “[num_images, channels, height, width]”.
-#         label : numpy.ndarray
-#             Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: "image_index", "unique_image_identifier", "..."
-#         overwrite : bool, default False
-#             If set to True, the function will overwrite the existing input image.
-#         """
-
-#         """
-#         Function to load imaging data from an array into the TimecourseProject.
-
-#         The provided array needs to fullfill the following conditions:
-#         - shape: NCYX
-#         - all images need to have the same dimensions and the same number of channels
-#         - channels need to be in the following order: nucleus, cytosol other channels
-#         - dtype uint16.
-
-#         Parameters
-#         ----------
-#         img : numpy.ndarray
-#             Numpy array of shape “[num_images, channels, height, width]”.
-#         label : numpy.ndarray
-#             Numpy array of shape “[num_images, num_labels]” containing the labels for each image. The labels need to have the following structure: "image_index", "unique_image_identifier", "..."
-#         overwrite : bool, default False
-#             If set to True, the function will overwrite the existing input image.
-#         """
-
-#         # check if already exists if so throw error message
-#         if not os.path.isdir(
-#             os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#         ):
-#             os.makedirs(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             )
-
-#         path = os.path.join(
-#             self.directory,
-#             self.DEFAULT_SEGMENTATION_DIR_NAME,
-#             self.DEFAULT_INPUT_IMAGE_NAME,
-#         )
-
-#         if not overwrite:
-#             if os.path.isfile(path):
-#                 sys.exit("File already exists")
-#             else:
-#                 overwrite = True
-
-#         if overwrite:
-#             # column labels
-#             column_labels = label.columns.to_list()
-
-#             # create .h5 dataset to which all results are written
-#             path = os.path.join(
-#                 self.directory,
-#                 self.DEFAULT_SEGMENTATION_DIR_NAME,
-#                 self.DEFAULT_INPUT_IMAGE_NAME,
-#             )
-#             hf = h5py.File(path, "w")
-#             dt = h5py.special_dtype(vlen=str)
-#             hf.create_dataset("label_names", data=column_labels, chunks=None, dtype=dt)
-#             hf.create_dataset(
-#                 "labels", data=label.astype(str).values, chunks=None, dtype=dt
-#             )
-#             hf.create_dataset(
-#                 "input_images", data=img, chunks=(1, 1, img.shape[2], img.shape[2])
-#             )
-
-#             hf.close()
-
-#     def load_input_from_files(
-#         self,
-#         input_dir,
-#         channels,
-#         timepoints,
-#         plate_layout,
-#         img_size=1080,
-#         overwrite=False,
-#     ):
-#         """
-#         Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.
-
-#         Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_.
-
-#         In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
-#         using the well notation ``RowXX_WellXX``:
-
-#         .. csv-table::
-#             :header: "Well", "Condition1", "Condition2", ...
-#             :widths: auto
-
-#             "RowXX_WellXX", "A", "B", ...
-
-#         A tab needs to be used as a seperator and the file saved as a .tsv file.
-
-#         Parameters
-#         ----------
-#         input_dir : str
-#             Path to the directory containing the sorted images from the opera phenix.
-#         channels : list(str)
-#             List containing the names of the channels that should be loaded.
-#         timepoints : list(str)
-#             List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
-#         plate_layout : str
-#             Path to the plate layout file. For the format please see above.
-#         img_size : int, default 1080
-#             Size of the images that should be loaded. All images will be cropped to this size.
-#         overwrite : bool, default False
-#             If set to True, the function will overwrite the existing input image.
-
-#         Example
-#         -------
-#         >>> channels = ["DAPI", "Alexa488", "mCherry"]
-#         >>> timepoints = ["Timepoint"+str(x).zfill(3) for x in list(range(1, 3))]
-#         >>> input_dir = "path/to/sorted/outputs/from/sparcstools"
-#         >>> plate_layout = "plate_layout.tsv"
-
-#         >>> project.load_input_from_files(input_dir = input_dir,  channels = channels,  timepoints = timepoints, plate_layout = plate_layout, overwrite = True)
-
-#         Function to load timecourse experiments recorded with an opera phenix into the TimecourseProject.
-
-#         Before being able to use this function the exported images from the opera phenix first need to be parsed, sorted and renamed using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_.
-
-#         In addition a plate layout file needs to be created that contains the information on imaged experiment and the experimental conditions for each well. This file needs to be in the following format,
-#         using the well notation ``RowXX_WellXX``:
-
-#         .. csv-table::
-#             :header: "Well", "Condition1", "Condition2", ...
-#             :widths: auto
-
-#             "RowXX_WellXX", "A", "B", ...
-
-#         A tab needs to be used as a seperator and the file saved as a .tsv file.
-
-#         Parameters
-#         ----------
-#         input_dir : str
-#             Path to the directory containing the sorted images from the opera phenix.
-#         channels : list(str)
-#             List containing the names of the channels that should be loaded.
-#         timepoints : list(str)
-#             List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
-#         plate_layout : str
-#             Path to the plate layout file. For the format please see above.
-#         img_size : int, default 1080
-#             Size of the images that should be loaded. All images will be cropped to this size.
-#         overwrite : bool, default False
-#             If set to True, the function will overwrite the existing input image.
-
-#         Example
-#         -------
-#         >>> channels = ["DAPI", "Alexa488", "mCherry"]
-#         >>> timepoints = ["Timepoint"+str(x).zfill(3) for x in list(range(1, 3))]
-#         >>> input_dir = "path/to/sorted/outputs/from/sparcstools"
-#         >>> plate_layout = "plate_layout.tsv"
-
-#         >>> project.load_input_from_files(input_dir = input_dir,  channels = channels,  timepoints = timepoints, plate_layout = plate_layout, overwrite = True)
-
-#         """
-
-#         # check if already exists if so throw error message
-#         if not os.path.isdir(
-#             os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#         ):
-#             os.makedirs(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             )
-
-#         path = os.path.join(
-#             self.directory,
-#             self.DEFAULT_SEGMENTATION_DIR_NAME,
-#             self.DEFAULT_INPUT_IMAGE_NAME,
-#         )
-
-#         if not overwrite:
-#             if os.path.isfile(path):
-#                 sys.exit("File already exists")
-#             else:
-#                 overwrite = True
-
-#         if overwrite:
-#             self.img_size = img_size
-
-#             def _read_write_images(dir, indexes, h5py_path):
-#                 # unpack indexes
-#                 index_start, index_end = indexes
-
-#                 # get information on directory
-#                 well = re.search(
-#                     "Row.._Well[0-9][0-9]", dir
-#                 ).group()  # need to use re.search and not match sinde the identifier is not always at the beginning of the name
-#                 region = re.search("r..._c...$", dir).group()
-
-#                 # list all images within directory
-#                 path = os.path.join(input_dir, dir)
-#                 files = os.listdir(path)
-
-#                 # filter to only contain the timepoints of interest
-#                 files = np.sort([x for x in files if x.startswith(tuple(timepoints))])
-
-#                 # checkt to make sure all timepoints are actually there
-#                 _timepoints = np.unique(
-#                     [re.search("Timepoint[0-9][0-9][0-9]", x).group() for x in files]
-#                 )
-
-#                 sum = 0
-#                 for timepoint in timepoints:
-#                     if timepoint in _timepoints:
-#                         sum += 1
-#                         continue
-#                     else:
-#                         print(f"No images found for Timepoint {timepoint}")
-
-#                 self.log(
-#                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
-#                 )
-
-#                 # read images for that region
-#                 imgs = np.empty(
-#                     (n_timepoints, n_channels, img_size, img_size), dtype="uint16"
-#                 )
-#                 for ix, channel in enumerate(channels):
-#                     images = [x for x in files if channel in x]
-
-#                     for i, im in enumerate(images):
-#                         image = imread(os.path.join(path, im))
-
-#                         if isinstance(image.dtype, np.uint8):
-#                             image = image.astype("uint16") * np.iinfo(np.uint8).max
-
-#                         self._check_image_dtype(image)
-#                         imgs[i, ix, :, :] = image.astype("uint16")
-
-#                 # create labelling
-#                 column_values = []
-#                 for column in plate_layout.columns:
-#                     column_values.append(plate_layout.loc[well, column])
-
-#                 list_input = [
-#                     list(range(index_start, index_end)),
-#                     [dir + "_" + x for x in timepoints],
-#                     [dir] * n_timepoints,
-#                     timepoints,
-#                     [well] * n_timepoints,
-#                     [region] * n_timepoints,
-#                 ]
-#                 list_input = [np.array(x) for x in list_input]
-
-#                 for x in column_values:
-#                     list_input.append(np.array([x] * n_timepoints))
-
-#                 labelling = np.array(list_input).T
-
-#                 input_images[index_start:index_end, :, :, :] = imgs
-#                 labels[index_start:index_end] = labelling
-
-#             # read plate layout
-#             plate_layout = pd.read_csv(plate_layout, sep="\s+|;|,", engine="python")
-#             plate_layout = plate_layout.set_index("Well")
-
-#             column_labels = [
-#                 "index",
-#                 "ID",
-#                 "location",
-#                 "timepoint",
-#                 "well",
-#                 "region",
-#             ] + plate_layout.columns.tolist()
-
-#             # get information on number of timepoints and number of channels
-#             n_timepoints = len(timepoints)
-#             n_channels = len(channels)
-#             wells = np.unique(plate_layout.index.tolist())
-
-#             # get all directories contained within the input dir
-#             directories = os.listdir(input_dir)
-#             if ".DS_Store" in directories:
-#                 directories.remove(
-#                     ".DS_Store"
-#                 )  # need to remove this because otherwise it gives errors
-#             if ".ipynb_checkpoints" in directories:
-#                 directories.remove(".ipynb_checkpoints")
-
-#             # filter directories to only contain those listed in the plate layout
-#             directories = [
-#                 _dir
-#                 for _dir in directories
-#                 if re.search("Row.._Well[0-9][0-9]", _dir).group() in wells
-#             ]
-
-#             # check to ensure that imaging data is found for all wells listed in plate_layout
-#             _wells = [
-#                 re.search("Row.._Well[0-9][0-9]", _dir).group() for _dir in directories
-#             ]
-#             not_found = [well for well in _wells if well not in wells]
-#             if len(not_found) > 0:
-#                 print(
-#                     "following wells listed in plate_layout not found in imaging data:",
-#                     not_found,
-#                 )
-#                 self.log(
-#                     f"following wells listed in plate_layout not found in imaging data: {not_found}"
-#                 )
-
-#             # check to make sure that timepoints given and timepoints found in data acutally match!
-#             _timepoints = []
-
-#             # create .h5 dataset to which all results are written
-#             path = os.path.join(
-#                 self.directory,
-#                 self.DEFAULT_SEGMENTATION_DIR_NAME,
-#                 self.DEFAULT_INPUT_IMAGE_NAME,
-#             )
-
-#             # for some reason this directory does not always exist so check to make sure it does otherwise the whole reading of stuff fails
-#             if not os.path.isdir(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             ):
-#                 os.makedirs(
-#                     os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#                 )
-
-#             with h5py.File(path, "w") as hf:
-#                 dt = h5py.special_dtype(vlen=str)
-#                 hf.create_dataset(
-#                     "label_names", (len(column_labels)), chunks=None, dtype=dt
-#                 )
-#                 hf.create_dataset(
-#                     "labels",
-#                     (len(directories) * n_timepoints, len(column_labels)),
-#                     chunks=None,
-#                     dtype=dt,
-#                 )
-
-#                 hf.create_dataset(
-#                     "input_images",
-#                     (len(directories) * n_timepoints, n_channels, img_size, img_size),
-#                     chunks=(1, 1, img_size, img_size),
-#                     dtype="uint16",
-#                 )
-
-#                 label_names = hf.get("label_names")
-#                 labels = hf.get("labels")
-#                 input_images = hf.get("input_images")
-
-#                 label_names[:] = column_labels
-
-#                 # ------------------
-#                 # start reading data
-#                 # ------------------
-
-#                 indexes = []
-#                 # create indexes
-#                 start_index = 0
-#                 for i, _ in enumerate(directories):
-#                     stop_index = start_index + n_timepoints
-#                     indexes.append((start_index, stop_index))
-#                     start_index = stop_index
-
-#                 # iterate through all directories and add to .h5
-#                 # this is not implemented with multithreaded processing because writing multi-threaded to hdf5 is hard
-#                 # multithreaded reading is easier
-
-#                 for dir, index in tqdm(
-#                     zip(directories, indexes), total=len(directories)
-#                 ):
-#                     _read_write_images(dir, index, h5py_path=path)
-
-#     def load_input_from_stitched_files(
-#         self,
-#         input_dir,
-#         channels,
-#         timepoints,
-#         plate_layout,
-#         overwrite=False,
-#     ):
-#         """
-#         Function to load timecourse experiments recorded with opera phenix into .h5 dataformat for further processing.
-#         Assumes that stitched images for all files have already been assembled.
-
-#         Args:
-#             input_dir (str): path to directory containing the stitched images
-#             channels (list(str)): list of strings indicating which channels should be loaded
-#             timepoints (list(str)): list of strings indicating which timepoints should be loaded
-#             plate_layout (str): path to csv file containing the plate layout
-#             overwrite (bool, optional): boolean indicating if existing files should be overwritten. Defaults to False.
-#         """
-
-#         # check if already exists if so throw error message
-#         if not os.path.isdir(
-#             os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#         ):
-#             os.makedirs(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             )
-
-#         path = os.path.join(
-#             self.directory,
-#             self.DEFAULT_SEGMENTATION_DIR_NAME,
-#             self.DEFAULT_INPUT_IMAGE_NAME,
-#         )
-
-#         if not overwrite:
-#             if os.path.isfile(path):
-#                 sys.exit("File already exists")
-#             else:
-#                 overwrite = True
-
-#         if overwrite:
-
-#             def _read_write_images(well, indexes, h5py_path):
-#                 # unpack indexes
-#                 index_start, index_end = indexes
-
-#                 # list all images for that well
-#                 _files = [_file for _file in files if well in _file]
-
-#                 # filter to only contain the timepoints of interest
-#                 _files = np.sort([x for x in _files if x.startswith(tuple(timepoints))])
-
-#                 # checkt to make sure all timepoints are actually there
-#                 _timepoints = np.unique(
-#                     [re.search("Timepoint[0-9][0-9][0-9]", x).group() for x in _files]
-#                 )
-
-#                 sum = 0
-#                 for timepoint in timepoints:
-#                     if timepoint in _timepoints:
-#                         sum += 1
-#                         continue
-#                     else:
-#                         print(f"No images found for Timepoint {timepoint}")
-
-#                 self.log(
-#                     f"{sum} different timepoints found of the total {len(timepoints)} timepoints given."
-#                 )
-
-#                 # read images for that region
-#                 imgs = np.empty(
-#                     (n_timepoints, n_channels, size1, size2), dtype="uint16"
-#                 )
-#                 for ix, channel in enumerate(channels):
-#                     images = [x for x in _files if channel in x]
-
-#                     for i, im in enumerate(images):
-#                         image = imread(os.path.join(input_dir, im), 0).astype("uint16")
-
-#                         # check if image is too small and if yes, pad the image with black pixels
-#                         if image.shape[0] < size1 or image.shape[1] < size2:
-#                             image = np.pad(
-#                                 image,
-#                                 (
-#                                     (0, np.max((size1 - image.shape[0], 0))),
-#                                     (0, np.max((size2 - image.shape[1], 0))),
-#                                 ),
-#                                 mode="constant",
-#                                 constant_values=0,
-#                             )
-#                             self.log(
-#                                 f"Image {im} with the index {i} is too small and was padded with black pixels. "
-#                                 f"Image shape after padding: {image.shape}."
-#                             )
-
-#                         # perform cropping so that all stitched images have the same size
-#                         x, y = image.shape
-#                         diff1 = x - size1
-#                         diff1x = int(np.floor(diff1 / 2))
-#                         diff1y = int(np.ceil(diff1 / 2))
-#                         diff2 = y - size2
-#                         diff2x = int(np.floor(diff2 / 2))
-#                         diff2y = int(np.ceil(diff2 / 2))
-
-#                         cropped = image[
-#                             slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
-#                         ]
-
-#                         imgs[i, ix, :, :] = cropped
-
-#                 # create labelling
-#                 column_values = []
-#                 for column in plate_layout.columns:
-#                     column_values.append(plate_layout.loc[well, column])
-
-#                 list_input = [
-#                     list(range(index_start, index_end)),
-#                     [well + "_" + x for x in timepoints],
-#                     [well] * n_timepoints,
-#                     timepoints,
-#                     [well] * n_timepoints,
-#                 ]
-#                 list_input = [np.array(x) for x in list_input]
-
-#                 for x in column_values:
-#                     list_input.append(np.array([x] * n_timepoints))
-
-#                 labelling = np.array(list_input).T
-
-#                 input_images[index_start:index_end, :, :, :] = imgs
-#                 labels[index_start:index_end] = labelling
-
-#             # read plate layout
-#             plate_layout = pd.read_csv(plate_layout, sep="\s+|;|,", engine="python")
-#             plate_layout = plate_layout.set_index("Well")
-
-#             column_labels = [
-#                 "index",
-#                 "ID",
-#                 "location",
-#                 "timepoint",
-#                 "well",
-#             ] + plate_layout.columns.tolist()
-
-#             # get information on number of timepoints and number of channels
-#             n_timepoints = len(timepoints)
-#             n_channels = len(channels)
-#             wells = np.unique(plate_layout.index.tolist())
-
-#             # get all files contained within the input dir
-#             files = os.listdir(input_dir)
-#             files = [file for file in files if file.endswith(".tif")]
-
-#             # filter directories to only contain those listed in the plate layout
-#             files = [
-#                 _dir
-#                 for _dir in files
-#                 if re.search("Row.._Well[0-9][0-9]", _dir).group() in wells
-#             ]
-
-#             # check to ensure that imaging data is found for all wells listed in plate_layout
-#             _wells = [re.search("Row.._Well[0-9][0-9]", _dir).group() for _dir in files]
-#             not_found = [well for well in _wells if well not in wells]
-#             if len(not_found) > 0:
-#                 print(
-#                     "following wells listed in plate_layout not found in imaging data:",
-#                     not_found,
-#                 )
-#                 self.log(
-#                     f"following wells listed in plate_layout not found in imaging data: {not_found}"
-#                 )
-
-#             # get image size and subtract 10 pixels from each edge
-#             # will adjust all merged images to this dimension to ensure that they all have the same dimensions and can be loaded into the same hdf5 file
-#             size1, size2 = imagesize.get(os.path.join(input_dir, files[0]))
-#             size1 = size1 - 2 * 10
-#             size2 = size2 - 2 * 10
-#             self.img_size = (size1, size2)
-
-#             # create .h5 dataset to which all results are written
-#             path = os.path.join(
-#                 self.directory,
-#                 self.DEFAULT_SEGMENTATION_DIR_NAME,
-#                 self.DEFAULT_INPUT_IMAGE_NAME,
-#             )
-
-#             # for some reason this directory does not always exist so check to make sure it does otherwise the whole reading of stuff fails
-#             if not os.path.isdir(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             ):
-#                 os.makedirs(
-#                     os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#                 )
-
-#             with h5py.File(path, "w") as hf:
-#                 dt = h5py.special_dtype(vlen=str)
-#                 hf.create_dataset(
-#                     "label_names", (len(column_labels)), chunks=None, dtype=dt
-#                 )
-#                 hf.create_dataset(
-#                     "labels",
-#                     (len(wells) * n_timepoints, len(column_labels)),
-#                     chunks=None,
-#                     dtype=dt,
-#                 )
-#                 hf.create_dataset(
-#                     "input_images",
-#                     (len(wells) * n_timepoints, n_channels, size1, size2),
-#                     chunks=(1, 1, size1, size2),
-#                     dtype="uint16",
-#                 )
-
-#                 label_names = hf.get("label_names")
-#                 labels = hf.get("labels")
-#                 input_images = hf.get("input_images")
-
-#                 label_names[:] = column_labels
-
-#                 # ------------------
-#                 # start reading data
-#                 # ------------------
-
-#                 indexes = []
-#                 # create indexes
-#                 start_index = 0
-#                 for i, _ in enumerate(wells):
-#                     stop_index = start_index + n_timepoints
-#                     indexes.append((start_index, stop_index))
-#                     start_index = stop_index
-
-#                 # iterate through all directories and add to .h5
-#                 # this is not implemented with multithreaded processing because writing multi-threaded to hdf5 is hard
-#                 # multithreaded reading is easier
-
-#                 for well, index in tqdm(zip(wells, indexes), total=len(wells)):
-#                     _read_write_images(well, index, h5py_path=path)
-
-#     def load_input_from_files_and_merge(
-#         self,
-#         input_dir,
-#         channels,
-#         timepoints,
-#         plate_layout,
-#         img_size=1080,
-#         stitching_channel="Alexa488",
-#         overlap=0.1,
-#         max_shift=10,
-#         overwrite=False,
-#         nucleus_channel="DAPI",
-#         cytosol_channel="Alexa488",
-#     ):
-#         """
-#         Function to load timecourse experiments recorded with an opera phenix into a TimecourseProject. In addition to loading the images,
-#         this wrapper function also stitches images acquired in the same well (this assumes that the tiles were aquired with overlap and in a rectangular shape)
-#         using the `sparcstools package <https://github.com/MannLabs/SPARCStools>`_. Implementation of this function is currently still slow for many wells/timepoints as stitching
-#         is handled consecutively and not in parallel. This will be fixed in the future.
-
-#         Parameters
-#         ----------
-#         input_dir : str
-#             Path to the directory containing the sorted images from the opera phenix.
-#         channels : list(str)
-#             List containing the names of the channels that should be loaded.
-#         timepoints : list(str)
-#             List containing the names of the timepoints that should be loaded. Will return a warning if you try to load a timepoint that is not found in the data.
-#         plate_layout : str
-#             Path to the plate layout file. For the format please see above.
-#         img_size : int, default 1080
-#             Size of the images that should be loaded. All images will be cropped to this size.
-#         stitching_channel : str, default "Alexa488"
-#             string indicated on which channel the stitching should be calculated.
-#         overlap : float, default 0.1
-#             float indicating the overlap between the tiles that were aquired.
-#         max_shift : int, default 10
-#             int indicating the maximum shift that is allowed when stitching the tiles. If a calculated shift is larger than this threshold
-#             between two tiles then the position of these tiles is not updated and is set according to the calculated position based on the overlap.
-#         overwrite : bool, default False
-#             If set to True, the function will overwrite the existing input image.
-#         nucleus_channel : str, default "DAPI"
-#             string indicating the channel that should be used for the nucleus channel.
-#         cytosol_channel : str, default "Alexa488"
-#             string indicating the channel that should be used for the cytosol channel.
-
-#         """
-
-#         from sparcstools.stitch import generate_stitched
-
-#         # check if already exists if so throw error message
-#         if not os.path.isdir(
-#             os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#         ):
-#             os.makedirs(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             )
-
-#         path = os.path.join(
-#             self.directory,
-#             self.DEFAULT_SEGMENTATION_DIR_NAME,
-#             self.DEFAULT_INPUT_IMAGE_NAME,
-#         )
-
-#         if not overwrite:
-#             if os.path.isfile(path):
-#                 sys.exit("File already exists.")
-#             else:
-#                 overwrite = True
-
-#         if overwrite:
-#             self.img_size = img_size
-
-#             self.log(f"Reading all images included in directory {input_dir}.")
-
-#             images = os.listdir(input_dir)
-#             images = [x for x in images if x.endswith((".tiff", ".tif"))]
-
-#             _timepoints = np.sort(list(set([x.split("_")[0] for x in images])))
-#             _wells = np.sort(
-#                 list(
-#                     set(
-#                         [
-#                             re.match(".*_Row[0-9][0-9]_Well[0-9][0-9]", x).group()[13:]
-#                             for x in images
-#                         ]
-#                     )
-#                 )
-#             )
-
-#             # apply filtering to only get those that are in the plate layout file
-#             plate_layout = pd.read_csv(plate_layout, sep="\s+|;|,", engine="python")
-#             plate_layout = plate_layout.set_index("Well")
-
-#             column_labels = [
-#                 "index",
-#                 "ID",
-#                 "location",
-#                 "timepoint",
-#                 "well",
-#                 "region",
-#             ] + plate_layout.columns.tolist()
-
-#             # get information on number of timepoints and number of channels
-#             n_timepoints = len(timepoints)
-#             n_channels = len(channels)
-#             wells = np.unique(plate_layout.index.tolist())
-
-#             _wells = [x for x in _wells if x in wells]
-#             _timepoints = [x for x in _timepoints if x in timepoints]
-
-#             not_found_wells = [well for well in _wells if well not in wells]
-#             not_found_timepoints = [
-#                 timepoint for timepoint in _timepoints if timepoint not in timepoints
-#             ]
-
-#             if len(not_found_wells) > 0:
-#                 print(
-#                     "following wells listed in plate_layout not found in imaging data:",
-#                     not_found_wells,
-#                 )
-#                 self.log(
-#                     f"following wells listed in plate_layout not found in imaging data: {not_found_wells}"
-#                 )
-
-#             if len(not_found_timepoints) > 0:
-#                 print(
-#                     "following timepoints given not found in imaging data:",
-#                     not_found_timepoints,
-#                 )
-#                 self.log(
-#                     f"following timepoints given not found in imaging data: {not_found_timepoints}"
-#                 )
-
-#             self.log("Will perform merging over the following specs:")
-#             self.log(f"Wells: {_wells}")
-#             self.log(f"Timepoints: {_timepoints}")
-
-#             # create .h5 dataset to which all results are written
-#             path = os.path.join(
-#                 self.directory,
-#                 self.DEFAULT_SEGMENTATION_DIR_NAME,
-#                 self.DEFAULT_INPUT_IMAGE_NAME,
-#             )
-
-#             # for some reason this directory does not always exist so check to make sure it does otherwise the whole reading of stuff fails
-#             if not os.path.isdir(
-#                 os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#             ):
-#                 os.makedirs(
-#                     os.path.join(self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME)
-#                 )
-
-#             with h5py.File(path, "w") as hf:
-#                 dt = h5py.special_dtype(vlen=str)
-#                 hf.create_dataset(
-#                     "label_names", (len(column_labels)), chunks=None, dtype=dt
-#                 )
-#                 hf.create_dataset(
-#                     "labels",
-#                     (len(_wells) * n_timepoints, len(column_labels)),
-#                     chunks=None,
-#                     dtype=dt,
-#                 )
-#                 label_names = hf.get("label_names")
-#                 labels = hf.get("labels")
-
-#                 label_names[:] = column_labels
-
-#                 run_number = 0
-#                 for timepoint in tqdm(_timepoints):
-#                     for well in tqdm(_wells):
-#                         RowID = well.split("_")[0]
-#                         WellID = well.split("_")[1]
-#                         zstack_value = 1
-
-#                         # define patter to recognize which slide should be stitched
-#                         # remember to adjust the zstack value if you aquired zstacks and want to stitch a speciifc one in the parameters above
-
-#                         pattern = (
-#                             f"{timepoint}_{RowID}_{WellID}"
-#                             + "_{channel}_"
-#                             + "zstack"
-#                             + str(zstack_value).zfill(3)
-#                             + "_r{row:03}_c{col:03}.tif"
-#                         )
-
-#                         merged_images, channels = generate_stitched(
-#                             input_dir,
-#                             well,
-#                             pattern,
-#                             outdir="/",
-#                             overlap=overlap,
-#                             max_shift=max_shift,
-#                             do_intensity_rescale=True,
-#                             stitching_channel=stitching_channel,
-#                             filetype="return_array",
-#                             export_XML=False,
-#                             plot_QC=False,
-#                         )
-
-#                         if run_number == 0:
-#                             img_size1 = merged_images.shape[1] - 2 * 10
-#                             img_size2 = merged_images.shape[2] - 2 * 10
-#                             # create this after the first image is stitched and we have the dimensions
-#                             hf.create_dataset(
-#                                 "input_images",
-#                                 (
-#                                     len(_wells) * n_timepoints,
-#                                     n_channels,
-#                                     img_size1,
-#                                     img_size2,
-#                                 ),
-#                                 chunks=(1, 1, img_size1, img_size2),
-#                             )
-#                             input_images = hf.get("input_images")
-
-#                         # crop so that all images have the same size
-#                         _, x, y = merged_images.shape
-#                         diff1 = x - img_size1
-#                         diff1x = int(np.floor(diff1 / 2))
-#                         diff1y = int(np.ceil(diff1 / 2))
-#                         diff2 = y - img_size2
-#                         diff2x = int(np.floor(diff2 / 2))
-#                         diff2y = int(np.ceil(diff2 / 2))
-#                         cropped = merged_images[
-#                             :, slice(diff1x, x - diff1y), slice(diff2x, y - diff2y)
-#                         ]
-
-#                         # create labelling
-#                         column_values = []
-#                         for column in plate_layout.columns:
-#                             column_values.append(plate_layout.loc[well, column])
-
-#                         list_input = [
-#                             str(run_number),
-#                             f"{well}_{timepoint}_all",
-#                             f"{well}_all",
-#                             timepoint,
-#                             well,
-#                             "stitched",
-#                         ]
-
-#                         for x in column_values:
-#                             list_input.append(x)
-
-#                         # reorder to fit to timecourse sorting
-#                         allocated_channels = []
-#                         allocated_indexes = []
-#                         if nucleus_channel in channels:
-#                             nucleus_index = channels.index(nucleus_channel)
-#                             allocated_channels.append(nucleus_channel)
-#                             allocated_indexes.append(nucleus_index)
-#                         else:
-#                             print("nucleus_channel not found in supplied channels!!!")
-
-#                         if cytosol_channel in channels:
-#                             cytosol_index = channels.index(cytosol_channel)
-#                             allocated_channels.append(cytosol_channel)
-#                             allocated_indexes.append(cytosol_index)
-#                         else:
-#                             print("cytosol_channel not found in supplied channels!!!")
-
-#                         all_other_indexes = [
-#                             channels.index(x)
-#                             for x in channels
-#                             if x not in allocated_channels
-#                         ]
-#                         all_other_indexes = list(np.sort(all_other_indexes))
-
-#                         index_list = allocated_indexes + all_other_indexes
-#                         cropped = np.array([cropped[x, :, :] for x in index_list])
-
-#                         self.log(
-#                             f"adjusted channels to the following order: {[channels[i] for i in index_list]}"
-#                         )
-#                         input_images[run_number, :, :, :] = cropped
-#                         labels[run_number] = list_input
-#                         run_number += 1
-#                         self.log(
-#                             f"finished stitching and saving well {well} for timepoint {timepoint}."
-#                         )
-
-#     def adjust_segmentation_indexes(self):
-#         self.segmentation_f.adjust_segmentation_indexes()
-
-#     def segment(self, overwrite=False, *args, **kwargs):
-#         """
-#         segment timecourse project with the defined segmentation method.
-#         """
-
-#         if overwrite:
-#             # delete segmentation and classes from .hdf5 to be able to create new again
-#             path = os.path.join(
-#                 self.directory,
-#                 self.DEFAULT_SEGMENTATION_DIR_NAME,
-#                 self.DEFAULT_INPUT_IMAGE_NAME,
-#             )
-#             with h5py.File(path, "a") as hf:
-#                 if "segmentation" in hf.keys():
-#                     del hf["segmentation"]
-#                 if "classes" in hf.keys():
-#                     del hf["classes"]
-
-#             # delete generated files to make clean
-#             classes_path = os.path.join(
-#                 self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME, "classes.csv"
-#             )
-#             log_path = os.path.join(
-#                 self.directory, self.DEFAULT_SEGMENTATION_DIR_NAME, "processing.log"
-#             )
-#             if os.path.isfile(classes_path):
-#                 os.remove(classes_path)
-#             if os.path.isfile(log_path):
-#                 os.remove(log_path)
-
-#             print("If Segmentation already existed removed.")
-
-#         if self.segmentation_f is None:
-#             raise ValueError("No segmentation method defined")
-
-#         else:
-#             self.segmentation_f(*args, **kwargs)
-
-#     def extract(self, *args, **kwargs):
-#         """
-#         Extract single cells from a timecourse project with the defined extraction method.
-#         """
-
-#         if self.extraction_f is None:
-#             raise ValueError("No extraction method defined")
-
-#         input_segmentation = self.segmentation_f.get_output()
-#         input_dir = os.path.join(
-#             self.project_location, self.DEFAULT_SEGMENTATION_DIR_NAME, "classes.csv"
-#         )
-#         self.extraction_f(input_segmentation, input_dir, *args, **kwargs)

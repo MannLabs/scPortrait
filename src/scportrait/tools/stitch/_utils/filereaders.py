@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import skimage.exposure
-from ashlar import filepattern
 from ashlar.filepattern import FilePatternReader
 from ashlar.reg import BioformatsMetadata, BioformatsReader
 from skimage.filters import gaussian
@@ -16,14 +15,14 @@ class FilePatternReaderRescale(FilePatternReader):
 
     def __init__(
         self,
-        path,
-        pattern,
-        overlap,
-        pixel_size=1,
-        do_rescale=False,
-        WGAchannel=None,
-        no_rescale_channel="Alexa488",
-        rescale_range=(1, 99),
+        path: str,
+        pattern: str,
+        overlap: float,
+        pixel_size: int = 1,
+        do_rescale: bool = False,
+        no_rescale_channel: str = "Alexa488",
+        rescale_range: tuple[int, int] = (1, 99),
+        dtype=None,
     ):
         try:
             super().__init__(path, pattern, overlap, pixel_size=pixel_size)
@@ -37,18 +36,26 @@ class FilePatternReaderRescale(FilePatternReader):
             )
 
         self.do_rescale = do_rescale
-        self.WGAchannel = WGAchannel
         self.no_rescale_channel = no_rescale_channel
         self.rescale_range = rescale_range
+        self.dtype_image = dtype
 
     @staticmethod
-    def rescale(img, rescale_range=(1, 99), cutoff_threshold=None):
+    def rescale(
+        img: np.ndarray, rescale_range: tuple[int, int] = (1, 99), cutoff_threshold: int | None = None
+    ) -> np.ndarray:
         return rescale_image(img, rescale_range, cutoff_threshold=cutoff_threshold)
 
     @staticmethod
     # placeholer method kept for compatibility with old code
     # should be reimplemented in the future to allow for more flexible illumination correction
-    def correct_illumination(img, sigma=30, double_correct=False, rescale_range=(1, 99), cutoff_threshold=None):
+    def correct_illumination(
+        img: np.ndarray,
+        sigma: float = 30,
+        double_correct: bool = False,
+        rescale_range: tuple[int, int] = (1, 99),
+        cutoff_threshold: int | None = None,
+    ) -> np.ndarray:
         img = rescale_image(img, rescale_range, cutoff_threshold=cutoff_threshold, return_float=True)
 
         # calculate correction mask
@@ -70,8 +77,18 @@ class FilePatternReaderRescale(FilePatternReader):
         else:
             return (img_corrected * 65535).astype("uint16")
 
-    def read(self, series, c):
+    def read(self, series, c) -> np.ndarray:
         img = super().read(series, c)
+
+        # check to ensure we are always using the same dtype
+        if self.dtype_image is not None:
+            if not isinstance(img.dtype, self.dtype_image):
+                Warning(f"Found image with dtype {img.dtype}. Automatically converting to {self.dtype_image}")
+                img = img.astype(self.dtype_image)
+        else:
+            # first time reading an image set dtype if none is supplied
+            print("Setting dtype to", img.dtype)
+            self.dtype_image = type(img.dtype)
 
         if not self.do_rescale:
             return img
@@ -142,7 +159,7 @@ class BioformatsReaderRescale(BioformatsReader):
         self.metadata._reader.setSeries(self.metadata.active_series[series])
         index = self.metadata._reader.getIndex(0, c, 0)
         byte_array = self.metadata._reader.openBytes(index)
-        dtype = self.metadata.pixel_dtype
+        dtype = self.metadata.pixel_dtype  # no check required here as dtype has to be the same for all
         shape = self.metadata.tile_size(series)
         img = np.frombuffer(byte_array.tostring(), dtype=dtype).reshape(shape)
 

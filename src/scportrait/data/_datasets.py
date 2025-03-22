@@ -1,10 +1,17 @@
 from pathlib import Path
+from typing import Literal
 
 from scportrait.data._dataloader import _download
 from scportrait.tools.ml.pretrained_models import get_data_dir
 
 
-def _get_remote_dataset(dataset: str, url: str, name: str | None = None) -> Path:
+def _get_remote_dataset(
+    dataset: str,
+    url: str,
+    name: str | None = None,
+    archive_format: Literal["zip", "tar", "tar.gz", "tgz"] | None = "zip",
+    outfile_name: None | str = None,
+) -> Path:
     """Download and extract a dataset from a remote location.
 
     Args:
@@ -18,11 +25,23 @@ def _get_remote_dataset(dataset: str, url: str, name: str | None = None) -> Path
     data_dir = get_data_dir()
     save_path = data_dir / dataset
     if not save_path.exists():
-        _download(url=url, output_path=str(save_path), archive_format="zip")
+        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
     if name is None:
         return save_path
     else:
         return save_path / name
+
+
+def custom_cellpose_model() -> Path:
+    """Download the example custom cellpose model.
+
+    Returns:
+        Path to the downloaded and extracted custom cellpose model
+    """
+    DATASET = "custom_cellpose_model"
+    URL = "https://zenodo.org/records/14931602/files/custom_cellpose_model.cpkt?download=1"
+    NAME = "custom_cellpose_model.cpkt"
+    return _get_remote_dataset(DATASET, URL, NAME, archive_format=None, outfile_name=NAME)
 
 
 def dataset_1() -> Path:
@@ -103,6 +122,17 @@ def dataset_6() -> Path:
     return _get_remote_dataset(DATASET, URL)
 
 
+def dataset_7() -> Path:
+    """Download and extract the example dataset 7 images.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "example_7_images"
+    URL = "https://zenodo.org/records/14951047/files/example_7_images.zip?download=1"
+    return _get_remote_dataset(DATASET, URL)
+
+
 def dataset_stitching_example() -> Path:
     """Download and extract the example dataset for stitching images.
 
@@ -112,3 +142,27 @@ def dataset_stitching_example() -> Path:
     DATASET = "stitching_example"
     URL = "https://zenodo.org/records/13742379/files/example_stitching.zip?download=1"
     return _get_remote_dataset(DATASET, URL)
+
+
+def dataset_parsing_example() -> Path:
+    """Download and extract the example dataset for parsing Harmony exported imaging experiments.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "parsing_example_basic"
+    URL = "https://zenodo.org/records/14193689/files/harmony_export_V7_basic.zip?download=1"
+    NAME = "basic_export"
+    return _get_remote_dataset(DATASET, URL, NAME)
+
+
+def dataset_parsing_example_flatfield_corrected() -> Path:
+    """Download and extract the example dataset for parsing Harmony exported imaging experiments.
+
+    Returns:
+        Path to the downloaded and extracted images.
+    """
+    DATASET = "parsing_example_flatfield"
+    URL = "https://zenodo.org/records/14973295/files/harmony_export_V7_flatfield_corrected.zip?download=1"
+    NAME = "flat_field_corrected"
+    return _get_remote_dataset(DATASET, URL, NAME)

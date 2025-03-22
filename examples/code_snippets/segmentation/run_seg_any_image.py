@@ -35,14 +35,8 @@ config = {
 method = CytosolOnlySegmentationCellpose(config=config)
 method.config = method.config["CytosolOnlySegmentationCellpose"]
 
-# create datastructure to save results to
-method.maps = {}
-
 # perform segmentation
-method.cellpose_segmentation(image)
-
-# access results
-seg_mask = method.maps["cytosol_segmentation"]
+seg_mask = method.cellpose_segmentation(image)
 
 # plot results
 plt.imshow(seg_mask)

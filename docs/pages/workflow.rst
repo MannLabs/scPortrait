@@ -98,7 +98,7 @@ Extraction
 ==========
 
 The scPortrait framework is built around the idea of generating standardized single-cell image datasets. A scPortrait single cell image dataset consists of a collection of images for each cell, containing both the segmentation masks and imaging channels of that particular cell as well as their annotation.
-Aggregated across all cells in a scPortrait dataset, these image collections are saved as ``HDF5``, a container file format that enables the retrieval of individual cells without loading the entire dataset. The standardized ``HDF5`` file-format developed in scPortrait allows for the efficient storage and retrieval of single-cell image datasets. You can find more information on the specifications of the file format :ref:`here <single_cell_image_datasets>`.
+Aggregated across all cells in a scPortrait dataset, these image collections are saved in a standardized container format, built on [AnnData](https://github.com/scverse/anndata). The format enables the retrieval of individual cells without loading the entire dataset  into memory. You can find more information on the specifications of the standardized single-cell image file-format developed in scPortrait  :ref:`here <single_cell_image_datasets>`.
 
 .. image:: images/single_cell_dataset.png
    :width: 100%
@@ -141,7 +141,7 @@ You can also find an example selection workflow outlined in this `notebook <http
 
 .. toctree::
    :maxdepth: 2
-   :caption: Topic Deep Dives:
+   :caption: Topic Deep Dives
 
    workflow/package_design
    workflow/project

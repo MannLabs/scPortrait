@@ -1,3 +1,4 @@
+from pathlib import PosixPath
 from typing import TypeVar
 
 import yaml
@@ -5,7 +6,7 @@ import yaml
 T = TypeVar("T")
 
 
-def read_config(config_path: str) -> dict:
+def read_config(config_path: str | PosixPath) -> dict:
     with open(config_path) as stream:
         try:
             config = yaml.safe_load(stream)

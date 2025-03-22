@@ -10,7 +10,7 @@ import xarray
 from alphabase.io import tempmmap
 from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, TableModel
+from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, ShapesModel, TableModel
 from spatialdata.transformations.transformations import Identity
 
 from scportrait.pipeline._base import Logable
@@ -18,10 +18,12 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
+from scportrait.tools.spdata.write import write
+from scportrait.tools.spdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
-ObjectType: TypeAlias = Literal["images", "labels", "points", "tables"]
+ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
 
 class sdata_filehandler(Logable):
@@ -54,6 +56,22 @@ class sdata_filehandler(Logable):
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
 
+    def _check_empty_sdata(self) -> bool:
+        """Check if SpatialData object is empty.
+
+        Returns:
+            Whether SpatialData object is empty
+        """
+        empty_sdata_keys = {".zattrs", ".zgroup", "zmetadata"}
+        if os.path.exists(self.sdata_path):
+            keys = set(os.listdir(self.sdata_path))
+            if keys == empty_sdata_keys:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def _create_empty_sdata(self) -> SpatialData:
         """Create an empty SpatialData object.
 
@@ -76,12 +94,7 @@ class sdata_filehandler(Logable):
             SpatialData object
         """
         if os.path.exists(self.sdata_path):
-            if len(os.listdir(self.sdata_path)) == 0:
-                shutil.rmtree(self.sdata_path, ignore_errors=True)
-                _sdata = self._create_empty_sdata()
-                _sdata.write(self.sdata_path, overwrite=True)
-            else:
-                _sdata = SpatialData.read(self.sdata_path)
+            _sdata = SpatialData.read(self.sdata_path)
 
         else:
             _sdata = self._create_empty_sdata()
@@ -103,7 +116,7 @@ class sdata_filehandler(Logable):
         Args:
             sdata: SpatialData object
             name: Name of object to delete
-            type: Type of object ("images", "labels", "points", "tables")
+            type: Type of object ("images", "labels", "points", "tables", "shapes")
         """
         if name in sdata:
             del sdata[name]
@@ -126,13 +139,15 @@ class sdata_filehandler(Logable):
         self.input_image_status = self.input_image_name in _sdata.images
         self.nuc_seg_status = self.nuc_seg_name in _sdata.labels
         self.cyto_seg_status = self.cyto_seg_name in _sdata.labels
-        self.centers_status = self.centers_name in _sdata.points
+        self.nuc_centers_status = f"{self.centers_name}_{self.nuc_seg_name}" in _sdata.points
+        self.cyto_centers_status = f"{self.centers_name}_{self.cyto_seg_name}" in _sdata.points
 
         _sdata.attrs["sdata_status"] = {
             "input_images": self.input_image_status,
             "nucleus_segmentation": self.nuc_seg_status,
             "cytosol_segmentation": self.cyto_seg_status,
-            "centers": self.centers_status,
+            "nucleus_centers": self.nuc_centers_status,
+            "cytosol_centers": self.cyto_centers_status,
         }
 
         _sdata.write_metadata()  # ensure the metadata is updated on file
@@ -183,58 +198,15 @@ class sdata_filehandler(Logable):
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
         _sdata = self._read_sdata()
-
-        # check if the image is already a multi-scale image
-        if isinstance(image, xarray.DataTree):
-            # if so only validate the model since this means we are getting the image from a spatialdata object already
-            # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
-            Image2DModel().validate(image)
-            if scale_factors is not None:
-                Warning("Scale factors are ignored when passing a multi-scale image.")
-        else:
-            if scale_factors is None:
-                scale_factors = [2, 4, 8]
-            if scale_factors is None:
-                scale_factors = [2, 4, 8]
-
-            if isinstance(image, xarray.DataArray):
-                # if so first validate the model since this means we are getting the image from a spatialdata object already
-                # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
-                Image2DModel().validate(image)
-
-                if channel_names is not None:
-                    Warning(
-                        "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
-                    )
-
-                image = Image2DModel.parse(
-                    image,
-                    scale_factors=scale_factors,
-                    rgb=False,
-                )
-
-            else:
-                if channel_names is None:
-                    channel_names = [f"channel_{i}" for i in range(image.shape[0])]
-
-                # transform to spatialdata image model
-                transform_original = Identity()
-                image = Image2DModel.parse(
-                    image,
-                    dims=["c", "y", "x"],
-                    chunks=chunks,
-                    c_coords=channel_names,
-                    scale_factors=scale_factors,
-                    transformations={"global": transform_original},
-                    rgb=False,
-                )
-
-        if overwrite:
-            self._force_delete_object(_sdata, image_name, "images")
-
-        _sdata.images[image_name] = image
-        _sdata.write_element(image_name, overwrite=True)
-
+        write.image(
+            _sdata,
+            image,
+            image_name,
+            channel_names=channel_names,
+            scale_factors=scale_factors,
+            chunks=chunks,
+            overwrite=overwrite,
+        )
         self.log(f"Image {image_name} written to sdata object.")
         self._check_sdata_status()
 
@@ -242,7 +214,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation_object: Labels2DModel,
         segmentation_label: str,
-        classes: set[str] | None = None,
         overwrite: bool = False,
     ) -> None:
         """Write segmentation object to SpatialData.
@@ -254,13 +225,7 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if overwrite:
-            self._force_delete_object(_sdata, segmentation_label, "labels")
-
-        _sdata.labels[segmentation_label] = segmentation_object
-        _sdata.write_element(segmentation_label, overwrite=True)
-
+        add_element_sdata(_sdata, segmentation_object, segmentation_label, overwrite=overwrite)
         self.log(f"Segmentation {segmentation_label} written to sdata object.")
         self._check_sdata_status()
 
@@ -268,7 +233,6 @@ class sdata_filehandler(Logable):
         self,
         segmentation: xarray.DataArray | np.ndarray,
         segmentation_label: str,
-        classes: set[str] | None = None,
         chunks: ChunkSize2D = (1000, 1000),
         overwrite: bool = False,
     ) -> None:
@@ -283,16 +247,13 @@ class sdata_filehandler(Logable):
         """
         transform_original = Identity()
         mask = Labels2DModel.parse(
-            segmentation,
-            dims=["y", "x"],
-            transformations={"global": transform_original},
-            chunks=chunks,
+            segmentation, dims=["y", "x"], transformations={"global": transform_original}, chunks=chunks
         )
 
         if not get_chunk_size(mask) == chunks:
             mask.data = mask.data.rechunk(chunks)
 
-        self._write_segmentation_object_sdata(mask, segmentation_label, classes=classes, overwrite=overwrite)
+        self._write_segmentation_object_sdata(mask, segmentation_label, overwrite=overwrite)
 
     def _write_points_object_sdata(self, points: PointsModel, points_name: str, overwrite: bool = False) -> None:
         """Write points object to SpatialData.
@@ -303,14 +264,9 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
-
-        if overwrite:
-            self._force_delete_object(_sdata, points_name, "points")
-
-        _sdata.points[points_name] = points
-        _sdata.write_element(points_name, overwrite=True)
-
+        add_element_sdata(_sdata, points, points_name, overwrite=overwrite)
         self.log(f"Points {points_name} written to sdata object.")
+        self._check_sdata_status()
 
     def _write_table_sdata(
         self, adata: AnnData, table_name: str, segmentation_mask_name: str, overwrite: bool = False
@@ -333,14 +289,16 @@ class sdata_filehandler(Logable):
 
         # get obs and obs_indices
         obs = adata.obs
-        obs_indices = adata.obs.index.astype(int)  # need to ensure int subtype to be able to annotate seg masks
+        if "cell_id" in obs.columns:
+            obs_indices = obs["cell_id"]
+        else:
+            raise ValueError("Cell IDs not found in adata object.")
 
         # sanity checking
         assert len(obs_indices) == len(set(obs_indices)), "Instance IDs are not unique."
         cell_ids_mask = set(_sdata[f"{self.centers_name}_{segmentation_mask_name}"].index.values.compute())
         assert set(obs_indices).issubset(cell_ids_mask), "Instance IDs do not match segmentation mask cell IDs."
 
-        obs["instance_id"] = obs_indices
         obs["region"] = segmentation_mask_name
         obs["region"] = obs["region"].astype("category")
 
@@ -349,7 +307,7 @@ class sdata_filehandler(Logable):
             adata,
             region=[segmentation_mask_name],
             region_key="region",
-            instance_key="instance_id",
+            instance_key="cell_id",
         )
 
         self._write_table_object_sdata(table, table_name, overwrite=overwrite)
@@ -363,14 +321,27 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing data
         """
         _sdata = self._read_sdata()
+        add_element_sdata(_sdata, table, table_name, overwrite=overwrite)
+        self.log(f"Table {table_name} written to sdata object.")
+        self._check_sdata_status()
+
+    def _write_shapes_object_sdata(self, shapes: ShapesModel, shapes_name: str, overwrite: bool = False) -> None:
+        """Write shapes object to SpatialData.
+
+        Args:
+            shapes: Shapes object to write
+            shapes_name: Name for the shapes object
+            overwrite: Whether to overwrite existing data
+        """
+        _sdata = self._read_sdata()
 
         if overwrite:
-            self._force_delete_object(_sdata, table_name, "tables")
+            self._force_delete_object(_sdata, shapes_name, "shapes")
 
-        _sdata.tables[table_name] = table
-        _sdata.write_element(table_name, overwrite=True)
+        _sdata.shapes[shapes_name] = shapes
+        _sdata.write_element(shapes_name, overwrite=True)
 
-        self.log(f"Table {table_name} written to sdata object.")
+        self.log(f"Shapes {shapes_name} written to sdata object.")
 
     def _get_centers(self, sdata: SpatialData, segmentation_label: str) -> PointsModel:
         """Get cell centers from segmentation.
@@ -435,12 +406,7 @@ class sdata_filehandler(Logable):
         shape = image.shape
 
         # initialize empty memory mapped arrays to store the data
-        path_input_image = tempmmap.create_empty_mmap(
-            shape=shape,
-            dtype=image.dtype,
-            tmp_dir_abs_path=tmp_dir_abs_path,
-        )
-
+        path_input_image = tempmmap.create_empty_mmap(shape=shape, dtype=image.dtype, tmp_dir_abs_path=tmp_dir_abs_path)
         input_image_mmap = tempmmap.mmap_array_from_path(path_input_image)
 
         Z: int | None = None
@@ -492,6 +458,12 @@ class sdata_filehandler(Logable):
 
         seg_objects = [_sdata.labels[seg] for seg in seg_name]
 
+        # ensure we get the correct level of segmentation
+        for i, seg in enumerate(seg_objects):
+            if isinstance(seg, xarray.DataTree):
+                seg = seg.scale0.image
+                seg_objects[i] = seg
+
         shapes = [seg.shape for seg in seg_objects]
 
         Z: int | None = None
@@ -523,9 +495,7 @@ class sdata_filehandler(Logable):
 
         # initialize empty memory mapped arrays to store the data
         path_seg_masks = tempmmap.create_empty_mmap(
-            shape=shape,
-            dtype=seg_objects[0].data.dtype,
-            tmp_dir_abs_path=tmp_dir_abs_path,
+            shape=shape, dtype=seg_objects[0].data.dtype, tmp_dir_abs_path=tmp_dir_abs_path
         )
 
         seg_masks = tempmmap.mmap_array_from_path(path_seg_masks)

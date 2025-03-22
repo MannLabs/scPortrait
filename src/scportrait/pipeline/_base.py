@@ -5,10 +5,44 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
+from pathlib import Path, PosixPath
 
 import numpy as np
 import torch
 
+from scportrait.pipeline._utils.constants import (
+    DEFAULT_BENCHMARKING_FILE,
+    DEFAULT_CELL_ID_NAME,
+    DEFAULT_CENTERS_NAME,
+    DEFAULT_CHUNK_SIZE_2D,
+    DEFAULT_CHUNK_SIZE_3D,
+    DEFAULT_CLASSES_FILE,
+    DEFAULT_CONFIG_NAME,
+    DEFAULT_DATA_DIR,
+    DEFAULT_EXTRACTION_DIR_NAME,
+    DEFAULT_EXTRACTION_FILE,
+    DEFAULT_FEATURIZATION_DIR_NAME,
+    DEFAULT_FORMAT,
+    DEFAULT_IMAGE_DTYPE,
+    DEFAULT_INPUT_IMAGE_NAME,
+    DEFAULT_LOG_NAME,
+    DEFAULT_NAME_SINGLE_CELL_IMAGES,
+    DEFAULT_PREFIX_FILTERED_SEG,
+    DEFAULT_PREFIX_MAIN_SEG,
+    DEFAULT_PREFIX_SELECTED_SEG,
+    DEFAULT_REMOVED_CLASSES_FILE,
+    DEFAULT_SDATA_FILE,
+    DEFAULT_SEG_NAME_0,
+    DEFAULT_SEG_NAME_1,
+    DEFAULT_SEGMENTATION_DIR_NAME,
+    DEFAULT_SEGMENTATION_DTYPE,
+    DEFAULT_SEGMENTATION_FILE,
+    DEFAULT_SELECTION_DIR_NAME,
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+    DEFAULT_TILES_FOLDER,
+    IMAGE_DATACONTAINER_NAME,
+    INDEX_DATACONTAINER_NAME,
+)
 from scportrait.pipeline._utils.helper import read_config
 
 
@@ -24,8 +58,8 @@ class Logable:
         DEFAULT_FORMAT (str): Date and time format used for logging. See `datetime.strftime <https://docs.python.org/3/library/datetime.html#datetime.date.strftime>`_.
     """
 
-    DEFAULT_LOG_NAME = "processing.log"
-    DEFAULT_FORMAT = "%d/%m/%Y %H:%M:%S"
+    DEFAULT_LOG_NAME = DEFAULT_LOG_NAME
+    DEFAULT_FORMAT = DEFAULT_FORMAT
 
     def __init__(self, directory, debug=False):
         self.directory = directory
@@ -142,40 +176,46 @@ class ProcessingStep(Logable):
         overwrite (bool, default ``False``): When set to True, the processing step directory will be completely deleted and newly created when called.
     """
 
-    DEFAULT_CONFIG_NAME = "config.yml"
-    DEFAULT_INPUT_IMAGE_NAME = "input_image"
-    DEFAULT_SDATA_FILE = "sparcs.sdata"
+    DEFAULT_CONFIG_NAME = DEFAULT_CONFIG_NAME
+    DEFAULT_INPUT_IMAGE_NAME = DEFAULT_INPUT_IMAGE_NAME
+    DEFAULT_SDATA_FILE = DEFAULT_SDATA_FILE
 
-    DEFAULT_PREFIX_MAIN_SEG = "seg_all"
-    DEFAULT_PREFIX_FILTERED_SEG = "seg_filtered"
-    DEFAULT_PREFIX_SELECTED_SEG = "seg_selected"
+    DEFAULT_PREFIX_MAIN_SEG = DEFAULT_PREFIX_MAIN_SEG
+    DEFAULT_PREFIX_FILTERED_SEG = DEFAULT_PREFIX_FILTERED_SEG
+    DEFAULT_PREFIX_SELECTED_SEG = DEFAULT_PREFIX_SELECTED_SEG
 
-    DEFAULT_SEG_NAME_0 = "nucleus"
-    DEFAULT_SEG_NAME_1 = "cytosol"
+    DEFAULT_SEG_NAME_0 = DEFAULT_SEG_NAME_0
+    DEFAULT_SEG_NAME_1 = DEFAULT_SEG_NAME_1
 
-    DEFAULT_CENTERS_NAME = "centers"
+    DEFAULT_CENTERS_NAME = DEFAULT_CENTERS_NAME
 
-    DEFAULT_CHUNK_SIZE = (1, 1000, 1000)
+    DEFAULT_CHUNK_SIZE_3D = DEFAULT_CHUNK_SIZE_3D
+    DEFAULT_CHUNK_SIZE_2D = DEFAULT_CHUNK_SIZE_2D
 
-    DEFAULT_SEGMENTATION_DIR_NAME = "segmentation"
-    DEFAULT_TILES_FOLDER = "tiles"
+    DEFAULT_SEGMENTATION_DIR_NAME = DEFAULT_SEGMENTATION_DIR_NAME
+    DEFAULT_TILES_FOLDER = DEFAULT_TILES_FOLDER
 
-    DEFAULT_EXTRACTION_DIR_NAME = "extraction"
-    DEFAULT_DATA_DIR = "data"
+    DEFAULT_EXTRACTION_DIR_NAME = DEFAULT_EXTRACTION_DIR_NAME
+    DEFAULT_DATA_DIR = DEFAULT_DATA_DIR
 
-    DEFAULT_IMAGE_DTYPE = np.uint16
-    DEFAULT_SEGMENTATION_DTYPE = np.uint32
-    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = np.float16
+    DEFAULT_IMAGE_DTYPE = DEFAULT_IMAGE_DTYPE
+    DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
 
-    DEFAULT_SEGMENTATION_FILE = "segmentation.h5"
-    DEFAULT_CLASSES_FILE = "classes.csv"
-    DEFAULT_REMOVED_CLASSES_FILE = "removed_classes.csv"
-    DEFAULT_EXTRACTION_FILE = "single_cells.h5"
+    DEFAULT_SEGMENTATION_FILE = DEFAULT_SEGMENTATION_FILE
+    DEFAULT_CLASSES_FILE = DEFAULT_CLASSES_FILE
+    DEFAULT_REMOVED_CLASSES_FILE = DEFAULT_REMOVED_CLASSES_FILE
+    DEFAULT_EXTRACTION_FILE = DEFAULT_EXTRACTION_FILE
 
-    DEFAULT_BENCHMARKING_FILE = "benchmarking.csv"
+    DEFAULT_BENCHMARKING_FILE = DEFAULT_BENCHMARKING_FILE
 
-    DEFAULT_CLASSIFICATION_DIR_NAME = "classification"
-    DEFAULT_SELECTION_DIR_NAME = "selection"
+    DEFAULT_FEATURIZATION_DIR_NAME = DEFAULT_FEATURIZATION_DIR_NAME
+    DEFAULT_SELECTION_DIR_NAME = DEFAULT_SELECTION_DIR_NAME
+
+    IMAGE_DATACONTAINER_NAME = IMAGE_DATACONTAINER_NAME
+    INDEX_DATACONTAINER_NAME = INDEX_DATACONTAINER_NAME
+    DEFAULT_CELL_ID_NAME = DEFAULT_CELL_ID_NAME
+    DEFAULT_NAME_SINGLE_CELL_IMAGES = DEFAULT_NAME_SINGLE_CELL_IMAGES
 
     def __init__(
         self,
@@ -203,7 +243,7 @@ class ProcessingStep(Logable):
             self.project = None
             self.filehandler = None
 
-        if isinstance(config, str):
+        if isinstance(config, str | PosixPath):
             config = read_config(config)
             if self.__class__.__name__ in config.keys():
                 self.config = config[self.__class__.__name__]

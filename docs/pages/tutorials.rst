@@ -9,7 +9,7 @@ This notebook demonstrates the basic functionality of scPortrait. It shows you h
 .. toctree::
    :maxdepth: 2
 
-   notebooks/example_scPortrait_project.ipynb
+   notebooks/_notebook_workflow_walkthrough.nblink
 
 
 Segmentation Workflows
@@ -20,7 +20,7 @@ This notebook walks you through the currently implemented segmentation workflows
 .. toctree::
    :maxdepth: 2
 
-   notebooks/example_notebook_segmentation_workflows.ipynb
+   notebooks/_notebook_segmentation_workflows.nblink
 
 Parsing Workflow
 ----------------
@@ -32,6 +32,7 @@ This notebook walks you through using scportrait's `parse` module to prepare ima
    notebooks/example_parsing_notebook.ipynb
 
 .. _example_stitching:
+
 Stitching Workflow
 ------------------
 
@@ -46,4 +47,4 @@ Additional Notebooks
 --------------------
 
 Within scPortrait we provide a variety of different example datasets with an example processing notebooks. These notebooks are designed to give you a quick overview of the functionality of scPortrait and to help you get started with your own data.
-You can find all of the example datasets and there notebooks here.
+You can find all of the example datasets and there notebooks [here](https://github.com/MannLabs/scPortrait-notebooks).

@@ -1,0 +1,2 @@
+napari-spatialdata
+pyqt5
