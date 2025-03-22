@@ -5,8 +5,6 @@ except ImportError:
     Graph = None
     shortest_distance = None
 
-from networkx import Graph as nxGraph
-
 
 # calcultion of centers is equivalent to method in networkx: https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.distance_measures.center.html
 def get_center_nodes(g):
@@ -82,6 +80,13 @@ def gt2nx(gtG):
     nxG : networkx.Graph
         The NetworkX graph.
     """
+    try:
+        from networkx import Graph as nxGraph
+    except ImportError:
+        raise ImportError(
+            "networkx is required to use stitching capabilities. Please install with 'pip install networkx'"
+        ) from None
+
     # Create a new NetworkX graph
     nxG = nxGraph()
     edges = gtG.get_edges()

@@ -1,14 +1,10 @@
 import multiprocessing as mp
 import os
-import pickle
 import timeit
 from functools import partial as func_partial
 
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from alphabase.io import tempmmap
 from lmd.lib import SegmentationLoader
 from scipy.sparse import coo_array
 from tqdm.auto import tqdm
@@ -64,7 +60,7 @@ class LMDSelection(ProcessingStep):
         if "orientation_transform" in self.config:
             self.orientation_transform = self.config["orientation_transform"]
         else:
-            self.orientation_transform = np.array([[0, -1], [1, 0]])
+            self.orientation_transform = [[0, -1], [1, 0]]
             self.config["orientation_transform"] = (
                 self.orientation_transform
             )  # ensure its also in config so its passed on to the segmentation loader
@@ -190,7 +186,7 @@ class LMDSelection(ProcessingStep):
 
     def _get_centers(self, cell_ids: list[int]) -> list[tuple[int, int]]:
         _sdata = self.project.filehandler.get_sdata()
-        centers = _sdata["centers_cells"].compute()
+        centers = _sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.segmentation_channel_to_select}"].compute()
         centers = centers.loc[cell_ids, :]
         return centers[
             ["y", "x"]
@@ -199,10 +195,6 @@ class LMDSelection(ProcessingStep):
     def _post_processing_cleanup(self, vars_to_delete: list | None = None):
         if vars_to_delete is not None:
             self._clear_cache(vars_to_delete=vars_to_delete)
-
-        # remove temporary files
-        if hasattr(self, "path_seg_mask"):
-            os.remove(self.path_seg_mask)
 
         self._clear_cache()
 
@@ -318,6 +310,7 @@ class LMDSelection(ProcessingStep):
         start_time = timeit.default_timer()
         cell_ids = self._get_cell_ids(cell_sets)
         centers = self._get_centers(cell_ids)
+
         coord_index = self._get_coords(
             cell_ids=cell_ids, centers=centers, width=self.cell_radius, batch_size=self.batch_size, threads=self.threads
         )

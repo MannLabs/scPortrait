@@ -8,3 +8,4 @@ tools
    tools/parsing
    tools/stitching
    tools/ml
+   tools/h5sc
