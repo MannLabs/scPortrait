@@ -1306,9 +1306,9 @@ class Project(Logable):
         input_image_name: str,
         nucleus_segmentation_name: str | None = None,
         cytosol_segmentation_name: str | None = None,
+        cell_id_identifier: str | None = None,
         overwrite: bool | None = None,
         keep_all: bool = True,
-        cell_id_identifier: str | None = None,
         remove_duplicates: bool = True,
     ) -> None:
         """
@@ -1319,6 +1319,7 @@ class Project(Logable):
             input_image_name: Name of the element in the spatial data object containing the input image.
             nucleus_segmentation_name: Name of the element in the spatial data object containing the nucleus segmentation mask. Default is ``None``.
             cytosol_segmentation_name: Name of the element in the spatial data object containing the cytosol segmentation mask. Default is ``None``.
+            cell_id_identifier: column of annotating tables that contain the values that match a segmentation mask. If not provided it will assume this column carries the same name as the segmentation mask before parsing.
             overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
