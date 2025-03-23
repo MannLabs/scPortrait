@@ -49,6 +49,7 @@ def image(
 
         if rgb:
             dimensions = ["y", "x", "c"]
+            channel_names = ["r", "g", "b"]
         else:
             dimensions = ["c", "y", "x"]
 
@@ -70,10 +71,7 @@ def image(
 
         else:
             if channel_names is None:
-                if rgb:
-                    channel_names = ["r", "g", "b"]
-                else:
-                    channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
 
             # transform to spatialdata image model
             if transform is None:
