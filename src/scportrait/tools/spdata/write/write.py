@@ -65,7 +65,6 @@ def image(
             image = Image2DModel.parse(
                 image,
                 scale_factors=scale_factors,
-                c_coords=channel_names,
                 rgb=rgb,
             )
 
