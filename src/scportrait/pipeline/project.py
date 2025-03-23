@@ -15,15 +15,12 @@ import os
 import re
 import shutil
 import tempfile
-import warnings
-from time import time
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import dask.array as darray
 import numpy as np
 import psutil
-import xarray
 import zarr
 from alphabase.io import tempmmap
 from spatialdata import SpatialData
@@ -34,12 +31,10 @@ from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.helper import read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
-    generate_region_annotation_lookuptable,
     get_chunk_size,
     rechunk_image,
-    remap_region_annotation_table,
 )
-from scportrait.tools.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
+from scportrait.tools.spdata.write._helper import _get_image, _get_shape
 
 if TYPE_CHECKING:
     from collections.abc import Callable
