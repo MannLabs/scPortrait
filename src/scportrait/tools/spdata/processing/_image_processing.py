@@ -26,9 +26,9 @@ def _rescale_image(
 def percentile_normalize_image(
     sdata,
     image_name: str,
-    lower_percentile: int = 1,
-    upper_percentile: int = 99,
     scale_factors: list[int] = None,
+    lower_percentile: float = 0.1,
+    upper_percentile: float = 99.9,
     rescaled_image_name: str | None = None,
     overwrite: bool = True,
 ):
