@@ -22,7 +22,7 @@ def image(
     image_name: str,
     channel_names: list[str] = None,
     scale_factors: list[int] = None,
-    chunks: ChunkSize3D = DEFAULT_CHUNK_SIZE_3D,
+    chunks: ChunkSize3D | None = None,
     overwrite=False,
     transform: None = None,
     rgb: bool = False,
@@ -49,6 +49,9 @@ def image(
         if scale_factors is None:
             scale_factors = DEFAULT_SCALE_FACTORS
 
+        if chunks is None:
+            chunks = DEFAULT_CHUNK_SIZE_3D
+
         if rgb:
             dimensions = ["y", "x", "c"]
             channel_names = ["r", "g", "b"]
@@ -63,6 +66,11 @@ def image(
             if channel_names is not None:
                 Warning(
                     "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                )
+
+            if chunks is not None:
+                Warning(
+                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray."
                 )
 
             image = Image2DModel.parse(
@@ -82,16 +90,25 @@ def image(
                 transform_original = transform
 
             if isinstance(image, daArray):
+                # rechunk dask array to match the desired chunk size
                 image = image.rechunk(chunks)
-
-            image = Image2DModel.parse(
-                image,
-                dims=dimensions,
-                chunks=chunks,
-                c_coords=channel_names,
-                scale_factors=scale_factors,
-                transformations={"global": transform_original},
-                rgb=rgb,
-            )
+                image = Image2DModel.parse(
+                    image,
+                    dims=dimensions,
+                    c_coords=channel_names,
+                    scale_factors=scale_factors,
+                    transformations={"global": transform_original},
+                    rgb=rgb,
+                )
+            else:
+                image = Image2DModel.parse(
+                    image,
+                    dims=dimensions,
+                    chunks=chunks,
+                    c_coords=channel_names,
+                    scale_factors=scale_factors,
+                    transformations={"global": transform_original},
+                    rgb=rgb,
+                )
 
     add_element_sdata(sdata, image, image_name, overwrite=overwrite)
