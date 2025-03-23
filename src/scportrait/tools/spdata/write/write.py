@@ -13,6 +13,8 @@ ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
+from scportrait.pipeline._utils.constants import DEFAULT_CHUNK_SIZE_3D, DEFAULT_SCALE_FACTORS
+
 
 def image(
     sdata: SpatialData,
@@ -20,7 +22,7 @@ def image(
     image_name: str,
     channel_names: list[str] = None,
     scale_factors: list[int] = None,
-    chunks: ChunkSize3D = (1, 1000, 1000),
+    chunks: ChunkSize3D | None = None,
     overwrite=False,
     transform: None = None,
     rgb: bool = False,
@@ -45,10 +47,14 @@ def image(
             Warning("Scale factors are ignored when passing a multi-scale image.")
     else:
         if scale_factors is None:
-            scale_factors = [2, 4, 8]
+            scale_factors = DEFAULT_SCALE_FACTORS
+
+        if chunks is None:
+            chunks = DEFAULT_CHUNK_SIZE_3D
 
         if rgb:
             dimensions = ["y", "x", "c"]
+            channel_names = ["r", "g", "b"]
         else:
             dimensions = ["c", "y", "x"]
 
@@ -62,19 +68,20 @@ def image(
                     "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
                 )
 
+            if chunks is not None:
+                Warning(
+                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray."
+                )
+
             image = Image2DModel.parse(
                 image,
                 scale_factors=scale_factors,
-                c_coords=channel_names,
                 rgb=rgb,
             )
 
         else:
             if channel_names is None:
-                if rgb:
-                    channel_names = ["r", "g", "b"]
-                else:
-                    channel_names = [f"channel_{i}" for i in range(image.shape[0])]
+                channel_names = [f"channel_{i}" for i in range(image.shape[0])]
 
             # transform to spatialdata image model
             if transform is None:
@@ -83,17 +90,25 @@ def image(
                 transform_original = transform
 
             if isinstance(image, daArray):
+                # rechunk dask array to match the desired chunk size
                 image = image.rechunk(chunks)
-                image = image.persist()
-
-            image = Image2DModel.parse(
-                image,
-                dims=dimensions,
-                chunks=chunks,
-                c_coords=channel_names,
-                scale_factors=scale_factors,
-                transformations={"global": transform_original},
-                rgb=rgb,
-            )
+                image = Image2DModel.parse(
+                    image,
+                    dims=dimensions,
+                    c_coords=channel_names,
+                    scale_factors=scale_factors,
+                    transformations={"global": transform_original},
+                    rgb=rgb,
+                )
+            else:
+                image = Image2DModel.parse(
+                    image,
+                    dims=dimensions,
+                    chunks=chunks,
+                    c_coords=channel_names,
+                    scale_factors=scale_factors,
+                    transformations={"global": transform_original},
+                    rgb=rgb,
+                )
 
     add_element_sdata(sdata, image, image_name, overwrite=overwrite)
