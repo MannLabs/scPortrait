@@ -1,6 +1,6 @@
-![GitHub Release](https://img.shields.io/github/v/release/mannlabs/scPortrait?logoColor=green&color=brightgreen)
+[![GitHub Release](https://img.shields.io/github/v/release/mannlabs/scPortrait?logoColor=green&color=brightgreen)](https://github.com/MannLabs/scPortrait/releases)
 ![Versions](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![License](https://img.shields.io/badge/License-Apache-brightgreen)](https://github.com/MannLabs/scPortrait/blob/main/LICENSE)
 [![Docs](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 
 
