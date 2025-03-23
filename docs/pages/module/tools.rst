@@ -9,3 +9,4 @@ tools
    tools/stitching
    tools/ml
    tools/h5sc
+   tools/spdata

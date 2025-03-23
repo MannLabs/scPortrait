@@ -18,7 +18,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
-from scportrait.tools.spdata.write import write
+from scportrait.tools.spdata.write import _write
 from scportrait.tools.spdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
@@ -206,7 +206,7 @@ class sdata_filehandler(Logable):
             overwrite (bool): Whether to overwrite existing data. Default is False.
         """
         _sdata = self._read_sdata()
-        write.image(
+        _write.image(
             _sdata,
             image,
             image_name,
