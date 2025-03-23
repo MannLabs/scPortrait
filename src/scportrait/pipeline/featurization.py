@@ -398,7 +398,7 @@ class _FeaturizationBase(ProcessingStep):
 
     def _load_pretrained_model(self, model_name: str) -> pl.LightningModule:
         """
-        Load a pretrained model from the SPARCScore library.
+        Load a pretrained model from the scPortrait library.
 
         Args:
             model_name : Name of the pretrained model to load.
@@ -840,26 +840,20 @@ class _FeaturizationBase(ProcessingStep):
 
 class MLClusterClassifier(_FeaturizationBase):
     """
-    Class for classifying single cells using a pre-trained machine learning model.
+    Perform classification on scPortrait's single-cell image datasets using a pretrained machine learning model.
 
-    This class takes a pre-trained model and uses it to classify single cells,
-    using the model's forward function or encoder function, depending on the
-    user's choice. The classification results are saved to a CSV file.
+    Args:
+        config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+        directory: Directory for the extraction log and results. Will be created if not existing yet.
+        debug : Flag used to output debug information and map images.
+        overwrite : Flag used to overwrite existing results.
     """
 
     CLEAN_LOG = True
     DEFAULT_LOG_NAME = "processing_MLClusterClassifier.log"
 
     def __init__(self, *args, **kwargs):
-        """
-        Class is initiated to classify extracted single cells.
-
-        Args:
-            config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
-            directory: Directory for the extraction log and results. Will be created if not existing yet.
-            debug : Flag used to output debug information and map images.
-            overwrite : Flag used to overwrite existing results.
-        """
+        """ """
         super().__init__(*args, **kwargs)
 
         if self.CLEAN_LOG:
@@ -945,7 +939,7 @@ class MLClusterClassifier(_FeaturizationBase):
         else:
             self.transforms = transforms.Compose([])  # default is no transforms
 
-    def _setup(self, dataset_paths: str, return_results: bool) -> None:
+    def _setup(self, dataset_paths: str | list[str], return_results: bool) -> None:
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
@@ -967,74 +961,58 @@ class MLClusterClassifier(_FeaturizationBase):
 
     def process(
         self,
-        dataset_paths: str,
+        dataset_paths: str | list[str],
         dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
     ) -> None | list[pd.DataFrame]:
         """
-        Perform classification on the provided single-cell image dataset.
-
         Args:
-            dataset_paths : Directory containing the extracted single-cell image files from the project. If this class is used as part of a project processing workflow, this argument will be provided automatically.
-            size : How many cells should be selected for inference. Default is 0, which means all cells are selected.
+            dataset_paths: Path(s) to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: Int Label(s) for the dataset(s) provided in `dataset_paths`
+            size: number of cells that should be selected for inference. Default is 0, which means all cells are selected.
+            return_results: boolean value indicating if the classification results should be returned as a list of pandas DataFrames or directly written to disk.
 
         Returns:
-            None unless return_results is True, the results are returned as a list of pandas DataFrames. Otherwise, the results are written to CSV files located in the project directory.
+            None unless `return_results` is True, then the results are returned as a list of pandas DataFrames. Otherwise, the results are written to directly to file.
 
         Important:
-            If this class is used as part of a project processing workflow, the first argument will be provided by the
-            `Project` class based on the previous single-cell extraction. Therefore, only the second and third arguments
-            need to be provided. The `Project` class will automatically provide the most recent extracted single-cell
-            dataset together with the supplied parameters.
+            If this class is used as part of a project processing workflow, the `Project` class will automatically provide the most recent extracted single-cell
+            dataset. Therefore, only the second and third arguments need to be provided.
 
-        Examples:
-            ```python
-            project.classify()
-            ```
+        Example:
+            .. code-block:: python
+                project.featurize()
 
-        Notes:
+
+        Note:
+
             The following parameters are required in the config file:
 
-            ```yaml
-            MLClusterClassifier:
-                # Channel number on which the classification should be performed
-                channel_selection: 4
+            .. code-block:: yaml
 
-                # Number of threads to use for dataloader
-                dataloader_worker_number: 24
+                MLClusterClassifier:
 
-                # Batch size to pass to GPU
-                batch_size: 900
+                    # channel number on which the classification should be performed
+                    channel_selection: 4
 
-                # Path to PyTorch checkpoint that should be used for inference
-                network: "path/to/model/"
+                    # batch size for inference
+                    batch_size: 900
 
-                # Classifier architecture implemented in scPortrait
-                # Choose one of VGG1, VGG2, VGG1_old, VGG2_old
-                classifier_architecture: "VGG2_old"
+                    # device on which the inference should be performed
+                    inference_device: "cpu"
 
-                # If more than one checkpoint is provided in the network directory, which checkpoint should be chosen
-                # Should either be "max" or a numeric value indicating the epoch number
-                epoch: "max"
+                    # number of workers for the dataloader
+                    dataloader_worker_number: 10 #needs to be 0 if using cpu
 
-                # Name of the classifier used for saving the classification results to a directory
-                label: "Autophagy_15h_classifier1"
+                    # pretrained model to use for classification
+                    network: "autophagy_classifier"
 
-                # List of which inference methods should be performed
-                # Available: "forward" and "encoder"
-                # If "forward": images are passed through all layers of the model and the final inference results are written to file
-                # If "encoder": activations at the end of the CNN are written to file
-                encoders: ["forward", "encoder"]
+                    # label that should be applied to the results
+                    label: "Autophagy_15h_classifier2_1"
 
-                # On which device inference should be performed
-                # For speed, should be "cuda"
-                inference_device: "cuda"
-
-                #define dataset transforms
-                transforms:
-                    resize: 128
-            ```
+                    # which output of the model should be returned
+                    encoders: ["forward"]
         """
         self.log("Started MLClusterClassifier classification.")
 
@@ -1077,7 +1055,13 @@ class MLClusterClassifier(_FeaturizationBase):
 
 class EnsembleClassifier(_FeaturizationBase):
     """
-    This class takes a pre-trained ensemble of models and uses it to classify extracted single cell datasets.
+    Perform classification on scPortrait's single-cell image datasets using an ensemble of pretrained machine learning models.
+
+    Args:
+        config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+        directory: Directory for the extraction log and results. Will be created if not existing yet.
+        debug : Flag used to output debug information and map images.
+        overwrite : Flag used to overwrite existing results.
     """
 
     CLEAN_LOG = True
@@ -1140,14 +1124,14 @@ class EnsembleClassifier(_FeaturizationBase):
         self, dataset_paths: str, dataset_labels: int | list[int] = 0, size: int = 0, return_results: bool = False
     ) -> None | dict:
         """
-        Function called to perform classification on the provided single-cell image dataset.
-
         Args:
-            dataset_paths (str): Directory containing the extracted single-cell image files from the project. If this class is used as part of
-            a project processing workflow this argument will be provided automatically.
+            dataset_paths: Path(s) to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: Int Label(s) for the dataset(s) provided in `dataset_paths`
+            size: number of cells that should be selected for inference. Default is 0, which means all cells are selected.
+            return_results: boolean value indicating if the classification results should be returned as a list of pandas DataFrames or directly written to disk.
 
         Returns:
-            None: Results are written to csv files located in the project directory.
+            None unless `return_results` is True, then the results are returned as a list of pandas DataFrames. Otherwise, the results are written to directly
 
         Important:
             If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
@@ -1156,8 +1140,7 @@ class EnsembleClassifier(_FeaturizationBase):
         Example:
 
             .. code-block:: python
-
-                project.classify()
+                project.featurize()
 
         Note:
 
@@ -1231,6 +1214,20 @@ class EnsembleClassifier(_FeaturizationBase):
 
 class ConvNeXtFeaturizer(_FeaturizationBase):
     CLEAN_LOG = True
+    """
+    Compute ConvNeXt features from scPortrait's single-cell image datasets.
+
+    This class uses the pretrained ConvNeXt model available from the Huggingface transformers library to extract features from single-cell image datasets.
+    To be able to use this class you will need to install the optional dependenices for the transformers library. You can do this with `pip install "scportrait[convnext]"`.
+
+    This method will not work with Python 3.12 or later as the required version of the transformers library is not compatible with these Python Versions.
+
+    Args:
+        config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+        directory: Directory for the extraction log and results. Will be created if not existing yet.
+        debug : Flag used to output debug information and map images.
+        overwrite : Flag used to overwrite existing results.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1338,47 +1335,45 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         return_results: bool = False,
     ) -> None | pd.DataFrame:
         """
-        Perform ConvNeXt inference on the provided single-cell  dataset.
-
         Args
-            dataset_paths : Paths to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
-            dataset_labels: labels for the provided single-cell image datasets
-            size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
-            return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
+            dataset_paths: Path(s) to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: Int Label(s) for the dataset(s) provided in `dataset_paths`
+            size: number of cells that should be selected for inference. Default is 0, which means all cells are selected.
+            return_results: boolean value indicating if the classification results should be returned as a list of pandas DataFrames or directly written to disk.
 
         Returns:
             None if return_results is False, otherwise a pandas DataFrame containing the results.
 
-        Important
-        ---------
-        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
-        class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
-        The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project``
+            class based on the previous single-cell extraction. Therefore, only the second and third arguments need to be provided.
+            The Project class will automatically provide the most recent extracted single-cell dataset together with the supplied parameters.
 
-        Examples
-        --------
-        .. code-block:: python
-            project.classify()
+        Example:
+            .. code-block:: python
+                project.featurize()
 
-        Notes
-        -----
-        The following parameters are required in the config file:
+        Note:
+            The following parameters are required in the config file:
 
-        .. code-block:: yaml
+            .. code-block:: yaml
 
-            MLClusterClassifier:
-                # Channel index on which the classification should be performed
-                channel_selection: 4
+                ConvNeXtFeaturizer:
+                    # number of cells in a minibatch
+                    batch_size: 900
 
-                # Number of threads to use for dataloader
-                dataloader_worker_number: 24
+                    # number of threads to use for dataloader
+                    dataloader_worker_number: 10 #needs to be 0 if using cpu
 
-                # Batch size to pass to GPU
-                batch_size: 100
+                    # what device should be used for inference
+                    inference_device: "auto"
 
-                # On which device inference should be performed
-                # For speed, should be "cuda"
-                inference_device: "cuda"
+                    # how the results should be saved
+                    label: "ConvNeXtFeaturizer"
+
+                    # which channels to run inference on
+                    channel_selection: 4
+
         """
 
         self._setup(dataset_paths=dataset_paths, return_results=return_results)
@@ -1544,18 +1539,24 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
 class CellFeaturizer(_cellFeaturizerBase):
     """
-    Class for extracting general image features from SPARCS single-cell image datasets.
-    The extracted features are saved to a CSV file. The features are calculated on the basis of a specified channel.
+    Class for extracting general image features from scPortrait's single-cell image datasets.
+    The extracted features are saved to a CSV file. The features are calculated on the basis of all channels.
 
     The features which are calculated are:
 
     - Area of the masks in pixels
-    - Mean intensity of the chosen channel in the regions labelled by each of the masks
-    - Median intensity of the chosen channel in the regions labelled by each of the masks
-    - 75% quantile of the chosen channel in the regions labelled by each of the masks
-    - 25% quantile of the chosen channel in the regions labelled by each of the masks
-    - Summed intensity of the chosen channel in the regions labelled by each of the masks
-    - Summed intensity of the chosen channel in the region labelled by each of the masks normalized for area
+    - Mean intensity in the regions labelled by each of the masks
+    - Median intensity in the regions labelled by each of the masks
+    - 75% quantile in the regions labelled by each of the masks
+    - 25% quantile in the regions labelled by each of the masks
+    - Summed intensity in the regions labelled by each of the masks
+    - Summed intensity in the region labelled by each of the masks normalized for area
+
+    Args:
+        config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+        directory: Directory for the extraction log and results. Will be created if not existing yet.
+        debug : Flag used to output debug information and map images.
+        overwrite : Flag used to overwrite existing results.
     """
 
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
@@ -1579,8 +1580,6 @@ class CellFeaturizer(_cellFeaturizerBase):
         return_results: bool = False,
     ) -> None | pd.DataFrame:
         """
-        Perform featurization on the provided dataset dataset.
-
         Args:
             dataset_paths : Paths to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
             dataset_labels: labels for the provided single-cell image datasets
@@ -1590,32 +1589,28 @@ class CellFeaturizer(_cellFeaturizerBase):
         Returns:
             None if return_results is False, otherwise a pandas DataFrame containing the results.
 
-        Important
-        ---------
-        If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.
 
-        Notes
-        -----
-        The following parameters are required in the config file:
+        Note:
 
-        .. code-block:: yaml
+            The following parameters are required in the config file:
 
-            CellFeaturizer:
-                # Channel number on which the featurization should be performed
-                channel_selection: 4
+            .. code-block:: yaml
 
-                # Number of threads to use for dataloader
-                dataloader_worker_number: 0 # needs to be 0 if using CPU
+                CellFeaturizer:
+                    # Number of threads to use for dataloader
+                    dataloader_worker_number: 0 # needs to be 0 if using CPU
 
-                # Batch size to pass to GPU
-                batch_size: 900
+                    # Batch size to pass to GPU
+                    batch_size: 900
 
-                # On which device inference should be performed
-                # For speed should be "cuda"
-                inference_device: "cpu"
+                    # On which device inference should be performed
+                    # For speed should be "cuda"
+                    inference_device: "cpu"
 
-                # Label under which the results should be saved
-                screen_label: "Ch3_Featurization"
+                    # Label under which the results should be saved
+                    screen_label: "all_channels"
         """
         self.log("Started CellFeaturization of all available channels.")
 
@@ -1660,6 +1655,27 @@ class CellFeaturizer(_cellFeaturizerBase):
 
 
 class CellFeaturizer_single_channel(_cellFeaturizerBase):
+    """
+    Class for extracting general image features from scPortrait's single-cell image datasets.
+    The extracted features are saved to a CSV file. The features are calculated on the basis of a single specified channel.
+
+    The features which are calculated are:
+
+    - Area of the masks in pixels
+    - Mean intensity of the chosen channel in the regions labelled by each of the masks
+    - Median intensity of the chosen channel in the regions labelled by each of the masks
+    - 75% quantile of the chosen channel in the regions labelled by each of the masks
+    - 25% quantile of the chosen channel in the regions labelled by each of the masks
+    - Summed intensity of the chosen channel in the regions labelled by each of the masks
+    - Summed intensity of the chosen channel in the region labelled by each of the masks normalized for area
+
+    Args:
+        config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
+        directory: Directory for the extraction log and results. Will be created if not existing yet.
+        debug : Flag used to output debug information and map images.
+        overwrite : Flag used to overwrite existing results.
+    """
+
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
 
     def __init__(self, *args, **kwargs):
@@ -1682,6 +1698,42 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
     def process(
         self, dataset_paths: str | list[str], dataset_labels: int | list[int] = 0, size=0, return_results: bool = False
     ) -> None | pd.DataFrame:
+        """
+        Args:
+            dataset_paths : Paths to the single-cell dataset files on which inference should be performed. If this class is used as part of a project processing workflow this argument will be provided automatically.
+            dataset_labels: labels for the provided single-cell image datasets
+            size : How many cells should be selected for inference. Default is 0, meaning all cells are selected.
+            return_results : If True, the results are returned as a pandas DataFrame. Otherwise the results are written out to file.
+
+        Returns:
+            None if return_results is False, otherwise a pandas DataFrame containing the results.
+
+        Important:
+            If this class is used as part of a project processing workflow, the first argument will be provided by the ``Project`` class based on the previous single-cell extraction. Therefore, only the second and third argument need to be provided. The Project class will automatically provide the most recent extraction results together with the supplied parameters.
+
+        Note:
+
+            The following parameters are required in the config file:
+
+            .. code-block:: yaml
+
+                CellFeaturizer:
+                    # Channel number on which the featurization should be performed
+                    channel_selection: 4
+
+                    # Number of threads to use for dataloader
+                    dataloader_worker_number: 0 # needs to be 0 if using CPU
+
+                    # Batch size to pass to GPU
+                    batch_size: 900
+
+                    # On which device inference should be performed
+                    # For speed should be "cuda"
+                    inference_device: "cpu"
+
+                    # Label under which the results should be saved
+                    screen_label: "Ch3_Featurization"
+        """
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
         # perform setup
