@@ -40,7 +40,7 @@ jobs:
           pandoc-version: "3.1.11" # The pandoc version to download (if necessary) and use.
       - name: Install package including dev dependencies
         run: |
-          pip install ".[docs]" # need to use pip instead of uv to ensure that doc strings are corrrectly parsed
+          pip install -e ".[docs]" # need to use pip instead of uv to ensure that doc strings are corrrectly parsed
       - uses: Mushus/checkout-submodule@v1
         with:
           basePath: .
