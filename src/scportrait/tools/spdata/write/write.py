@@ -13,7 +13,7 @@ ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
-from scportrait.pipeline._utils.constants import DEFAULT_CHUNK_SIZE_3D
+from scportrait.pipeline._utils.constants import DEFAULT_CHUNK_SIZE_3D, DEFAULT_SCALE_FACTORS
 
 
 def image(
@@ -47,7 +47,7 @@ def image(
             Warning("Scale factors are ignored when passing a multi-scale image.")
     else:
         if scale_factors is None:
-            scale_factors = [2, 4, 8]
+            scale_factors = DEFAULT_SCALE_FACTORS
 
         if rgb:
             dimensions = ["y", "x", "c"]

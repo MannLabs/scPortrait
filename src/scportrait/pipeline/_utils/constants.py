@@ -23,6 +23,7 @@ DEFAULT_SEG_NAME_1: str = "cytosol"
 DEFAULT_CENTERS_NAME: str = "centers"
 DEFAULT_CHUNK_SIZE_3D: ChunkSize3D = (1, 2000, 2000)
 DEFAULT_CHUNK_SIZE_2D: ChunkSize2D = (2000, 2000)
+DEFAULT_SCALE_FACTORS: list[int] = [2, 4, 8]
 
 DEFAULT_SEGMENTATION_DIR_NAME: str = "segmentation"
 DEFAULT_TILES_FOLDER: str = "tiles"
