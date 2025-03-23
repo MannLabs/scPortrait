@@ -66,7 +66,15 @@ def percentile_normalize_image(
     # get local transform
     local_transform = get_transformation(image)
 
+    # get channel names
+    channel_names = image.c.values.tolist()
+
     # write rescaled image back to sdata object
     write_image(
-        sdata, image=data_rescaled, image_name=f"{image_name}_rescaled", transform=local_transform, overwrite=overwrite
+        sdata,
+        image=data_rescaled,
+        image_name=f"{image_name}_rescaled",
+        channel_names=channel_names,
+        transform=local_transform,
+        overwrite=overwrite,
     )
