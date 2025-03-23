@@ -19,13 +19,13 @@ import warnings
 from time import time
 from typing import TYPE_CHECKING, Literal
 
+import dask.array as da
 import dask.array as darray
 import numpy as np
 import psutil
 import xarray
+import zarr
 from alphabase.io import tempmmap
-from ome_zarr.io import parse_url
-from ome_zarr.reader import Reader
 from spatialdata import SpatialData
 from tifffile import imread
 
@@ -39,6 +39,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     rechunk_image,
     remap_region_annotation_table,
 )
+from scportrait.tools.spdata.write._helper import _get_image, _get_shape, _make_key_lookup
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -72,6 +73,7 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize3D,
 )
 from scportrait.plotting.h5sc import cell_grid
+from scportrait.processing.images._image_processing import percentile_normalization
 
 
 class Project(Logable):
@@ -537,17 +539,16 @@ class Project(Logable):
         self.input_image_status = self.filehandler.input_image_status
         self.nuc_seg_status = self.filehandler.nuc_seg_status
         self.cyto_seg_status = self.filehandler.cyto_seg_status
-        self.centers_status = self.filehandler.centers_status
+        self.nuc_centers_status = self.filehandler.nuc_centers_status
+        self.cyto_centers_status = self.filehandler.cyto_centers_status
         extraction_file = os.path.join(
             self.project_location, self.DEFAULT_EXTRACTION_DIR_NAME, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE
         )
         self.extraction_status = True if os.path.isfile(extraction_file) else False
 
         if self.input_image_status:
-            if isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataTree):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME]["scale0"].image
-            elif isinstance(self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME], xarray.DataArray):
-                self.input_image = self.sdata.images[self.DEFAULT_INPUT_IMAGE_NAME].image
+            if self.DEFAULT_INPUT_IMAGE_NAME in self.sdata:
+                self.input_image = _get_image(self.sdata[self.DEFAULT_INPUT_IMAGE_NAME])
             else:
                 self.input_image = None
 
@@ -557,7 +558,8 @@ class Project(Logable):
             self.log(f"Input Image in sdata: {self.input_image_status}")
             self.log(f"Nucleus Segmentation in sdata: {self.nuc_seg_status}")
             self.log(f"Cytosol Segmentation in sdata: {self.cyto_seg_status}")
-            self.log(f"Centers in sdata: {self.centers_status}")
+            self.log(f"Nucleus Centers in sdata: {self.nuc_centers_status}")
+            self.log(f"Cytosol Centers in sdata: {self.cyto_centers_status}")
             self.log(f"Extracted single-cell images saved to file: {self.extraction_status}")
             self.log("--------------------------------")
 
@@ -612,16 +614,19 @@ class Project(Logable):
 
     def plot_input_image(
         self,
-        max_size: int = 1000,
-        center_coordinates: tuple[int, int] | None = None,
+        max_width: int = 1000,
+        select_region: tuple[int, int] | None = None,
         channels: list[int] | list[str] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
         return_fig: bool = False,
+        image_name="input_image",
     ) -> Figure | None:
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
         Args:
             max_size: Maximum size of the image to be plotted in pixels.
-            center_coordinates: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
+            select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
@@ -676,7 +681,7 @@ class Project(Logable):
             "white",
             "black",
         ]
-        c, x, y = _sdata["input_image"].scale0.image.shape
+        c, x, y = _sdata[image_name].scale0.image.shape
         channel_names = _sdata["input_image"].scale0.c.values
 
         if channels is not None:
@@ -701,13 +706,13 @@ class Project(Logable):
             channel_names = list(channel_names[:c])
 
         # subset spatialdata object if its too large
-        width = max_size // 2
-        if x > max_size or y > max_size:
-            if center_coordinates is None:
+        width = max_width // 2
+        if x > max_width or y > max_width:
+            if select_region is None:
                 center_x = x // 2
                 center_y = y // 2
             else:
-                center_x, center_y = center_coordinates
+                center_x, center_y = select_region
 
             _sdata = _sdata.query.bounding_box(
                 axes=["x", "y"],
@@ -716,14 +721,26 @@ class Project(Logable):
                 target_coordinate_system="global",
             )
 
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
+
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
+
         fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
-        _sdata.pl.render_images("input_image", channel=channel_names, palette=palette).pl.show(
+        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(
             ax=axs[0], title="overlayed"
         )
         axs[0].axis("off")
 
         for i, channel in enumerate(channel_names):
-            _sdata.pl.render_images("input_image", channel=channel, palette=palette[i]).pl.show(
+            _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
                 ax=axs[i + 1], colorbar=False, title=channel
             )
             axs[i + 1].axis("off")
@@ -735,8 +752,89 @@ class Project(Logable):
             return None
             plt.show()
 
+    def plot_he_image(
+        self,
+        image_name: str = "he_image",
+        max_width: int | None = None,
+        select_region: tuple[int, int] | None = None,
+        return_fig: bool = False,
+    ) -> None | Figure:
+        """Plot the hematoxylin and eosin (HE) channel of the input image.
+
+        Args:
+            image_name: Name of the element containing the H&E image in the spatialdata object.
+            max_width: Maximum width of the image to be plotted in pixels.
+            select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+
+        Returns:
+            A matplotlib figure object if return_fig is set to ``True``.
+
+        Examples:
+            Plot the HE channel of a project::
+
+                project.plot_he()
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
+            from spatialdata import to_polygons
+
+        except ImportError:
+            raise ImportError(
+                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
+            ) from None
+
+        _sdata = self.sdata
+
+        # remove points object as this makes it
+        points_keys = list(_sdata.points.keys())
+        if len(points_keys) > 0:
+            for x in points_keys:
+                del _sdata.points[x]
+
+        channel_names = list(_sdata[image_name].scale0.c.values)
+        assert channel_names == ["r", "g", "b"], "The image is not an RGB image."
+
+        # subset spatialdata object if its too large
+        if max_width is not None:
+            c, x, y = _sdata[image_name].scale0.image.shape
+            width = max_width // 2
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
+
+            if x > max_width or y > max_width:
+                _sdata = _sdata.query.bounding_box(
+                    axes=["x", "y"],
+                    min_coordinate=[center_x - width, center_y - width],
+                    max_coordinate=[center_x + width, center_y + width],
+                    target_coordinate_system="global",
+                )
+
+        fig, axs = plt.subplots(1, 1, figsize=(8, 8))
+        _sdata.pl.render_images(image_name).pl.show(ax=axs, title="H&E Image")
+        axs.axis("off")
+        fig.tight_layout()
+
+        if return_fig:
+            return fig
+        else:
+            return None
+            plt.show()
+
     def plot_segmentation_masks(
-        self, return_fig: bool = False, max_width: int = 1500, select_region: tuple[int, int] | None = None
+        self,
+        max_width: int = 1500,
+        select_region: tuple[int, int] | None = None,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        image_name: str = "input_image",
+        mask_names: list[str] | None = None,
+        return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
 
@@ -762,6 +860,7 @@ class Project(Logable):
 
         # get relevant information from spatialdata object
         _, x, y = _sdata["input_image"].scale0.image.shape
+        channel_names = list(_sdata["input_image"].scale0.c.values)
 
         # get center coordinates
         if select_region is None:
@@ -774,40 +873,58 @@ class Project(Logable):
         if x > max_width or y > max_width:
             _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
-        # get relevant segmentation masks
-        masks = []
-        if self.filehandler.nuc_seg_status:
-            masks.append("seg_all_nucleus")
-        if self.filehandler.cyto_seg_status:
-            masks.append("seg_all_cytosol")
+        if normalize:
+            lower_percentile, upper_percentile = normalization_percentile
 
-        if len(masks) == 0:
-            raise ValueError("No segmentation masks found in the sdata object.")
+            # get percentile values to normalize viewing to
+            for channel in channel_names:
+                idx = list(_sdata[image_name].scale0.c.values).index(channel)
+                for scale in _sdata[image_name]:
+                    im = _sdata[image_name].get(scale).image[idx].compute()
+                    _sdata[image_name].get(scale).image[idx] = (
+                        percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
+                    ).astype(np.uint16)
+
+        # get relevant segmentation masks
+        if mask_names is None:
+            masks = []
+            if self.filehandler.nuc_seg_status:
+                masks.append("seg_all_nucleus")
+            if self.filehandler.cyto_seg_status:
+                masks.append("seg_all_cytosol")
+
+            if len(masks) == 0:
+                raise ValueError("No segmentation masks found in the sdata object.")
+        else:
+            for mask in mask_names:
+                if mask not in _sdata:
+                    raise ValueError(f"Mask {mask} not found in the spatialdata object.")
+            masks = mask_names
 
         # create plot
         fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
         plot_segmentation_mask(_sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", show_fig=False)
 
-        if self.filehandler.nuc_seg_status:
-            idx = masks.index("seg_all_nucleus")
+        for mask in masks:
+            idx = masks.index(mask)
+
+            if "nucleus" in mask:
+                channel = 0
+                name = "Nucleus Mask"
+            if "cytosol" in mask:
+                channel = 1
+                name = "Cytosol Mask"
+            else:
+                channel = channel_names
+                name = mask
+
             plot_segmentation_mask(
                 _sdata,
-                ["seg_all_nucleus"],
+                [mask],
                 max_width=max_width,
-                selected_channels=0,
+                selected_channels=channel,
                 axs=axs[idx + 1],
-                title="Nucleus Segmentation",
-                show_fig=False,
-            )
-        if self.filehandler.cyto_seg_status:
-            idx = masks.index("seg_all_cytosol")
-            plot_segmentation_mask(
-                _sdata,
-                ["seg_all_cytosol"],
-                max_width=max_width,
-                selected_channels=1,
-                axs=axs[idx + 1],
-                title="Cytosol Segmentation",
+                title=name,
                 show_fig=False,
             )
 
@@ -1098,12 +1215,11 @@ class Project(Logable):
 
         # read the image data
         self.log(f"trying to read file from {ome_zarr_path}")
-        loc = parse_url(ome_zarr_path, mode="r")
-        zarr_reader = Reader(loc).zarr
-        image = zarr_reader.load("0")
+        image = da.from_zarr(str(ome_zarr_path), component=0)
 
         # Access the metadata to get channel names
-        metadata = loc.root_attrs
+        zarr_store = zarr.open(ome_zarr_path, mode="r")  # Adjust the path
+        metadata = zarr_store.attrs.asdict()
 
         if "omero" in metadata and "channels" in metadata["omero"]:
             channels = metadata["omero"]["channels"]
@@ -1133,16 +1249,67 @@ class Project(Logable):
         self.get_project_status()
         self.overwrite = original_overwrite  # reset to original value
 
+    def load_input_from_dask(self, dask_array, channel_names: list[str], overwrite: bool | None = None) -> None:
+        """Load input image from a dask array.
+
+        Args:
+            dask_array: Dask array containing the input image.
+            channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
+            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+                Otherwise can be set to a boolean value to override project specific settings for image loading.
+
+        Returns:
+            None: Image is written to the project associated sdata object.
+
+            The input image can be accessed using the project object::
+
+                    project.input_image
+
+        Examples:
+            Load input images from a dask array and attach them to an scportrait project::
+
+                from scportrait.pipeline.project import Project
+
+                project = Project("path/to/project", config_path="path/to/config.yml", overwrite=True, debug=False)
+                dask_array = da.random.random((3, 1000, 1000))
+                channel_names = ["cytosol", "nucleus", "other_channel"]
+                project.load_input_from_dask(dask_array, channel_names=channel_names)
+
+        """
+        # setup overwrite
+        original_overwrite = self.overwrite
+        if overwrite is not None:
+            self.overwrite = overwrite
+
+        self._cleanup_sdata_object()
+
+        assert (
+            len(channel_names) == dask_array.shape[0]
+        ), "Number of channel names does not match number of input images."
+
+        self.channel_names = channel_names
+
+        self.filehandler._write_image_sdata(
+            dask_array,
+            channel_names=self.channel_names,
+            scale_factors=[2, 4, 8],
+            chunks=self.DEFAULT_CHUNK_SIZE_3D,
+            image_name=self.DEFAULT_INPUT_IMAGE_NAME,
+        )
+
+        self.get_project_status()
+        self.overwrite = original_overwrite
+
     def load_input_from_sdata(
         self,
         sdata_path,
         input_image_name: str,
         nucleus_segmentation_name: str | None = None,
         cytosol_segmentation_name: str | None = None,
+        cell_id_identifier: str | None = None,
         overwrite: bool | None = None,
         keep_all: bool = True,
         remove_duplicates: bool = True,
-        rechunk: bool = False,
     ) -> None:
         """
         Load input image from a spatialdata object.
@@ -1152,6 +1319,7 @@ class Project(Logable):
             input_image_name: Name of the element in the spatial data object containing the input image.
             nucleus_segmentation_name: Name of the element in the spatial data object containing the nucleus segmentation mask. Default is ``None``.
             cytosol_segmentation_name: Name of the element in the spatial data object containing the cytosol segmentation mask. Default is ``None``.
+            cell_id_identifier: column of annotating tables that contain the values that match a segmentation mask. If not provided it will assume this column carries the same name as the segmentation mask before parsing.
             overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
@@ -1171,186 +1339,94 @@ class Project(Logable):
 
         # read input sdata object
         sdata_input = SpatialData.read(sdata_path)
-        if keep_all:
-            shutil.rmtree(self.sdata_path, ignore_errors=True)  # remove old sdata object
-            sdata_input.write(self.sdata_path, overwrite=True)
-            del sdata_input
-            sdata_input = self.filehandler.get_sdata()
+        all_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory()]
+        dict_elems = {self.DEFAULT_INPUT_IMAGE_NAME: sdata_input[input_image_name]}
 
-        self.get_project_status()
-
-        # get input image and write it to the final sdata object
-        image = sdata_input.images[input_image_name]
-        self.log(f"Adding image {input_image_name} to sdata object as 'input_image'.")
-
-        if isinstance(image, xarray.DataTree):
-            image_c, image_x, image_y = image.scale0.image.shape
-
-            # ensure chunking is correct
-            if rechunk:
-                for scale in image:
-                    self._check_chunk_size(image[scale].image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
-
-            # get channel names
-            channel_names = image.scale0.image.c.values
-
-        elif isinstance(image, xarray.DataArray):
-            image_c, image_x, image_y = image.shape
-
-            # ensure chunking is correct
-            if rechunk:
-                self._check_chunk_size(image, chunk_size=self.DEFAULT_CHUNK_SIZE_3D)
-
-            channel_names = image.c.values
-
-        # Reset all transformations
-        if image.attrs.get("transform"):
-            self.log("Image contained transformations which which were removed.")
-            image.attrs["transform"] = None
-
-        # check coordinate system of input image
-        ### PLACEHOLDER
-
-        # check channel names
-        self.log(
-            f"Found the following channel names in the input image and saving in the spatialdata object: {channel_names}"
-        )
-
-        self.filehandler._write_image_sdata(image, self.DEFAULT_INPUT_IMAGE_NAME, channel_names=channel_names)
-
-        # check if a nucleus segmentation exists and if so add it to the sdata object
         if nucleus_segmentation_name is not None:
-            mask = sdata_input.labels[nucleus_segmentation_name]
-            self.log(
-                f"Adding nucleus segmentation mask '{nucleus_segmentation_name}' to sdata object as '{self.nuc_seg_name}'."
-            )
+            dict_elems[self.nuc_seg_name] = sdata_input[nucleus_segmentation_name]
+            if remove_duplicates:
+                all_elements.remove(nucleus_segmentation_name)
 
-            # if mask is multi-scale ensure we only use the scale 0
-            if isinstance(mask, xarray.DataTree):
-                mask = mask["scale0"].image
-
-            # ensure that loaded masks are at the same scale as the input image
-            mask_x, mask_y = mask.shape
-            assert (mask_x == image_x) and (
-                mask_y == image_y
-            ), "Nucleus segmentation mask does not match input image size."
-
-            if rechunk:
-                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
-
-            self.filehandler._write_segmentation_object_sdata(mask, self.nuc_seg_name)
-            self.log(
-                f"Calculating centers for nucleus segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
-            )
-            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
-
-        # check if a cytosol segmentation exists and if so add it to the sdata object
         if cytosol_segmentation_name is not None:
-            mask = sdata_input.labels[cytosol_segmentation_name]
-            self.log(
-                f"Adding cytosol segmentation mask '{cytosol_segmentation_name}' to sdata object as '{self.cyto_seg_name}'."
-            )
+            dict_elems[self.cyto_seg_name] = sdata_input[cytosol_segmentation_name]
+            if remove_duplicates:
+                all_elements.remove(cytosol_segmentation_name)
 
-            # if mask is multi-scale ensure we only use the scale 0
-            if isinstance(mask, xarray.DataTree):
-                mask = mask["scale0"].image
+        # set cell_id_identifier
+        if cell_id_identifier is None:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                cell_id_identifier = nucleus_segmentation_name
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                cell_id_identifier = cytosol_segmentation_name
+                new_name = self.cyto_seg_name
+            else:
+                cell_id_identifier = None
+        else:
+            if nucleus_segmentation_name is not None and cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            elif nucleus_segmentation_name is not None:
+                new_name = self.nuc_seg_name
+            elif cytosol_segmentation_name is not None:
+                new_name = self.cyto_seg_name
+            else:
+                new_name = None
 
-            # ensure that loaded masks are at the same scale as the input image
-            mask_x, mask_y = mask.shape
-            assert (mask_x == image_x) and (
-                mask_y == image_y
-            ), "Nucleus segmentation mask does not match input image size."
+        # ensure that any annotating table objects are updated with the correct labels
+        table_elements = [x.split("/")[1] for x in sdata_input.elements_paths_in_memory() if x.split("/")[1] == "table"]
 
-            if rechunk:
-                self._check_chunk_size(mask, chunk_size=self.DEFAULT_CHUNK_SIZE_2D)  # ensure chunking is correct
+        for table_elem in table_elements:
+            table = sdata_input[table_elem]
+            rename_columns = {}
+            if "cell_id" in table.obs:
+                rename_columns["cell_id"] = "cell_id_orig"
+                self.log(f"Renaming column `cell_id` to `cell_id_orig` in table {table_elem}")
+            if cell_id_identifier is not None:
+                rename_columns[cell_id_identifier] = "cell_id"
+                self.log(f"Renaming column `{cell_id_identifier}` to `cell_id` in table {table_elem}")
+                table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
+                table.uns["spatialdata_attrs"]["region"] = new_name
+                table.obs["region"] = new_name
+                table.obs["region"] = table.obs["region"].astype("category")
+            table.obs.rename(columns=rename_columns, inplace=True)
 
-            self.filehandler._write_segmentation_object_sdata(mask, self.cyto_seg_name)
-            self.log(
-                f"Calculating centers for cytosol segmentation mask {self.nuc_seg_name} and adding to spatialdata object."
-            )
+        if keep_all:
+            shutil.rmtree(self.sdata_path, ignore_errors=True)
+            for elem in all_elements:
+                dict_elems[elem] = sdata_input[elem]
+
+        sdata = SpatialData.init_from_elements(dict_elems)
+        sdata.write(self.sdata_path, overwrite=True)
+
+        # update project status
+        self.get_project_status()
+        _, x, y = _get_shape(sdata[self.DEFAULT_INPUT_IMAGE_NAME])
+
+        self.overwrite = original_overwrite
+
+        if self.nuc_seg_status:
+            # check input size
+            _, x_mask, y_mask = _get_shape(sdata[self.nuc_seg_name])
+            assert x == x_mask and y == y_mask, "Input image and nucleus segmentation mask do not match in size."
+
+            self.filehandler._add_centers(segmentation_label=self.nuc_seg_name)
+        if self.cyto_seg_status:
+            # check input size
+            _, x_mask, y_mask = _get_shape(sdata[self.cyto_seg_name])
+            assert x == x_mask and y == y_mask, "Input image and nucleus segmentation mask do not match in size."
+
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
-        self.get_project_status()
-
-        # ensure that the provided nucleus and cytosol segmentations fullfill the scPortrait requirements
-        # requirements are:
-        # 1. The nucleus segmentation mask and the cytosol segmentation mask must contain the same ids
-        # if self.nuc_seg_status and self.cyto_seg_status:
-        # THIS NEEDS TO BE IMPLEMENTED HERE
-
-        # 2. the nucleus segmentation ids and the cytosol segmentation ids need to match
-        # THIS NEEDS TO BE IMPLEMENTED HERE
-
-        # check if there are any annotations that match the nucleus/cytosol segmentations
-        if self.nuc_seg_status or self.cyto_seg_status:
-            region_annotation = generate_region_annotation_lookuptable(self.sdata)
-
-            if self.nuc_seg_status:
-                region_name = self.nuc_seg_name
-
-                # add existing nucleus annotations if available
-                if nucleus_segmentation_name in region_annotation.keys():
-                    for x in region_annotation[nucleus_segmentation_name]:
-                        table_name, table = x
-
-                        new_table_name = f"annot_{region_name}_{table_name}"
-
-                        table = remap_region_annotation_table(table, region_name=region_name)
-
-                        self.filehandler._write_table_object_sdata(table, new_table_name)
-                        self.log(
-                            f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
-                        )
-
-                        if keep_all and remove_duplicates:
-                            self.log(
-                                f"Deleting original annotation {table_name} for nucleus segmentation {nucleus_segmentation_name} from sdata object to prevent information duplication."
-                            )
-                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
-                else:
-                    self.log(f"No region annotation found for the nucleus segmentation {nucleus_segmentation_name}.")
-
-            # add cytosol segmentations if available
-            if self.cyto_seg_status:
-                if cytosol_segmentation_name in region_annotation.keys():
-                    for x in region_annotation[cytosol_segmentation_name]:
-                        table_name, table = x
-                        region_name = self.cyto_seg_name
-                        new_table_name = f"annot_{region_name}_{table_name}"
-
-                        table = remap_region_annotation_table(table, region_name=region_name)
-                        self.filehandler._write_table_object_sdata(table, new_table_name)
-
-                        self.log(
-                            f"Added annotation {new_table_name} to spatialdata object for segmentation object {region_name}."
-                        )
-
-                        if keep_all and remove_duplicates:
-                            self.log(
-                                f"Deleting original annotation {table_name} for cytosol segmentation {cytosol_segmentation_name} from sdata object to prevent information duplication."
-                            )
-                            self.filehandler._force_delete_object(self.sdata, name=table_name, type="tables")
-                else:
-                    self.log(f"No region annotation found for the cytosol segmentation {cytosol_segmentation_name}.")
-
-        if keep_all and remove_duplicates:
-            # remove input image
-            self.log(f"Deleting input image '{input_image_name}' from sdata object to prevent information duplication.")
-            self.filehandler._force_delete_object(self.sdata, name=input_image_name, type="images")
-
-            if self.nuc_seg_status:
-                self.log(
-                    f"Deleting original nucleus segmentation mask '{nucleus_segmentation_name}' from sdata object to prevent information duplication."
-                )
-                self.filehandler._force_delete_object(self.sdata, name=nucleus_segmentation_name, type="labels")
-            if self.cyto_seg_status:
-                self.log(
-                    f"Deleting original cytosol segmentation mask '{cytosol_segmentation_name}' from sdata object to prevent information duplication."
-                )
-                self.filehandler._force_delete_object(self.sdata, name=cytosol_segmentation_name, type="labels")
+        # ensure that if both an nucleus and cytosol segmentation mask are loaded that they match
+        if self.nuc_seg_status and self.cyto_seg_status:
+            ids_nuc = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.nuc_seg_name}"].index.values)
+            ids_cyto = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.cyto_seg_name}"].index.values)
+            assert ids_nuc == ids_cyto, "Nucleus and cytosol segmentation masks do not match."
 
         self.get_project_status()
-        self.overwrite = original_overwrite  # reset to original value
 
     #### Functions to perform processing ####
 

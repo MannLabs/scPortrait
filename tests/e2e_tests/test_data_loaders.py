@@ -13,7 +13,6 @@ from scportrait.pipeline.project import Project
 @pytest.fixture()
 def sdata_path(tmp_path):
     sdata = blobs()
-
     # Write to temporary location
     sdata_path = tmp_path / "sdata.zarr"
     sdata.write(sdata_path)
@@ -34,23 +33,11 @@ def config_path(tmp_path):
     os.remove(config_path)
 
 
-@pytest.mark.parametrize("image_name, segmentation_name", [("blobs_image", "blobs_labels")])
-def test_project_load_input_from_sdata(sdata_path, config_path, tmp_path, image_name: str, segmentation_name: str):
-    project_path = str(tmp_path / "scportrait/project/")
-
-    project = Project(
-        project_location=project_path,
-        config_path=config_path,
-        overwrite=True,
-        debug=True,
-    )
-
-    project.load_input_from_sdata(sdata_path, input_image_name=image_name, cytosol_segmentation_name=segmentation_name)
-
-
-@pytest.mark.parametrize("image_name, segmentation_name", [("blobs_multiscale_image", "blobs_multiscale_labels")])
-def test_project_load_input_from_sdata_multiscale_image(
-    sdata_path, config_path, tmp_path, image_name: str, segmentation_name: str
+@pytest.mark.parametrize(
+    "image_name, segmentation_name, cell_id_identifier", [("blobs_image", "blobs_labels", "instance_id")]
+)
+def test_project_load_input_from_sdata(
+    sdata_path, config_path, tmp_path, image_name: str, segmentation_name: str, cell_id_identifier: str
 ):
     project_path = str(tmp_path / "scportrait/project/")
 
@@ -61,7 +48,36 @@ def test_project_load_input_from_sdata_multiscale_image(
         debug=True,
     )
 
-    project.load_input_from_sdata(sdata_path, input_image_name=image_name, cytosol_segmentation_name=segmentation_name)
+    project.load_input_from_sdata(
+        sdata_path,
+        input_image_name=image_name,
+        cytosol_segmentation_name=segmentation_name,
+        cell_id_identifier=cell_id_identifier,
+    )
+
+
+@pytest.mark.parametrize(
+    "image_name, segmentation_name, cell_id_identifier",
+    [("blobs_multiscale_image", "blobs_multiscale_labels", "instance_id")],
+)
+def test_project_load_input_from_sdata_multiscale_image(
+    sdata_path, config_path, tmp_path, image_name: str, segmentation_name: str, cell_id_identifier: str
+):
+    project_path = str(tmp_path / "scportrait/project/")
+
+    project = Project(
+        project_location=project_path,
+        config_path=config_path,
+        overwrite=True,
+        debug=True,
+    )
+
+    project.load_input_from_sdata(
+        sdata_path,
+        input_image_name=image_name,
+        cytosol_segmentation_name=segmentation_name,
+        cell_id_identifier=cell_id_identifier,
+    )
 
 
 def test_project_load_from_omezarr(config_path, tmp_path):
