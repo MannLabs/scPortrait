@@ -58,9 +58,8 @@ def percentile_normalize_image(
     IPRs = upper_quantiles - lower_quantiles
 
     # apply rescaling to image
-    data = image.data
     data_rescaled = da.map_blocks(
-        lambda x: _rescale_image(x, lower_quantiles, IPRs, dtype=image_dtype), data, dtype=image_dtype
+        lambda x: _rescale_image(x, lower_quantiles, IPRs, dtype=image_dtype), image.data, dtype=image_dtype
     )
 
     # get local transform
