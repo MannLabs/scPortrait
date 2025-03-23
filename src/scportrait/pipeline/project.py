@@ -49,6 +49,7 @@ if TYPE_CHECKING:
 
 from scportrait.io import read_h5sc
 from scportrait.pipeline._utils.constants import (
+    DEFAULT_CELL_ID_NAME,
     DEFAULT_CENTERS_NAME,
     DEFAULT_CHUNK_SIZE_2D,
     DEFAULT_CHUNK_SIZE_3D,
@@ -123,6 +124,7 @@ class Project(Logable):
     DEFAULT_IMAGE_DTYPE = DEFAULT_IMAGE_DTYPE
     DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
+    DEFAULT_CELL_ID_NAME = DEFAULT_CELL_ID_NAME
 
     def __init__(
         self,
@@ -1381,13 +1383,18 @@ class Project(Logable):
         for table_elem in table_elements:
             table = sdata_input[table_elem]
             rename_columns = {}
-            if "cell_id" in table.obs:
-                rename_columns["cell_id"] = "cell_id_orig"
-                self.log(f"Renaming column `cell_id` to `cell_id_orig` in table {table_elem}")
+            if self.DEFAULT_CELL_ID_NAME in table.obs:
+                Warning(
+                    f"Column {self.DEFAULT_CELL_ID_NAME} already exists in table. Renaming to `f{self.DEFAULT_CELL_ID_NAME}_orig` to preserve compatibility with scPortrait workflow."
+                )
+                rename_columns[self.DEFAULT_CELL_ID_NAME] = f"{self.DEFAULT_CELL_ID_NAME}_orig"
+                self.log(
+                    f"Renaming column `{self.DEFAULT_CENTERS_NAME}` to `f{self.DEFAULT_CELL_ID_NAME}_orig` in table {table_elem}"
+                )
             if cell_id_identifier is not None:
-                rename_columns[cell_id_identifier] = "cell_id"
-                self.log(f"Renaming column `{cell_id_identifier}` to `cell_id` in table {table_elem}")
-                table.uns["spatialdata_attrs"]["instance_key"] = "cell_id"
+                rename_columns[cell_id_identifier] = self.DEFAULT_CELL_ID_NAME
+                self.log(f"Renaming column `{cell_id_identifier}` to `{DEFAULT_CELL_ID_NAME}` in table {table_elem}")
+                table.uns["spatialdata_attrs"]["instance_key"] = self.DEFAULT_CELL_ID_NAME
                 table.uns["spatialdata_attrs"]["region"] = new_name
                 table.obs["region"] = new_name
                 table.obs["region"] = table.obs["region"].astype("category")
