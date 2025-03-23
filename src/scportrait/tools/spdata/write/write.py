@@ -84,7 +84,6 @@ def image(
 
             if isinstance(image, daArray):
                 image = image.rechunk(chunks)
-                image = image.persist()
 
             image = Image2DModel.parse(
                 image,
