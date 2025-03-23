@@ -36,7 +36,7 @@ def percentile_normalize_image(sdata,
             # currently hard code because this is unclear how to do
             scale_factors = [2, 4, 8]
     elif isinstance(image, xarray.DataArray):
-        image = image.image
+        image = image
 
     # get dtype
     image_dtype = image.data.dtype.type
