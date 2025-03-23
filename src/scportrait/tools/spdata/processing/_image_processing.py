@@ -59,6 +59,10 @@ def percentile_normalize_image(
 
     if isinstance(image, xarray.DataTree):
         image = image.get("scale0").image
+        # placeholder needs to be implemented
+        # if a multiscale image is provided the scale_factors should be kept the same
+        # scale_factors = .... code here ...
+
     elif isinstance(image, xarray.DataArray):
         image = image
 
