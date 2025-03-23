@@ -39,7 +39,7 @@ def percentile_normalize_image(sdata,
         image = image.image
 
     # get dtype
-    dtype = type(image.dtype)
+    image_dtype = image.data.dtype.type
 
     #convert percentiles to quantiles
     assert lower_percentile < upper_percentile, "Lower percentile must be less than upper percentile"
@@ -55,7 +55,7 @@ def percentile_normalize_image(sdata,
 
     # apply rescaling to image
     data = image.data
-    data_rescaled = da.map_blocks(lambda x: _rescale_image(x, lower_quantiles, IPRs), data, dtype = dtype)
+    data_rescaled = da.map_blocks(lambda x: _rescale_image(x, lower_quantiles, IPRs, dtype=image_dtype), data, dtype = image_dtype)
 
     # get local transform
     local_transform = get_transformation(image)
