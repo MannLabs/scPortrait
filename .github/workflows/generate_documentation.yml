@@ -41,7 +41,7 @@ jobs:
       - name: Install package including dev dependencies
         run: |
           pip install uv
-          uv pip install --system ".[docs]"
+          uv pip install --system ".[all]"
       - uses: Mushus/checkout-submodule@v1
         with:
           basePath: .
