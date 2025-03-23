@@ -1,6 +1,7 @@
 import dask.array as da
 import numpy as np
 import xarray
+from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
 from scportrait.tools.spdata.write import image as write_image
@@ -24,14 +25,29 @@ def _rescale_image(
 
 
 def percentile_normalize_image(
-    sdata,
+    sdata: SpatialData,
     image_name: str,
-    scale_factors: list[int] = None,
     lower_percentile: float = 0.1,
     upper_percentile: float = 99.9,
     rescaled_image_name: str | None = None,
     overwrite: bool = True,
-):
+) -> None:
+    """Percentile Normalize an image in a spatialdata object.
+
+    Args:
+        sdata: SpatialData object containing the image to be percentile normalized.
+        image_name: Name of the image to be percentile normalized.
+        lower_percentile: Lower percentile for normalization. Default is 0.1.
+        upper_percentile: Upper percentile for normalization. Default is 99.9.
+        rescaled_image_name: Name of the rescaled image. Default is None.
+        overwrite: Whether to overwrite existing data. Default is True.
+
+    Returns:
+        the SpatialData object is updated on file with a new element containing the rescaled image
+        with the name "rescaled_image_name". If this is not provided, the name will be "{image_name}_rescaled".
+        If the name is identical to the input image the input image will be overwritten.
+
+    """
     if image_name not in sdata:
         raise ValueError(f"Image {image_name} not found in sdata")
 
