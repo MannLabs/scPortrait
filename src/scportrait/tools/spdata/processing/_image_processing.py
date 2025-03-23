@@ -5,6 +5,7 @@ from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
 from scportrait.tools.spdata.write import image as write_image
+from scportrait.tools.spdata.write._helper import _force_delete_object
 
 
 def _rescale_image(
@@ -30,6 +31,7 @@ def percentile_normalize_image(
     lower_percentile: float = 0.1,
     upper_percentile: float = 99.9,
     rescaled_image_name: str | None = None,
+    scale_factors: list[int] | None = None,
     overwrite: bool = True,
 ) -> None:
     """Percentile Normalize an image in a spatialdata object.
@@ -52,6 +54,8 @@ def percentile_normalize_image(
         raise ValueError(f"Image {image_name} not found in sdata")
 
     image = sdata[image_name]
+    if rescaled_image_name is None:
+        rescaled_image_name = f"{image_name}_rescaled"
 
     if isinstance(image, xarray.DataTree):
         image = image.get("scale0").image
@@ -84,12 +88,50 @@ def percentile_normalize_image(
     # get channel names
     channel_names = image.c.values.tolist()
 
-    # write rescaled image back to sdata object
-    write_image(
-        sdata,
-        image=data_rescaled,
-        image_name=f"{image_name}_rescaled",
-        channel_names=channel_names,
-        transform=local_transform,
-        overwrite=overwrite,
-    )
+    if rescaled_image_name == image_name:
+        # to  overwrite the image in place we currently need to use a workaround that
+        # involves writing the object multiple times as we can first delete the old object
+        # after the new one has been created (since it reads lazily from this object)
+
+        rescaled_image_name = f"{image_name}_rescaled"
+        write_image(
+            sdata,
+            image=data_rescaled,
+            image_name=rescaled_image_name,
+            channel_names=channel_names,
+            transform=local_transform,
+            overwrite=overwrite,
+            scale_factors=scale_factors,
+        )
+
+        _force_delete_object(sdata, image_name)
+
+        # currently we need to write the rescaled image again because spatialdata
+        # does not yet support renaming of objects
+        # once https://github.com/scverse/spatialdata/issues/906 has been implemented this
+        # can be changes to use that syntax
+        image = sdata[rescaled_image_name]
+        if isinstance(image, xarray.DataTree):
+            image = image.get("scale0").image
+        write_image(
+            sdata,
+            image=image,
+            image_name=image_name,
+            channel_names=channel_names,
+            transform=local_transform,
+            overwrite=overwrite,
+            scale_factors=scale_factors,
+        )
+        _force_delete_object(sdata, rescaled_image_name)
+
+    else:
+        # write rescaled image back to sdata object
+        write_image(
+            sdata,
+            image=data_rescaled,
+            image_name=rescaled_image_name,
+            channel_names=channel_names,
+            transform=local_transform,
+            overwrite=overwrite,
+            scale_factors=scale_factors,
+        )
