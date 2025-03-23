@@ -13,6 +13,8 @@ ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
+from scportrait.pipeline._utils.constants import DEFAULT_CHUNK_SIZE_3D
+
 
 def image(
     sdata: SpatialData,
@@ -20,7 +22,7 @@ def image(
     image_name: str,
     channel_names: list[str] = None,
     scale_factors: list[int] = None,
-    chunks: ChunkSize3D = (1, 1000, 1000),
+    chunks: ChunkSize3D = DEFAULT_CHUNK_SIZE_3D,
     overwrite=False,
     transform: None = None,
     rgb: bool = False,
