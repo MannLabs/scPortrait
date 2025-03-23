@@ -525,7 +525,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.stats()
 
 
-class _H5ADSingleCellDataset(Dataset):
+class _H5ScSingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files."""
 
     HDF_FILETYPES = ["h5sc", "h5ad"]  # supported filetypes
@@ -884,7 +884,7 @@ class _H5ADSingleCellDataset(Dataset):
             return (t, torch.tensor(label))
 
 
-class H5ADSingleCellDataset(_H5ADSingleCellDataset):
+class H5ScSingleCellDataset(_H5ScSingleCellDataset):
     """
     Dataset reader for scPortraits single cell datasets stored in HDF5 files.
 
@@ -955,7 +955,7 @@ class H5ADSingleCellDataset(_H5ADSingleCellDataset):
         self.stats()
 
 
-class LabelledH5ADSingleCellDataset(_H5ADSingleCellDataset):
+class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
     """
     Dataset reader for scPortraits single cell datasets stored in HDF5 files. Single-cell labels are read directly from the HDF5 file.
 

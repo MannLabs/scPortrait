@@ -18,12 +18,12 @@ from spatialdata.models import TableModel
 from torchvision import transforms
 
 from scportrait.pipeline._base import ProcessingStep
-from scportrait.tools.ml.datasets import H5ADSingleCellDataset
+from scportrait.tools.ml.datasets import H5ScSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 
 class _FeaturizationBase(ProcessingStep):
-    DEFAULT_DATA_LOADER = H5ADSingleCellDataset
+    DEFAULT_DATA_LOADER = H5ScSingleCellDataset
     DEFAULT_MODEL_CLASS = MultilabelSupervisedModel
     PRETRAINED_MODEL_NAMES = [
         "autophagy_classifier",
