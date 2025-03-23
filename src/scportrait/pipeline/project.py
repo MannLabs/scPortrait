@@ -619,6 +619,8 @@ class Project(Logable):
         channels: list[int] | list[str] | None = None,
         normalize: bool = False,
         normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        fontsize: int = 20,
+        figsize_single_tile=(8, 8),
         return_fig: bool = False,
         image_name="input_image",
     ) -> Figure | None:
@@ -628,6 +630,8 @@ class Project(Logable):
             max_size: Maximum size of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
+            fontsize: Fontsize of the title of the plot.
+            figsize_single_tile: Size of the single tile in the plot.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
@@ -733,16 +737,18 @@ class Project(Logable):
                         percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
                     ).astype(np.uint16)
 
-        fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(8 * (len(channel_names) + 1), 8))
-        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(
-            ax=axs[0], title="overlayed"
-        )
+        fig_size_x, fig_size_y = figsize_single_tile
+        fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(fig_size_x * (len(channel_names) + 1), fig_size_y))
+        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(ax=axs[0])
+        axs[0].set_title("overlayed", fontsize=fontsize)
         axs[0].axis("off")
 
         for i, channel in enumerate(channel_names):
             _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
-                ax=axs[i + 1], colorbar=False, title=channel
+                ax=axs[i + 1],
+                colorbar=False,
             )
+            axs[i + 1].set_title(channel, fontsize=fontsize)
             axs[i + 1].axis("off")
         fig.tight_layout()
 
@@ -758,6 +764,7 @@ class Project(Logable):
         max_width: int | None = None,
         select_region: tuple[int, int] | None = None,
         return_fig: bool = False,
+        fontsize: int = 20,
     ) -> None | Figure:
         """Plot the hematoxylin and eosin (HE) channel of the input image.
 
@@ -834,6 +841,7 @@ class Project(Logable):
         normalization_percentile: tuple[float, float] = (0.01, 0.99),
         image_name: str = "input_image",
         mask_names: list[str] | None = None,
+        fontsize: int = 20,
         return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
@@ -903,7 +911,9 @@ class Project(Logable):
 
         # create plot
         fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
-        plot_segmentation_mask(_sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", show_fig=False)
+        plot_segmentation_mask(
+            _sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", font_size=fontsize, show_fig=False
+        )
 
         for mask in masks:
             idx = masks.index(mask)
@@ -925,6 +935,7 @@ class Project(Logable):
                 selected_channels=channel,
                 axs=axs[idx + 1],
                 title=name,
+                font_size=fontsize,
                 show_fig=False,
             )
 
@@ -937,9 +948,20 @@ class Project(Logable):
             return None
 
     def plot_single_cell_images(
-        self, n_cells: int | None = None, select_channel: int | None = None, return_fig: bool = False
+        self,
+        n_cells: int | None = None,
+        cell_ids: list[int] | None = None,
+        select_channel: int | None = None,
+        return_fig: bool = False,
     ) -> None | Figure:
-        return cell_grid(self.h5sc, n_cells=n_cells, select_channel=select_channel, return_fig=return_fig)
+        if cell_ids is not None:
+            assert n_cells is None, "n_cells and cell_ids cannot be set at the same time."
+        if n_cells is not None:
+            assert cell_ids is None, "n_cells and cell_ids cannot be set at the same time."
+
+        return cell_grid(
+            self.h5sc, n_cells=n_cells, cell_ids=cell_ids, select_channel=select_channel, return_fig=return_fig
+        )
 
     #### Functions to load input data ####
     def load_input_from_array(

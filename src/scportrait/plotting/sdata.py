@@ -75,6 +75,7 @@ def plot_segmentation_mask(
     selected_channels: int | list[int] | None = None,
     select_region: tuple[int, int] | None = None,
     axs: plt.Axes | None = None,
+    font_size: int = 20,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
@@ -148,7 +149,7 @@ def plot_segmentation_mask(
 
     # turn off axis
     axs.axis("off")
-    axs.set_title(title)
+    axs.set_title(title, fontsize=font_size)
 
     # return elements
     if return_fig:
