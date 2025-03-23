@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 import dask.array as da
 import numpy as np
 import xarray
@@ -6,6 +8,9 @@ from spatialdata.transformations import get_transformation
 
 from scportrait.tools.spdata.write import image as write_image
 from scportrait.tools.spdata.write._helper import _force_delete_object
+
+ChunkSize2D: TypeAlias = tuple[int, int]
+ChunkSize3D: TypeAlias = tuple[int, int, int]
 
 
 def _rescale_image(
@@ -33,6 +38,7 @@ def percentile_normalize_image(
     rescaled_image_name: str | None = None,
     scale_factors: list[int] | None = None,
     overwrite: bool = True,
+    chunks: ChunkSize3D | None = None,
 ) -> None:
     """Percentile Normalize an image in a spatialdata object.
 
@@ -43,6 +49,7 @@ def percentile_normalize_image(
         upper_percentile: Upper percentile for normalization. Default is 99.9.
         rescaled_image_name: Name of the rescaled image. Default is None.
         overwrite: Whether to overwrite existing data. Default is True.
+        chunks: Chunk size for the image. Default is None.
 
     Returns:
         the SpatialData object is updated on file with a new element containing the rescaled image
@@ -106,6 +113,7 @@ def percentile_normalize_image(
             transform=local_transform,
             overwrite=overwrite,
             scale_factors=scale_factors,
+            chunks=chunks,
         )
 
         _force_delete_object(sdata, image_name)
@@ -125,6 +133,7 @@ def percentile_normalize_image(
             transform=local_transform,
             overwrite=overwrite,
             scale_factors=scale_factors,
+            chunks=chunks,
         )
         _force_delete_object(sdata, rescaled_image_name)
 
@@ -138,4 +147,5 @@ def percentile_normalize_image(
             transform=local_transform,
             overwrite=overwrite,
             scale_factors=scale_factors,
+            chunks=chunks,
         )
