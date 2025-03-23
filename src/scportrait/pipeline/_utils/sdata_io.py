@@ -25,6 +25,12 @@ ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
 
+from scportrait.pipeline._utils.constants import (
+    DEFAULT_CELL_ID_NAME,
+    DEFAULT_CHUNK_SIZE_3D,
+    DEFAULT_NAME_SINGLE_CELL_IMAGES,
+)
+
 
 class sdata_filehandler(Logable):
     def __init__(
@@ -35,6 +41,7 @@ class sdata_filehandler(Logable):
         nuc_seg_name: str,
         cyto_seg_name: str,
         centers_name: str,
+        default_cell_id_name: str,
         debug: bool = False,
     ) -> None:
         """Initialize the SpatialData file handler.
@@ -55,6 +62,7 @@ class sdata_filehandler(Logable):
         self.nuc_seg_name = nuc_seg_name
         self.cyto_seg_name = cyto_seg_name
         self.centers_name = centers_name
+        self.default_cell_id_name = default_cell_id_name
 
     def _check_empty_sdata(self) -> bool:
         """Check if SpatialData object is empty.
@@ -289,10 +297,12 @@ class sdata_filehandler(Logable):
 
         # get obs and obs_indices
         obs = adata.obs
-        if "cell_id" in obs.columns:
-            obs_indices = obs["cell_id"]
+        if self.default_cell_id_name in obs.columns:
+            obs_indices = obs[self.default_cell_id_name]
         else:
-            raise ValueError("Cell IDs not found in adata object.")
+            raise ValueError(
+                f"column `{self.default_cell_id_name}` not found in adata.obs object, but this object is expect to be able to annotate a segmentation."
+            )
 
         # sanity checking
         assert len(obs_indices) == len(set(obs_indices)), "Instance IDs are not unique."
@@ -307,7 +317,7 @@ class sdata_filehandler(Logable):
             adata,
             region=[segmentation_mask_name],
             region_key="region",
-            instance_key="cell_id",
+            instance_key=self.default_cell_id_name,
         )
 
         self._write_table_object_sdata(table, table_name, overwrite=overwrite)

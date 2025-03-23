@@ -179,6 +179,7 @@ class Project(Logable):
             nuc_seg_name=self.nuc_seg_name,
             cyto_seg_name=self.cyto_seg_name,
             centers_name=self.DEFAULT_CENTERS_NAME,
+            default_cell_id_name=self.DEFAULT_CELL_ID_NAME,
             debug=self.debug,
         )
         self.filehandler._check_sdata_status()  # update sdata object and status
