@@ -715,7 +715,9 @@ class HDF5CellExtraction(ProcessingStep):
         vars["channel_mapping"] = channel_mapping
 
         # create empty obs object
-        obs = pd.DataFrame({"cell_id": np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)})
+        obs = pd.DataFrame(
+            {self.DEFAULT_CELL_ID_NAME: np.zeros(shape=(self.num_classes), dtype=self.DEFAULT_SEGMENTATION_DTYPE)}
+        )
         obs.index = obs.index.values.astype("str")
 
         # create anndata object
