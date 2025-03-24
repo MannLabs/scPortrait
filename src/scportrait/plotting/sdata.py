@@ -78,6 +78,7 @@ def plot_segmentation_mask(
     font_size: int = 20,
     return_fig: bool = False,
     show_fig: bool = True,
+    linewidth: int = 1,
 ) -> plt.Figure | None:
     """Plot the segmentation mask on the input image.
 
@@ -144,7 +145,7 @@ def plot_segmentation_mask(
         if f"{mask}_vectorized" not in sdata:
             sdata[f"{mask}_vectorized"] = to_polygons(sdata[mask])
         sdata.pl.render_shapes(
-            f"{mask}_vectorized", fill_alpha=0, outline_alpha=0.7, outline_width=1, outline_color="white"
+            f"{mask}_vectorized", fill_alpha=0, outline_alpha=1, outline_width=linewidth, outline_color="white"
         ).pl.show(ax=axs, title=mask)
 
     # turn off axis

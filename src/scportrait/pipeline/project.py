@@ -840,6 +840,7 @@ class Project(Logable):
         image_name: str = "input_image",
         mask_names: list[str] | None = None,
         fontsize: int = 20,
+        linewidth: int = 1,
         return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
@@ -910,7 +911,14 @@ class Project(Logable):
         # create plot
         fig, axs = plt.subplots(1, len(masks) + 1, figsize=(8 * (len(masks) + 1), 8))
         plot_segmentation_mask(
-            _sdata, masks, max_width=max_width, axs=axs[0], title="overlayed", font_size=fontsize, show_fig=False
+            _sdata,
+            masks,
+            max_width=max_width,
+            axs=axs[0],
+            title="overlayed",
+            font_size=fontsize,
+            linewidth=linewidth,
+            show_fig=False,
         )
 
         for mask in masks:
@@ -933,6 +941,7 @@ class Project(Logable):
                 axs=axs[idx + 1],
                 title=name,
                 font_size=fontsize,
+                linewidth=linewidth,
                 show_fig=False,
             )
 
