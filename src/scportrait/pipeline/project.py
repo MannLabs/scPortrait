@@ -625,7 +625,7 @@ class Project(Logable):
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
         Args:
-            max_size: Maximum size of the image to be plotted in pixels.
+            max_width: Maximum size of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
             fontsize: Fontsize of the title of the plot.
