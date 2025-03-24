@@ -4,11 +4,13 @@ from ._cellpose import (
     CytosolSegmentationCellpose,
     CytosolSegmentationDownsamplingCellpose,
     DAPISegmentationCellpose,
+    NuclearExpansionSegmentationCellpose,
     ShardedCytosolOnlySegmentationCellpose,
     ShardedCytosolOnlySegmentationDownsamplingCellpose,
     ShardedCytosolSegmentationCellpose,
     ShardedCytosolSegmentationDownsamplingCellpose,
     ShardedDAPISegmentationCellpose,
+    ShardedNuclearExpansionSegmentationCellpose,
 )
 from ._wga_segmentation import (
     DAPISegmentation,

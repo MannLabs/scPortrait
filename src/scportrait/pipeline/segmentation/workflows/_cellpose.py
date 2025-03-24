@@ -5,8 +5,12 @@ import timeit
 import numpy as np
 import torch
 from cellpose import models
+from skfmm import travel_time as skfmm_travel_time
+from skimage.morphology import dilation, disk
+from skimage.segmentation import watershed
 
 from scportrait.pipeline._utils.segmentation import (
+    numba_mask_centroid,
     remove_edge_labels,
 )
 from scportrait.pipeline.segmentation.segmentation import (
@@ -190,12 +194,12 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=self.MASK_NAMES)
 
-    def _finalize_segmentation_results(self, nucleus_mask: np.ndarray) -> np.ndarray:
+    def _finalize_segmentation_results(self, mask: np.ndarray) -> np.ndarray:
         # ensure correct dtype of the maps
 
-        nucleus_mask = self._check_seg_dtype(mask=nucleus_mask, mask_name="nucleus")
+        mask = self._check_seg_dtype(mask=mask, mask_name=self.MASK_NAMES[0])
 
-        segmentation = np.stack([nucleus_mask])
+        segmentation = np.stack([mask])
 
         return segmentation
 
@@ -267,6 +271,100 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
 
 class ShardedDAPISegmentationCellpose(ShardedSegmentation):
     method = DAPISegmentationCellpose
+
+
+class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
+    N_MASKS = 1
+    N_INPUT_CHANNELS = 1
+    MASK_NAMES = ["cytosol"]
+    DEFAULT_CYTOSOL_CHANNEL_IDS = [0]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._get_kernel_config()
+
+    def _get_kernel_config(self):
+        if "kernel_size" in self.config.keys():
+            self.kernel_size = self.config["kernel_size"]
+        else:
+            self.kernel_size = 20  # default value
+
+        print(self.kernel_size)
+
+    def _expand_nucleus_mask(self, nucleus_mask: np.ndarray, kernel_size: int) -> np.ndarray:
+        """
+        Expands the nucleus mask by a given kernel size using dilation
+
+        Parameters
+        ----------
+        nucleus_mask
+            nucleus mask to expand
+        kernel_size
+            size of the kernel to use for dilation
+
+        Returns
+        -------
+        expanded nucleus mask
+        """
+        # get centers of segmented nuclei
+        nucleus_centers, _, _ids = numba_mask_centroid(nucleus_mask)
+        px_centers = np.round(nucleus_centers).astype(np.uint64)
+
+        # convert to binary mask
+        binary_mask = (nucleus_mask > 0).astype(np.uint16)
+
+        # expand the mask using dilation with the given kernel size
+        expanded_masks = dilation(binary_mask, disk(kernel_size))
+
+        # initialize marker array with cell_ids
+        marker = np.zeros_like(nucleus_mask)
+        for center in px_centers:
+            marker[center[0], center[1]] = nucleus_mask[center[0], center[1]]
+
+        # perform fast marching to get travel times for watershed
+        fmm_marker = np.ones_like(expanded_masks)
+        for center in px_centers:
+            fmm_marker[center[0], center[1]] = 0
+
+        travel_time = skfmm_travel_time(fmm_marker, expanded_masks)
+
+        # use watershed to get expanded cytosol masks
+        cytosol_segmentation = watershed(
+            travel_time,
+            marker.astype(np.int64),
+            mask=(expanded_masks).astype(np.int64),
+        )
+
+        # remove edge labels
+        cytosol_segmentation = remove_edge_labels(cytosol_segmentation)
+
+        return cytosol_segmentation
+
+    def _execute_segmentation(self, input_image):
+        total_time_start = timeit.default_timer()
+
+        # check that the correct level of input image is used
+        input_image = self._transform_input_image(input_image)
+
+        self._check_input_image_dtype(input_image)
+
+        start_segmentation = timeit.default_timer()
+        nucleus_mask = self.cellpose_segmentation(input_image)
+        cytosol_mask = self._expand_nucleus_mask(nucleus_mask, kernel_size=self.kernel_size)
+        stop_segmentation = timeit.default_timer()
+        self.segmentation_time = stop_segmentation - start_segmentation
+
+        # finalize classes list
+        all_classes = set(np.unique(cytosol_mask)) - {0}
+
+        segmentation = self._finalize_segmentation_results(mask=cytosol_mask)
+        self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
+        self.total_time = timeit.default_timer() - total_time_start
+
+
+class ShardedNuclearExpansionSegmentationCellpose(ShardedSegmentation):
+    method = NuclearExpansionSegmentationCellpose
 
 
 class CytosolSegmentationCellpose(_CellposeSegmentation):
