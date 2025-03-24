@@ -958,6 +958,7 @@ class Project(Logable):
         n_cells: int | None = None,
         cell_ids: list[int] | None = None,
         select_channel: int | None = None,
+        cmap="viridis",
         return_fig: bool = False,
     ) -> None | Figure:
         if cell_ids is not None:
@@ -966,7 +967,12 @@ class Project(Logable):
             assert cell_ids is None, "n_cells and cell_ids cannot be set at the same time."
 
         return cell_grid(
-            self.h5sc, n_cells=n_cells, cell_ids=cell_ids, select_channel=select_channel, return_fig=return_fig
+            self.h5sc,
+            n_cells=n_cells,
+            cell_ids=cell_ids,
+            select_channel=select_channel,
+            cmap=cmap,
+            return_fig=return_fig,
         )
 
     #### Functions to load input data ####
