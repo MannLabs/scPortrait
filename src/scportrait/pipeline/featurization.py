@@ -715,7 +715,7 @@ class _FeaturizationBase(ProcessingStep):
 
         dataframe = pd.DataFrame(data=features, columns=column_names)
         dataframe["label"] = labels
-        dataframe["cell_id"] = cell_ids.astype("int")
+        dataframe[self.DEFAULT_CELL_ID_NAME] = cell_ids.astype("int")
 
         self.log("finished processing.")
 
@@ -736,8 +736,8 @@ class _FeaturizationBase(ProcessingStep):
             label: Label for the results.
             mask_type: Type of mask used for the results. Defaults to "seg_all".
         """
-        cell_ids = results["cell_id"].values.astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        results.drop(columns=["cell_id", "label"], inplace=True)
+        cell_ids = results[self.DEFAULT_CELL_ID_NAME].values.astype(self.DEFAULT_SEGMENTATION_DTYPE)
+        results.drop(columns=[self.DEFAULT_CELL_ID_NAME, "label"], inplace=True)
         feature_matrix = results.to_numpy()
         var_names = results.columns
         obs_indices = results.index.astype(str)
@@ -746,7 +746,7 @@ class _FeaturizationBase(ProcessingStep):
             # save nucleus segmentation
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["cell_id"] = cell_ids
+            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
             obs["region"] = obs["region"].astype("category")
 
@@ -755,7 +755,7 @@ class _FeaturizationBase(ProcessingStep):
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
                 region_key="region",
-                instance_key="cell_id",
+                instance_key=self.DEFAULT_CELL_ID_NAME,
             )
 
             self.filehandler._write_table_object_sdata(
@@ -768,7 +768,7 @@ class _FeaturizationBase(ProcessingStep):
             # save cytoplasm segmentation
             obs = pd.DataFrame()
             obs.index = obs_indices
-            obs["cell_id"] = cell_ids
+            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
             obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
             obs["region"] = obs["region"].astype("category")
 
@@ -777,7 +777,7 @@ class _FeaturizationBase(ProcessingStep):
                 table,
                 region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
                 region_key="region",
-                instance_key="cell_id",
+                instance_key=self.DEFAULT_CELL_ID_NAME,
             )
 
             self.filehandler._write_table_object_sdata(
