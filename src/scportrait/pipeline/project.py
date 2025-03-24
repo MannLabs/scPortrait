@@ -915,15 +915,14 @@ class Project(Logable):
 
         for mask in masks:
             idx = masks.index(mask)
-
             if "nucleus" in mask:
-                channel = 0
+                channel = [0]
                 name = "Nucleus Mask"
-            if "cytosol" in mask:
-                channel = 1
+            elif "cytosol" in mask:
+                channel = [1]
                 name = "Cytosol Mask"
             else:
-                channel = channel_names
+                channel = list(range(len(channel_names)))
                 name = mask
 
             plot_segmentation_mask(
