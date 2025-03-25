@@ -276,8 +276,8 @@ class ShardedDAPISegmentationCellpose(ShardedSegmentation):
 class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
     N_MASKS = 1
     N_INPUT_CHANNELS = 1
-    MASK_NAMES = ["cytosol"]
-    DEFAULT_CYTOSOL_CHANNEL_IDS = [0]
+    MASK_NAMES = ["nucleus"]
+    DEFAULT_NUCLEUS_CHANNEL_IDS = [0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
