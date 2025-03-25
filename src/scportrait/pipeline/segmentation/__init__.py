@@ -1,1 +1,1 @@
-from scportrait.pipeline.segmentation.segmentation import Segmentation, ShardedSegmentation
+from . import segmentation, workflows

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import gc
 import os
 import platform
@@ -44,8 +46,10 @@ from scportrait.pipeline._utils.constants import (
     INDEX_DATACONTAINER_NAME,
 )
 from scportrait.pipeline._utils.helper import read_config
-from scportrait.pipeline._utils.sdata_io import sdata_filehandler
-from scportrait.pipeline.project import Project
+
+if TYPE_CHECKING:
+    from scportrait.pipeline._utils.sdata_io import sdata_filehandler
+    from scportrait.pipeline.project import Project
 
 
 class Logable:
@@ -238,8 +242,8 @@ class ProcessingStep(Logable):
         project_location: str | PosixPath = None,
         debug: bool = False,
         overwrite: bool = False,
-        project: Project = None,
-        filehandler: sdata_filehandler = None,
+        project: Project | None = None,
+        filehandler: sdata_filehandler | None = None,
         from_project: bool = False,
     ) -> None:
         super().__init__(directory=directory)
