@@ -149,7 +149,7 @@ def plot_segmentation_mask(
     # get relevant information from spatialdata object
     mask = sdata[masks[0]]
     if isinstance(mask, xarray.DataTree):
-        shape = mask.scale0.data.shape
+        shape = mask.scale0.image.shape
     else:
         shape = mask.data.shape
     if len(shape) == 3:
@@ -247,7 +247,12 @@ def plot_labels(
     _check_for_spatialdata_plot()
 
     # get relevant information from spatialdata object
-    shape = sdata[label_layer].scale0.image.shape
+    element = sdata[label_layer]
+    if isinstance(element, xarray.DataTree):
+        shape = element.scale0.image.shape
+    else:
+        shape = element.data.shape
+
     if len(shape) == 3:
         _, x, y = shape
     elif len(shape) == 2:
