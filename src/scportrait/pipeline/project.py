@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import dask.array as darray
+import matplotlib.pyplot as plt
 import numpy as np
 import psutil
 import zarr
@@ -120,6 +121,31 @@ class Project(Logable):
     DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
     DEFAULT_CELL_ID_NAME = DEFAULT_CELL_ID_NAME
+
+    PALETTE = [
+        "blue",
+        "green",
+        "red",
+        "yellow",
+        "purple",
+        "orange",
+        "pink",
+        "cyan",
+        "magenta",
+        "lime",
+        "teal",
+        "lavender",
+        "brown",
+        "beige",
+        "maroon",
+        "mint",
+        "olive",
+        "apricot",
+        "navy",
+        "grey",
+        "white",
+        "black",
+    ]
 
     def __init__(
         self,
@@ -612,15 +638,15 @@ class Project(Logable):
 
     def plot_input_image(
         self,
+        image_name="input_image",
         max_width: int = 1000,
         select_region: tuple[int, int] | None = None,
         channels: list[int] | list[str] | None = None,
         normalize: bool = False,
         normalization_percentile: tuple[float, float] = (0.01, 0.99),
-        fontsize: int = 20,
+        title_fontsize: int = 20,
         figsize_single_tile=(8, 8),
         return_fig: bool = False,
-        image_name="input_image",
     ) -> Figure | None:
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
@@ -640,88 +666,31 @@ class Project(Logable):
 
                 project.plot_input_image()
         """
-
         try:
-            import matplotlib.pyplot as plt
-            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
-            from spatialdata import to_polygons
-
+            from scportrait.plotting import plot_image
+            from scportrait.tools.sdata.processing import get_bounding_box_sdata
         except ImportError:
             raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
+                "Extended plotting capabilities required to use this function. please install with `pip install 'scportrait[plotting]'`."
             ) from None
 
         _sdata = self.sdata
 
-        # remove points object as this makes it
-        points_keys = list(_sdata.points.keys())
-        if len(points_keys) > 0:
-            for x in points_keys:
-                del _sdata.points[x]
-
-        palette = [
-            "blue",
-            "green",
-            "red",
-            "yellow",
-            "purple",
-            "orange",
-            "pink",
-            "cyan",
-            "magenta",
-            "lime",
-            "teal",
-            "lavender",
-            "brown",
-            "beige",
-            "maroon",
-            "mint",
-            "olive",
-            "apricot",
-            "navy",
-            "grey",
-            "white",
-            "black",
-        ]
+        # get relevant information from spatialdata object
         c, x, y = _sdata[image_name].scale0.image.shape
-        channel_names = _sdata["input_image"].scale0.c.values
+        channel_names = list(_sdata[image_name].scale0.c.values)
 
-        if channels is not None:
-            if isinstance(channels[0], str):
-                assert [
-                    x in channel_names for x in channels
-                ], "The specified channel names are not found in the spatialdata object."
-                channel_names = channels
-                palette = palette[:c]
-            if isinstance(channels[0], int):
-                assert [
-                    x in range(c) for x in channels
-                ], "The specified channel indices are not found in the spatialdata object."
-                channel_names = list(channel_names[channels])
-            c = len(channels)
-            palette = palette[:c]
-        else:
-            # do not plot more than 4 channels per default
-            if c > 4:
-                c = 4
-            palette = palette[:c]
-            channel_names = list(channel_names[:c])
-
-        # subset spatialdata object if its too large
-        width = max_width // 2
-        if x > max_width or y > max_width:
+        if max_width is not None:
+            # get center coordinates
             if select_region is None:
                 center_x = x // 2
                 center_y = y // 2
             else:
                 center_x, center_y = select_region
 
-            _sdata = _sdata.query.bounding_box(
-                axes=["x", "y"],
-                min_coordinate=[center_x - width, center_y - width],
-                max_coordinate=[center_x + width, center_y + width],
-                target_coordinate_system="global",
-            )
+            # subset spatialdata object if its too large
+            if x > max_width or y > max_width:
+                _sdata = get_bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
         if normalize:
             lower_percentile, upper_percentile = normalization_percentile
@@ -735,26 +704,58 @@ class Project(Logable):
                         percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
                     ).astype(np.uint16)
 
+        if channels is not None:
+            if isinstance(channels[0], int):
+                assert [
+                    x in range(c) for x in channels
+                ], "The specified channel indices are not found in the spatialdata object."
+                valid_channels = [i for i in channels if isinstance(i, int)]
+                channel_names = [channel_names[i] for i in valid_channels]
+            if isinstance(channels[0], str):
+                assert [
+                    x in channel_names for x in channels
+                ], "The specified channel names are not found in the spatialdata object."
+                channel_names = channels
+
+            c = len(channels)
+            palette = self.PALETTE[:c]
+        else:
+            palette = self.PALETTE[:c]
+
         fig_size_x, fig_size_y = figsize_single_tile
         fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(fig_size_x * (len(channel_names) + 1), fig_size_y))
-        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(ax=axs[0])
-        axs[0].set_title("overlayed", fontsize=fontsize)
-        axs[0].axis("off")
+
+        plot_image(
+            _sdata,
+            image_name=image_name,
+            channel_names=channel_names,
+            palette=palette,
+            ax=axs[0],
+            title="overlayed",
+            title_fontsize=title_fontsize,
+            return_fig=False,
+            show_fig=False,
+        )
 
         for i, channel in enumerate(channel_names):
-            _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
+            plot_image(
+                _sdata,
+                image_name=image_name,
+                channel_names=[channel],
+                palette=[palette[i]],
                 ax=axs[i + 1],
-                colorbar=False,
+                title=channel,
+                title_fontsize=title_fontsize,
+                return_fig=False,
+                show_fig=False,
             )
-            axs[i + 1].set_title(channel, fontsize=fontsize)
-            axs[i + 1].axis("off")
-        fig.tight_layout()
 
+        fig.tight_layout()
         if return_fig:
             return fig
         else:
-            return None
             plt.show()
+            return None
 
     def plot_he_image(
         self,
@@ -828,19 +829,19 @@ class Project(Logable):
         if return_fig:
             return fig
         else:
-            return None
             plt.show()
+            return None
 
     def plot_segmentation_masks(
         self,
         max_width: int = 1500,
         select_region: tuple[int, int] | None = None,
-        normalize: bool = False,
-        normalization_percentile: tuple[float, float] = (0.01, 0.99),
         image_name: str = "input_image",
         mask_names: list[str] | None = None,
-        fontsize: int = 20,
-        linewidth: int = 1,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        title_fontsize: int = 20,
+        line_width: int = 1,
         return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
@@ -861,24 +862,26 @@ class Project(Logable):
         # import relevant functions for this method
         import matplotlib.pyplot as plt
 
-        from scportrait.plotting.sdata import _bounding_box_sdata, plot_segmentation_mask
+        from scportrait.plotting.sdata import plot_segmentation_mask
+        from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
         _sdata = self.sdata
 
         # get relevant information from spatialdata object
-        _, x, y = _sdata["input_image"].scale0.image.shape
-        channel_names = list(_sdata["input_image"].scale0.c.values)
+        _, x, y = _sdata[image_name].scale0.image.shape
+        channel_names = list(_sdata[image_name].scale0.c.values)
 
-        # get center coordinates
-        if select_region is None:
-            center_x = x // 2
-            center_y = y // 2
-        else:
-            center_x, center_y = select_region
+        if max_width is not None:
+            # get center coordinates
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
 
-        # subset spatialdata object if its too large
-        if x > max_width or y > max_width:
-            _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
+            # subset spatialdata object if its too large
+            if x > max_width or y > max_width:
+                _sdata = get_bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
         if normalize:
             lower_percentile, upper_percentile = normalization_percentile
@@ -913,11 +916,10 @@ class Project(Logable):
         plot_segmentation_mask(
             _sdata,
             masks,
-            max_width=max_width,
-            axs=axs[0],
+            ax=axs[0],
             title="overlayed",
-            font_size=fontsize,
-            linewidth=linewidth,
+            title_fontsize=title_fontsize,
+            line_width=line_width,
             show_fig=False,
         )
 
@@ -936,12 +938,11 @@ class Project(Logable):
             plot_segmentation_mask(
                 _sdata,
                 [mask],
-                max_width=max_width,
                 selected_channels=channel,
-                axs=axs[idx + 1],
+                ax=axs[idx + 1],
                 title=name,
-                font_size=fontsize,
-                linewidth=linewidth,
+                title_fontsize=title_fontsize,
+                line_width=line_width,
                 show_fig=False,
             )
 
