@@ -285,14 +285,15 @@ def plot_labels(
 
                     # check for annotating column
                     if color in annotating_table.obs:
-                        if annotating_table.obs[color].dtype.name != "category":
-                            annotating_table.obs[color] = annotating_table.obs[color].astype("category")
+                        annotating_table.obs[color] = annotating_table.obs[color].astype(
+                            "str"
+                        )  # this resets the categories to only contain those present in the the datasubset
+                        annotating_table.obs[color] = annotating_table.obs[color].astype("category")
                         # check for NaN values
                         if annotating_table.obs[color].isna().sum() > 0:
-                            # Add "NaN" to the list of categories if not present
+                            # NaN values need to be filled as otherwise the plotting will throw an error
                             if "NaN" not in annotating_table.obs[color].cat.categories:
                                 annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
-                            # Fill NaN values with the "NaN" category
                             annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
                     break
         if found_annotation is not None:
