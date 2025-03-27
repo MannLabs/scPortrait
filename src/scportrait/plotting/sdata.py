@@ -223,6 +223,7 @@ def plot_labels(
     font_size: int = 20,
     color="grey",
     fill_alpha: float = 1,
+    cmap: str = None,
     vectorized: bool = False,
     dpi: int | None = None,
     ax: plt.Axes | None = None,
@@ -303,18 +304,19 @@ def plot_labels(
                 color=color,
                 fill_alpha=fill_alpha,
                 outline_alpha=0,
+                cmap=cmap,
             ).pl.show(ax=ax)
             del sdata["_annotation"]  # delete element again after plotting
         else:
             try:
-                sdata.pl.render_labels(f"{label_layer}", color=color, fill_alpha=fill_alpha, outline_alpha=1).pl.show(
-                    ax=ax
-                )
+                sdata.pl.render_labels(
+                    f"{label_layer}", color=color, fill_alpha=fill_alpha, outline_alpha=1, cmap=cmap
+                ).pl.show(ax=ax)
             except Exception as err:
                 raise Exception from err
 
     else:
-        sdata.pl.render_labels(f"{label_layer}", color=color, fill_alpha=fill_alpha).pl.show(ax=ax)
+        sdata.pl.render_labels(f"{label_layer}", color=color, fill_alpha=fill_alpha, cmap=cmap).pl.show(ax=ax)
 
     # configure axes
     ax.axis("off")
