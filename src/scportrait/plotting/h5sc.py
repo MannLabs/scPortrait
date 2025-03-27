@@ -321,6 +321,7 @@ def cell_grid(
     select_channel: int | None | list[int] = None,
     n_cells: int | None = None,
     cell_ids: int | list[int] | None = None,
+    show_cell_id: bool = True,
     cmap="viridis",
     return_fig: bool = False,
     show_fig: bool = True,
@@ -349,6 +350,7 @@ def cell_grid(
             select_channel,
             n_cells=n_cells,
             cell_ids=cell_ids,
+            show_cell_id=show_cell_id,
             cmap=cmap,
             return_fig=return_fig,
             show_fig=show_fig,
@@ -363,6 +365,7 @@ def cell_grid(
             cell_ids=cell_ids,
             cmap=cmap,
             select_channels=select_channel,
+            show_cell_id=show_cell_id,
             return_fig=return_fig,
             show_fig=show_fig,
         )
