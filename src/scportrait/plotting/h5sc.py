@@ -221,6 +221,7 @@ def cell_grid_multi_channel(
     adata,
     n_cells: int = 5,
     cell_ids: int | list[int] | None = None,
+    select_channels: list[int] | None = None,
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
@@ -268,6 +269,14 @@ def cell_grid_multi_channel(
     n_channels = adata.uns["single_cell_images"]["n_channels"]
     channel_names = adata.uns["single_cell_images"]["channel_names"]
 
+    # Collect images in a list
+    images = get_image_with_cellid(adata, _cell_ids)
+    if select_channels is not None:
+        images = images[:, select_channels, :, :]
+        channel_names = [channel_names[i] for i in select_channels]
+        n_channels = len(select_channels)
+    images = _reshape_image_array(images)
+
     # Determine grid size
     nrows = n_cells
     ncols = n_channels
@@ -281,10 +290,6 @@ def cell_grid_multi_channel(
         fig, axs = plt.subplots(1, 1, figsize=(fig_width, fig_height))
     else:
         fig = axs.get_figure()
-
-    # Collect images in a list
-    images = get_image_with_cellid(adata, _cell_ids)
-    images = _reshape_image_array(images)
 
     # Call the image grid function
     spacing = spacing * single_cell_size
@@ -313,7 +318,7 @@ def cell_grid_multi_channel(
 
 def cell_grid(
     adata: AnnData,
-    select_channel: int | None = None,
+    select_channel: int | None | list[int] = None,
     n_cells: int | None = None,
     cell_ids: int | list[int] | None = None,
     cmap="viridis",
@@ -335,15 +340,7 @@ def cell_grid(
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
     """
-
-    if select_channel is None:
-        if cell_ids is None:
-            if n_cells is None:
-                n_cells = 5
-        return cell_grid_multi_channel(
-            adata, n_cells=n_cells, cell_ids=cell_ids, cmap=cmap, return_fig=return_fig, show_fig=show_fig
-        )
-    else:
+    if isinstance(select_channel, int):
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 16
@@ -353,6 +350,19 @@ def cell_grid(
             n_cells=n_cells,
             cell_ids=cell_ids,
             cmap=cmap,
+            return_fig=return_fig,
+            show_fig=show_fig,
+        )
+    else:
+        if cell_ids is None:
+            if n_cells is None:
+                n_cells = 5
+        return cell_grid_multi_channel(
+            adata,
+            n_cells=n_cells,
+            cell_ids=cell_ids,
+            cmap=cmap,
+            select_channels=select_channel,
             return_fig=return_fig,
             show_fig=show_fig,
         )

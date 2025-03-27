@@ -958,7 +958,7 @@ class Project(Logable):
         self,
         n_cells: int | None = None,
         cell_ids: list[int] | None = None,
-        select_channel: int | None = None,
+        select_channel: int | list[int] | None = None,
         cmap="viridis",
         return_fig: bool = False,
     ) -> None | Figure:
