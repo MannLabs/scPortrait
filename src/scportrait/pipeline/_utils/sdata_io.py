@@ -18,8 +18,8 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
-from scportrait.tools.spdata.write import _write
-from scportrait.tools.spdata.write._helper import add_element_sdata
+from scportrait.tools.sdata.write import _write
+from scportrait.tools.sdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
