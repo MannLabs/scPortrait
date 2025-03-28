@@ -220,7 +220,7 @@ def plot_labels(
     sdata: spatialdata.SpatialData,
     label_layer: str,
     title: str | None = None,
-    font_size: int = 20,
+    title_fontsize: int = 20,
     color="grey",
     fill_alpha: float = 1,
     cmap: str = None,
@@ -320,7 +320,7 @@ def plot_labels(
 
     # configure axes
     ax.axis("off")
-    ax.set_title(title, fontsize=font_size)
+    ax.set_title(title, fontsize=title_fontsize)
 
     # return elements
     if return_fig:
