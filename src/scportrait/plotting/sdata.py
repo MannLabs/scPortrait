@@ -31,7 +31,8 @@ PALETTE = [
 ]
 
 
-def _check_for_spatialdata_plot():
+def _check_for_spatialdata_plot() -> None:
+    """Helper funtion to check if required package is installed"""
     # check for spatialdata_plot
     try:
         import spatialdata_plot
@@ -61,6 +62,7 @@ def plot_image(
         channel_names: List of channel names to plot. If None then all channels will be plotted. Defaults to None.
         palette: List of colors to use for the channels. If None then the default palette will be used. Defaults to None.
         title: Title of the plot. Defaults to None.
+        title_fontsize: Font size of the title in points. Defaults to 20.
         dpi: Dots per inch of the plot. Defaults to None.
         ax: Matplotlib axis object to plot on. Defaults to None.
         return_fig: Whether to return the figure. Defaults to False.
@@ -136,9 +138,14 @@ def plot_segmentation_mask(
         masks: List of keys identifying the segmentation masks to plot.
         background_image: Key identifying the background image to plot the segmentation masks on. Defaults to "input_image". If set to None then only the segmentation masks will be plotted as outlines.
         selected_channels: List of indices of the channels in the background image to plot. If None then the first `max_channels_to_plot` channels will be plotted. Defaults to None.
-        max_width: Maximum width of the region to plot. Defaults to 1000.
         title: Title of the plot. Defaults to None.
-        select_region: coordinates on which the region to plot should be centered. If not supplied then the middle of the entire image will be used.
+        title_fontsize: Font size of the title in points.
+        line_width: Width of the outline of the segmentation masks.
+        line_color: Color of the outline of the segmentation masks.
+        line_alpha: Alpha value of the outline of the segmentation masks.
+        fill_alpha: Alpha value of the fill of the segmentation masks.
+        fill_color: Color of the fill of the segmentation masks. If None then no fill will be used. Defaults to None.
+        dpi: Dots per inch of the plot. Defaults to None.
         axs: Matplotlib axis object to plot on. Defaults to None.
         return_fig: Whether to return the figure. Defaults to False.
         show_fig: Whether to show the figure. Defaults to True.
@@ -232,17 +239,22 @@ def plot_labels(
 ) -> plt.Figure | None:
     """Plot the segmentation mask on the input image.
 
-    Requires an installed spatialdata_plot package.
-
     Args:
         sdata: SpatialData object containing the input image and segmentation mask.
-        masks: List of keys identifying the segmentation masks to plot.
-        max_width: Maximum width of the plot. Defaults to 1000.
-        title: Title of the plot. Defaults to None.
-        select_region: coordinates on which the region to plot should be centered. If not supplied then the middle of the entire image will be used.
-        axs: Matplotlib axis object to plot on. Defaults to None.
-        return_fig: Whether to return the figure. Defaults to False.
-        show_fig: Whether to show the figure. Defaults to True.
+        labels_layer: Key identifying the label layer to plot.
+        title: Title of the plot.
+        title_fontsize: Font size of the title in points.
+        color: color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
+        fill_alpha: Alpha value of the fill of the segmentation masks.
+        cmap: Colormap to use for the labels.
+        vectorized: Whether to plot a vectorized version of the labels.
+        dpi: Dots per inch of the plot.
+        axs: Matplotlib axis object to plot on.
+        return_fig: Whether to return the figure.
+        show_fig: Whether to show the figure.
+
+    Returns:
+        Matplotlib figure object if return_fig is True.
     """
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
