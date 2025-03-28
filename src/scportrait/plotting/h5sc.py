@@ -138,8 +138,9 @@ def cell_grid_single_channel(
         nrows: The number of rows in the grid. If not specified will be automatically calculated to make a square grid.
         single_cell_size: The size of each cell in the grid.
         spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
-        axs: The matplotlib axes object to plot on. If `None`, a new figure is created.
+        ax: The matplotlib axes object to plot on. If `None`, a new figure is created.
         return_fig: If `True`, the function returns the figure object instead of displaying it.
+        show_fig: If `True`, the figure is displayed.
 
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
@@ -228,7 +229,7 @@ def cell_grid_multi_channel(
     cmap="viridis",
     spacing: float = 0.025,
     single_cell_size: int = 2,
-    axs: Axes = None,
+    ax: Axes = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> None | Figure:
@@ -238,14 +239,16 @@ def cell_grid_multi_channel(
         adata: An scPortrait single-cell image dataset.
         n_cells: The number of cells to visualize. This number of cells will randomly be selected. If `None`, `cell_ids` must be provided.
         cell_ids: cell IDs for the specific cells that should be visualized. If `None`, `n_cells` must be provided.
+        select_channels: The channels to visualize. Channels are identified as int values corresponding to their order in the h5sc dataset. If `None`, all channels will be visualized.
         title: The title of the plot.
         show_cell_id: Whether to show the cell ID as row label for each cell in the image grid.
         label_channels: Whether to show the channel names as titles for column in the image grid.
         cmap: The colormap to use for the images.
         spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
         single_cell_size: The size of each cell in the grid.
-        axs: The matplotlib axes object to plot on. If `None`, a new figure is created.
+        ax: The matplotlib axes object to plot on. If `None`, a new figure is created.
         return_fig: If `True`, the function returns the figure object instead of displaying it.
+        show_fig: If `True`, the figure is displayed.
 
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
@@ -286,10 +289,10 @@ def cell_grid_multi_channel(
     fig_height = nrows * single_cell_size
 
     # Create figure object
-    if axs is None:
+    if ax is None:
         fig, axs = plt.subplots(1, 1, figsize=(fig_width, fig_height))
     else:
-        fig = axs.get_figure()
+        fig = ax.get_figure()
 
     # Call the image grid function
     spacing = spacing * single_cell_size
@@ -333,10 +336,13 @@ def cell_grid(
 
     Args:
         adata: An scPortrait single-cell image dataset.
+        select_channel: The channel to visualize. Can be either a single int value or a list of values. If None all channels will  be visualized.
         n_cells: The number of cells to visualize. This number of cells will randomly be selected. If set to `None`, `cell_ids` must be provided.
         cell_ids: cell IDs of the cells that are to be visualiazed. If `None`, `n_cells` must be provided.
+        show_cell_ids: Whether to show the cell ID as titles/y-labels for each single-cell image.
         cmap: The colormap to use for the images.
         return_fig: If `True`, the function returns the figure object instead of displaying it.
+        show_fig: If `True`, the figure is displayed.
 
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
