@@ -32,7 +32,7 @@ PALETTE = [
 
 
 def _check_for_spatialdata_plot() -> None:
-    """Helper funtion to check if required package is installed"""
+    """Helper function to check if required package is installed"""
     # check for spatialdata_plot
     try:
         import spatialdata_plot
