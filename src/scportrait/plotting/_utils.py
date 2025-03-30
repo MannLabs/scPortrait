@@ -5,7 +5,7 @@ try:
     from matplotlib_scalebar.scalebar import ScaleBar
 except ImportError:
     raise ImportError(
-        "matplotlib_scalebar must be installed to use the plotting capabilites. please install with `pip install 'scportrait[plotting]'`."
+        "matplotlib_scalebar must be installed to use the plotting capabilities. please install with `pip install 'scportrait[plotting]'`."
     ) from None
 
 
