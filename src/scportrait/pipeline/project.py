@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import tempfile
+import warnings
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -706,15 +707,15 @@ class Project(Logable):
 
         if channels is not None:
             if isinstance(channels[0], int):
-                assert [
+                assert all(
                     x in range(c) for x in channels
-                ], "The specified channel indices are not found in the spatialdata object."
+                ), "The specified channel indices are not found in the spatialdata object."
                 valid_channels = [i for i in channels if isinstance(i, int)]
                 channel_names = [channel_names[i] for i in valid_channels]
             if isinstance(channels[0], str):
-                assert [
+                assert all(
                     x in channel_names for x in channels
-                ], "The specified channel names are not found in the spatialdata object."
+                ), "The specified channel names are not found in the spatialdata object."
                 channel_names = channels
 
             c = len(channels)
