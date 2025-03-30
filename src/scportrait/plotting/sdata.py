@@ -75,7 +75,7 @@ def plot_image(
 
     if ax is not None:
         if dpi is not None:
-            raise Warning("DPI is ignored when an axis is provided.")
+            warnings.warn("DPI is ignored when an axis is provided.")
     else:
         if dpi is None:
             dpi = 300
