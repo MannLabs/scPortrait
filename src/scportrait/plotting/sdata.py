@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
@@ -75,7 +76,7 @@ def plot_image(
 
     if ax is not None:
         if dpi is not None:
-            warnings.warn("DPI is ignored when an axis is provided.")
+            warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
     else:
         if dpi is None:
             dpi = 300
