@@ -226,6 +226,7 @@ def cell_grid_multi_channel(
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
+    row_labels: list[str] | None = None,
     cmap="viridis",
     spacing: float = 0.025,
     single_cell_size: int = 2,
@@ -243,6 +244,7 @@ def cell_grid_multi_channel(
         title: The title of the plot.
         show_cell_id: Whether to show the cell ID as row label for each cell in the image grid.
         label_channels: Whether to show the channel names as titles for column in the image grid.
+        row_labels: can override the labels plotted on the y-axis on the first element of each row. If using not compatible with passing `show_cell_id` as `True`.
         cmap: The colormap to use for the images.
         spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
         single_cell_size: The size of each cell in the grid.
@@ -268,6 +270,14 @@ def cell_grid_multi_channel(
     else:
         # Get random cells if no specific IDs are provided
         _cell_ids = adata.obs[DEFAULT_CELL_ID_NAME].sample(n_cells).values
+
+    if row_labels is not None:
+        assert (
+            show_cell_id is False
+        ), "If manually providing row_labels, can not automatically annotate rows with cell IDs. Set `show_cell_id` to False."
+        assert len(row_labels) == n_cells, "Length of `row_labels` must match the number of cells to be visualized."
+    else:
+        row_labels = [f"cell ID {_id}" for _id in _cell_ids] if show_cell_id else None
 
     n_channels = adata.uns["single_cell_images"]["n_channels"]
     channel_names = adata.uns["single_cell_images"]["channel_names"]
@@ -302,7 +312,7 @@ def cell_grid_multi_channel(
         nrows=nrows,
         ncols=ncols,
         spacing=spacing,
-        row_labels=[f"cell ID {_id}" for _id in _cell_ids] if show_cell_id else None,
+        row_labels=row_labels,
         col_labels=channel_names if label_channels else None,
         axs_title=title,
         cmap=cmap,
