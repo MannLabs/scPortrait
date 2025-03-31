@@ -1,5 +1,6 @@
 import warnings
 from collections.abc import Iterable
+from numbers import Integral
 
 import matplotlib.pyplot as plt
 import spatialdata
@@ -71,7 +72,12 @@ def plot_image(
     else:
         if dpi is None:
             dpi = 300
-        shape = sdata[image_name].scale0.image.shape
+
+        if isinstance(sdata[image_name], xarray.DataTree):
+            shape = sdata[image_name].scale0.image.shape
+        else:
+            shape = sdata[image_name].data.shape
+
         if len(shape) == 3:
             axs_length = shape[1] / dpi
             axs_width = shape[2] / dpi
@@ -169,7 +175,14 @@ def plot_segmentation_mask(
     # plot background image if desired
     if background_image is not None:
         # get channel names
-        channel_names = sdata[background_image].scale0.c.values
+        if background_image not in sdata:
+            raise ValueError(f"Background image {background_image} not found in sdata object.")
+
+        if isinstance(sdata[background_image], xarray.DataTree):
+            channel_names = sdata[background_image].scale0.c.values
+        else:
+            channel_names = sdata[background_image].c.values
+
         c = len(channel_names)
 
         # do not plot more than `max_channels_to_plot` overlapping channels
