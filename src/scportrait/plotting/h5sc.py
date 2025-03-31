@@ -300,14 +300,14 @@ def cell_grid_multi_channel(
 
     # Create figure object
     if ax is None:
-        fig, axs = plt.subplots(1, 1, figsize=(fig_width, fig_height))
+        fig, ax = plt.subplots(1, 1, figsize=(fig_width, fig_height))
     else:
         fig = ax.get_figure()
 
     # Call the image grid function
     spacing = spacing * single_cell_size
     _plot_image_grid(
-        ax=axs,
+        ax=ax,
         images=images,
         nrows=nrows,
         ncols=ncols,
