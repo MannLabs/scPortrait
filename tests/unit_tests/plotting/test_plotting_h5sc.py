@@ -18,16 +18,18 @@ from scportrait.plotting.h5sc import (
 # ---------- _reshape_image_array ----------
 
 
-def test_reshape_image_array_3d():
-    arr = rng.random((10, 64, 64))
+@pytest.mark.parametrize(
+    "input_shape, expected_shape",
+    [
+        ((10, 64, 64), (10, 64, 64)),  # 3D array
+        ((5, 3, 64, 64), (15, 64, 64)),  # 4D array
+        ((1, 3, 64, 64), (3, 64, 64)),  # Single image in a batch
+    ],
+)
+def test_reshape_image_array(input_shape, expected_shape):
+    arr = rng.random(input_shape)
     reshaped = _reshape_image_array(arr)
-    assert reshaped.shape == (10, 64, 64)
-
-
-def test_reshape_image_array_4d():
-    arr = rng.random((5, 3, 64, 64))
-    reshaped = _reshape_image_array(arr)
-    assert reshaped.shape == (15, 64, 64)
+    assert reshaped.shape == expected_shape
 
 
 # ---------- _plot_image_grid ----------
