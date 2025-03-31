@@ -761,8 +761,8 @@ class Project(Logable):
         image_name: str = "he_image",
         max_width: int | None = None,
         select_region: tuple[int, int] | None = None,
+        title_fontsize: int = 20,
         return_fig: bool = False,
-        fontsize: int = 20,
     ) -> None | Figure:
         """Plot the hematoxylin and eosin (HE) channel of the input image.
 
@@ -816,9 +816,11 @@ class Project(Logable):
                     target_coordinate_system="global",
                 )
 
-        fig, axs = plt.subplots(1, 1, figsize=(8, 8))
-        _sdata.pl.render_images(image_name).pl.show(ax=axs, title="H&E Image")
-        axs.axis("off")
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        _sdata.pl.render_images(image_name).pl.show(ax=ax)
+        ax.axis("off")
+        ax.set_title(title="H&E Image", fontsize=title_fontsize)
+
         fig.tight_layout()
 
         if return_fig:
