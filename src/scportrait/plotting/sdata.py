@@ -237,7 +237,7 @@ def plot_labels(
     label_layer: str,
     title: str | None = None,
     title_fontsize: int = 20,
-    color="grey",
+    color: str = "grey",
     fill_alpha: float = 1,
     cmap: str = None,
     vectorized: bool = False,
