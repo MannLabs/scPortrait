@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.axes import Axes
@@ -35,11 +36,21 @@ def test_reshape_image_array(input_shape, expected_shape):
 # ---------- _plot_image_grid ----------
 
 
-def test_plot_image_grid_runs():
-    ax = MagicMock(spec=Axes)
-    images = rng.random((4, 10, 10))
-    _plot_image_grid(ax, images, nrows=2, ncols=2)
-    assert ax.set_title.called
+@pytest.mark.parametrize(
+    "input_shape, nrows, ncols",
+    [
+        ((4, 10, 10), 2, 2),  # 4 images
+        ((1, 10, 10), 1, 1),  # Single image
+        ((10, 10, 10), 3, 3),  # More images than grid cells
+    ],
+)
+def test_plot_image_grid(input_shape, nrows, ncols):
+    arr = rng.random(input_shape)
+    fig, ax = plt.subplots(1, 1)
+    _plot_image_grid(ax, arr, nrows=nrows, ncols=ncols)
+
+    # ensure that there are only the expected number of elements in the grid
+    assert len(fig.axes) == nrows * ncols + 1  # 1 required for the main axes the others are the inset axes
 
 
 # ---------- cell_grid_single_channel ----------
