@@ -31,16 +31,7 @@ PALETTE = [
     "black",
 ]
 
-
-def _check_for_spatialdata_plot() -> None:
-    """Helper function to check if required package is installed"""
-    # check for spatialdata_plot
-    try:
-        import spatialdata_plot
-    except ImportError:
-        raise ImportError(
-            "Extended plotting capabilities required. Please install with `pip install 'scportrait[plotting]'`."
-        ) from None
+from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot
 
 
 def plot_image(

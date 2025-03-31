@@ -30,3 +30,14 @@ def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
         [1, 2, 3, 4, 5, 6, 7, 8, 9]
     """
     return [item for sublist in nested_list for item in sublist]
+
+
+def _check_for_spatialdata_plot() -> None:
+    """Helper function to check if required package is installed"""
+    # check for spatialdata_plot
+    try:
+        import spatialdata_plot
+    except ImportError:
+        raise ImportError(
+            "Extended plotting capabilities required. Please install with `pip install 'scportrait[plotting]'`."
+        ) from None
