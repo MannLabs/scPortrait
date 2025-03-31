@@ -183,6 +183,10 @@ def plot_segmentation_mask(
         else:
             channel_names = sdata[background_image].c.values
 
+        # required work around because spatialdata plot only supports int and not things like int64
+        if all(isinstance(x, Integral) for x in channel_names):
+            channel_names = [int(x) for x in channel_names]
+
         c = len(channel_names)
 
         # do not plot more than `max_channels_to_plot` overlapping channels
