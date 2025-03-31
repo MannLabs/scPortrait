@@ -69,7 +69,6 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize2D,
     ChunkSize3D,
 )
-from scportrait.plotting.h5sc import cell_grid
 from scportrait.processing.images._image_processing import percentile_normalization
 
 
@@ -645,17 +644,20 @@ class Project(Logable):
         normalize: bool = False,
         normalization_percentile: tuple[float, float] = (0.01, 0.99),
         title_fontsize: int = 20,
-        figsize_single_tile=(8, 8),
+        figsize_single_tile: tuple[float, float] = (8, 8),
         return_fig: bool = False,
     ) -> Figure | None:
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
         Args:
-            max_size: Maximum size of the image to be plotted in pixels.
+            image_name: Name of the element containing the input image in the spatialdata object.
+            max_width: Maximum size of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
-            fontsize: Fontsize of the title of the plot.
-            figsize_single_tile: Size of the single tile in the plot.
+            normalize: If set to ``True``, the image will be normalized to the specified percentile values.
+            normalization_percentile: Tuple containing the lower and upper percentile values to be used for normalization.
+            title_fontsize: Fontsize of the title of the plot.
+            figsize_single_tile: size to be used during figure creation for a single axes in the resulting plot.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
@@ -770,7 +772,7 @@ class Project(Logable):
             image_name: Name of the element containing the H&E image in the spatialdata object.
             max_width: Maximum width of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
-
+            title_fontsize: Fontsize of the title of the plot.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
@@ -843,10 +845,20 @@ class Project(Logable):
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
 
+        Uses the function `scportrait.plotting.sdata.plot_segmentation_mask` to plot the found segmentation masks in an scPortrait project.
+        Please refer to the documentation of this function for further customization.
+
         Args:
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
             max_width: Maximum width of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+            image_name: Name of the element containing the input image in the spatialdata object.
+            mask_names: List of mask names to be plotted. If not set, all available masks will be plotted.
+            normalize: If set to ``True``, the image will be normalized to the specified percentile values.
+            normalization_percentile: Tuple containing the lower and upper percentile values to be used for normalization.
+            title_fontsize: Fontsize of the title of the plot.
+            line_width: Width of the lines in the plot.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
             A matplotlib figure object if return_fig is set to ``True``.
@@ -858,6 +870,7 @@ class Project(Logable):
         """
         _check_for_spatialdata_plot()
 
+        # import relevant functions for this method
         from scportrait.plotting.sdata import plot_segmentation_mask
         from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
@@ -959,6 +972,23 @@ class Project(Logable):
         cmap="viridis",
         return_fig: bool = False,
     ) -> None | Figure:
+        """Visualize the extracted single-cell images.
+
+        Uses the function `scportrait.plotting.h5sc.cell_grid` to plot the images providing useful default values.
+        For further customization of this plot please refer to the documentation of the function.
+
+        Args:
+            n_cells: Number of cells to be plotted. If not set, will proceed with default values.
+            cell_ids: List of cell ids to be plotted. If not set, will randomly select cells from the dataset.
+            show_cell_ids: If set to ``True``, the cell ids will be shown on the plot.
+            select_channel: List of channel names or indices to be plotted. If not set, all available channels will be plotted.
+            cmap: Colormap to be used for the plot. Default is ``viridis``.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+        """
+
+        # import optional required dependencies for this function
+        from scportrait.plotting.h5sc import cell_grid
+
         if cell_ids is not None:
             assert n_cells is None, "n_cells and cell_ids cannot be set at the same time."
         if n_cells is not None:
