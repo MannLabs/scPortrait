@@ -88,7 +88,7 @@ def _plot_image_grid(
         row = i // ncols
         col = i % ncols
 
-        ax_sub = ax.figure.add_axes(
+        ax_sub = ax.inset_axes(
             [
                 spacing + col * (cell_width + spacing),  # X position
                 1 - (spacing + (row + 1) * (cell_height + spacing + title_adjustment)),  # Y position
@@ -96,6 +96,7 @@ def _plot_image_grid(
                 cell_height,  # Height
             ]
         )
+        ax.figure.add_axes(ax_sub)
 
         ax_sub.imshow(img, cmap=cmap, vmin=vmin, vmax=vmax)
         ax_sub.yaxis.set_visible(False)
