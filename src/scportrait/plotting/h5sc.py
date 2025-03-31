@@ -1,5 +1,6 @@
 """Collection of plotting functions for scPortrait's standardized single-cell image format"""
 
+import warnings
 from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ import numpy as np
 from anndata import AnnData
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME
 from scportrait.tools.h5sc import get_image_with_cellid
@@ -75,11 +77,18 @@ def _plot_image_grid(
     cell_width = (1 - (ncols + 1) * spacing) / ncols
     cell_height = (1 - (nrows + 1) * spacing - title_adjustment) / nrows  # Adjust height
 
+    if len(images) > nrows * ncols:
+        warnings.warn(
+            f"Number of images exceeds grid size. Only the first {nrows * ncols} images will be displayed.",
+            stacklevel=2,
+        )
+        images = images[: nrows * ncols]
+
     for i, img in enumerate(images):
         row = i // ncols
         col = i % ncols
 
-        ax_sub = ax.inset_axes(
+        ax_sub = ax.figure.add_axes(
             [
                 spacing + col * (cell_width + spacing),  # X position
                 1 - (spacing + (row + 1) * (cell_height + spacing + title_adjustment)),  # Y position
