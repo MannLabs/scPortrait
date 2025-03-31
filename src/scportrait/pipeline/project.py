@@ -15,7 +15,6 @@ import os
 import re
 import shutil
 import tempfile
-import warnings
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -30,7 +29,7 @@ from tifffile import imread
 
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
-from scportrait.pipeline._utils.helper import read_config
+from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
     get_chunk_size,
@@ -667,13 +666,12 @@ class Project(Logable):
 
                 project.plot_input_image()
         """
-        try:
-            from scportrait.plotting import plot_image
-            from scportrait.tools.sdata.processing import get_bounding_box_sdata
-        except ImportError:
-            raise ImportError(
-                "Extended plotting capabilities required to use this function. please install with `pip install 'scportrait[plotting]'`."
-            ) from None
+
+        # check if spatialdata_plot is installed
+        _check_for_spatialdata_plot()
+
+        from scportrait.plotting import plot_image
+        from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
         _sdata = self.sdata
 
@@ -783,15 +781,11 @@ class Project(Logable):
 
                 project.plot_he()
         """
-        try:
-            import matplotlib.pyplot as plt
-            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
-            from spatialdata import to_polygons
 
-        except ImportError:
-            raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
-            ) from None
+        _check_for_spatialdata_plot()
+
+        # import optional dependencies required for this method
+        import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
 
         _sdata = self.sdata
 
@@ -860,8 +854,7 @@ class Project(Logable):
 
                 project.plot_segmentation_masks()
         """
-        # import relevant functions for this method
-        import matplotlib.pyplot as plt
+        _check_for_spatialdata_plot()
 
         from scportrait.plotting.sdata import plot_segmentation_mask
         from scportrait.tools.sdata.processing import get_bounding_box_sdata
