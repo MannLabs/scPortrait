@@ -29,7 +29,10 @@ def _rescale_image(
     Returns:
         Rescaled image with the same dtype as the input image.
     """
-    return (((img - lower_quantiles[:, None, None]) / IPRs[:, None, None]) * np.iinfo(dtype).max).astype(dtype)
+    img = (img.astype(float) - lower_quantiles[:, None, None]) / IPRs[:, None, None]
+    img = img.clip(0, 1)
+    img = img * np.iinfo(dtype).max
+    return img.astype(dtype)
 
 
 def percentile_normalize_image(
