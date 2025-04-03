@@ -104,9 +104,7 @@ def plot_image(
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
 
 
 def plot_segmentation_mask(
@@ -227,9 +225,7 @@ def plot_segmentation_mask(
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
 
 
 def plot_labels(
@@ -348,6 +344,4 @@ def plot_labels(
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
