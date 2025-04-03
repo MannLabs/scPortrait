@@ -1,7 +1,7 @@
+import os
 from typing import Any, Literal, TypeAlias
 
 import numpy as np
-import os
 from spatialdata import SpatialData, read_zarr
 from spatialdata.models import get_model
 from xarray import DataArray, DataTree
@@ -114,6 +114,7 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
     sdata[element_name] = element
     sdata.write_element(element_name)
 
+
 def rename_image_element(sdata: SpatialData, image_element: str, new_element_name: str) -> SpatialData:
     """Rename an image element in the sdata object.
 
@@ -138,7 +139,9 @@ def rename_image_element(sdata: SpatialData, image_element: str, new_element_nam
     short_path_elem = f"images/{image_element}"
     short_path_new_elem = f"images/{new_element_name}"
 
-    assert str(short_path_elem) in sdata.elements_paths_on_disk(), f"Element {image_element} needs to be on disk to rename it."
+    assert (
+        str(short_path_elem) in sdata.elements_paths_on_disk()
+    ), f"Element {image_element} needs to be on disk to rename it."
 
     # rename metadata
     zattrs_path = sdata.path / "images" / image_element / ".zattrs"
@@ -153,4 +156,4 @@ def rename_image_element(sdata: SpatialData, image_element: str, new_element_nam
     os.rename(path_elem, new_path_elem)
 
     # read and return update spatialdata object
-    return(read_zarr(path_sdata))
+    return read_zarr(path_sdata)

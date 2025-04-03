@@ -1,15 +1,15 @@
+from functools import partial
 from typing import TypeAlias
 
 import dask.array as da
 import numpy as np
+import spatialdata
 import xarray
 from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
 from scportrait.tools.sdata.write._helper import _force_delete_object, rename_image_element
 from scportrait.tools.sdata.write._write import image as write_image
-from functools import partial
-import spatialdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
@@ -62,7 +62,7 @@ def percentile_normalize_image(
     if image_name not in sdata:
         raise ValueError(f"Image {image_name} not found in sdata")
 
-    #define default values for generated rescaled image
+    # define default values for generated rescaled image
     if rescaled_image_name is None:
         rescaled_image_name = f"{image_name}_rescaled"
 
@@ -80,7 +80,7 @@ def percentile_normalize_image(
 
     # get dtype
     image_dtype = image.data.dtype.type
-        # get channel names
+    # get channel names
 
     # get channel names
     channel_names = image.c.values.tolist()
@@ -103,14 +103,14 @@ def percentile_normalize_image(
         upper_quantiles = np.zeros((len(image.c),), dtype=image_dtype)
         IPRs = np.zeros((len(image.c),), dtype=image_dtype)
 
-        for i, x in enumerate(zip(image.c, lower_quantile, upper_quantile, strict = True)):
+        for i, x in enumerate(zip(image.c, lower_quantile, upper_quantile, strict=True)):
             c, lower, upper = x
             channel = image.sel(c=c)
             lower_quantiles[i] = channel.quantile(lower, dim=["x", "y"]).compute().values
             upper_quantiles[i] = channel.quantile(upper, dim=["x", "y"]).compute().values
             IPRs[i] = upper_quantiles[i] - lower_quantiles[i]
 
-    elif isinstance(lower_percentile, float|int) and isinstance(upper_percentile, float|int):
+    elif isinstance(lower_percentile, float | int) and isinstance(upper_percentile, float | int):
         assert lower_percentile < upper_percentile, "Lower percentile must be less than upper percentile"
         assert lower_percentile >= 0 and upper_percentile <= 100, "Percentiles must be between 0 and 100"
 
@@ -122,16 +122,14 @@ def percentile_normalize_image(
         upper_quantiles = image.quantile(upper_quantile, dim=["x", "y"]).compute().values
         IPRs = upper_quantiles - lower_quantiles
     else:
-        raise ValueError(f"Lower and upper percentiles are an unsupported dtype {type(lower_percentile)} and {type(upper_percentile)}")
+        raise ValueError(
+            f"Lower and upper percentiles are an unsupported dtype {type(lower_percentile)} and {type(upper_percentile)}"
+        )
 
     # apply rescaling to image
     rescale_fn = partial(_rescale_image, lower_quantiles=lower_quantiles, IPRs=IPRs, dtype=image_dtype)
 
-    data_rescaled = da.map_blocks(
-        rescale_fn,
-        image.data,
-        dtype=image_dtype
-    )
+    data_rescaled = da.map_blocks(rescale_fn, image.data, dtype=image_dtype)
 
     # get local transform
     local_transform = get_transformation(image)
@@ -153,9 +151,11 @@ def percentile_normalize_image(
             chunks=chunks,
         )
         # to ensure that the object is updated and is backed by the new written file otherwise the original input image can not be deleted
-        sdata= spatialdata.read_zarr(sdata.path)
+        sdata = spatialdata.read_zarr(sdata.path)
         _force_delete_object(sdata, image_name)
-        sdata = rename_image_element(sdata, image_element = rescaled_image_name, new_element_name = image_name) #rename directory on disk instead of rewriting to improve performance
+        sdata = rename_image_element(
+            sdata, image_element=rescaled_image_name, new_element_name=image_name
+        )  # rename directory on disk instead of rewriting to improve performance
 
     else:
         # write rescaled image back to sdata object
@@ -169,6 +169,8 @@ def percentile_normalize_image(
             scale_factors=scale_factors,
             chunks=chunks,
         )
-        sdata = spatialdata.read_zarr(sdata.path) # to ensure that the object is updated and is backed by the new written file
+        sdata = spatialdata.read_zarr(
+            sdata.path
+        )  # to ensure that the object is updated and is backed by the new written file
 
-    return(sdata)
+    return sdata
