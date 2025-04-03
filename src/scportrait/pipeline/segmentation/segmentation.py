@@ -450,7 +450,10 @@ class Segmentation(ProcessingStep):
             try:
                 self._execute_segmentation(input_image)
                 self.clear_temp_dir()
-            except (RuntimeError, ValueError, TypeError) as e:
+            except (RuntimeError, ValueError, TypeError, IndexError) as e:
+                print(
+                    f"An error occurred when segmenting shard  with the tile id {self.directory} with the slicing {self.window}: {e}"
+                )
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
@@ -459,7 +462,10 @@ class Segmentation(ProcessingStep):
             try:
                 super().__call_empty__(input_image)
                 self.clear_temp_dir()
-            except (RuntimeError, ValueError, TypeError) as e:
+            except (RuntimeError, ValueError, TypeError, IndexError) as e:
+                print(
+                    f"An error occurred when segmenting shard  with the tile id {self.directory} with the slicing {self.window}: {e}"
+                )
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
