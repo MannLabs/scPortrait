@@ -1,2 +1,4 @@
 napari-spatialdata
 pyqt5
+matplotlib_scalebar
+spatialdata-plot

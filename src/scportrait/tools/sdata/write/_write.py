@@ -7,7 +7,7 @@ from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, ShapesM
 from spatialdata.transformations.transformations import Identity
 from xarray import DataArray, DataTree
 
-from scportrait.tools.spdata.write._helper import add_element_sdata
+from scportrait.tools.sdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]

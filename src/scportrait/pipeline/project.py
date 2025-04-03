@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import dask.array as darray
+import matplotlib.pyplot as plt
 import numpy as np
 import psutil
 import zarr
@@ -28,13 +29,13 @@ from tifffile import imread
 
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
-from scportrait.pipeline._utils.helper import read_config
+from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
     get_chunk_size,
     rechunk_image,
 )
-from scportrait.tools.spdata.write._helper import _get_image, _get_shape
+from scportrait.tools.sdata.write._helper import _get_image, _get_shape
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -68,7 +69,6 @@ from scportrait.pipeline._utils.constants import (
     ChunkSize2D,
     ChunkSize3D,
 )
-from scportrait.plotting.h5sc import cell_grid
 from scportrait.processing.images._image_processing import percentile_normalization
 
 
@@ -120,6 +120,31 @@ class Project(Logable):
     DEFAULT_SEGMENTATION_DTYPE = DEFAULT_SEGMENTATION_DTYPE
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
     DEFAULT_CELL_ID_NAME = DEFAULT_CELL_ID_NAME
+
+    PALETTE = [
+        "blue",
+        "green",
+        "red",
+        "yellow",
+        "purple",
+        "orange",
+        "pink",
+        "cyan",
+        "magenta",
+        "lime",
+        "teal",
+        "lavender",
+        "brown",
+        "beige",
+        "maroon",
+        "mint",
+        "olive",
+        "apricot",
+        "navy",
+        "grey",
+        "white",
+        "black",
+    ]
 
     def __init__(
         self,
@@ -612,24 +637,27 @@ class Project(Logable):
 
     def plot_input_image(
         self,
+        image_name="input_image",
         max_width: int = 1000,
         select_region: tuple[int, int] | None = None,
         channels: list[int] | list[str] | None = None,
         normalize: bool = False,
         normalization_percentile: tuple[float, float] = (0.01, 0.99),
-        fontsize: int = 20,
-        figsize_single_tile=(8, 8),
+        title_fontsize: int = 20,
+        figsize_single_tile: tuple[float, float] = (8, 8),
         return_fig: bool = False,
-        image_name="input_image",
     ) -> Figure | None:
         """Plot the input image associated with the project. If the image is large it will automatically plot a subset in the center
 
         Args:
-            max_size: Maximum size of the image to be plotted in pixels.
+            image_name: Name of the element containing the input image in the spatialdata object.
+            max_width: Maximum size of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the center of the region to be plotted. If not set it will use the center of the image.
             channels: List of channel names or indices to be plotted. If not set, the first 4 channels will be plotted.
-            fontsize: Fontsize of the title of the plot.
-            figsize_single_tile: Size of the single tile in the plot.
+            normalize: If set to ``True``, the image will be normalized to the specified percentile values.
+            normalization_percentile: Tuple containing the lower and upper percentile values to be used for normalization.
+            title_fontsize: Fontsize of the title of the plot.
+            figsize_single_tile: size to be used during figure creation for a single axes in the resulting plot.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
@@ -641,87 +669,29 @@ class Project(Logable):
                 project.plot_input_image()
         """
 
-        try:
-            import matplotlib.pyplot as plt
-            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
-            from spatialdata import to_polygons
+        # check if spatialdata_plot is installed
+        _check_for_spatialdata_plot()
 
-        except ImportError:
-            raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
-            ) from None
+        from scportrait.plotting import plot_image
+        from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
         _sdata = self.sdata
 
-        # remove points object as this makes it
-        points_keys = list(_sdata.points.keys())
-        if len(points_keys) > 0:
-            for x in points_keys:
-                del _sdata.points[x]
-
-        palette = [
-            "blue",
-            "green",
-            "red",
-            "yellow",
-            "purple",
-            "orange",
-            "pink",
-            "cyan",
-            "magenta",
-            "lime",
-            "teal",
-            "lavender",
-            "brown",
-            "beige",
-            "maroon",
-            "mint",
-            "olive",
-            "apricot",
-            "navy",
-            "grey",
-            "white",
-            "black",
-        ]
+        # get relevant information from spatialdata object
         c, x, y = _sdata[image_name].scale0.image.shape
-        channel_names = _sdata["input_image"].scale0.c.values
+        channel_names = list(_sdata[image_name].scale0.c.values)
 
-        if channels is not None:
-            if isinstance(channels[0], str):
-                assert [
-                    x in channel_names for x in channels
-                ], "The specified channel names are not found in the spatialdata object."
-                channel_names = channels
-                palette = palette[:c]
-            if isinstance(channels[0], int):
-                assert [
-                    x in range(c) for x in channels
-                ], "The specified channel indices are not found in the spatialdata object."
-                channel_names = list(channel_names[channels])
-            c = len(channels)
-            palette = palette[:c]
-        else:
-            # do not plot more than 4 channels per default
-            if c > 4:
-                c = 4
-            palette = palette[:c]
-            channel_names = list(channel_names[:c])
-
-        # subset spatialdata object if its too large
-        width = max_width // 2
-        if x > max_width or y > max_width:
+        if max_width is not None:
+            # get center coordinates
             if select_region is None:
                 center_x = x // 2
                 center_y = y // 2
             else:
                 center_x, center_y = select_region
 
-            _sdata = _sdata.query.bounding_box(
-                axes=["x", "y"],
-                min_coordinate=[center_x - width, center_y - width],
-                max_coordinate=[center_x + width, center_y + width],
-                target_coordinate_system="global",
-            )
+            # subset spatialdata object if its too large
+            if x > max_width or y > max_width:
+                _sdata = get_bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
         if normalize:
             lower_percentile, upper_percentile = normalization_percentile
@@ -735,34 +705,66 @@ class Project(Logable):
                         percentile_normalization(im, lower_percentile, upper_percentile) * np.iinfo(np.uint16).max
                     ).astype(np.uint16)
 
+        if channels is not None:
+            if isinstance(channels[0], int):
+                assert all(
+                    x in range(c) for x in channels
+                ), "The specified channel indices are not found in the spatialdata object."
+                valid_channels = [i for i in channels if isinstance(i, int)]
+                channel_names = [channel_names[i] for i in valid_channels]
+            if isinstance(channels[0], str):
+                assert all(
+                    x in channel_names for x in channels
+                ), "The specified channel names are not found in the spatialdata object."
+                channel_names = channels
+
+            c = len(channels)
+            palette = self.PALETTE[:c]
+        else:
+            palette = self.PALETTE[:c]
+
         fig_size_x, fig_size_y = figsize_single_tile
         fig, axs = plt.subplots(1, len(channel_names) + 1, figsize=(fig_size_x * (len(channel_names) + 1), fig_size_y))
-        _sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(ax=axs[0])
-        axs[0].set_title("overlayed", fontsize=fontsize)
-        axs[0].axis("off")
+
+        plot_image(
+            _sdata,
+            image_name=image_name,
+            channel_names=channel_names,
+            palette=palette,
+            ax=axs[0],
+            title="overlayed",
+            title_fontsize=title_fontsize,
+            return_fig=False,
+            show_fig=False,
+        )
 
         for i, channel in enumerate(channel_names):
-            _sdata.pl.render_images(image_name, channel=channel, palette=palette[i]).pl.show(
+            plot_image(
+                _sdata,
+                image_name=image_name,
+                channel_names=[channel],
+                palette=[palette[i]],
                 ax=axs[i + 1],
-                colorbar=False,
+                title=channel,
+                title_fontsize=title_fontsize,
+                return_fig=False,
+                show_fig=False,
             )
-            axs[i + 1].set_title(channel, fontsize=fontsize)
-            axs[i + 1].axis("off")
-        fig.tight_layout()
 
+        fig.tight_layout()
         if return_fig:
             return fig
         else:
-            return None
             plt.show()
+            return None
 
     def plot_he_image(
         self,
         image_name: str = "he_image",
         max_width: int | None = None,
         select_region: tuple[int, int] | None = None,
+        title_fontsize: int = 20,
         return_fig: bool = False,
-        fontsize: int = 20,
     ) -> None | Figure:
         """Plot the hematoxylin and eosin (HE) channel of the input image.
 
@@ -770,7 +772,7 @@ class Project(Logable):
             image_name: Name of the element containing the H&E image in the spatialdata object.
             max_width: Maximum width of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
-
+            title_fontsize: Fontsize of the title of the plot.
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
@@ -781,15 +783,11 @@ class Project(Logable):
 
                 project.plot_he()
         """
-        try:
-            import matplotlib.pyplot as plt
-            import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
-            from spatialdata import to_polygons
 
-        except ImportError:
-            raise ImportError(
-                "spatialdata_plot must be installed to use the plotting capabilites. please install with `pip install scportrait[plotting]`."
-            ) from None
+        _check_for_spatialdata_plot()
+
+        # import optional dependencies required for this method
+        import spatialdata_plot  # this does not have an explicit call put allows for sdata.pl calls
 
         _sdata = self.sdata
 
@@ -820,35 +818,47 @@ class Project(Logable):
                     target_coordinate_system="global",
                 )
 
-        fig, axs = plt.subplots(1, 1, figsize=(8, 8))
-        _sdata.pl.render_images(image_name).pl.show(ax=axs, title="H&E Image")
-        axs.axis("off")
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        _sdata.pl.render_images(image_name).pl.show(ax=ax)
+        ax.axis("off")
+        ax.set_title(title="H&E Image", fontsize=title_fontsize)
+
         fig.tight_layout()
 
         if return_fig:
             return fig
         else:
-            return None
             plt.show()
+            return None
 
     def plot_segmentation_masks(
         self,
         max_width: int = 1500,
         select_region: tuple[int, int] | None = None,
-        normalize: bool = False,
-        normalization_percentile: tuple[float, float] = (0.01, 0.99),
         image_name: str = "input_image",
         mask_names: list[str] | None = None,
-        fontsize: int = 20,
-        linewidth: int = 1,
+        normalize: bool = False,
+        normalization_percentile: tuple[float, float] = (0.01, 0.99),
+        title_fontsize: int = 20,
+        line_width: int = 1,
         return_fig: bool = False,
     ) -> None | Figure:
         """Plot the generated segmentation masks. If the image is large it will automatically plot a subset cropped to the center of the spatialdata object.
+
+        Uses the function `scportrait.plotting.sdata.plot_segmentation_mask` to plot the found segmentation masks in an scPortrait project.
+        Please refer to the documentation of this function for further customization.
 
         Args:
             return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
             max_width: Maximum width of the image to be plotted in pixels.
             select_region: Tuple containing the x and y coordinates of the region to be plotted. If not set it will use the center of the image.
+            image_name: Name of the element containing the input image in the spatialdata object.
+            mask_names: List of mask names to be plotted. If not set, all available masks will be plotted.
+            normalize: If set to ``True``, the image will be normalized to the specified percentile values.
+            normalization_percentile: Tuple containing the lower and upper percentile values to be used for normalization.
+            title_fontsize: Fontsize of the title of the plot.
+            line_width: Width of the lines in the plot.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
 
         Returns:
             A matplotlib figure object if return_fig is set to ``True``.
@@ -858,27 +868,29 @@ class Project(Logable):
 
                 project.plot_segmentation_masks()
         """
-        # import relevant functions for this method
-        import matplotlib.pyplot as plt
+        _check_for_spatialdata_plot()
 
-        from scportrait.plotting.sdata import _bounding_box_sdata, plot_segmentation_mask
+        # import relevant functions for this method
+        from scportrait.plotting.sdata import plot_segmentation_mask
+        from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
         _sdata = self.sdata
 
         # get relevant information from spatialdata object
-        _, x, y = _sdata["input_image"].scale0.image.shape
-        channel_names = list(_sdata["input_image"].scale0.c.values)
+        _, x, y = _sdata[image_name].scale0.image.shape
+        channel_names = list(_sdata[image_name].scale0.c.values)
 
-        # get center coordinates
-        if select_region is None:
-            center_x = x // 2
-            center_y = y // 2
-        else:
-            center_x, center_y = select_region
+        if max_width is not None:
+            # get center coordinates
+            if select_region is None:
+                center_x = x // 2
+                center_y = y // 2
+            else:
+                center_x, center_y = select_region
 
-        # subset spatialdata object if its too large
-        if x > max_width or y > max_width:
-            _sdata = _bounding_box_sdata(_sdata, max_width, center_x, center_y)
+            # subset spatialdata object if its too large
+            if x > max_width or y > max_width:
+                _sdata = get_bounding_box_sdata(_sdata, max_width, center_x, center_y)
 
         if normalize:
             lower_percentile, upper_percentile = normalization_percentile
@@ -913,11 +925,10 @@ class Project(Logable):
         plot_segmentation_mask(
             _sdata,
             masks,
-            max_width=max_width,
-            axs=axs[0],
+            ax=axs[0],
             title="overlayed",
-            font_size=fontsize,
-            linewidth=linewidth,
+            title_fontsize=title_fontsize,
+            line_width=line_width,
             show_fig=False,
         )
 
@@ -936,12 +947,11 @@ class Project(Logable):
             plot_segmentation_mask(
                 _sdata,
                 [mask],
-                max_width=max_width,
                 selected_channels=channel,
-                axs=axs[idx + 1],
+                ax=axs[idx + 1],
                 title=name,
-                font_size=fontsize,
-                linewidth=linewidth,
+                title_fontsize=title_fontsize,
+                line_width=line_width,
                 show_fig=False,
             )
 
@@ -957,10 +967,28 @@ class Project(Logable):
         self,
         n_cells: int | None = None,
         cell_ids: list[int] | None = None,
-        select_channel: int | None = None,
+        show_cell_ids: bool = True,
+        select_channel: int | list[int] | None = None,
         cmap="viridis",
         return_fig: bool = False,
     ) -> None | Figure:
+        """Visualize the extracted single-cell images.
+
+        Uses the function `scportrait.plotting.h5sc.cell_grid` to plot the images providing useful default values.
+        For further customization of this plot please refer to the documentation of the function.
+
+        Args:
+            n_cells: Number of cells to be plotted. If not set, will proceed with default values.
+            cell_ids: List of cell ids to be plotted. If not set, will randomly select cells from the dataset.
+            show_cell_ids: If set to ``True``, the cell ids will be shown on the plot.
+            select_channel: List of channel names or indices to be plotted. If not set, all available channels will be plotted.
+            cmap: Colormap to be used for the plot. Default is ``viridis``.
+            return_fig: If set to ``True``, the function returns the figure object instead of displaying it.
+        """
+
+        # import optional required dependencies for this function
+        from scportrait.plotting.h5sc import cell_grid
+
         if cell_ids is not None:
             assert n_cells is None, "n_cells and cell_ids cannot be set at the same time."
         if n_cells is not None:
@@ -970,6 +998,7 @@ class Project(Logable):
             self.h5sc,
             n_cells=n_cells,
             cell_ids=cell_ids,
+            show_cell_id=show_cell_ids,
             select_channel=select_channel,
             cmap=cmap,
             return_fig=return_fig,

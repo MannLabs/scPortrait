@@ -6,8 +6,8 @@ import xarray
 from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
-from scportrait.tools.spdata.write._helper import _force_delete_object
-from scportrait.tools.spdata.write._write import image as write_image
+from scportrait.tools.sdata.write._helper import _force_delete_object
+from scportrait.tools.sdata.write._write import image as write_image
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
