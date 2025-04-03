@@ -6,7 +6,7 @@ import xarray
 from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
-from scportrait.tools.sdata.write._helper import _force_delete_object
+from scportrait.tools.sdata.write._helper import _force_delete_object, rename_image_elem
 from scportrait.tools.sdata.write._write import image as write_image
 
 ChunkSize2D: TypeAlias = tuple[int, int]
@@ -39,7 +39,7 @@ def percentile_normalize_image(
     scale_factors: list[int] | None = None,
     overwrite: bool = True,
     chunks: ChunkSize3D | None = None,
-) -> None:
+) -> SpatialData:
     """Percentile Normalize an image in a spatialdata object.
 
     Args:
@@ -115,27 +115,10 @@ def percentile_normalize_image(
             scale_factors=scale_factors,
             chunks=chunks,
         )
-
+        # to ensure that the object is updated and is backed by the new written file otherwise the original input image can not be deleted
+        sdata= spatialdata.read_zarr(sdata.path)
         _force_delete_object(sdata, image_name)
-
-        # currently we need to write the rescaled image again because spatialdata
-        # does not yet support renaming of objects
-        # once https://github.com/scverse/spatialdata/issues/906 has been implemented this
-        # can be changes to use that syntax
-        image = sdata[rescaled_image_name]
-        if isinstance(image, xarray.DataTree):
-            image = image.get("scale0").image
-        write_image(
-            sdata,
-            image=image,
-            image_name=image_name,
-            channel_names=channel_names,
-            transform=local_transform,
-            overwrite=overwrite,
-            scale_factors=scale_factors,
-            chunks=chunks,
-        )
-        _force_delete_object(sdata, rescaled_image_name)
+        sdata = rename_image_elem(sdata, image_element = rescaled_image_name, new_element_name = image_name) #rename directory on disk instead of rewriting to improve performance
 
     else:
         # write rescaled image back to sdata object
@@ -149,3 +132,6 @@ def percentile_normalize_image(
             scale_factors=scale_factors,
             chunks=chunks,
         )
+        sdata = spatialdata.read_zarr(sdata.path) # to ensure that the object is updated and is backed by the new written file
+
+    return(sdata)
