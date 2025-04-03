@@ -114,7 +114,7 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
     sdata[element_name] = element
     sdata.write_element(element_name)
 
-def rename_image_elem(sdata: SpatialData, image_element: str, new_element_name: str) -> SpatialData:
+def rename_image_element(sdata: SpatialData, image_element: str, new_element_name: str) -> SpatialData:
     """Rename an image element in the sdata object.
 
     Args:

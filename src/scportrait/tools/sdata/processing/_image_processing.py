@@ -6,7 +6,7 @@ import xarray
 from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
-from scportrait.tools.sdata.write._helper import _force_delete_object, rename_image_elem
+from scportrait.tools.sdata.write._helper import _force_delete_object, rename_image_element
 from scportrait.tools.sdata.write._write import image as write_image
 from functools import partial
 import spatialdata
@@ -155,7 +155,7 @@ def percentile_normalize_image(
         # to ensure that the object is updated and is backed by the new written file otherwise the original input image can not be deleted
         sdata= spatialdata.read_zarr(sdata.path)
         _force_delete_object(sdata, image_name)
-        sdata = rename_image_elem(sdata, image_element = rescaled_image_name, new_element_name = image_name) #rename directory on disk instead of rewriting to improve performance
+        sdata = rename_image_element(sdata, image_element = rescaled_image_name, new_element_name = image_name) #rename directory on disk instead of rewriting to improve performance
 
     else:
         # write rescaled image back to sdata object
