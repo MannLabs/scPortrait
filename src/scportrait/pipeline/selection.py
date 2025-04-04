@@ -5,6 +5,7 @@ from functools import partial as func_partial
 
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray
 from lmd.lib import SegmentationLoader
 from scipy.sparse import coo_array
 from tqdm.auto import tqdm
@@ -98,6 +99,14 @@ class LMDSelection(ProcessingStep):
         results = []
 
         _sdata = self.project.filehandler.get_sdata()
+
+        # get correct scale of segmentaiton mask
+        seg_mask = _sdata[self.segmentation_channel_to_select]
+        if isinstance(seg_mask, xarray.DataArray):
+            seg_mask = seg_mask.data
+        elif isinstance(seg_mask, xarray.DataTree):
+            seg_mask = seg_mask.scale0.image
+
         for i, _id in enumerate(cell_ids):
             values = centers[i]
 
@@ -107,9 +116,7 @@ class LMDSelection(ProcessingStep):
             x_end = x_start + width * 2
             y_end = y_start + width * 2
 
-            _cropped = _sdata[self.segmentation_channel_to_select][
-                slice(x_start, x_end), slice(y_start, y_end)
-            ].compute()
+            _cropped = seg_mask[slice(x_start, x_end), slice(y_start, y_end)].compute()
 
             # optional plotting output for deep debugging
             if self.deep_debug:
