@@ -179,7 +179,7 @@ def labels(
             else:
                 transform_original = transform
 
-            dimensions = (["y", "x"],)
+            dimensions = ["y", "x"]
 
             if isinstance(labels, daArray):
                 # rechunk dask array to match the desired chunk size
