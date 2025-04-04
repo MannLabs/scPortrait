@@ -11,6 +11,7 @@ import sys
 from . import processing as pp
 from .write._helper import add_element_sdata, rename_image_element
 from .write._write import image as write_image
+from .write._write import labels as write_labels
 
 # update symlinks to the functions
 sys.modules.update(
@@ -23,4 +24,4 @@ sys.modules.update(
     }
 )
 
-__all__ = ["write_image", "add_element_sdata", "rename_image_element" "pp"]
+__all__ = ["write_image", "write_labels", "add_element_sdata", "rename_image_element", "pp"]
