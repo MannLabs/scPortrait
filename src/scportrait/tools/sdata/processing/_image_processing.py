@@ -1,12 +1,14 @@
+from functools import partial
 from typing import TypeAlias
 
 import dask.array as da
 import numpy as np
+import spatialdata
 import xarray
 from spatialdata import SpatialData
 from spatialdata.transformations import get_transformation
 
-from scportrait.tools.sdata.write._helper import _force_delete_object
+from scportrait.tools.sdata.write._helper import _force_delete_object, rename_image_element
 from scportrait.tools.sdata.write._write import image as write_image
 
 ChunkSize2D: TypeAlias = tuple[int, int]
@@ -27,19 +29,22 @@ def _rescale_image(
     Returns:
         Rescaled image with the same dtype as the input image.
     """
-    return (((img - lower_quantiles[:, None, None]) / IPRs[:, None, None]) * np.iinfo(dtype).max).astype(dtype)
+    img = (img.astype(float) - lower_quantiles[:, None, None]) / IPRs[:, None, None]
+    img = img.clip(0, 1)
+    img = img * np.iinfo(dtype).max
+    return img.astype(dtype)
 
 
 def percentile_normalize_image(
     sdata: SpatialData,
     image_name: str,
-    lower_percentile: float = 0.1,
-    upper_percentile: float = 99.9,
+    lower_percentile: float | list[float] = 0.1,
+    upper_percentile: float | list[float] = 99.9,
     rescaled_image_name: str | None = None,
     scale_factors: list[int] | None = None,
     overwrite: bool = True,
     chunks: ChunkSize3D | None = None,
-) -> None:
+) -> SpatialData:
     """Percentile Normalize an image in a spatialdata object.
 
     Args:
@@ -60,9 +65,12 @@ def percentile_normalize_image(
     if image_name not in sdata:
         raise ValueError(f"Image {image_name} not found in sdata")
 
-    image = sdata[image_name]
+    # define default values for generated rescaled image
     if rescaled_image_name is None:
         rescaled_image_name = f"{image_name}_rescaled"
+
+    # get image and check for proper scaling
+    image = sdata[image_name]
 
     if isinstance(image, xarray.DataTree):
         image = image.get("scale0").image
@@ -75,29 +83,59 @@ def percentile_normalize_image(
 
     # get dtype
     image_dtype = image.data.dtype.type
-
-    # convert percentiles to quantiles
-    assert lower_percentile < upper_percentile, "Lower percentile must be less than upper percentile"
-    assert lower_percentile >= 0 and upper_percentile <= 100, "Percentiles must be between 0 and 100"
-
-    lower_quantile = lower_percentile / 100
-    upper_quantile = upper_percentile / 100
-
-    # calculate quantiles for specific scale
-    lower_quantiles = image.quantile(lower_quantile, dim=["x", "y"]).compute().values
-    upper_quantiles = image.quantile(upper_quantile, dim=["x", "y"]).compute().values
-    IPRs = upper_quantiles - lower_quantiles
-
-    # apply rescaling to image
-    data_rescaled = da.map_blocks(
-        lambda x: _rescale_image(x, lower_quantiles, IPRs, dtype=image_dtype), image.data, dtype=image_dtype
-    )
-
-    # get local transform
-    local_transform = get_transformation(image)
+    # get channel names
 
     # get channel names
     channel_names = image.c.values.tolist()
+
+    # convert percentiles to quantiles
+    if isinstance(lower_percentile, list) and isinstance(upper_percentile, list):
+        assert len(lower_percentile) == len(upper_percentile), "Lower and upper percentiles must have the same length"
+        for lower, upper in zip(lower_percentile, upper_percentile, strict=True):
+            assert lower < upper, "Lower percentile must be less than upper percentile"
+            assert lower >= 0 and upper <= 100, "Percentiles must be between 0 and 100"
+
+        # convert to quantiles
+        lower_quantile = np.array(lower_percentile) / 100
+        upper_quantile = np.array(upper_percentile) / 100
+
+        # calculate quantiles for a specific scale for each channel
+        assert len(image.c) == len(lower_quantile), "Number of channels must match number of quantiles"
+
+        lower_quantiles = np.zeros((len(image.c),), dtype=image_dtype)
+        upper_quantiles = np.zeros((len(image.c),), dtype=image_dtype)
+        IPRs = np.zeros((len(image.c),), dtype=image_dtype)
+
+        for i, x in enumerate(zip(image.c, lower_quantile, upper_quantile, strict=True)):
+            c, lower, upper = x
+            channel = image.sel(c=c)
+            lower_quantiles[i] = channel.quantile(lower, dim=["x", "y"]).compute().values
+            upper_quantiles[i] = channel.quantile(upper, dim=["x", "y"]).compute().values
+            IPRs[i] = upper_quantiles[i] - lower_quantiles[i]
+
+    elif isinstance(lower_percentile, float | int) and isinstance(upper_percentile, float | int):
+        assert lower_percentile < upper_percentile, "Lower percentile must be less than upper percentile"
+        assert lower_percentile >= 0 and upper_percentile <= 100, "Percentiles must be between 0 and 100"
+
+        lower_quantile = lower_percentile / 100
+        upper_quantile = upper_percentile / 100
+
+        # calculate quantiles for specific scale
+        lower_quantiles = image.quantile(lower_quantile, dim=["x", "y"]).compute().values
+        upper_quantiles = image.quantile(upper_quantile, dim=["x", "y"]).compute().values
+        IPRs = upper_quantiles - lower_quantiles
+    else:
+        raise ValueError(
+            f"Lower and upper percentiles are an unsupported dtype {type(lower_percentile)} and {type(upper_percentile)}"
+        )
+
+    # apply rescaling to image
+    rescale_fn = partial(_rescale_image, lower_quantiles=lower_quantiles, IPRs=IPRs, dtype=image_dtype)
+
+    data_rescaled = da.map_blocks(rescale_fn, image.data, dtype=image_dtype)
+
+    # get local transform
+    local_transform = get_transformation(image)
 
     if rescaled_image_name == image_name:
         # to  overwrite the image in place we currently need to use a workaround that
@@ -115,27 +153,12 @@ def percentile_normalize_image(
             scale_factors=scale_factors,
             chunks=chunks,
         )
-
+        # to ensure that the object is updated and is backed by the new written file otherwise the original input image can not be deleted
+        sdata = spatialdata.read_zarr(sdata.path)
         _force_delete_object(sdata, image_name)
-
-        # currently we need to write the rescaled image again because spatialdata
-        # does not yet support renaming of objects
-        # once https://github.com/scverse/spatialdata/issues/906 has been implemented this
-        # can be changes to use that syntax
-        image = sdata[rescaled_image_name]
-        if isinstance(image, xarray.DataTree):
-            image = image.get("scale0").image
-        write_image(
-            sdata,
-            image=image,
-            image_name=image_name,
-            channel_names=channel_names,
-            transform=local_transform,
-            overwrite=overwrite,
-            scale_factors=scale_factors,
-            chunks=chunks,
-        )
-        _force_delete_object(sdata, rescaled_image_name)
+        sdata = rename_image_element(
+            sdata, image_element=rescaled_image_name, new_element_name=image_name
+        )  # rename directory on disk instead of rewriting to improve performance
 
     else:
         # write rescaled image back to sdata object
@@ -149,3 +172,8 @@ def percentile_normalize_image(
             scale_factors=scale_factors,
             chunks=chunks,
         )
+        sdata = spatialdata.read_zarr(
+            sdata.path
+        )  # to ensure that the object is updated and is backed by the new written file
+
+    return sdata

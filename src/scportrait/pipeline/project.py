@@ -827,9 +827,8 @@ class Project(Logable):
 
         if return_fig:
             return fig
-        else:
-            plt.show()
-            return None
+        plt.show()
+        return None
 
     def plot_segmentation_masks(
         self,
