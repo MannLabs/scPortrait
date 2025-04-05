@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Literal, TypeAlias
 
 import numpy as np
@@ -50,7 +51,7 @@ def image(
         # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
         Image2DModel().validate(image)
         if scale_factors is not None:
-            Warning("Scale factors are ignored when passing a multi-scale image.")
+            warnings.warn("Scale factors are ignored when passing a multi-scale image.", stacklevel=2)
     else:
         if scale_factors is None:
             scale_factors = DEFAULT_SCALE_FACTORS
@@ -70,13 +71,15 @@ def image(
             Image2DModel().validate(image)
 
             if channel_names is not None:
-                Warning(
-                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray."
+                warnings.warn(
+                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray.",
+                    stacklevel=2,
                 )
 
             if chunks is not None:
-                Warning(
-                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray."
+                warnings.warn(
+                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray.",
+                    stacklevel=2,
                 )
 
             image = Image2DModel.parse(
@@ -149,7 +152,7 @@ def labels(
         # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
         Labels2DModel().validate(labels)
         if scale_factors is not None:
-            Warning("Scale factors are ignored when passing a multi-scale label layer.")
+            warnings.warn("Scale factors are ignored when passing a multi-scale label layer.", stacklevel=2)
     else:
         if scale_factors is None:
             scale_factors = DEFAULT_SCALE_FACTORS
@@ -163,8 +166,9 @@ def labels(
             Labels2DModel().validate(labels)
 
             if chunks is not None:
-                Warning(
-                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray."
+                warnings.warn(
+                    "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray.",
+                    stacklevel=2,
                 )
 
             labels = Labels2DModel.parse(
