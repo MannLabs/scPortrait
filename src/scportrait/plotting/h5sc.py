@@ -295,6 +295,10 @@ def cell_grid_multi_channel(
     # Collect images in a list
     images = get_image_with_cellid(adata, _cell_ids)
     if select_channels is not None:
+        if not isinstance(select_channels, Iterable):
+            select_channels = [select_channels]
+        if np.all(isinstance(x, str) for x in select_channels):
+            select_channels = [list(channel_names).index(x) for x in select_channels]
         images = images[:, select_channels, :, :]
         channel_names = [channel_names[i] for i in select_channels]
         n_channels = len(select_channels)
