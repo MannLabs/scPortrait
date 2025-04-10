@@ -1572,7 +1572,6 @@ class CellFeaturizer(_cellFeaturizerBase):
     """
 
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
-    LABEL = "CellFeaturizer_all_channels"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

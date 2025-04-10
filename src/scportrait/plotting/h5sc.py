@@ -232,7 +232,7 @@ def cell_grid_multi_channel(
     adata,
     n_cells: int = 5,
     cell_ids: int | list[int] | None = None,
-    select_channels: list[int] | None = None,
+    select_channels: list[int] | list[str] | None = None,
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
@@ -295,6 +295,10 @@ def cell_grid_multi_channel(
     # Collect images in a list
     images = get_image_with_cellid(adata, _cell_ids)
     if select_channels is not None:
+        if not isinstance(select_channels, Iterable):
+            select_channels = [select_channels]
+        if np.all(isinstance(x, str) for x in select_channels):
+            select_channels = [list(channel_names).index(x) for x in select_channels]
         images = images[:, select_channels, :, :]
         channel_names = [channel_names[i] for i in select_channels]
         n_channels = len(select_channels)
@@ -341,7 +345,7 @@ def cell_grid_multi_channel(
 
 def cell_grid(
     adata: AnnData,
-    select_channel: int | None | list[int] = None,
+    select_channel: int | str | list[int] | list[str] = None,
     n_cells: int | None = None,
     cell_ids: int | list[int] | None = None,
     show_cell_id: bool = True,
@@ -367,7 +371,7 @@ def cell_grid(
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
     """
-    if isinstance(select_channel, int):
+    if isinstance(select_channel, int | str):
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 16
