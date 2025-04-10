@@ -174,7 +174,7 @@ class Project(Logable):
         self.project_location = project_location
         self.overwrite = overwrite
         self.config: None | dict = None
-        if isinstance(config_path, None | str | PosixPath):
+        if config_path is None or isinstance(config_path, (str, PosixPath)):
             self._get_config_file(config_path)
         elif isinstance(config_path, dict):
             self._load_config_from_dict(config_path)
