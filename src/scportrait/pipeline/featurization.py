@@ -758,7 +758,7 @@ class _FeaturizationBase(ProcessingStep):
 
             self.filehandler._write_table_object_sdata(
                 table,
-                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}",
+                f"{label}_{self.MASK_NAMES[0]}",
                 overwrite=self.overwrite_run_path,
             )
 
@@ -780,7 +780,7 @@ class _FeaturizationBase(ProcessingStep):
 
             self.filehandler._write_table_object_sdata(
                 table,
-                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}",
+                f"{label}_{self.MASK_NAMES[1]}",
                 overwrite=self.overwrite_run_path,
             )
 
@@ -1041,7 +1041,7 @@ class MLClusterClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.label}_{model.__name__}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{self.label}_{model.__name__}")
             else:
                 all_results.append(results)
 
@@ -1206,7 +1206,7 @@ class EnsembleClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=model_name)
+                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{model_name}")
             else:
                 all_results[model_name] = results
 
@@ -1222,7 +1222,7 @@ class EnsembleClassifier(_FeaturizationBase):
 
 class ConvNeXtFeaturizer(_FeaturizationBase):
     CLEAN_LOG = True
-    LABEL = "ConvNeXt_Featurizer"
+    LABEL = "ConvNeXtFeaturizer"
 
     """
     Compute ConvNeXt features from scPortrait's single-cell image datasets.
@@ -1409,7 +1409,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="ConvNeXt")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:
@@ -1658,7 +1658,7 @@ class CellFeaturizer(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:
@@ -1783,7 +1783,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:
