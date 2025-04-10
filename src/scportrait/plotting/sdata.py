@@ -35,6 +35,49 @@ PALETTE = [
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot
 
 
+def _get_shape_element(sdata, element_name) -> tuple[int, int]:
+    """Get the x, y shape of the element in the spatialdata object.
+
+    Args:
+        sdata: SpatialData object containing the element.
+        element_name: Name of the element to get the shape of.
+
+    Returns:
+        Tuple containing the shape of the x, y coordinates of the element.
+    """
+    if isinstance(sdata[element_name], xarray.DataTree):
+        shape = sdata[element_name].scale0.image.shape
+    else:
+        shape = sdata[element_name].data.shape
+
+    if len(shape) == 3:
+        _, x, y = shape
+    elif len(shape) == 2:
+        x, y = shape
+    return x, y
+
+
+def _create_figure_dpi(x: float, y: float, dpi: int | None = 300) -> tuple[plt.Figure, Axes]:
+    """Helper function to create a figure to plot a given image with x, y resolution at the specified DPI.
+    Args:
+        x: x resolution of the image.
+        y: y resolution of the image.
+        dpi: Dots per inch of the image. Defaults to 300.
+    Returns:
+        Tuple containing the figure and axis objects.
+    """
+    # create figure and axis if it does not exist
+    if dpi is None:
+        dpi = 300
+
+    axs_length = x / dpi
+    axs_width = y / dpi
+
+    fig = plt.figure(figsize=(axs_width, axs_length), frameon=False, dpi=dpi)
+    ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
+    return fig, ax
+
+
 def plot_image(
     sdata: spatialdata.SpatialData,
     image_name: str,
@@ -70,23 +113,11 @@ def plot_image(
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
     else:
-        if dpi is None:
-            dpi = 300
+        # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
+        x, y = _get_shape_element(sdata, image_name)
 
-        if isinstance(sdata[image_name], xarray.DataTree):
-            shape = sdata[image_name].scale0.image.shape
-        else:
-            shape = sdata[image_name].data.shape
-
-        if len(shape) == 3:
-            axs_length = shape[1] / dpi
-            axs_width = shape[2] / dpi
-        elif len(shape) == 2:
-            axs_length = shape[0] / dpi
-            axs_width = shape[1] / dpi
-
-        fig = plt.figure(figsize=(axs_width, axs_length), frameon=False, dpi=dpi)
-        ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
+        # create figure and axis if it does not exist
+        fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     if palette is None:
         if channel_names is None:
@@ -94,19 +125,16 @@ def plot_image(
         else:
             palette = PALETTE[: len(channel_names)]
 
-    # turn off axis
-    ax.set_axis_off()
-
+    # plot figure
     sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(ax=ax, colorbar=False)
+    ax.set_axis_off()
     ax.set_title(title, fontsize=title_fontsize)
 
     if return_fig:
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
 
 
 def plot_segmentation_mask(
@@ -152,25 +180,16 @@ def plot_segmentation_mask(
     _check_for_spatialdata_plot()
 
     # get relevant information from spatialdata object
-    mask = sdata[masks[0]]
-    if isinstance(mask, xarray.DataTree):
-        shape = mask.scale0.image.shape
+
+    if ax is not None:
+        if dpi is not None:
+            warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
     else:
-        shape = mask.data.shape
-    if len(shape) == 3:
-        _, x, y = shape
-    elif len(shape) == 2:
-        x, y = shape
+        # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
+        x, y = _get_shape_element(sdata, masks[0])
 
-    # create figure and axis if it does not exist
-    if ax is None:
-        if dpi is None:
-            dpi = 300
-        axs_length = x / dpi
-        axs_width = y / dpi
-
-        fig = plt.figure(figsize=(axs_width, axs_length), frameon=False, dpi=dpi)
-        ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
+        # create figure and axis if it does not exist
+        fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot background image if desired
     if background_image is not None:
@@ -227,9 +246,7 @@ def plot_segmentation_mask(
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
 
 
 def plot_labels(
@@ -268,27 +285,15 @@ def plot_labels(
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
 
-    # get relevant information from spatialdata object
-    element = sdata[label_layer]
-    if isinstance(element, xarray.DataTree):
-        shape = element.scale0.image.shape
+    if ax is not None:
+        if dpi is not None:
+            warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
     else:
-        shape = element.data.shape
+        # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
+        x, y = _get_shape_element(sdata, label_layer)
 
-    if len(shape) == 3:
-        _, x, y = shape
-    elif len(shape) == 2:
-        x, y = shape
-
-    # create figure and axis if it does not exist
-    if ax is None:
-        if dpi is None:
-            dpi = 300
-        axs_length = x / dpi
-        axs_width = y / dpi
-
-        fig = plt.figure(figsize=(axs_width, axs_length), frameon=False, dpi=dpi)
-        ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
+        # create figure and axis if it does not exist
+        fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot selected segmentation masks
     if vectorized:
@@ -348,6 +353,4 @@ def plot_labels(
         return fig
     elif show_fig:
         plt.show()
-        return None
-    else:
-        return None
+    return None
