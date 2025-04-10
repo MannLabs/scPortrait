@@ -44,6 +44,7 @@ def get_config_file(config_id, force_download: bool = False) -> Path:
     config_files = {
         "dataset_1_wga_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1_WGASegmentation.yml",
         "dataset_1_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1.yml",
+        "dataset_1_custom_cellpost_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1_custom_params.yml",
     }
 
     DATASET = config_id
