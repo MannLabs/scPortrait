@@ -63,7 +63,6 @@ class _FeaturizationBase(ProcessingStep):
         """Check if all required parameters are present in the config file."""
         assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
         assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
-        assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
 
     def _setup_output(self) -> None:
         """Helper function to generate the output directory for the featurization results."""
