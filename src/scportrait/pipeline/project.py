@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import tempfile
+from pathlib import PosixPath
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -29,7 +30,7 @@ from tifffile import imread
 
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
-from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config
+from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config, write_config
 from scportrait.pipeline._utils.sdata_io import sdata_filehandler
 from scportrait.pipeline._utils.spatialdata_helper import (
     get_chunk_size,
@@ -172,8 +173,11 @@ class Project(Logable):
 
         self.project_location = project_location
         self.overwrite = overwrite
-        self.config = None
-        self._get_config_file(config_path)
+        self.config: None | dict = None
+        if config_path is None or isinstance(config_path, str | PosixPath):
+            self._get_config_file(config_path)
+        elif isinstance(config_path, dict):
+            self._load_config_from_dict(config_path)
 
         self.nuc_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_0}"
         self.cyto_seg_name = f"{self.DEFAULT_PREFIX_MAIN_SEG}_{self.DEFAULT_SEG_NAME_1}"
@@ -262,6 +266,10 @@ class Project(Logable):
             raise ValueError(f"Your config path {file_path} is invalid.")
 
         self.config = read_config(file_path)
+
+    def _load_config_from_dict(self, config_dict):
+        self.config = config_dict
+        write_config(self.config, os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME))
 
     def _get_config_file(self, config_path: str | None = None) -> None:
         """Load the config file for the project. If no config file is passed the default config file in the project directory is loaded.
