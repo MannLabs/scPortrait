@@ -1245,8 +1245,6 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         if self.CLEAN_LOG:
             self._clean_log_file()
 
-        self._check_config()
-
         # assert that the correct transformers version is installed
         try:
             import transformers
