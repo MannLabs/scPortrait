@@ -11,6 +11,8 @@ def _get_remote_dataset(
     name: str | None = None,
     archive_format: Literal["zip", "tar", "tar.gz", "tgz"] | None = "zip",
     outfile_name: None | str = None,
+    outdirectory: None | str = None,
+    force_download: bool = False,
 ) -> Path:
     """Download and extract a dataset from a remote location.
 
@@ -23,13 +25,43 @@ def _get_remote_dataset(
         Path to the downloaded and extracted dataset or a specific file in the dataset
     """
     data_dir = get_data_dir()
+    if outdirectory is not None:
+        data_dir = data_dir / outdirectory
+        data_dir.mkdir(parents=True, exist_ok=True)
     save_path = data_dir / dataset
-    if not save_path.exists():
+
+    if force_download:
+        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
+    elif not save_path.exists():
         _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
     if name is None:
         return save_path
     else:
         return save_path / name
+
+
+def get_config_file(config_id, force_download: bool = False) -> Path:
+    config_files = {
+        "dataset_1_wga_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1_WGASegmentation.yml",
+        "dataset_1_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1.yml",
+        "dataset_1_custom_cellpost_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1_custom_params.yml",
+        "dataset_2_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_2/config_example2.yml",
+        "dataset_3_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_3/config_example3.yml",
+        "dataset_4_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_4/config_example4.yml",
+    }
+
+    DATASET = config_id
+    URL = config_files[config_id]
+    NAME = "config.yml"
+    return _get_remote_dataset(
+        DATASET,
+        URL,
+        NAME,
+        archive_format=None,
+        outfile_name=NAME,
+        outdirectory="example_configs",
+        force_download=force_download,
+    )
 
 
 def custom_cellpose_model() -> Path:
