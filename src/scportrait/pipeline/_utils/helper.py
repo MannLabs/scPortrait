@@ -15,6 +15,22 @@ def read_config(config_path: str | PosixPath) -> dict:
     return config
 
 
+class QuotedStringDumper(yaml.SafeDumper):
+    def represent_str(self, data):
+        return self.represent_scalar("tag:yaml.org,2002:str", data, style='"')
+
+
+QuotedStringDumper.add_representer(str, QuotedStringDumper.represent_str)
+
+
+def write_config(config: dict, config_path: str | PosixPath) -> None:
+    with open(config_path, "w") as stream:
+        try:
+            yaml.dump(config, stream, sort_keys=False, Dumper=QuotedStringDumper)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
 def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
     """Flatten a list of lists into a single list.
 
