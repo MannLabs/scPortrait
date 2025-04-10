@@ -232,7 +232,7 @@ def cell_grid_multi_channel(
     adata,
     n_cells: int = 5,
     cell_ids: int | list[int] | None = None,
-    select_channels: list[int] | None = None,
+    select_channels: list[int] | list[str] | None = None,
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
@@ -341,7 +341,7 @@ def cell_grid_multi_channel(
 
 def cell_grid(
     adata: AnnData,
-    select_channel: int | None | list[int] = None,
+    select_channel: int | str | list[int] | list[str] = None,
     n_cells: int | None = None,
     cell_ids: int | list[int] | None = None,
     show_cell_id: bool = True,
@@ -367,7 +367,7 @@ def cell_grid(
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
     """
-    if isinstance(select_channel, int):
+    if isinstance(select_channel, int | str):
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 16
