@@ -371,7 +371,7 @@ def cell_grid(
     Returns:
         If `return_fig=True`, the figure object is returned. Otherwise, the figure is displayed.
     """
-    if isinstance(select_channel, int | str):
+    if isinstance(select_channel, (int, str)):
         if cell_ids is None:
             if n_cells is None:
                 n_cells = 16
