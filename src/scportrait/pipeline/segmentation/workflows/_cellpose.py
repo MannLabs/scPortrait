@@ -79,6 +79,8 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model_path"]
+            if isinstance(model_name, PosixPath):
+                model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
 
         # get model parameters from config if not defined use default values
