@@ -1,4 +1,3 @@
 {
-    "path": "../../../examples/notebooks/tutorials/walkthrough_the_scportrait_ecosystem.ipynb",
-    "extra-media": ["../../../examples/notebooks/example_projects/example_1/config_example1_WGASegmentation.yml"]
+    "path": "../../../examples/notebooks/tutorials/walkthrough_the_scportrait_ecosystem.ipynb"
 }

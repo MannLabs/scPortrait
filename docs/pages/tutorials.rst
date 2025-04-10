@@ -22,6 +22,16 @@ This notebook walks you through the currently implemented segmentation workflows
 
    notebooks/_notebook_segmentation_workflows.nblink
 
+Deep Learning in scPortrait
+---------------------------
+
+This notebook walks you through creating a pyTorch dataloader from your scPortrait single-cell image dataset and how to utilize transforms to augment your data.
+
+.. toctree::
+   :maxdepth: 2
+
+   notebooks/_notebook_deep_learning.nblink
+
 Parsing Workflow
 ----------------
 This notebook walks you through using scportrait's `parse` module to prepare imaging data obtained from an Opera Phenix microscope for downstream applications.

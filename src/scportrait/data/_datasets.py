@@ -76,6 +76,19 @@ def custom_cellpose_model() -> Path:
     return _get_remote_dataset(DATASET, URL, NAME, archive_format=None, outfile_name=NAME)
 
 
+def autophagosome_h5sc() -> list[Path]:
+    """Download the example autophagosome h5sc dataset.
+
+    Returns:
+        Path to the downloaded and extracted h5sc dataset
+    """
+    DATASET = "autophagosome_h5sc"
+    URL = "https://zenodo.org/api/records/15105848/files-archive"
+    NAMES = ["stimulated_small.h5sc", "unstimulated_small.h5sc"]
+    save_path = _get_remote_dataset(DATASET, URL)
+    return [save_path / name for name in NAMES]
+
+
 def dataset_1() -> Path:
     """Download and extract the example dataset 1 images.
 
