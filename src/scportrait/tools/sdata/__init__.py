@@ -1,5 +1,5 @@
 """
-spdata
+sdata
 =======
 
 Functions to work with spatialdata objects.
