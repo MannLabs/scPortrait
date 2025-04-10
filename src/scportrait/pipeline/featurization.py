@@ -1610,7 +1610,7 @@ class CellFeaturizer(_cellFeaturizerBase):
                     inference_device: "cpu"
 
                     # Label under which the results should be saved
-                    screen_label: "all_channels"
+                    label: "all_channels"
         """
         self.log("Started CellFeaturization of all available channels.")
 
@@ -1732,7 +1732,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
                     inference_device: "cpu"
 
                     # Label under which the results should be saved
-                    screen_label: "Ch3_Featurization"
+                    label: "Ch3_Featurization"
         """
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
