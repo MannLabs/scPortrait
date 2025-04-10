@@ -267,7 +267,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # finalize classes list
         all_classes = set(np.unique(nucleus_mask)) - {0}
 
-        segmentation = self._finalize_segmentation_results(nucleus_mask=nucleus_mask)
+        segmentation = self._finalize_segmentation_results(mask=nucleus_mask)
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self.total_time = timeit.default_timer() - total_time_start
 
