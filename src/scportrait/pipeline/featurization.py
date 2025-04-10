@@ -860,7 +860,7 @@ class MLClusterClassifier(_FeaturizationBase):
         # checks for additional essential parameters in the config file
         assert (
             self.label is not None
-        ), "'label' musst be specified in the config file. This is the label used to save the results."
+        ), "'label' must be specified in the config file. This is the label used to save the results."
 
     def _get_network_dir(self) -> pl.LightningModule:
         if self.network_dir in self.PRETRAINED_MODEL_NAMES:
