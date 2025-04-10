@@ -12,6 +12,7 @@ def _get_remote_dataset(
     archive_format: Literal["zip", "tar", "tar.gz", "tgz"] | None = "zip",
     outfile_name: None | str = None,
     outdirectory: None | str = None,
+    force_download: bool = False,
 ) -> Path:
     """Download and extract a dataset from a remote location.
 
@@ -28,7 +29,10 @@ def _get_remote_dataset(
         data_dir = data_dir / outdirectory
         data_dir.mkdir(parents=True, exist_ok=True)
     save_path = data_dir / dataset
-    if not save_path.exists():
+
+    if force_download:
+        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
+    elif not save_path.exists():
         _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
     if name is None:
         return save_path
@@ -36,7 +40,7 @@ def _get_remote_dataset(
         return save_path / name
 
 
-def get_config_file(config_id) -> Path:
+def get_config_file(config_id, force_download: bool = False) -> Path:
     config_files = {
         "dataset_1_wga_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1_WGASegmentation.yml",
         "dataset_1_config": "https://raw.githubusercontent.com/MannLabs/scPortrait-notebooks/main/example_projects/example_1/config_example1.yml",
@@ -46,7 +50,13 @@ def get_config_file(config_id) -> Path:
     URL = config_files[config_id]
     NAME = "config.yml"
     return _get_remote_dataset(
-        DATASET, URL, NAME, archive_format=None, outfile_name=NAME, outdirectory="example_configs"
+        DATASET,
+        URL,
+        NAME,
+        archive_format=None,
+        outfile_name=NAME,
+        outdirectory="example_configs",
+        force_download=force_download,
     )
 
 
