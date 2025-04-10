@@ -60,8 +60,6 @@ class _FeaturizationBase(ProcessingStep):
 
     def _check_config(self) -> None:
         """Check if all required parameters are present in the config file."""
-
-        assert "label" in self.config.keys(), "No label specified in config file."
         assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
         assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
         assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
