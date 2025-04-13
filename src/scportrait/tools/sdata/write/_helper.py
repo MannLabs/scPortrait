@@ -83,6 +83,7 @@ def _force_delete_object(sdata: SpatialData, name: str) -> None:
         del sdata[name]
 
     in_memory_only, _ = sdata._symmetric_difference_with_zarr_store()
+    in_memory_only = [x.split("/")[-1] for x in in_memory_only]
     if name not in in_memory_only:
         sdata.delete_element_from_disk(name)
 
@@ -105,6 +106,7 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
             raise ValueError(
                 f"Object with name '{element_name}' already exists in SpatialData." f"Set overwrite=True to replace it."
             )
+
         _force_delete_object(sdata, element_name)
 
     # the element needs to validate with exactly one of the models
