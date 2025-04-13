@@ -613,6 +613,17 @@ class HDF5CellExtraction(ProcessingStep):
             mask = binary_fill_holes(mask)
             mask = gaussian(mask, preserve_range=True, sigma=1)
 
+            if self.deep_debug:
+                if mask.shape != (self.extracted_image_size, self.extracted_image_size):
+                    print("Width of window_x", window_x.stop - window_x.start)
+                    print("Width of window_y", window_y.stop - window_y.start)
+                    print("Width of mask", mask.shape)
+                    print("px_center", px_center)
+                    print("cell_id", ids[mask_ix])
+            assert mask.shape == (
+                self.extracted_image_size,
+                self.extracted_image_size,
+            ), "Mask shape does not match extracted image size."
             masks.append(mask)
 
         # get the image data
