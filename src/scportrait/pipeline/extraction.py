@@ -351,10 +351,11 @@ class HDF5CellExtraction(ProcessingStep):
     def _get_input_image_info(self) -> None:
         """get relevant information about the input image to be able to extract single-cell images"""
         # get channel information
-        self.channel_names = self.project.input_image.c.values
+        input_image = self.filehandler._get_input_image(self.filehandler.get_sdata())
+        self.channel_names = input_image.c.values
         self.n_image_channels = len(self.channel_names)
-        self.input_image_width = len(self.project.input_image.x)
-        self.input_image_height = len(self.project.input_image.y)
+        self.input_image_width = len(input_image.x)
+        self.input_image_height = len(input_image.y)
 
     def _get_centers(self) -> None:
         """get the centers of the cells that should be extracted.
