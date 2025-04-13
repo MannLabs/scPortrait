@@ -595,8 +595,7 @@ class HDF5CellExtraction(ProcessingStep):
             px_center[1] < self.input_image_height - self.width_extraction,
         ]
         if not condition:
-            msg = "Cell is too close to the image edge to be extracted."
-            raise ValueError(msg)  # or a custom error
+            raise ValueError("Cell is too close to the image edge to be extracted.")
 
         masks = []
 
