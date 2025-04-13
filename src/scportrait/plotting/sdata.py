@@ -249,6 +249,81 @@ def plot_segmentation_mask(
     return None
 
 
+def plot_shapes(
+    sdata: spatialdata.SpatialData,
+    shapes_layer: str,
+    title: str | None = None,
+    title_fontsize: int = 20,
+    fill_color: str = "grey",
+    fill_alpha: float = 1,
+    outline_color: str = "black",
+    outline_alpha: float = 0,
+    outline_width: float = 1,
+    cmap: str = None,
+    dpi: int | None = None,
+    ax: plt.Axes | None = None,
+    return_fig: bool = False,
+    show_fig: bool = True,
+) -> plt.Figure | None:
+    """Visualize shapes layer.
+
+    Args:
+        sdata: SpatialData object containing the shapes layer.
+        shapes_layer: Key identifying the shapes layer to plot.
+        title: Title of the plot.
+        title_fontsize: Font size of the title in points.
+        fill_color: Color of the fill of the shapes.
+        fill_alpha: Alpha value of the fill of the shapes.
+        outline_color: Color of the outline of the shapes.
+        outline_alpha: Alpha value of the outline of the shapes.
+        outline_width: Width of the outline of the shapes.
+        cmap: Colormap to use for the shapes.
+        dpi: Dots per inch of the plot.
+        ax: Matplotlib axis object to plot on.
+        return_fig: Whether to return the figure.
+        show_fig: Whether to show the figure.
+
+    Returns:
+        Matplotlib figure object if return_fig is True.
+    """
+
+    # check for spatialdata_plot
+    _check_for_spatialdata_plot()
+
+    if ax is not None:
+        if dpi is not None:
+            warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+    else:
+        # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
+        x, y = _get_shape_element(sdata, shapes_layer)
+
+        # create figure and axis if it does not exist
+        fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
+
+    # plot selected shapes layer
+    assert shapes_layer in sdata, f"Shapes layer {shapes_layer} not found in sdata object."
+
+    sdata.pl.render_shapes(
+        f"{shapes_layer}",
+        fill_alpha=fill_alpha,
+        color=fill_color,
+        outline_alpha=outline_alpha,
+        outline_color=outline_color,
+        outline_width=outline_width,
+        cmap=cmap,
+    ).pl.show(ax=ax)
+
+    ax.axis("off")
+    ax.set_title(title, fontsize=title_fontsize)
+
+    # return elements
+    if return_fig:
+        return fig
+    elif show_fig:
+        plt.show()
+    return None
+
+
 def plot_labels(
     sdata: spatialdata.SpatialData,
     label_layer: str,
