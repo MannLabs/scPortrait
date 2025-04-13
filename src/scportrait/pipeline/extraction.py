@@ -221,12 +221,16 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
-    def _set_up_extraction(self) -> None:
+    def _set_up_extraction(self, output_folder_name: str | None) -> None:
         """execute all helper functions to setup extraction process"""
-        if self.partial_processing:
-            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_ncells_{self.n_cells}_seed_{self.seed}"
-        else:
+
+        if output_folder_name is None:
             output_folder_name = self.DEFAULT_DATA_DIR
+
+        if self.partial_processing:
+            output_folder_name = f"partial_{output_folder_name}_ncells_{self.n_cells}_seed_{self.seed}"
+        else:
+            output_folder_name = output_folder_name
 
         self._setup_output(folder_name=output_folder_name)
         self._get_segmentation_info()
@@ -280,12 +284,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.extract_cytosol_mask = False
 
         if "segmentation_mask" in self.config:
-            allowed_mask_values = ["nucleus", "cytosol"]
-            allowed_mask_values = [f"{self.segmentation_key}_{x}" for x in allowed_mask_values]
-
             if isinstance(self.config["segmentation_mask"], str):
-                assert self.config["segmentation_mask"] in allowed_mask_values
-
                 if "nucleus" in self.config["segmentation_mask"]:
                     self.nucleus_key = self.config["segmentation_mask"]
                     self.extract_nucleus_mask = True
@@ -872,7 +871,9 @@ class HDF5CellExtraction(ProcessingStep):
             benchmarking.to_csv(benchmarking_path, index=False)
         self.log("Benchmarking times saved to file.")
 
-    def process(self, partial: bool = False, n_cells: int = None, seed: int = 42) -> None:
+    def process(
+        self, partial: bool = False, n_cells: int = None, seed: int = 42, output_folder_name: str | None = None
+    ) -> None:
         """
         Extracts single cell images from a segmented scPortrait project and saves the results to a standardized HDF5 file.
 
@@ -922,7 +923,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.DEFAULT_LOG_NAME = "partial_processing.log"  # change log name so that the results are not written to the same log file as a complete extraction
 
         # run all of the extraction setup steps
-        self._set_up_extraction()
+        self._set_up_extraction(output_folder_name=output_folder_name)
         stop_setup = timeit.default_timer()
         time_setup = stop_setup - start_setup
 
