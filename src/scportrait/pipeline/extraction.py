@@ -335,18 +335,18 @@ class HDF5CellExtraction(ProcessingStep):
             # perform sanity check that the masks have the same ids
             # THIS NEEDS TO BE IMPLEMENTED HERE
 
-            self.main_segmenation_mask = self.nucleus_key
+            self.main_segmentation_mask = self.nucleus_key
 
         elif self.n_masks == 1:
             if self.extract_nucleus_mask:
-                self.main_segmenation_mask = self.nucleus_key
+                self.main_segmentation_mask = self.nucleus_key
             elif self.extract_cytosol_mask:
-                self.main_segmenation_mask = self.cytosol_key
+                self.main_segmentation_mask = self.cytosol_key
 
         self.log(
             f"Found {self.n_masks} segmentation masks for the given key in the sdata object. Will be extracting single-cell images based on these masks: {self.masks}"
         )
-        self.log(f"Using {self.main_segmenation_mask} as the main segmentation mask to determine cell centers.")
+        self.log(f"Using {self.main_segmentation_mask} as the main segmentation mask to determine cell centers.")
 
     def _get_input_image_info(self) -> None:
         """get relevant information about the input image to be able to extract single-cell images"""
@@ -364,9 +364,9 @@ class HDF5CellExtraction(ProcessingStep):
         _sdata = self.filehandler._read_sdata()
 
         # calculate centers if they have not been calculated yet
-        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.main_segmenation_mask}"
+        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.main_segmentation_mask}"
         if centers_name not in _sdata:
-            self.filehandler._add_centers(self.main_segmenation_mask, overwrite=self.overwrite)
+            self.filehandler._add_centers(self.main_segmentation_mask, overwrite=self.overwrite)
             _sdata = self.filehandler._read_sdata()  # reread to ensure we have updated version
 
         centers = _sdata[centers_name].values.compute()
