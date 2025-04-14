@@ -312,7 +312,11 @@ def remove_edge_labels(input_map: NDArray) -> NDArray:
 
 
 def shift_labels(
-    input_map: NDArray, shift: int, return_shifted_labels: bool = False, remove_edge_labels: bool = True
+    input_map: NDArray,
+    shift: int,
+    return_shifted_labels: bool = False,
+    remove_edge_labels: bool = True,
+    dtype=np.uint64,
 ) -> tuple[NDArray, list[int]]:
     """Shift label values by specified amount.
 
@@ -358,7 +362,7 @@ def shift_labels(
             _edge_label = [label + shift for label in edge_label]
             shifted_map = np.where(np.isin(shifted_map, _edge_label), 0, shifted_map)
 
-    return shifted_map.astype(np.uint32), list(set(edge_label))
+    return shifted_map.astype(dtype), list(set(edge_label))
 
 
 @njit(parallel=True)
