@@ -1567,7 +1567,14 @@ class Project(Logable):
         self.get_project_status()
         self.segmentation_f.overwrite = original_overwrite  # reset to original value
 
-    def extract(self, partial=False, n_cells=None, seed: int = 42, overwrite: bool | None = None) -> None:
+    def extract(
+        self,
+        partial=False,
+        n_cells=None,
+        seed: int = 42,
+        overwrite: bool | None = None,
+        output_folder_name: str | None = None,
+    ) -> None:
         """Extract single-cell images from the input image using the defined extraction method.
 
         Args:
@@ -1576,6 +1583,7 @@ class Project(Logable):
             seed: Seed for the random number generator during a partial extraction. Default is ``42``.
             overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading
+            output_folder_name: can be set to override the default output folder location.
 
         Returns:
             None: Single-cell images are written to HDF5 files in the project associated extraction directory. File path can be accessed via ``project.extraction_f.output_path``.
@@ -1594,7 +1602,7 @@ class Project(Logable):
         if overwrite is not None:
             self.extraction_f.overwrite_run_path = overwrite
 
-        self.extraction_f(partial=partial, n_cells=n_cells, seed=seed)
+        self.extraction_f(partial=partial, n_cells=n_cells, seed=seed, output_folder_name=output_folder_name)
         self.get_project_status()
 
     def featurize(
