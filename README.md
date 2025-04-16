@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache-brightgreen)](https://github.com/MannLabs/scPortrait/blob/main/LICENSE)
 [![Docs](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 [![PyPI version](https://img.shields.io/pypi/v/scportrait.svg)](https://pypi.org/project/scportrait/)
+[![PyPI Downloads](https://static.pepy.tech/badge/scportrait)](https://pepy.tech/projects/scportrait)
 
 
 ![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
