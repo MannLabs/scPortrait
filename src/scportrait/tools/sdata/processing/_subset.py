@@ -1,3 +1,6 @@
+import copy
+import warnings
+
 import spatialdata
 
 
@@ -15,13 +18,23 @@ def get_bounding_box_sdata(
     Returns:
         spatialdata: spatialdata object with bounding box applied
     """
-
+    _sdata = sdata
     # remove points object to improve subsetting
     if drop_points:
-        points_keys = list(sdata.points.keys())
+        points_keys = list(_sdata.points.keys())
         if len(points_keys) > 0:
+            # add check to make sure we aren't deleting a points object that is only in memory
+            in_memory_only, _ = _sdata._symmetric_difference_with_zarr_store()
+            in_memory_only = [x.split("/")[-1] for x in in_memory_only]
+
             for x in points_keys:
-                del sdata.points[x]
+                if x not in in_memory_only:
+                    del _sdata.points[x]
+                else:
+                    warnings.warn(
+                        f"Points object {x} is in memory only and will not be deleted despite the drop_points flag being set to True.",
+                        stacklevel=2,
+                    )
 
     width = max_width // 2
 
@@ -32,10 +45,18 @@ def get_bounding_box_sdata(
         center_y = width
 
     # subset spatialdata object if its too large
-    sdata = sdata.query.bounding_box(
+    _sdata = _sdata.query.bounding_box(
         axes=["x", "y"],
         min_coordinate=[center_x - width, center_y - width],
         max_coordinate=[center_x + width, center_y + width],
         target_coordinate_system="global",
     )
-    return sdata
+
+    if drop_points:
+        # re-add points object
+        __sdata = spatialdata.SpatialData.read(sdata.path, selection=["points"])
+        for x in points_keys:
+            sdata[x] = __sdata[x]
+        del __sdata
+
+    return _sdata
