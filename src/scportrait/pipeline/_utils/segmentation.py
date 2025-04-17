@@ -357,7 +357,7 @@ def shift_labels(
             _edge_label = [label + shift for label in edge_label]
             shifted_map = np.where(np.isin(shifted_map, _edge_label), 0, shifted_map)
 
-    return shifted_map.astype(np.uint32), list(set(edge_label))
+    return shifted_map.astype(DEFAULT_SEGMENTATION_DTYPE), list(set(edge_label))
 
 
 @njit(parallel=True)
@@ -589,11 +589,10 @@ def numba_mask_centroid(
         >>> mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
         >>> centers, sizes, ids = numba_mask_centroid(mask)
     """
-    cell_ids = list(np.unique(mask).flatten())
+    cell_ids = np.unique(mask).flatten()
     if skip_background:
         if 0 in cell_ids:
-            cell_ids.remove(0)
-    cell_ids = np.array(cell_ids)
+            cell_ids = cell_ids[1:]
 
     min_cell_id = np.min(cell_ids)
 
