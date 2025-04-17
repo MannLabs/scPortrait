@@ -14,9 +14,8 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.segmentation import watershed
 from skimage.transform import resize
 
+from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
 from scportrait.plotting.vis import plot_image
-
-DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 
 def global_otsu(image: NDArray) -> float:
@@ -603,7 +602,7 @@ def numba_mask_centroid(
 
     num_classes = int(np.max(mask) if skip_background else np.max(mask) + 1)
 
-    points_class = np.zeros((num_classes,), dtype=nb.uint32)
+    points_class = np.zeros((num_classes,), dtype=nb.uint64)
     center = np.zeros((num_classes, 2))
     ids = np.full((num_classes,), np.nan)
 
@@ -638,7 +637,7 @@ def numba_mask_centroid(
     points_class = points_class[bg_mask]
     ids = ids[bg_mask]
 
-    return center, points_class, ids.astype(np.uint32)
+    return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
 
 @nb.jit(nopython=True)
