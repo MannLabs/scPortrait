@@ -14,9 +14,8 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.segmentation import watershed
 from skimage.transform import resize
 
+from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
 from scportrait.plotting.vis import plot_image
-
-DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 
 def global_otsu(image: NDArray) -> float:
@@ -594,10 +593,10 @@ def numba_mask_centroid(
         >>> mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
         >>> centers, sizes, ids = numba_mask_centroid(mask)
     """
-    cell_ids = list(np.unique(mask).flatten())
-    if 0 in cell_ids:
-        cell_ids.remove(0)
-    cell_ids = np.array(cell_ids)
+    cell_ids = np.unique(mask).flatten()
+    if skip_background:
+        if 0 in cell_ids:
+            cell_ids = cell_ids[1:]
 
     min_cell_id = np.min(cell_ids)
 
@@ -605,9 +604,9 @@ def numba_mask_centroid(
         print("no cells in image. Only contains background with value 0.")
         return None, None, None
 
-    num_classes = int(np.max(mask) if skip_background else np.max(mask) + 1)
+    num_classes = int(len(cell_ids) if skip_background else len(cell_ids) + 1)
 
-    points_class = np.zeros((num_classes,), dtype=nb.uint32)
+    points_class = np.zeros((num_classes,), dtype=nb.uint64)
     center = np.zeros((num_classes, 2))
     ids = np.full((num_classes,), np.nan)
 
@@ -616,16 +615,18 @@ def numba_mask_centroid(
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
                 if class_id != 0:
-                    points_class[class_id - 1] += 1
-                    center[class_id - 1] += np.array([x, y])
-                    ids[class_id - 1] = class_id
+                    idx = np.where(cell_ids == class_id)[0][0]
+                    points_class[idx] += 1
+                    center[idx] += np.array([x, y])
+                    ids[idx] = class_id
     else:
         for y in range(len(mask)):
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
-                points_class[class_id] += 1
-                center[class_id] += np.array([x, y])
-                ids[class_id] = class_id
+                idx = np.where(cell_ids == class_id)[0][0]
+                points_class[idx] += 1
+                center[idx] += np.array([x, y])
+                ids[idx] = class_id
 
     x = center[:, 0] / points_class
     y = center[:, 1] / points_class
@@ -642,7 +643,7 @@ def numba_mask_centroid(
     points_class = points_class[bg_mask]
     ids = ids[bg_mask]
 
-    return center, points_class, ids.astype(np.uint32)
+    return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
 
 @nb.jit(nopython=True)

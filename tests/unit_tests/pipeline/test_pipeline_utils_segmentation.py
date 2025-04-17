@@ -207,9 +207,24 @@ def test_numba_mask_centroid():
     mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
     centers, points_class, ids = numba_mask_centroid(mask)
     expected_centers = np.array([[0.33333333, 1.66666667], [1.5, 1.5]])
-    expected_points_class = np.array([3, 2], dtype=np.uint32)
+    expected_points_class = np.array([3, 2], dtype=np.uint64)
     expected_ids = np.array([1, 2], dtype=int)
 
     assert np.allclose(centers, expected_centers, atol=1e-6)
     assert np.all(points_class == expected_points_class)
     assert np.all(ids == expected_ids)
+
+
+def test_numba_mask_centroid_shifted():
+    mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
+    shift = 10
+    centers, points_class, ids = numba_mask_centroid(mask)
+    expected_centers = np.array([[0.33333333, 1.66666667], [1.5, 1.5]])
+    expected_points_class = np.array([3, 2], dtype=np.uint64)
+    shifted_mask = shift_labels(mask, shift, remove_edge_labels=False)[0]
+    shifted_centers, shifted_points_class, shifted_ids = numba_mask_centroid(shifted_mask)
+
+    assert np.allclose(shifted_centers, centers, atol=1e-6)
+    assert np.allclose(shifted_centers, expected_centers, atol=1e-6)
+    assert np.all(shifted_points_class == points_class)
+    assert np.all(shifted_points_class == expected_points_class)

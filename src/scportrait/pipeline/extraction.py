@@ -221,12 +221,16 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
-    def _set_up_extraction(self) -> None:
+    def _set_up_extraction(self, output_folder_name: str | None) -> None:
         """execute all helper functions to setup extraction process"""
-        if self.partial_processing:
-            output_folder_name = f"partial_{self.DEFAULT_DATA_DIR}_ncells_{self.n_cells}_seed_{self.seed}"
-        else:
+
+        if output_folder_name is None:
             output_folder_name = self.DEFAULT_DATA_DIR
+
+        if self.partial_processing:
+            output_folder_name = f"partial_{output_folder_name}_ncells_{self.n_cells}_seed_{self.seed}"
+        else:
+            output_folder_name = output_folder_name
 
         self._setup_output(folder_name=output_folder_name)
         self._get_segmentation_info()
@@ -280,12 +284,7 @@ class HDF5CellExtraction(ProcessingStep):
         self.extract_cytosol_mask = False
 
         if "segmentation_mask" in self.config:
-            allowed_mask_values = ["nucleus", "cytosol"]
-            allowed_mask_values = [f"{self.segmentation_key}_{x}" for x in allowed_mask_values]
-
             if isinstance(self.config["segmentation_mask"], str):
-                assert self.config["segmentation_mask"] in allowed_mask_values
-
                 if "nucleus" in self.config["segmentation_mask"]:
                     self.nucleus_key = self.config["segmentation_mask"]
                     self.extract_nucleus_mask = True
@@ -335,26 +334,27 @@ class HDF5CellExtraction(ProcessingStep):
             # perform sanity check that the masks have the same ids
             # THIS NEEDS TO BE IMPLEMENTED HERE
 
-            self.main_segmenation_mask = self.nucleus_key
+            self.main_segmentation_mask = self.nucleus_key
 
         elif self.n_masks == 1:
             if self.extract_nucleus_mask:
-                self.main_segmenation_mask = self.nucleus_key
+                self.main_segmentation_mask = self.nucleus_key
             elif self.extract_cytosol_mask:
-                self.main_segmenation_mask = self.cytosol_key
+                self.main_segmentation_mask = self.cytosol_key
 
         self.log(
             f"Found {self.n_masks} segmentation masks for the given key in the sdata object. Will be extracting single-cell images based on these masks: {self.masks}"
         )
-        self.log(f"Using {self.main_segmenation_mask} as the main segmentation mask to determine cell centers.")
+        self.log(f"Using {self.main_segmentation_mask} as the main segmentation mask to determine cell centers.")
 
     def _get_input_image_info(self) -> None:
         """get relevant information about the input image to be able to extract single-cell images"""
         # get channel information
-        self.channel_names = self.project.input_image.c.values
+        input_image = self.filehandler._get_input_image(self.filehandler.get_sdata())
+        self.channel_names = input_image.c.values
         self.n_image_channels = len(self.channel_names)
-        self.input_image_width = len(self.project.input_image.x)
-        self.input_image_height = len(self.project.input_image.y)
+        self.input_image_width = len(input_image.x)
+        self.input_image_height = len(input_image.y)
 
     def _get_centers(self) -> None:
         """get the centers of the cells that should be extracted.
@@ -364,9 +364,9 @@ class HDF5CellExtraction(ProcessingStep):
         _sdata = self.filehandler._read_sdata()
 
         # calculate centers if they have not been calculated yet
-        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.main_segmenation_mask}"
+        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.main_segmentation_mask}"
         if centers_name not in _sdata:
-            self.filehandler._add_centers(self.main_segmenation_mask, overwrite=self.overwrite)
+            self.filehandler._add_centers(self.main_segmentation_mask, overwrite=self.overwrite)
             _sdata = self.filehandler._read_sdata()  # reread to ensure we have updated version
 
         centers = _sdata[centers_name].values.compute()
@@ -539,11 +539,7 @@ class HDF5CellExtraction(ProcessingStep):
         """
 
         # define path where classes should be saved
-        filtered_path = os.path.join(
-            self.project_location,
-            self.DEFAULT_EXTRACTION_DIR_NAME,
-            self.DEFAULT_REMOVED_CLASSES_FILE,
-        )
+        filtered_path = os.path.join(self.extraction_data_directory, self.DEFAULT_REMOVED_CLASSES_FILE)
 
         to_write = "\n".join([str(i) for i in list(classes)])
 
@@ -599,8 +595,7 @@ class HDF5CellExtraction(ProcessingStep):
             px_center[1] < self.input_image_height - self.width_extraction,
         ]
         if not condition:
-            msg = "Cell is too close to the image edge to be extracted."
-            raise ValueError(msg)  # or a custom error
+            raise ValueError("Cell is too close to the image edge to be extracted.")
 
         masks = []
 
@@ -618,6 +613,17 @@ class HDF5CellExtraction(ProcessingStep):
             mask = binary_fill_holes(mask)
             mask = gaussian(mask, preserve_range=True, sigma=1)
 
+            if self.deep_debug:
+                if mask.shape != (self.extracted_image_size, self.extracted_image_size):
+                    print("Width of window_x", window_x.stop - window_x.start)
+                    print("Width of window_y", window_y.stop - window_y.start)
+                    print("Width of mask", mask.shape)
+                    print("px_center", px_center)
+                    print("cell_id", ids[mask_ix])
+            assert mask.shape == (
+                self.extracted_image_size,
+                self.extracted_image_size,
+            ), "Mask shape does not match extracted image size."
             masks.append(mask)
 
         # get the image data
@@ -875,7 +881,9 @@ class HDF5CellExtraction(ProcessingStep):
             benchmarking.to_csv(benchmarking_path, index=False)
         self.log("Benchmarking times saved to file.")
 
-    def process(self, partial: bool = False, n_cells: int = None, seed: int = 42) -> None:
+    def process(
+        self, partial: bool = False, n_cells: int = None, seed: int = 42, output_folder_name: str | None = None
+    ) -> None:
         """
         Extracts single cell images from a segmented scPortrait project and saves the results to a standardized HDF5 file.
 
@@ -925,7 +933,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.DEFAULT_LOG_NAME = "partial_processing.log"  # change log name so that the results are not written to the same log file as a complete extraction
 
         # run all of the extraction setup steps
-        self._set_up_extraction()
+        self._set_up_extraction(output_folder_name=output_folder_name)
         stop_setup = timeit.default_timer()
         time_setup = stop_setup - start_setup
 

@@ -79,11 +79,12 @@ def _force_delete_object(sdata: SpatialData, name: str) -> None:
     Returns:
         None the SpatialData object is updated on file
     """
+    in_memory_only, _ = sdata._symmetric_difference_with_zarr_store()
+    in_memory_only = [x.split("/")[-1] for x in in_memory_only]
+
     if name in sdata:
         del sdata[name]
 
-    in_memory_only, _ = sdata._symmetric_difference_with_zarr_store()
-    in_memory_only = [x.split("/")[-1] for x in in_memory_only]
     if name not in in_memory_only:
         sdata.delete_element_from_disk(name)
 
