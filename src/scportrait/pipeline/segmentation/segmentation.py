@@ -782,6 +782,7 @@ class ShardedSegmentation(Segmentation):
                 class_id_shift,
                 return_shifted_labels=True,
                 remove_edge_labels=True,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )
 
             orig_input = hdf_labels[:, window[0], window[1]]
