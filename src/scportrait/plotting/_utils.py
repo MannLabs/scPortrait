@@ -28,7 +28,14 @@ def _custom_cmap():
 
 
 def add_scalebar(
-    ax: Axes, resolution: float, resolution_unit: str = "um", location: str = "lower right", color: str = "white"
+    ax: Axes,
+    resolution: float,
+    resolution_unit: str = "um",
+    fixed_length: float | None = None,
+    location: str = "lower right",
+    color: str = "white",
+    scale_loc: str = "bottom",
+    border_pad=0.1,
 ) -> None:
     """Add a scalebar to an axis.
 
@@ -39,5 +46,15 @@ def add_scalebar(
         location: The location of the scalebar.
         color: The color of the scalebar.
     """
-    scalebar = ScaleBar(resolution, resolution_unit, length_fraction=0.2, location=location, frameon=False, color=color)
+    scalebar = ScaleBar(
+        resolution,
+        resolution_unit,
+        length_fraction=0.2,
+        location=location,
+        frameon=False,
+        color=color,
+        fixed_value=fixed_length,
+        scale_loc=scale_loc,
+        border_pad=border_pad,
+    )
     ax.add_artist(scalebar)
