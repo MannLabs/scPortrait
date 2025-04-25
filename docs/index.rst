@@ -11,7 +11,7 @@ scPortrait is a scalable toolkit to analyse single-cell image datasets. This Pyt
 Installation
 =============
 
-Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/scPortrait/tree/main/docs/pages/notebooks>`_.
+Check out the installation instructions :ref:`here<installation>`. You can validate your installation by running one of the example notebooks `here <https://github.com/MannLabs/scPortrait-notebooks/tree/main/example_projects/example_1>`_.
 
 Getting Started
 ===============
