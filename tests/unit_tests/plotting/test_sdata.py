@@ -12,7 +12,10 @@ from scportrait.plotting import sdata as plotting
 
 @pytest.fixture
 def sdata():
-    return blobs()  # provides images and labels used in tests
+    sdata = blobs()
+    sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
+    sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
+    return sdata  # provides images and labels used in tests
 
 
 @pytest.mark.parametrize(
@@ -64,8 +67,10 @@ def test_plot_segmentation_mask(sdata, selected_channels, background_image):
 @pytest.mark.parametrize(
     "vectorized, color",
     [
-        (False, "instance_id"),
-        (True, "instance_id"),
+        (False, "labelling_categorical"),
+        (True, "labelling_categorical"),
+        (False, "labelling_continous"),
+        (True, "labelling_continous"),
     ],
 )
 def test_plot_labels(sdata, vectorized, color):
