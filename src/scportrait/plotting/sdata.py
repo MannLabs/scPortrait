@@ -396,6 +396,7 @@ def plot_labels(
                             if "NaN" not in annotating_table.obs[color].cat.categories:
                                 annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
                             annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
+                    annotating_table = spatialdata.models.TableModel.parse(annotating_table)
                     break
         if found_annotation is not None:
             sdata["_annotation"] = annotating_table
