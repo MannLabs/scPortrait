@@ -2,6 +2,7 @@ import io
 import os
 import platform
 import shutil
+import warnings
 from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
@@ -1452,14 +1453,20 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
     def _generate_column_names(self, n_masks: int, channel_names: list[str]) -> list[str]:
         if n_masks == 1:
-            self.project.get_project_status()
+            if self.project is not None:
+                self.project.get_project_status()
 
-            if self.project.nuc_seg_status:
-                mask_name = self.MASK_NAMES[0]
-            elif self.project.cyto_seg_status:
-                mask_name = self.MASK_NAMES[1]
+                if self.project.nuc_seg_status:
+                    mask_name = self.MASK_NAMES[0]
+                elif self.project.cyto_seg_status:
+                    mask_name = self.MASK_NAMES[1]
+                else:
+                    raise ValueError("no segmentation mask found in sdata object.")
             else:
-                raise ValueError("no segmentation mask found in sdata object.")
+                warnings.warn(
+                    "No project object provided. Assuming that the provided mask is a cytosol mask", stacklevel=2
+                )
+                mask_name = self.MASK_NAMES[1]
             mask_names = [mask_name]
 
         elif n_masks == 2:
