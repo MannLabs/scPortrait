@@ -829,7 +829,7 @@ class Project(Logable):
         fig, ax = plt.subplots(1, 1, figsize=(8, 8))
         _sdata.pl.render_images(image_name).pl.show(ax=ax)
         ax.axis("off")
-        ax.set_title(title="H&E Image", fontsize=title_fontsize)
+        ax.set_title("H&E Image", fontsize=title_fontsize)
 
         fig.tight_layout()
 
