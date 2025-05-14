@@ -14,9 +14,8 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.segmentation import watershed
 from skimage.transform import resize
 
+from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
 from scportrait.plotting.vis import plot_image
-
-DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 
 def global_otsu(image: NDArray) -> float:
@@ -530,7 +529,7 @@ def _class_size(mask: NDArray, debug: bool = False, background: int = 0) -> tupl
         for col in range(cols):
             return_id = mask[row, col]
             if return_id != background:
-                mean_sum[return_id] += np.array([row, col], dtype=np.uint32)
+                mean_sum[return_id] += np.array([row, col], dtype=DEFAULT_SEGMENTATION_DTYPE)
                 length[return_id][0] += 1
 
     mean_arr = np.divide(mean_sum, length)
@@ -607,7 +606,7 @@ def numba_mask_centroid(
 
     num_classes = int(np.max(mask) if skip_background else np.max(mask) + 1)
 
-    points_class = np.zeros((num_classes,), dtype=nb.uint32)
+    points_class = np.zeros((num_classes,), dtype=nb.uint64)
     center = np.zeros((num_classes, 2))
     ids = np.full((num_classes,), np.nan)
 
@@ -642,7 +641,7 @@ def numba_mask_centroid(
     points_class = points_class[bg_mask]
     ids = ids[bg_mask]
 
-    return center, points_class, ids.astype(np.uint32)
+    return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
 
 @nb.jit(nopython=True)
@@ -695,7 +694,7 @@ def remap_mask(input_mask: np.ndarray) -> np.ndarray:
     """
     # Create lookup table as an array
     max_label = np.max(input_mask)
-    lookup_array = np.zeros(max_label + 1, dtype=np.int32)
+    lookup_array = np.zeros(max_label + 1, dtype=DEFAULT_SEGMENTATION_DTYPE)
 
     cell_ids = np.unique(input_mask)[1:]
     lookup_table = dict(zip(cell_ids, range(1, len(cell_ids) + 1), strict=True))

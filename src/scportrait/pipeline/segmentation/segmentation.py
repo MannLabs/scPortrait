@@ -1123,8 +1123,11 @@ class ShardedSegmentation(Segmentation):
         )
         self._clear_cache(vars_to_delete=[input_image])
 
-        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
-        self.log("Mapped input image to memory-mapped array.")
+        if len(incomplete_indexes) > 0:
+            input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+            self.log("Mapped input image to memory-mapped array.")
+        else:
+            self.log("All shards already segmented. Proceeding to resolve sharding")
 
         self.image_size = input_image.shape[1:]
 
