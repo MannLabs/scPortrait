@@ -107,7 +107,6 @@ class sdata_filehandler(Logable):
         else:
             _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
-
         return _sdata
 
     def get_sdata(self) -> SpatialData:
@@ -150,7 +149,7 @@ class sdata_filehandler(Logable):
         self.nuc_centers_status = f"{self.centers_name}_{self.nuc_seg_name}" in _sdata.points
         self.cyto_centers_status = f"{self.centers_name}_{self.cyto_seg_name}" in _sdata.points
 
-        _sdata.attrs["sdata_status"] = {
+        updated_attrs = {
             "input_images": self.input_image_status,
             "nucleus_segmentation": self.nuc_seg_status,
             "cytosol_segmentation": self.cyto_seg_status,
@@ -158,8 +157,17 @@ class sdata_filehandler(Logable):
             "cytosol_centers": self.cyto_centers_status,
         }
 
-        _sdata.write_metadata()  # ensure the metadata is updated on file
+        # only update attrs on file if necessary to prevent potential data corruption due to no file space
+        if not updated_attrs == _sdata.attrs["sdata_status"]:
+            _sdata.attrs["sdata_status"] = {
+                "input_images": self.input_image_status,
+                "nucleus_segmentation": self.nuc_seg_status,
+                "cytosol_segmentation": self.cyto_seg_status,
+                "nucleus_centers": self.nuc_centers_status,
+                "cytosol_centers": self.cyto_centers_status,
+            }
 
+            _sdata.write_metadata()  # ensure the metadata is updated on file
         if return_sdata:
             return _sdata
         return None
