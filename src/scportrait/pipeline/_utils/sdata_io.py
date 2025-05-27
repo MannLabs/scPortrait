@@ -158,15 +158,8 @@ class sdata_filehandler(Logable):
         }
 
         # only update attrs on file if necessary to prevent potential data corruption due to no file space
-        if not updated_attrs == _sdata.attrs["sdata_status"]:
-            _sdata.attrs["sdata_status"] = {
-                "input_images": self.input_image_status,
-                "nucleus_segmentation": self.nuc_seg_status,
-                "cytosol_segmentation": self.cyto_seg_status,
-                "nucleus_centers": self.nuc_centers_status,
-                "cytosol_centers": self.cyto_centers_status,
-            }
-
+        if "sdata_status" not in _sdata.attrs or updated_attrs != _sdata.attrs["sdata_status"]:
+            _sdata.attrs["sdata_status"] = updated_attrs
             _sdata.write_metadata()  # ensure the metadata is updated on file
         if return_sdata:
             return _sdata
