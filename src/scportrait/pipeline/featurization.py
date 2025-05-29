@@ -741,49 +741,50 @@ class _FeaturizationBase(ProcessingStep):
         var_names = results.columns
         obs_indices = results.index.astype(str)
 
-        if self.project.nuc_seg_status:
-            # save nucleus segmentation
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
-            obs["region"] = obs["region"].astype("category")
+        if self.project is not None:
+            if self.project.nuc_seg_status:
+                # save nucleus segmentation
+                obs = pd.DataFrame()
+                obs.index = obs_indices
+                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
+                obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
+                obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
-                region_key="region",
-                instance_key=self.DEFAULT_CELL_ID_NAME,
-            )
+                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                table = TableModel.parse(
+                    table,
+                    region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
+                    region_key="region",
+                    instance_key=self.DEFAULT_CELL_ID_NAME,
+                )
 
-            self.filehandler._write_table_object_sdata(
-                table,
-                f"{label}_{self.MASK_NAMES[0]}",
-                overwrite=self.overwrite_run_path,
-            )
+                self.filehandler._write_table_object_sdata(
+                    table,
+                    f"{label}_{self.MASK_NAMES[0]}",
+                    overwrite=self.overwrite_run_path,
+                )
 
-        if self.project.cyto_seg_status:
-            # save cytoplasm segmentation
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
-            obs["region"] = obs["region"].astype("category")
+            if self.project.cyto_seg_status:
+                # save cytoplasm segmentation
+                obs = pd.DataFrame()
+                obs.index = obs_indices
+                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
+                obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
+                obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
-                region_key="region",
-                instance_key=self.DEFAULT_CELL_ID_NAME,
-            )
+                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                table = TableModel.parse(
+                    table,
+                    region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
+                    region_key="region",
+                    instance_key=self.DEFAULT_CELL_ID_NAME,
+                )
 
-            self.filehandler._write_table_object_sdata(
-                table,
-                f"{label}_{self.MASK_NAMES[1]}",
-                overwrite=self.overwrite_run_path,
-            )
+                self.filehandler._write_table_object_sdata(
+                    table,
+                    f"{label}_{self.MASK_NAMES[1]}",
+                    overwrite=self.overwrite_run_path,
+                )
 
     #### Cleanup Functions ####
 
