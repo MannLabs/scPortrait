@@ -124,12 +124,12 @@ class HDF5CellExtraction(ProcessingStep):
                 if isinstance(normalization_range, list):
                     normalization_range = tuple(normalization_range)
             else:
-                normalization_range = (0.01, 0.99)
+                normalization_range = (0.001, 0.999)
 
             self.normalization_range = normalization_range
 
         else:
-            self.normalization_range = [0.01, 0.99]
+            self.normalization_range = [0.001, 0.999]
 
         if not self.normalization:
             self.normalization_range = ("None", "None")
