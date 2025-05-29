@@ -35,7 +35,7 @@ We recommended installing the library within a separate conda environment runnin
 
    .. code::
 
-      pip install "scportrait[stitching]""
+      pip install "scportrait[stitching]"
 
 To install the latest release of scPortrait:
 
