@@ -18,10 +18,6 @@ from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, pl
 
 
 class Stitcher:
-    """
-    Class for stitching of image tiles to assemble a mosaic.
-    """
-
     def __init__(
         self,
         input_dir: str,
@@ -33,7 +29,7 @@ class Stitcher:
         max_shift: float = 30,
         filter_sigma: int = 0,
         do_intensity_rescale: bool | str = True,
-        rescale_range: tuple = (1, 99),
+        rescale_range: dict | tuple = (1, 99),
         channel_order: list[str] = None,
         reader_type="FilePatternReaderRescale",
         image_dtype=None,
@@ -42,7 +38,8 @@ class Stitcher:
         overwrite: bool = False,
         cache: str = None,
     ) -> None:
-        """Initialize the Stitcher object.
+        """
+        Class for stitching of image tiles to assemble a mosaic.
 
         Args:
             input_dir: Directory containing the input image tiles
@@ -54,7 +51,7 @@ class Stitcher:
             max_shift: Maximum allowed shift during alignment
             filter_sigma: Sigma value for Gaussian filter applied during alignment
             do_intensity_rescale: Flag to rescale image intensities or "full_image" to rescale entire image
-            rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys
+            rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys. If passed as a dictionary, channels not listed will not be rescaled.
             channel_order: Order of channels in output mosaic
             reader_type: Type of reader for image tiles
             image_dtype: dtype of the images that are to be stitched, mainly relevant when stitching with the BioformatsReaderRescale
@@ -223,6 +220,10 @@ class Stitcher:
             # if all channels should be rescaled to the same range, initialize dictionary with all channels
             if type(self.rescale_range) is tuple:
                 self.rescale_range = {k: self.rescale_range for k in self.channel_names}
+            else:
+                assert isinstance(
+                    self.rescale_range, dict
+                ), "Please provide either a dictionary containing unique rescale ranges for each channel that should be rescaled individually, or a tuple for all channels."
 
             # check if all channels are in dictionary for rescaling
             rescale_channels = list(self.rescale_range.keys())
@@ -247,6 +248,11 @@ class Stitcher:
                 self.reader.no_rescale_channel = [
                     list(self.channel_names).index(missing_channel) for missing_channel in missing_channels
                 ]
+
+                # add some log output indicating which channels will not be rescaled
+                print("The following channels will not be rescaled:")
+                for i in self.reader.no_rescale_channel:
+                    print(i)
 
             # lookup channel names and match them with channel ids to return a new dict whose keys are the channel ids
             rescale_range_ids = {list(self.channel_names).index(k): v for k, v in self.rescale_range.items()}
@@ -524,8 +530,6 @@ class Stitcher:
 
 
 class ParallelStitcher(Stitcher):
-    """Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing."""
-
     def __init__(
         self,
         input_dir: str,
@@ -537,7 +541,7 @@ class ParallelStitcher(Stitcher):
         max_shift: float = 30,
         filter_sigma: int = 0,
         do_intensity_rescale: bool | str = True,
-        rescale_range: tuple = (1, 99),
+        rescale_range: dict | tuple = (1, 99),
         channel_order: list[str] = None,
         reader_type="FilePatternReaderRescale",
         image_dtype=None,
@@ -548,6 +552,8 @@ class ParallelStitcher(Stitcher):
         threads: int = 20,
     ) -> None:
         """
+        Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.
+
         Args:
             input_dir: Directory containing the input image tiles.
             slidename: Name of the slide.
@@ -558,7 +564,7 @@ class ParallelStitcher(Stitcher):
             max_shift: Maximum allowed shift during alignment (default is 30).
             filter_sigma: Sigma value for Gaussian filter applied during alignment (default is 0).
             do_intensity_rescale: Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
-            rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range.
+            rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range. Channels not present in the dictionary won't be rescaled.
             channel_order: Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
             reader_type: Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
             orientation: Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
