@@ -18,6 +18,29 @@ from scportrait.tools.stitch._utils.ashlar_plotting import plot_edge_quality, pl
 
 
 class Stitcher:
+    """
+    Class for stitching of image tiles to assemble a mosaic.
+
+    Args:
+        input_dir: Directory containing the input image tiles
+        slidename: Name of the slide
+        outdir: Output directory to save the stitched mosaic
+        stitching_channel: Name of the channel to be used for stitching
+        pattern: File pattern to match the image tiles
+        overlap: Overlap between adjacent image tiles
+        max_shift: Maximum allowed shift during alignment
+        filter_sigma: Sigma value for Gaussian filter applied during alignment
+        do_intensity_rescale: Flag to rescale image intensities or "full_image" to rescale entire image
+        rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys. If passed as a dictionary, channels not listed will not be rescaled.
+        channel_order: Order of channels in output mosaic
+        reader_type: Type of reader for image tiles
+        image_dtype: dtype of the images that are to be stitched, mainly relevant when stitching with the BioformatsReaderRescale
+        orientation: Dict specifying dimensions to flip {'flip_x', 'flip_y'}
+        plot_QC: Generate quality control figures
+        overwrite: Overwrite existing output directory
+        cache: Directory for temporary files
+    """
+
     def __init__(
         self,
         input_dir: str,
@@ -38,28 +61,6 @@ class Stitcher:
         overwrite: bool = False,
         cache: str = None,
     ) -> None:
-        """
-        Class for stitching of image tiles to assemble a mosaic.
-
-        Args:
-            input_dir: Directory containing the input image tiles
-            slidename: Name of the slide
-            outdir: Output directory to save the stitched mosaic
-            stitching_channel: Name of the channel to be used for stitching
-            pattern: File pattern to match the image tiles
-            overlap: Overlap between adjacent image tiles
-            max_shift: Maximum allowed shift during alignment
-            filter_sigma: Sigma value for Gaussian filter applied during alignment
-            do_intensity_rescale: Flag to rescale image intensities or "full_image" to rescale entire image
-            rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys. If passed as a dictionary, channels not listed will not be rescaled.
-            channel_order: Order of channels in output mosaic
-            reader_type: Type of reader for image tiles
-            image_dtype: dtype of the images that are to be stitched, mainly relevant when stitching with the BioformatsReaderRescale
-            orientation: Dict specifying dimensions to flip {'flip_x', 'flip_y'}
-            plot_QC: Generate quality control figures
-            overwrite: Overwrite existing output directory
-            cache: Directory for temporary files
-        """
         self._lazy_imports()
 
         if orientation is None:
@@ -530,6 +531,29 @@ class Stitcher:
 
 
 class ParallelStitcher(Stitcher):
+    """
+    Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.
+
+    Args:
+        input_dir: Directory containing the input image tiles.
+        slidename: Name of the slide.
+        outdir: Output directory to save the stitched mosaic.
+        stitching_channel: Name of the channel to be used for stitching.
+        pattern: File pattern to match the image tiles.
+        overlap: Overlap between adjacent image tiles (default is 0.1).
+        max_shift: Maximum allowed shift during alignment (default is 30).
+        filter_sigma: Sigma value for Gaussian filter applied during alignment (default is 0).
+        do_intensity_rescale: Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
+        rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range. Channels not present in the dictionary won't be rescaled.
+        channel_order: Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
+        reader_type: Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
+        orientation: Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
+        plot_QC: Flag to indicate whether to plot quality control (QC) figures (default is True).
+        overwrite: Flag to indicate whether to overwrite the output directory if it already exists (default is False).
+        cache: Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
+        threads: Number of threads to use for parallel processing (default is 20).
+    """
+
     def __init__(
         self,
         input_dir: str,
@@ -551,28 +575,6 @@ class ParallelStitcher(Stitcher):
         cache: str = None,
         threads: int = 20,
     ) -> None:
-        """
-        Class for parallel stitching of image tiles and generating a mosaic. For applicable steps multi-threading is used for faster processing.
-
-        Args:
-            input_dir: Directory containing the input image tiles.
-            slidename: Name of the slide.
-            outdir: Output directory to save the stitched mosaic.
-            stitching_channel: Name of the channel to be used for stitching.
-            pattern: File pattern to match the image tiles.
-            overlap: Overlap between adjacent image tiles (default is 0.1).
-            max_shift: Maximum allowed shift during alignment (default is 30).
-            filter_sigma: Sigma value for Gaussian filter applied during alignment (default is 0).
-            do_intensity_rescale: Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
-            rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range. Channels not present in the dictionary won't be rescaled.
-            channel_order: Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-            reader_type: Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
-            orientation: Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
-            plot_QC: Flag to indicate whether to plot quality control (QC) figures (default is True).
-            overwrite: Flag to indicate whether to overwrite the output directory if it already exists (default is False).
-            cache: Directory to store temporary files during stitching (default is None). If set to none this directory will be created in the outdir.
-            threads: Number of threads to use for parallel processing (default is 20).
-        """
         if orientation is None:
             orientation = {"flip_x": False, "flip_y": True}
         super().__init__(
