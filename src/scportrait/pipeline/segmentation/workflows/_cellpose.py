@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import timeit
+from pathlib import PosixPath
 
 import numpy as np
 import torch
@@ -78,6 +79,8 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model_path"]
+            if isinstance(model_name, PosixPath):
+                model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
 
         # get model parameters from config if not defined use default values
@@ -264,7 +267,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
         # finalize classes list
         all_classes = set(np.unique(nucleus_mask)) - {0}
 
-        segmentation = self._finalize_segmentation_results(nucleus_mask=nucleus_mask)
+        segmentation = self._finalize_segmentation_results(mask=nucleus_mask)
         self._save_segmentation_sdata(segmentation, all_classes, masks=self.MASK_NAMES)
         self.total_time = timeit.default_timer() - total_time_start
 

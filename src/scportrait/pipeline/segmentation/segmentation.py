@@ -450,7 +450,10 @@ class Segmentation(ProcessingStep):
             try:
                 self._execute_segmentation(input_image)
                 self.clear_temp_dir()
-            except (RuntimeError, ValueError, TypeError) as e:
+            except (RuntimeError, ValueError, TypeError, IndexError) as e:
+                print(
+                    f"An error occurred when segmenting shard  with the tile id {self.directory} with the slicing {self.window}: {e}"
+                )
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
@@ -459,7 +462,10 @@ class Segmentation(ProcessingStep):
             try:
                 super().__call_empty__(input_image)
                 self.clear_temp_dir()
-            except (RuntimeError, ValueError, TypeError) as e:
+            except (RuntimeError, ValueError, TypeError, IndexError) as e:
+                print(
+                    f"An error occurred when segmenting shard  with the tile id {self.directory} with the slicing {self.window}: {e}"
+                )
                 self.log(f"An error occurred: {e}")
                 self.log(traceback.format_exc())
                 self.clear_temp_dir()
@@ -776,6 +782,7 @@ class ShardedSegmentation(Segmentation):
                 class_id_shift,
                 return_shifted_labels=True,
                 remove_edge_labels=True,
+                dtype=self.DEFAULT_SEGMENTATION_DTYPE,
             )
 
             orig_input = hdf_labels[:, window[0], window[1]]
@@ -1116,8 +1123,11 @@ class ShardedSegmentation(Segmentation):
         )
         self._clear_cache(vars_to_delete=[input_image])
 
-        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
-        self.log("Mapped input image to memory-mapped array.")
+        if len(incomplete_indexes) > 0:
+            input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+            self.log("Mapped input image to memory-mapped array.")
+        else:
+            self.log("All shards already segmented. Proceeding to resolve sharding")
 
         self.image_size = input_image.shape[1:]
 

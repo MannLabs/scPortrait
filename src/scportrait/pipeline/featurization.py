@@ -2,6 +2,7 @@ import io
 import os
 import platform
 import shutil
+import warnings
 from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
@@ -29,15 +30,16 @@ class _FeaturizationBase(ProcessingStep):
         "autophagy_classifier",
     ]
     MASK_NAMES = ["nucleus", "cytosol"]
+    LABEL: str | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_config()
 
-        self.label = self.config["label"]
         self.num_workers = self.config["dataloader_worker_number"]
         self.batch_size = self.config["batch_size"]
 
+        self.label = self.config["label"] if "label" in self.config.keys() else self.LABEL
         self.dataset_size = None
         self.channel_selection = None
         self.inference_device = None
@@ -60,11 +62,8 @@ class _FeaturizationBase(ProcessingStep):
 
     def _check_config(self) -> None:
         """Check if all required parameters are present in the config file."""
-
-        assert "label" in self.config.keys(), "No label specified in config file."
         assert "dataloader_worker_number" in self.config.keys(), "No dataloader_worker_number specified in config file."
         assert "batch_size" in self.config.keys(), "No batch_size specified in config file."
-        assert "inference_device" in self.config.keys(), "No inference_device specified in config file."
 
     def _setup_output(self) -> None:
         """Helper function to generate the output directory for the featurization results."""
@@ -742,49 +741,50 @@ class _FeaturizationBase(ProcessingStep):
         var_names = results.columns
         obs_indices = results.index.astype(str)
 
-        if self.project.nuc_seg_status:
-            # save nucleus segmentation
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
-            obs["region"] = obs["region"].astype("category")
+        if self.project is not None:
+            if self.project.nuc_seg_status:
+                # save nucleus segmentation
+                obs = pd.DataFrame()
+                obs.index = obs_indices
+                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
+                obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
+                obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
-                region_key="region",
-                instance_key=self.DEFAULT_CELL_ID_NAME,
-            )
+                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                table = TableModel.parse(
+                    table,
+                    region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
+                    region_key="region",
+                    instance_key=self.DEFAULT_CELL_ID_NAME,
+                )
 
-            self.filehandler._write_table_object_sdata(
-                table,
-                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[0]}",
-                overwrite=self.overwrite_run_path,
-            )
+                self.filehandler._write_table_object_sdata(
+                    table,
+                    f"{label}_{self.MASK_NAMES[0]}",
+                    overwrite=self.overwrite_run_path,
+                )
 
-        if self.project.cyto_seg_status:
-            # save cytoplasm segmentation
-            obs = pd.DataFrame()
-            obs.index = obs_indices
-            obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-            obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
-            obs["region"] = obs["region"].astype("category")
+            if self.project.cyto_seg_status:
+                # save cytoplasm segmentation
+                obs = pd.DataFrame()
+                obs.index = obs_indices
+                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
+                obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
+                obs["region"] = obs["region"].astype("category")
 
-            table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-            table = TableModel.parse(
-                table,
-                region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
-                region_key="region",
-                instance_key=self.DEFAULT_CELL_ID_NAME,
-            )
+                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                table = TableModel.parse(
+                    table,
+                    region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
+                    region_key="region",
+                    instance_key=self.DEFAULT_CELL_ID_NAME,
+                )
 
-            self.filehandler._write_table_object_sdata(
-                table,
-                f"{self.__class__.__name__ }_{label}_{self.MASK_NAMES[1]}",
-                overwrite=self.overwrite_run_path,
-            )
+                self.filehandler._write_table_object_sdata(
+                    table,
+                    f"{label}_{self.MASK_NAMES[1]}",
+                    overwrite=self.overwrite_run_path,
+                )
 
     #### Cleanup Functions ####
 
@@ -858,6 +858,11 @@ class MLClusterClassifier(_FeaturizationBase):
 
         if self.CLEAN_LOG:
             self._clean_log_file()
+
+        # checks for additional essential parameters in the config file
+        assert (
+            self.label is not None
+        ), "'label' must be specified in the config file. This is the label used to save the results."
 
     def _get_network_dir(self) -> pl.LightningModule:
         if self.network_dir in self.PRETRAINED_MODEL_NAMES:
@@ -1038,7 +1043,7 @@ class MLClusterClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.label}_{model.__name__}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{self.label}_{model.__name__}")
             else:
                 all_results.append(results)
 
@@ -1072,6 +1077,11 @@ class EnsembleClassifier(_FeaturizationBase):
 
         if self.CLEAN_LOG:
             self._clean_log_file()
+
+        # checks for additional essential parameters in the config file
+        assert (
+            self.label is not None
+        ), "'label' musst be specified in the config file. This is the label used to save the results."
 
     def _setup_transforms(self):
         if self.transforms is not None:
@@ -1198,7 +1208,7 @@ class EnsembleClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=model_name)
+                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{model_name}")
             else:
                 all_results[model_name] = results
 
@@ -1214,6 +1224,8 @@ class EnsembleClassifier(_FeaturizationBase):
 
 class ConvNeXtFeaturizer(_FeaturizationBase):
     CLEAN_LOG = True
+    LABEL = "ConvNeXtFeaturizer"
+
     """
     Compute ConvNeXt features from scPortrait's single-cell image datasets.
 
@@ -1235,8 +1247,6 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         if self.CLEAN_LOG:
             self._clean_log_file()
 
-        self._check_config()
-
         # assert that the correct transformers version is installed
         try:
             import transformers
@@ -1250,6 +1260,9 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         ), "Please install transformers version 4.26.0 via pip install --force 'transformers==4.26.0'"
 
         assert len(self.channel_selection) in [1, 3], "channel_selection should be either 1 or 3 channels"
+
+        # predefine label name for convnext featurizer
+        self.label = f"{self.LABEL}_{'_'.join(f'Ch{n}' for n in self.channel_selection)}"
 
     def _load_model(self):
         # lazy imports
@@ -1398,7 +1411,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="ConvNeXt")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:
@@ -1421,6 +1434,7 @@ class _cellFeaturizerBase(_FeaturizationBase):
         "summed_intensity",
         "summed_intensity_area_normalized",
     ]
+    LABEL = "CellFeaturizer"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1440,14 +1454,20 @@ class _cellFeaturizerBase(_FeaturizationBase):
 
     def _generate_column_names(self, n_masks: int, channel_names: list[str]) -> list[str]:
         if n_masks == 1:
-            self.project.get_project_status()
+            if self.project is not None:
+                self.project.get_project_status()
 
-            if self.project.nuc_seg_status:
-                mask_name = self.MASK_NAMES[0]
-            elif self.project.cyto_seg_status:
-                mask_name = self.MASK_NAMES[1]
+                if self.project.nuc_seg_status:
+                    mask_name = self.MASK_NAMES[0]
+                elif self.project.cyto_seg_status:
+                    mask_name = self.MASK_NAMES[1]
+                else:
+                    raise ValueError("no segmentation mask found in sdata object.")
             else:
-                raise ValueError("no segmentation mask found in sdata object.")
+                warnings.warn(
+                    "No project object provided. Assuming that the provided mask is a cytosol mask", stacklevel=2
+                )
+                mask_name = self.MASK_NAMES[1]
             mask_names = [mask_name]
 
         elif n_masks == 2:
@@ -1610,7 +1630,7 @@ class CellFeaturizer(_cellFeaturizerBase):
                     inference_device: "cpu"
 
                     # Label under which the results should be saved
-                    screen_label: "all_channels"
+                    label: "all_channels"
         """
         self.log("Started CellFeaturization of all available channels.")
 
@@ -1645,7 +1665,7 @@ class CellFeaturizer(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:
@@ -1677,9 +1697,12 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
     """
 
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
+    LABEL = "CellFeaturizer_single_channel"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.label = f"{self.LABEL}_{'_'.join(f'Ch{n}' for n in self.channel_selection)}"
 
     def _setup_channel_selection(self):
         if self.n_masks == 2:
@@ -1732,7 +1755,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
                     inference_device: "cpu"
 
                     # Label under which the results should be saved
-                    screen_label: "Ch3_Featurization"
+                    label: "Ch3_Featurization"
         """
         self.log(f"Started CellFeaturization of selected channel {self.channel_selection}.")
 
@@ -1767,7 +1790,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             path = os.path.join(self.run_path, f"{output_name}.csv")
 
             self._write_results_csv(results, path)
-            self._write_results_sdata(results, label="")
+            self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
             if not self.deep_debug:

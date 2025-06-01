@@ -10,4 +10,5 @@ from ._datasets import (
     dataset_parsing_example,
     dataset_parsing_example_flatfield_corrected,
     dataset_stitching_example,
+    get_config_file,
 )

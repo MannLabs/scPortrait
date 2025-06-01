@@ -1,7 +1,8 @@
+import os
 from typing import Any, Literal, TypeAlias
 
 import numpy as np
-from spatialdata import SpatialData
+from spatialdata import SpatialData, read_zarr
 from spatialdata.models import get_model
 from xarray import DataArray, DataTree
 
@@ -78,10 +79,12 @@ def _force_delete_object(sdata: SpatialData, name: str) -> None:
     Returns:
         None the SpatialData object is updated on file
     """
+    in_memory_only, _ = sdata._symmetric_difference_with_zarr_store()
+    in_memory_only = [x.split("/")[-1] for x in in_memory_only]
+
     if name in sdata:
         del sdata[name]
 
-    in_memory_only, _ = sdata._symmetric_difference_with_zarr_store()
     if name not in in_memory_only:
         sdata.delete_element_from_disk(name)
 
@@ -104,6 +107,7 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
             raise ValueError(
                 f"Object with name '{element_name}' already exists in SpatialData." f"Set overwrite=True to replace it."
             )
+
         _force_delete_object(sdata, element_name)
 
     # the element needs to validate with exactly one of the models
@@ -112,3 +116,47 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
     # Add the element to the SpatialData object
     sdata[element_name] = element
     sdata.write_element(element_name)
+
+
+def rename_image_element(sdata: SpatialData, image_element: str, new_element_name: str) -> SpatialData:
+    """Rename an image element in the sdata object.
+
+    Args:
+        sdata: SpatialData object
+        image_element: Image element to rename
+        new_element_name: New name for the image element
+
+    Returns:
+        sdata: Updated SpatialData object with the renamed image element.
+    """
+    assert image_element in sdata, f"Image element '{image_element}' not found in SpatialData."
+
+    path_sdata = sdata.path
+    path_elem = path_sdata / "images" / image_element
+    new_path_elem = sdata.path / "images" / new_element_name
+
+    # Check if the new name already exists
+    if new_path_elem.exists():
+        raise ValueError(f"Image element with name '{new_element_name}' already exists.")
+
+    short_path_elem = f"images/{image_element}"
+    short_path_new_elem = f"images/{new_element_name}"
+
+    assert (
+        str(short_path_elem) in sdata.elements_paths_on_disk()
+    ), f"Element {image_element} needs to be on disk to rename it."
+
+    # rename metadata
+    zattrs_path = sdata.path / "images" / image_element / ".zattrs"
+    with open(zattrs_path) as file:
+        content = file.read()
+        content = content.replace(f"/{short_path_elem}", f"/{short_path_new_elem}")
+
+    with open(zattrs_path, "w") as file:
+        file.write(content)
+
+    # rename image files
+    os.rename(path_elem, new_path_elem)
+
+    # read and return update spatialdata object
+    return read_zarr(path_sdata)

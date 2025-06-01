@@ -18,8 +18,8 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     calculate_centroids,
     get_chunk_size,
 )
-from scportrait.tools.spdata.write import _write
-from scportrait.tools.spdata.write._helper import add_element_sdata
+from scportrait.tools.sdata.write import _write
+from scportrait.tools.sdata.write._helper import add_element_sdata
 
 ChunkSize2D: TypeAlias = tuple[int, int]
 ChunkSize3D: TypeAlias = tuple[int, int, int]
@@ -107,7 +107,6 @@ class sdata_filehandler(Logable):
         else:
             _sdata = self._create_empty_sdata()
             _sdata.write(self.sdata_path, overwrite=True)
-
         return _sdata
 
     def get_sdata(self) -> SpatialData:
@@ -150,7 +149,7 @@ class sdata_filehandler(Logable):
         self.nuc_centers_status = f"{self.centers_name}_{self.nuc_seg_name}" in _sdata.points
         self.cyto_centers_status = f"{self.centers_name}_{self.cyto_seg_name}" in _sdata.points
 
-        _sdata.attrs["sdata_status"] = {
+        updated_attrs = {
             "input_images": self.input_image_status,
             "nucleus_segmentation": self.nuc_seg_status,
             "cytosol_segmentation": self.cyto_seg_status,
@@ -158,8 +157,10 @@ class sdata_filehandler(Logable):
             "cytosol_centers": self.cyto_centers_status,
         }
 
-        _sdata.write_metadata()  # ensure the metadata is updated on file
-
+        # only update attrs on file if necessary to prevent potential data corruption due to no file space
+        if "sdata_status" not in _sdata.attrs or updated_attrs != _sdata.attrs["sdata_status"]:
+            _sdata.attrs["sdata_status"] = updated_attrs
+            _sdata.write_metadata()  # ensure the metadata is updated on file
         if return_sdata:
             return _sdata
         return None
@@ -191,7 +192,7 @@ class sdata_filehandler(Logable):
         image_name: str,
         channel_names: list[str] = None,
         scale_factors: list[int] = None,
-        chunks: ChunkSize3D = (1, 1000, 1000),
+        chunks: ChunkSize3D = None,
         overwrite=False,
     ):
         """
@@ -218,30 +219,11 @@ class sdata_filehandler(Logable):
         self.log(f"Image {image_name} written to sdata object.")
         self._check_sdata_status()
 
-    def _write_segmentation_object_sdata(
-        self,
-        segmentation_object: Labels2DModel,
-        segmentation_label: str,
-        overwrite: bool = False,
-    ) -> None:
-        """Write segmentation object to SpatialData.
-
-        Args:
-            segmentation_object: Segmentation object to write
-            segmentation_label: Label for the segmentation
-            classes: Set of class names
-            overwrite: Whether to overwrite existing data
-        """
-        _sdata = self._read_sdata()
-        add_element_sdata(_sdata, segmentation_object, segmentation_label, overwrite=overwrite)
-        self.log(f"Segmentation {segmentation_label} written to sdata object.")
-        self._check_sdata_status()
-
     def _write_segmentation_sdata(
         self,
         segmentation: xarray.DataArray | np.ndarray,
         segmentation_label: str,
-        chunks: ChunkSize2D = (1000, 1000),
+        chunks: ChunkSize2D = None,
         overwrite: bool = False,
     ) -> None:
         """Write segmentation data to SpatialData.
@@ -253,15 +235,16 @@ class sdata_filehandler(Logable):
             chunks: Chunk size for data storage
             overwrite: Whether to overwrite existing data
         """
-        transform_original = Identity()
-        mask = Labels2DModel.parse(
-            segmentation, dims=["y", "x"], transformations={"global": transform_original}, chunks=chunks
+        _write.labels(
+            self._read_sdata(),
+            segmentation,
+            segmentation_label,
+            chunks=chunks,
+            overwrite=overwrite,
         )
 
-        if not get_chunk_size(mask) == chunks:
-            mask.data = mask.data.rechunk(chunks)
-
-        self._write_segmentation_object_sdata(mask, segmentation_label, overwrite=overwrite)
+        self.log(f"Segmentation {segmentation_label} written to sdata object.")
+        self._check_sdata_status()
 
     def _write_points_object_sdata(self, points: PointsModel, points_name: str, overwrite: bool = False) -> None:
         """Write points object to SpatialData.

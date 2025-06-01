@@ -1,4 +1,5 @@
 tqdm
+psutil
 numba
 h5py
 alphabase
@@ -19,7 +20,7 @@ scikit-learn
 mahotas
 
 scikit-fmm #WGA segmentation
-cellpose>=3.1.1 #cellpose segmentation
+cellpose>=3.1.1,<4 #cellpose segmentation
 
 torch
 pytorch-lightning

@@ -56,7 +56,7 @@ class MultilabelSupervisedModel(pl.LightningModule):
         Callback function after testing epochs
     """
 
-    def __init__(self, model_type="VGG2", **kwargs):
+    def __init__(self, model_type="VGG2", image_size_factor=None, **kwargs):
         super().__init__()
 
         self.save_hyperparameters()
@@ -72,6 +72,14 @@ class MultilabelSupervisedModel(pl.LightningModule):
             task_type = "multiclass"
         else:
             raise ValueError("No num_classes specified in hparams")
+
+        if image_size_factor is not None:
+            if "image_size_factor" in self.hparams:
+                assert (
+                    self.hparams["image_size_factor"] == image_size_factor
+                ), "image size factor in hparams and passed to model do not match"
+            else:
+                self.hparams["image_size_factor"] = image_size_factor
 
         # initialize metrics to track
         self.accuracy = torchmetrics.Accuracy(task=task_type, num_classes=self.hparams["num_classes"])
