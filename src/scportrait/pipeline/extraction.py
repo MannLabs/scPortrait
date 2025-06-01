@@ -221,8 +221,12 @@ class HDF5CellExtraction(ProcessingStep):
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
-    def _set_up_extraction(self, output_folder_name: str | None) -> None:
-        """execute all helper functions to setup extraction process"""
+    def _set_up_extraction(self, output_folder_name: str | None) -> bool:
+        """execute all helper functions to setup extraction process.
+
+        Returns:
+            Boolean value indicating if cells exist to proceed with extraction workflow.
+        """
 
         if output_folder_name is None:
             output_folder_name = self.DEFAULT_DATA_DIR
@@ -248,11 +252,17 @@ class HDF5CellExtraction(ProcessingStep):
         self._get_centers()
         self._get_classes_to_extract()
 
+        if self.num_classes == 0:
+            Warning("After removing cells to close to border of image to extract no cells remain.")
+            return False
+
         # create output files for saving results to
         self._create_output_files()
 
         # print relevant information to log file
         self._verbalise_extraction_info()
+
+        return True
 
     def _get_segmentation_info(self) -> None:
         """execute logic to determine which segmentation masks to use for extraction"""
@@ -933,7 +943,11 @@ class HDF5CellExtraction(ProcessingStep):
             self.DEFAULT_LOG_NAME = "partial_processing.log"  # change log name so that the results are not written to the same log file as a complete extraction
 
         # run all of the extraction setup steps
-        self._set_up_extraction(output_folder_name=output_folder_name)
+        check = self._set_up_extraction(output_folder_name=output_folder_name)
+
+        if not check:
+            return None
+
         stop_setup = timeit.default_timer()
         time_setup = stop_setup - start_setup
 
