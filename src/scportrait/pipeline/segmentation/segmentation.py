@@ -5,6 +5,7 @@ import sys
 import time
 import timeit
 import traceback
+import warnings
 from multiprocessing import current_process
 
 import h5py
@@ -332,13 +333,22 @@ class Segmentation(ProcessingStep):
             if "nucleus" in masks:
                 ix = masks.index("nucleus")
 
-                self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
-                self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
+                if sc_any(labels[ix]):
+                    self.filehandler._write_segmentation_sdata(labels[ix], self.nuc_seg_name, overwrite=self.overwrite)
+                    self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
+                else:
+                    self.log("No nuclei found in segmentation mask. Please check your processing")
+                    warnings.Warn("No nuclei found in segmentation mask. Please check your processing")
 
             if "cytosol" in masks:
                 ix = masks.index("cytosol")
-                self.filehandler._write_segmentation_sdata(labels[ix], self.cyto_seg_name, overwrite=self.overwrite)
-                self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
+
+                if sc_any(labels[ix]):
+                    self.filehandler._write_segmentation_sdata(labels[ix], self.cyto_seg_name, overwrite=self.overwrite)
+                    self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
+                else:
+                    self.log("No cytosols found in segmentation mask. Please check your processing")
+                    warnings.Warn("No cytosols found in segmentation mask. Please check your processing")
 
     def save_map(self, map_name):
         """Saves newly computed map.
