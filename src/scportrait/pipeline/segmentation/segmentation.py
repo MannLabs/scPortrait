@@ -338,7 +338,7 @@ class Segmentation(ProcessingStep):
                     self.filehandler._add_centers(self.nuc_seg_name, overwrite=self.overwrite)
                 else:
                     self.log("No nuclei found in segmentation mask. Please check your processing")
-                    warnings.Warn("No nuclei found in segmentation mask. Please check your processing")
+                    warnings.warn("No nuclei found in segmentation mask. Please check your processing", stacklevel=2)
 
             if "cytosol" in masks:
                 ix = masks.index("cytosol")
@@ -348,7 +348,7 @@ class Segmentation(ProcessingStep):
                     self.filehandler._add_centers(self.cyto_seg_name, overwrite=self.overwrite)
                 else:
                     self.log("No cytosols found in segmentation mask. Please check your processing")
-                    warnings.Warn("No cytosols found in segmentation mask. Please check your processing")
+                    warnings.warn("No cytosols found in segmentation mask. Please check your processing", stacklevel=2)
 
     def save_map(self, map_name):
         """Saves newly computed map.
