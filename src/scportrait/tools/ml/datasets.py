@@ -20,7 +20,18 @@ from pathlib import PosixPath
 
 
 class _HDF5SingleCellDataset(Dataset):
-    """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files."""
+    """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files.
+
+    Args:
+        dir_list: List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory containing hdf5 files.
+        index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
+        select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
+        transform: An optional user-defined function to apply transformations to the data. Default is None.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
+            otherwise you can no longer identify the source cell returning a specific result.
+        max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+    """
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
 
@@ -33,17 +44,7 @@ class _HDF5SingleCellDataset(Dataset):
         return_id: bool = True,
         max_level: int = 5,
     ):
-        """
-        Args:
-            dir_list: List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory containing hdf5 files.
-            index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
-            select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
-            transform: An optional user-defined function to apply transformations to the data. Default is None.
-            return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
-                For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
-                otherwise you can no longer identify the source cell returning a specific result.
-            max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
-        """
+        """ """
         self.dir_list = dir_list
 
         if isinstance(self.dir_list[0], PosixPath):
@@ -307,6 +308,7 @@ class _HDF5SingleCellDataset(Dataset):
 
     def stats(self, detailed: bool = False):  # print dataset statistics
         """Print dataset statistics.
+
         Args:
             detailed: Whether to print detailed statistics. Default is False.
         """
@@ -396,23 +398,15 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         select_channel: Specific channel or list of channels to retrieve from the data. Default is `None`, which returns all channels.
             This is more efficient than performing selection via a transform function as the data is never read in the first place.
         transform: User-defined function to apply transformations to the data. Default is `None`.
-        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `False`.
         return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
-            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`, otherwise
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to keep this as `True`, otherwise
             you can no longer identify the source cell returning a specific result.
-        max_level (int, optional):
-            Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
-
-    Methods:
-        stats():
-            Prints dataset statistics, including the total count and count per label.
-        __len__():
-            Returns the total number of single cells in the dataset.
-        __getitem__(idx):
-            Retrieves the data, label, and optionally an ID or fake ID for the single cell at index `idx`.
+        max_level: Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
     Examples:
-        ```python
+
+        .. code-block:: python
+
         hdf5_data = HDF5SingleCellDataset(
             dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
             dir_labels=[0, 1],
@@ -421,7 +415,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         )
 
         print(len(hdf5_data))  # Output: 2000
-        ```
+
     """
 
     def __init__(
@@ -483,7 +477,9 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
             Retrieves the data, label, and optionally a unique ID for the single cell at index `idx`.
 
     Examples:
-        ```python
+
+        .. code-block:: python
+
         hdf5_data = HDF5SingleCellDataset(
             dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
             dir_labels=[0, 1],
@@ -492,7 +488,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         )
 
         print(len(hdf5_data))  # Output: 2000
-        ```
+
     """
 
     def __init__(
@@ -526,7 +522,18 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 
 
 class _H5ScSingleCellDataset(Dataset):
-    """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files."""
+    """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files.
+
+    Args:
+        dir_list: List of path(s) to the single-cell datasets. Supports specifying a path to a specific hd5c file or directory containing hd5c files.
+        index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
+        select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
+        transform: An optional user-defined function to apply transformations to the data. Default is None.
+        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
+            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
+            otherwise you can no longer identify the source cell returning a specific result.
+        max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
+    """
 
     HDF_FILETYPES = ["h5sc", "h5ad"]  # supported filetypes
 
@@ -542,17 +549,6 @@ class _H5ScSingleCellDataset(Dataset):
         return_id: bool = True,
         max_level: int = 5,
     ):
-        """
-        Args:
-            dir_list: List of path(s) to the single-cell datasets. Supports specifying a path to a specific hd5c file or directory containing hd5c files.
-            index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
-            select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
-            transform: An optional user-defined function to apply transformations to the data. Default is None.
-            return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
-                For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
-                otherwise you can no longer identify the source cell returning a specific result.
-            max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
-        """
         self.dir_list = dir_list
 
         if isinstance(self.dir_list[0], PosixPath):
@@ -812,6 +808,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     def stats(self, detailed: bool = False):  # print dataset statistics
         """Print dataset statistics.
+
         Args:
             detailed: Whether to print detailed statistics. Default is False.
         """
@@ -917,16 +914,18 @@ class H5ScSingleCellDataset(_H5ScSingleCellDataset):
             Retrieves the data, label, and optionally an ID or fake ID for the single cell at index `idx`.
 
     Examples:
-        ```python
-        hdf5_data = HDF5SingleCellDataset(
-            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
-            dir_labels=[0, 1],
-            transform=None,
-            return_id=True,
-        )
 
-        print(len(hdf5_data))  # Output: 2000
-        ```
+        .. code-block:: python
+
+            hdf5_data = HH5ScSingleCellDataset(
+                dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+                dir_labels=[0, 1],
+                transform=None,
+                return_id=True,
+            )
+
+            print(len(hdf5_data))  # Output: 2000
+
     """
 
     def __init__(
@@ -987,16 +986,17 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
             Retrieves the data, label, and optionally a unique ID for the single cell at index `idx`.
 
     Examples:
-        ```python
-        hdf5_data = HDF5SingleCellDataset(
-            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
-            dir_labels=[0, 1],
-            transform=None,
-            return_id=True,
-        )
 
-        print(len(hdf5_data))  # Output: 2000
-        ```
+        .. code-block:: python
+
+            hdf5_data = HDF5SingleCellDataset(
+                dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+                dir_labels=[0, 1],
+                transform=None,
+                return_id=True,
+            )
+
+            print(len(hdf5_data))  # Output: 2000
     """
 
     def __init__(
