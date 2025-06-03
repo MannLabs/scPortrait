@@ -12,13 +12,13 @@ license = {file = "LICENSE"}
 keywords = ["single-cell", "image analysis", "spatial omics", "deep learning", "image representation"]
 dynamic = ["dependencies", "optional-dependencies"]
 authors = [
-  {name = "Sophia Maedler"},
-  {name = "Niklas Schmacke"},
+  {name = "Sophia Maedler", email = "hello@sophia-maedler.com"},
+  {name = "Niklas Schmacke", email = "niklas@schmacke.bio"},
   {name = "Altana Namsaraeva"},
   {name = "Georg Wallmann"},
 ]
 maintainers = [
-  {name = "Sophia Maedler", email = "maedler@biochem.mpg.de"},
+  {name = "Sophia Maedler", email = "hello@sophia-maedler.com"},
 ]
 
 classifiers = [
