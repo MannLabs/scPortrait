@@ -987,6 +987,7 @@ class MLClusterClassifier(_FeaturizationBase):
 
         Example:
             .. code-block:: python
+
                 project.featurize()
 
 
@@ -1150,6 +1151,7 @@ class EnsembleClassifier(_FeaturizationBase):
         Example:
 
             .. code-block:: python
+
                 project.featurize()
 
         Note:
@@ -1364,6 +1366,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
 
         Example:
             .. code-block:: python
+
                 project.featurize()
 
         Note:
