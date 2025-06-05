@@ -77,10 +77,13 @@ def custom_cellpose_model() -> Path:
 
 
 def autophagosome_h5sc() -> list[Path]:
-    """Download the example autophagosome h5sc dataset.
+    """Download the example autophagosome h5sc datasets.
+
+    Consists of two h5sc files with single-cell images of cells with and without autophagosomes.
+    The first file is autophagy positive. The second file is autophagy negative.
 
     Returns:
-        Path to the downloaded and extracted h5sc dataset
+        Path to the downloaded and extracted h5sc datasets
     """
     DATASET = "autophagosome_h5sc"
     URL = "https://zenodo.org/api/records/15105848/files-archive"
