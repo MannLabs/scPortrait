@@ -407,14 +407,14 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
 
         .. code-block:: python
 
-        hdf5_data = HDF5SingleCellDataset(
-            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
-            dir_labels=[0, 1],
-            transform=None,
-            return_id=True,
-        )
+            hdf5_data = HDF5SingleCellDataset(
+                dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+                dir_labels=[0, 1],
+                transform=None,
+                return_id=True,
+            )
 
-        print(len(hdf5_data))  # Output: 2000
+            print(len(hdf5_data))  # Output: 2000
 
     """
 
