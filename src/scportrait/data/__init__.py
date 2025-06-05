@@ -1,4 +1,5 @@
 from ._datasets import (
+    autophagosome_h5sc,
     dataset_1,
     dataset_1_omezarr,
     dataset_2,
