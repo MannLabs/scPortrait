@@ -391,7 +391,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
 
     It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Attributes:
+    Args:
         dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
         dir_labels: List of bulk labels applied to all cells within each dataset in `dir_list`.
         index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
@@ -453,7 +453,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 
     It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Attributes:
+    Args:
         dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
         label_column: Index of the column from `single_cell_index_labelled` from which single-cell labels should be read.
         label_dtype: Data type to which the read labels should be converted.
@@ -468,26 +468,18 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
             you can no longer identify the source cell returning a specific result.
         max_level: Maximum number of directory levels to search for HDF5 files within the provided paths. Default is `5`.
 
-    Methods:
-        stats():
-            Prints dataset statistics, including the total count and count per label.
-        __len__():
-            Returns the total number of single cells in the dataset.
-        __getitem__(idx):
-            Retrieves the data, label, and optionally a unique ID for the single cell at index `idx`.
-
     Examples:
 
         .. code-block:: python
 
-        hdf5_data = HDF5SingleCellDataset(
-            dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
-            dir_labels=[0, 1],
-            transform=None,
-            return_id=True,
-        )
+            hdf5_data = HDF5SingleCellDataset(
+                dir_list=["path/to/data/data1.hdf5", "path/to/data/data2.hdf5"],
+                dir_labels=[0, 1],
+                transform=None,
+                return_id=True,
+            )
 
-        print(len(hdf5_data))  # Output: 2000
+            print(len(hdf5_data))  # Output: 2000
 
     """
 
@@ -891,7 +883,7 @@ class H5ScSingleCellDataset(_H5ScSingleCellDataset):
 
     It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Attributes:
+    Args:
         dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
         dir_labels: List of bulk labels applied to all cells within each dataset in `dir_list`.
         index_list: List of indices to select from the dataset. If `None`, all cells are included. Default is `None`.
@@ -963,7 +955,7 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
 
     It is compatible with the PyTorch DataLoader and can be used to load single cell data for training and evaluation.
 
-    Attributes:
+    Args:
         dir_list: List of paths where the HDF5 files are stored. Supports specifying a path to a specific HDF5 file or a directory containing multiple HDF5 files.
         label_column: Index of the column from `single_cell_index_labelled` from which single-cell labels should be read.
         label_column_transform: Optional function to apply a mathematical transformation to the read labels.
