@@ -16,9 +16,12 @@ def combine_datasets_balanced(
     test_per_class: int,
     seed: int | None = None,
     return_residual: bool = False,
+    concat_datasets: bool = True,
 ) -> (
     tuple[ConcatDataset, ConcatDataset, ConcatDataset]
     | tuple[ConcatDataset, ConcatDataset, ConcatDataset, ConcatDataset]
+    | tuple[list[Dataset], list[Dataset], list[Dataset]]
+    | tuple[list[Dataset], list[Dataset], list[Dataset], list[Dataset]]
 ):
     """Combine multiple datasets to create a balanced dataset for train, val, and test sets.
 
@@ -30,13 +33,14 @@ def combine_datasets_balanced(
         test_per_class: Number of samples per class in the test set
         seed: Random seed for reproducibility
         return_residual: boolean value indicating of left over elements not allocated to one of the datasets should be returned as a seperate dataset
+        concat_datasets: if the returned datasets should be concatenated or returned as a list
 
     Returns:
         Tuple containing:
-            - Combined train dataset with balanced samples per class
-            - Combined validation dataset with balanced samples per class
-            - Combined test dataset with balanced samples per class
-            - if return_residual is true: combined dataset with all residual samples (unbalanced)
+            - train dataset(s) with balanced samples per class
+            - validation dataset(s) with balanced samples per class
+            - test dataset(s) with balanced samples per class
+            - potentially: residual dataset(s) with all residual samples (unbalanced)
 
     Raises:
         ValueError: If dataset is too small to be split into requested sizes
@@ -120,15 +124,17 @@ def combine_datasets_balanced(
             if return_residual:
                 residual_dataset.append(residual)
 
+    if concat_datasets:
+        train_dataset = ConcatDataset(train_dataset)
+        val_dataset = ConcatDataset(val_dataset)
+        test_dataset = ConcatDataset(test_dataset)
+        if return_residual:
+            residual_dataset = ConcatDataset(residual_dataset)
+
     if return_residual:
-        return (
-            ConcatDataset(train_dataset),
-            ConcatDataset(val_dataset),
-            ConcatDataset(test_dataset),
-            ConcatDataset(residual_dataset),
-        )
+        return (train_dataset, val_dataset, test_dataset, residual_dataset)
     else:
-        return (ConcatDataset(train_dataset), ConcatDataset(val_dataset), ConcatDataset(test_dataset))
+        return (train_dataset, val_dataset, test_dataset)
 
 
 def split_dataset_fractions(
