@@ -48,8 +48,14 @@ def combine_datasets_balanced(
     elements = [len(el) for el in list_of_datasets]
     rows = np.arange(len(list_of_datasets))
 
+    # Map labels to 0-based consecutive integers
+    unique_labels = sorted(set(class_labels))
+    label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
+    indexed_labels = [label_to_index[label] for label in class_labels]
+
     # create dataset fraction array of len(list_of_datasets)
-    mat = csr_matrix((elements, (rows, class_labels))).toarray()
+    # mat = csr_matrix((elements, (rows, class_labels))).toarray()
+    mat = csr_matrix((elements, (rows, indexed_labels))).toarray()
     cells_per_class = np.sum(mat, axis=0)
     normalized = mat / cells_per_class
     dataset_fraction = np.sum(normalized, axis=1)
