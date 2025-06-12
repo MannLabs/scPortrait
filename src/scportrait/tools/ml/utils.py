@@ -15,7 +15,11 @@ def combine_datasets_balanced(
     val_per_class: int,
     test_per_class: int,
     seed: int | None = None,
-) -> tuple[ConcatDataset, ConcatDataset, ConcatDataset]:
+    return_residual: bool = False,
+) -> (
+    tuple[ConcatDataset, ConcatDataset, ConcatDataset]
+    | tuple[ConcatDataset, ConcatDataset, ConcatDataset, ConcatDataset]
+):
     """Combine multiple datasets to create a balanced dataset for train, val, and test sets.
 
     Args:
@@ -25,12 +29,14 @@ def combine_datasets_balanced(
         val_per_class: Number of samples per class in the validation set
         test_per_class: Number of samples per class in the test set
         seed: Random seed for reproducibility
+        return_residual: boolean value indicating of left over elements not allocated to one of the datasets should be returned as a seperate dataset
 
     Returns:
         Tuple containing:
             - Combined train dataset with balanced samples per class
             - Combined validation dataset with balanced samples per class
             - Combined test dataset with balanced samples per class
+            - if return_residual is true: combined dataset with all residual samples (unbalanced)
 
     Raises:
         ValueError: If dataset is too small to be split into requested sizes
@@ -47,6 +53,7 @@ def combine_datasets_balanced(
     train_dataset: list[Dataset] = []
     test_dataset: list[Dataset] = []
     val_dataset: list[Dataset] = []
+    residual_dataset: list[Dataset] = []
 
     if np.sum(pd.Series(class_labels).value_counts() > 1) == 0:
         for dataset, label, fraction in zip(list_of_datasets, class_labels, dataset_fraction, strict=False):
@@ -74,10 +81,12 @@ def combine_datasets_balanced(
                 )
             else:
                 splits = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
-            train, test, val, _ = splits
+            train, test, val, residual = splits
             train_dataset.append(train)
             test_dataset.append(test)
             val_dataset.append(val)
+            if return_residual:
+                residual_dataset.append(residual)
     else:
         for dataset, fraction in zip(list_of_datasets, dataset_fraction, strict=False):
             train_size = int(np.round(train_per_class * fraction))
@@ -103,12 +112,23 @@ def combine_datasets_balanced(
             else:
                 splits = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
 
-            train, test, val, _ = splits
+            train, test, val, residual = splits
             train_dataset.append(train)
             test_dataset.append(test)
             val_dataset.append(val)
 
-    return (ConcatDataset(train_dataset), ConcatDataset(val_dataset), ConcatDataset(test_dataset))
+            if return_residual:
+                residual_dataset.append(residual)
+
+    if return_residual:
+        return (
+            ConcatDataset(train_dataset),
+            ConcatDataset(val_dataset),
+            ConcatDataset(test_dataset),
+            ConcatDataset(residual_dataset),
+        )
+    else:
+        return (ConcatDataset(train_dataset), ConcatDataset(val_dataset), ConcatDataset(test_dataset))
 
 
 def split_dataset_fractions(
