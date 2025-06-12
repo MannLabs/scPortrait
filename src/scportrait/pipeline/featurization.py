@@ -648,7 +648,7 @@ class _FeaturizationBase(ProcessingStep):
             # perform first pass to get size of the returned inference results
             x, label, class_id = next(data_iter)
             if pooler_output:
-                result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
+                result = model_fun(x.to(self.inference_device)).pooler_output.cpu().detach()
             else:
                 result = model_fun(x.to(self.inference_device)).cpu().detach()
 
@@ -693,7 +693,7 @@ class _FeaturizationBase(ProcessingStep):
 
                     x, label, class_id = next(data_iter)
                     if pooler_output:
-                        result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
+                        result = model_fun(x.to(self.inference_device)).pooler_output.cpu().detach()
                     else:
                         result = model_fun(x.to(self.inference_device)).cpu().detach()
 
@@ -1306,28 +1306,30 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             handler.addFilter(SpecificMessageFilter(suppressed_keywords))
 
     def _setup_transforms(self) -> None:
-        # lazy imports
-        from transformers import AutoImageProcessor
-
+        # ConvNeXt expects 0-1 rescaled images of the shape (3, 224, 224)
+        # since images are already rescaled we need to multiply the channel if running on
+        # a single channel and resize the images to the desired range, in addition the
+        # huggingface convnext model expects images to be passed in a dictionary with the key "pixel_values"
         from scportrait.tools.ml.transforms import ChannelMultiplier
 
-        feature_extractor = AutoImageProcessor.from_pretrained("facebook/convnext-xlarge-224-22k")
-
-        # custom transform to properly pass images to model
-        def get_pixel_values(in_tensor):
-            in_tensor["pixel_values"] = in_tensor["pixel_values"][0]
-            return in_tensor
+        def construct_pixel_values(input_tensors):
+            return {"pixel_values": input_tensors}
 
         if len(self.channel_selection) == 1:
             self.transforms = transforms.Compose(
                 [
                     ChannelMultiplier(3),
-                    feature_extractor,
-                    get_pixel_values,
+                    transforms.Resize((self.input_image_size, self.input_image_size)),
+                    # construct_pixel_values
                 ]
             )
         elif len(self.channel_selection) == 3:
-            self.transforms = transforms.Compose([feature_extractor, get_pixel_values])
+            self.transforms = transforms.Compose(
+                [
+                    transforms.Resize((self.input_image_size, self.input_image_size)),
+                    # construct_pixel_values
+                ]
+            )
         else:
             raise ValueError("channel_selection should be either 1 or 3 channels")
 
