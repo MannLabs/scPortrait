@@ -1236,8 +1236,6 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
     This class uses the pretrained ConvNeXt model available from the Huggingface transformers library to extract features from single-cell image datasets.
     To be able to use this class you will need to install the optional dependenices for the transformers library. You can do this with `pip install "scportrait[convnext]"`.
 
-    This method will not work with Python 3.12 or later as the required version of the transformers library is not compatible with these Python Versions.
-
     Args:
         config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
         directory: Directory for the extraction log and results. Will be created if not existing yet.
@@ -1255,13 +1253,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         try:
             import transformers
         except ImportError:
-            raise ImportError(
-                "transformers is not installed. Please install it via pip install 'transformers==4.26.0'"
-            ) from None
-
-        assert (
-            transformers.__version__ == "4.26.0"
-        ), "Please install transformers version 4.26.0 via pip install --force 'transformers==4.26.0'"
+            raise ImportError("transformers is not installed. Please install it via pip install transformers") from None
 
         assert len(self.channel_selection) in [1, 3], "channel_selection should be either 1 or 3 channels"
 
