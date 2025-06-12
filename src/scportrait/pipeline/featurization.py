@@ -1227,6 +1227,8 @@ class EnsembleClassifier(_FeaturizationBase):
 class ConvNeXtFeaturizer(_FeaturizationBase):
     CLEAN_LOG = True
     LABEL = "ConvNeXtFeaturizer"
+    input_image_size = 224
+    model_path = "facebook/convnext-xlarge-224-22k"
 
     """
     Compute ConvNeXt features from scPortrait's single-cell image datasets.
@@ -1273,7 +1275,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         # silence warnings from transformers that are not relevant here
         # we do actually just want to load some of the weights to access the convnext features
 
-        model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
+        model = ConvNextModel.from_pretrained(self.model_path)
         model.eval()
         model.to(self.inference_device)
 
