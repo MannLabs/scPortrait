@@ -648,7 +648,7 @@ class _FeaturizationBase(ProcessingStep):
             # perform first pass to get size of the returned inference results
             x, label, class_id = next(data_iter)
             if pooler_output:
-                result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
+                result = model_fun(x.to(self.inference_device)).pooler_output.cpu().detach()
             else:
                 result = model_fun(x.to(self.inference_device)).cpu().detach()
 
@@ -693,7 +693,7 @@ class _FeaturizationBase(ProcessingStep):
 
                     x, label, class_id = next(data_iter)
                     if pooler_output:
-                        result = model_fun(**x.to(self.inference_device)).pooler_output.cpu().detach()
+                        result = model_fun(x.to(self.inference_device)).pooler_output.cpu().detach()
                     else:
                         result = model_fun(x.to(self.inference_device)).cpu().detach()
 
@@ -1227,14 +1227,14 @@ class EnsembleClassifier(_FeaturizationBase):
 class ConvNeXtFeaturizer(_FeaturizationBase):
     CLEAN_LOG = True
     LABEL = "ConvNeXtFeaturizer"
+    input_image_size = 224
+    model_path = "facebook/convnext-xlarge-224-22k"
 
     """
     Compute ConvNeXt features from scPortrait's single-cell image datasets.
 
     This class uses the pretrained ConvNeXt model available from the Huggingface transformers library to extract features from single-cell image datasets.
     To be able to use this class you will need to install the optional dependenices for the transformers library. You can do this with `pip install "scportrait[convnext]"`.
-
-    This method will not work with Python 3.12 or later as the required version of the transformers library is not compatible with these Python Versions.
 
     Args:
         config : Configuration for the extraction passed over from the :class:`pipeline.Project`.
@@ -1253,13 +1253,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         try:
             import transformers
         except ImportError:
-            raise ImportError(
-                "transformers is not installed. Please install it via pip install 'transformers==4.26.0'"
-            ) from None
-
-        assert (
-            transformers.__version__ == "4.26.0"
-        ), "Please install transformers version 4.26.0 via pip install --force 'transformers==4.26.0'"
+            raise ImportError("transformers is not installed. Please install it via pip install transformers") from None
 
         assert len(self.channel_selection) in [1, 3], "channel_selection should be either 1 or 3 channels"
 
@@ -1273,7 +1267,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         # silence warnings from transformers that are not relevant here
         # we do actually just want to load some of the weights to access the convnext features
 
-        model = ConvNextModel.from_pretrained("facebook/convnext-xlarge-224-22k")
+        model = ConvNextModel.from_pretrained(self.model_path)
         model.eval()
         model.to(self.inference_device)
 
@@ -1304,28 +1298,30 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             handler.addFilter(SpecificMessageFilter(suppressed_keywords))
 
     def _setup_transforms(self) -> None:
-        # lazy imports
-        from transformers import AutoImageProcessor
-
+        # ConvNeXt expects 0-1 rescaled images of the shape (3, 224, 224)
+        # since images are already rescaled we need to multiply the channel if running on
+        # a single channel and resize the images to the desired range, in addition the
+        # huggingface convnext model expects images to be passed in a dictionary with the key "pixel_values"
         from scportrait.tools.ml.transforms import ChannelMultiplier
 
-        feature_extractor = AutoImageProcessor.from_pretrained("facebook/convnext-xlarge-224-22k")
-
-        # custom transform to properly pass images to model
-        def get_pixel_values(in_tensor):
-            in_tensor["pixel_values"] = in_tensor["pixel_values"][0]
-            return in_tensor
+        def construct_pixel_values(input_tensors):
+            return {"pixel_values": input_tensors}
 
         if len(self.channel_selection) == 1:
             self.transforms = transforms.Compose(
                 [
                     ChannelMultiplier(3),
-                    feature_extractor,
-                    get_pixel_values,
+                    transforms.Resize((self.input_image_size, self.input_image_size)),
+                    # construct_pixel_values
                 ]
             )
         elif len(self.channel_selection) == 3:
-            self.transforms = transforms.Compose([feature_extractor, get_pixel_values])
+            self.transforms = transforms.Compose(
+                [
+                    transforms.Resize((self.input_image_size, self.input_image_size)),
+                    # construct_pixel_values
+                ]
+            )
         else:
             raise ValueError("channel_selection should be either 1 or 3 channels")
 
