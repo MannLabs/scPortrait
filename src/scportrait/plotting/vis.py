@@ -5,8 +5,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.color import label2rgb
 
+from scportrait.pipeline.project import Project
 
-def plot_image(array, size=(10, 10), save_name="", cmap="magma", return_fig=False, **kwargs):
+
+def plot_image(
+    array: np.ndarray,
+    size: tuple[int, int] = (10, 10),
+    save_name: str | None = "",
+    cmap: str = "magma",
+    return_fig: bool = False,
+    **kwargs,
+):
     """
     Visualize and optionally save an input array as an image.
 
@@ -14,10 +23,10 @@ def plot_image(array, size=(10, 10), save_name="", cmap="magma", return_fig=Fals
     the resulting image as a PNG file.
 
     Args:
-        array (np.array): Input 2D numpy array to be plotted.
-        size (tuple of int, optional): Figure size in inches, by default (10, 10).
-        save_name (str, optional): Name of the output file, without extension. If not provided, image will not be saved, by default "".
-        cmap (str, optional): Color map used to display the array, by default "magma".
+        array: Input 2D numpy array to be plotted.
+        size: Figure size in inches, by default (10, 10).
+        save_name: Name of the output file, without extension. If not provided, image will not be saved, by default "".
+        cmap: Color map used to display the array, by default "magma".
         **kwargs: Additional keyword arguments to be passed to `ax.imshow`.
 
     Returns:
@@ -47,7 +56,9 @@ def plot_image(array, size=(10, 10), save_name="", cmap="magma", return_fig=Fals
         plt.close()
 
 
-def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, **kwargs):
+def visualize_class(
+    class_ids: np.ndarray | list[int], seg_map: np.ndarray, image: np.ndarray, all_ids=None, return_fig=False, **kwargs
+):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
 
@@ -55,9 +66,9 @@ def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *
     where the specified classes are highlighted on top of the provided background image.
 
     Args:
-        class_ids (array-like): A list or array of integers representing the class IDs to be highlighted.
-        seg_map (2D array-like): A 2D array representing the segmentation map, where each value corresponds to a class ID.
-        background (2D/3D array-like): Background image (2D or 3D) on which the classes will be highlighted. Its size should match that of `seg_map`.
+        class_ids: A list or array of integers representing the class IDs to be highlighted.
+        seg_map: A 2D array representing the segmentation map, where each value corresponds to a class ID.
+        background: Background image (2D or 3D) on which the classes will be highlighted. Its size should match that of `seg_map`.
         *args: Any additional positional arguments that are passed to the underlying plotting functions.
         **kwargs: Any additional keyword arguments that are passed underlying plotting functions.
 
@@ -70,7 +81,6 @@ def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *
     >>> background = np.random.random((3, 3)) * 255
     >>> visualize_class(class_ids, seg_map, background)
     """
-
     # ensure the class ids are a list
     if not isinstance(class_ids, list):
         class_ids = list(class_ids)
@@ -99,38 +109,28 @@ def visualize_class(class_ids, seg_map, image, all_ids=None, return_fig=False, *
 
 
 def plot_segmentation_mask(
-    project,
-    mask_channel=0,
-    image_channel=0,
-    selection=None,
-    cmap_image="Greys_r",
-    cmap_masks="prism",
-    alpha=0.5,
-    figsize=(10, 10),
-):
-    """
-    Visualize the segmentation mask overlayed with a channel of the input image.
+    project: Project,
+    mask_channel: int = 0,
+    image_channel: int = 0,
+    selection: tuple[slice, slice] | None = None,
+    cmap_image: str = "Greys_r",
+    cmap_masks: str = "prism",
+    alpha: float = 0.5,
+    figsize: tuple[int, int] = (10, 10),
+) -> object:
+    """Visualize the segmentation mask overlayed with a channel of the input image.
 
-    Parameters
-    ----------
-    project : scPortrait.pipeline.project.Project
-        instance of a scPortrait project.
-    mask_channel : int, optional
-        The index of the channel to use for the segmentation mask (default: 0).
-    image_channel : int, optional
-        The index of the channel to use for the image (default: 0).
-    selection : tuple(slice, slice), optional
-        The selection coordinates for a specific region of interest (default: None).
-    cmap_image : str, optional
-        The colormap to use for the input image (default: "Greys_r").
-    cmap_masks : str, optional
-        The colormap to use for the segmentation mask (default: "prism").
-    alpha : float, optional
-        The transparency level of the segmentation mask (default: 0.5).
+    Args:
+       project: Instance of a scPortrait project.
+       mask_channel: The index of the channel to use for the segmentation mask.
+       image_channel: The index of the channel to use for the image.
+       selection: The selection coordinates for a specific region of interest.
+       cmap_image: The colormap to use for the input image.
+       cmap_masks: The colormap to use for the segmentation mask.
+       alpha: The transparency level of the segmentation mask.
+       figsize: The figure size as (width, height).
 
-    Returns
-    -------
-    fig : object
+    Returns:
         The generated figure object.
     """
     # integer value indicating background (default value)
@@ -199,16 +199,16 @@ def colorize(
     return im_scaled * color
 
 
-def generate_composite(images: np.ndarray, colors: list[tuple[int, ...]] = None, plot: bool = False):
+def generate_composite(images: np.ndarray, colors: list[tuple[int, ...]] = None, plot: bool = False) -> np.ndarray:
     """Create a composite image from a multi-channel image for visualization.
 
     Args:
-        images (np.ndarray): A multi-channel image to be combined.
-        colors (list[tuple[int, ...]], optional): A list of colors to use for each channel. Defaults to None.
-        plot (bool, optional): Whether to plot the composite image. Defaults to False.
+        images: A multi-channel image to be combined.
+        colors: A list of colors to use for each channel. Defaults to None.
+        plot: Whether to plot the composite image. Defaults to False.
 
     Returns:
-        np.ndarray: The composite image.
+        The composite image.
     """
     if colors is None:
         colors = [(0, 0, 1), (0, 1, 0), (1, 0, 0), (1, 0, 1)]

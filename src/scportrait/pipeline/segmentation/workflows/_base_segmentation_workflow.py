@@ -531,7 +531,7 @@ class _BaseSegmentation(Segmentation):
     def _perform_size_filtering(
         self,
         mask: np.array,
-        thresholds: tuple[float] | None,
+        thresholds: tuple[float, float] | None,
         confidence_interval: float,
         mask_name: str,
         log: bool = True,
