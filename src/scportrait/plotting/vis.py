@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.color import label2rgb
 
-from scportrait.pipeline.project import Project
+if TYPE_CHECKING:
+    from scportrait.pipeline.project import Project
 
 
 def plot_image(
