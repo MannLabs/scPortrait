@@ -21,20 +21,14 @@ class _BaseFilter(Logable):
     def get_unique_ids(self, mask):
         return np.unique(mask)[1:]  # to remove the background
 
-    def get_updated_mask(self, mask, ids_to_remove):
-        """
-        Update the given mask by setting the values corresponding to the specified IDs to 0.
+    def get_updated_mask(self, mask: np.ndarray, ids_to_remove: np.ndarray) -> np.ndarray:
+        """Update the given mask by setting the values corresponding to the specified IDs to 0.
 
-        Parameters
-        ----------
-        mask : numpy.ndarray
-            The mask to be updated.
-        ids_to_remove : numpy.ndarray
-            The IDs to be removed from the mask.
+        Args:
+            mask: The mask to be updated.
+            ids_to_remove: The IDs to be removed from the mask.
 
-        Returns
-        -------
-        numpy.ndarray
+        Returns:
             The updated mask with the specified IDs set to 0.
         """
         return np.where(np.isin(mask, ids_to_remove), 0, mask)
@@ -53,8 +47,7 @@ class _BaseFilter(Logable):
 
 
 class SizeFilter(_BaseFilter):
-    """
-    Filter class for removing objects from a mask based on their size.
+    """Filter class for removing objects from a mask based on their size.
 
     This class provides methods to remove objects from a segmentation mask based on their size.
     If specified the objects are filtered using a threshold range passed by the user. Otherwise,
@@ -67,63 +60,50 @@ class SizeFilter(_BaseFilter):
     represent the actual cell masks of interest. Using the fitted model, the filtering thresholds are calculated
     to remove all cells that fall outside of the given confidence interval.
 
-    Parameters
-    ----------
-    filter_threshold : tuple of floats, optional
-        The lower and upper thresholds for object size filtering. If not provided, it will be automatically calculated.
-    label : str, optional
-        The label of the mask. Default is "segmask".
-    log : bool, optional
-        Whether to take the logarithm of the size of the objects before fitting the normal distribution. Default is True.
-        By enabling this option, the filter will better be able to distinguish between small and large objects.
-    plot_qc : bool, optional
-        Whether to plot quality control figures. Default is True.
-    directory : str, optional
-        The directory to save the generated figures. If not provided, the current working directory will be used.
-    confidence_interval : float, optional
-        The confidence interval for calculating the filtering threshold. Default is 0.95.
-    n_components : int, optional
-        The number of components in the Gaussian mixture model. Default is 1.
-    population_to_keep : str, optional
-        For multipopulation models this parameter determines which population should be kept. Options are "largest", "smallest", "mostcommon", "leastcommon". Default is "mostcommon".
-        If set to "largest" or "smallest", the model is chosen which has the largest or smallest mean. If set to "mostcommon" or "leastcommon", the model is chosen whose population is least or most common.
-    filter_lower : bool, optional
-        Whether to filter objects that are smaller than the lower threshold. Default is True.
-    filter_upper : bool, optional
-        Whether to filter objects that are larger than the upper threshold. Default is True.
-    *args
-        Additional positional arguments.
-    **kwargs
-        Additional keyword arguments.
+    Args:
+        filter_threshold: The lower and upper thresholds for object size filtering. If not provided, it will be automatically calculated.
+        label: The label of the mask.
+        log: Whether to take the logarithm of the size of the objects before fitting the normal distribution.
+            By enabling this option, the filter will better be able to distinguish between small and large objects.
+        plot_qc: Whether to plot quality control figures.
+        directory: The directory to save the generated figures. If not provided, the current working directory will be used.
+        confidence_interval: The confidence interval for calculating the filtering threshold.
+        n_components: The number of components in the Gaussian mixture model.
+        population_to_keep: For multipopulation models this parameter determines which population should be kept.
+            Options are "largest", "smallest", "mostcommon", "leastcommon".
+            If set to "largest" or "smallest", the model is chosen which has the largest or smallest mean.
+            If set to "mostcommon" or "leastcommon", the model is chosen whose population is least or most common.
+        filter_lower: Whether to filter objects that are smaller than the lower threshold.
+        filter_upper: Whether to filter objects that are larger than the upper threshold.
+        *args: Additional positional arguments.
+        **kwargs: Additional keyword arguments.
 
-    Examples
-    --------
-    >>> # Create a SizeFilter object
-    >>> filter = SizeFilter(filter_threshold=(100, 200), label="my_mask")
-    >>> # Apply the filter to a mask
-    >>> filtered_mask = filter.filter(input_mask)
-    >>> # Get the object IDs to be removed
-    >>> ids_to_remove = filter.get_ids_to_remove(input_mask)
-    >>> # Update the mask by removing the identified object IDs
-    >>> updated_mask = filter.update_mask(input_mask, ids_to_remove)
-
+     Examples
+     >>> # Create a SizeFilter object
+     >>> filter = SizeFilter(filter_threshold=(100, 200), label="my_mask")
+     >>> # Apply the filter to a mask
+     >>> filtered_mask = filter.filter(input_mask)
+     >>> # Get the object IDs to be removed
+     >>> ids_to_remove = filter.get_ids_to_remove(input_mask)
+     >>> # Update the mask by removing the identified object IDs
+     >>> updated_mask = filter.update_mask(input_mask, ids_to_remove)
     """
 
     def __init__(
         self,
-        filter_threshold=None,
-        label="segmask",
-        log=True,
-        plot_qc=True,
-        directory=None,
-        confidence_interval=0.95,
-        n_components=1,
-        population_to_keep="largest",
-        filter_lower=True,
-        filter_upper=True,
-        downsampling_factor=None,
-        erosion_dilation=True,
-        smoothing_kernel_size=7,
+        filter_threshold: tuple[float, float] | None = None,
+        label: str = "segmask",
+        log: bool = True,
+        plot_qc: bool = True,
+        directory: str | None = None,
+        confidence_interval: float = 0.95,
+        n_components: int = 1,
+        population_to_keep: str = "largest",
+        filter_lower: bool = True,
+        filter_upper: bool = True,
+        downsampling_factor: int | None = None,
+        erosion_dilation: bool = True,
+        smoothing_kernel_size: int = 7,
         *args,
         **kwargs,
     ):
@@ -164,67 +144,45 @@ class SizeFilter(_BaseFilter):
         self.ids_to_remove = None
         self.mask = None
 
-    def load_mask(self, mask):
-        """
-        Load the mask to be filtered.
+    def load_mask(self, mask: np.ndarray) -> None:
+        """Load the mask to be filtered.
 
-        Parameters
-        ----------
-        mask : numpy.ndarray
-            The mask to be filtered.
+        Args:
+            mask: The mask to be filtered.
         """
         if self.downsample:
             if self.mask is None:
-                self.mask = self.downsample_mask(mask)
+                self.mask = self.get_downsampled_mask(mask)
         else:
             if self.mask is None:
                 self.mask = mask
 
     def _get_gaussian_model_plot(
         self,
-        counts,
-        means,
-        variances,
-        weights,
-        threshold,
-        bins=30,
-        figsize=(5, 5),
-        alpha=0.5,
-        save_figure=True,
-    ):
-        """
-        Plot a histogram of the provided data with fitted Gaussian distributions.
+        counts: np.ndarray,
+        means: np.ndarray,
+        variances: np.ndarray,
+        weights: np.ndarray,
+        threshold: tuple[float, float],
+        bins: int = 30,
+        figsize: tuple[int, int] = (5, 5),
+        alpha: float = 0.5,
+        save_figure: bool = True,
+    ) -> plt.Figure:
+        """Plot a histogram of the provided data with fitted Gaussian distributions.
 
-        Parameters
-        ----------
-        counts : array_like
-            The input data array.
-        means : array_like
-            The means of the Gaussian distributions.
-        variances : array_like
-            The variances of the Gaussian distributions.
-        weights : array_like
-            The weights of the Gaussian distributions.
-        threshold : tuple
-            The lower and upper threshold values.
-        label : str
-            The label for the histogram.
-        n_components : int
-            The number of Gaussian components.
-        bins : int, optional
-            The number of bins in the histogram. Default is 30.
-        figsize : tuple, optional
-            The size of the figure. Default is (5, 5).
-        alpha : float, optional
-            The transparency of the histogram bars. Default is 0.5.
-        directory : str, optional
-            The directory to save the figure. Default is None.
-        save_figure : bool, optional
-            Whether to save the figure. Default is True.
+        Args:
+            counts: The input data array.
+            means: The means of the Gaussian distributions.
+            variances: The variances of the Gaussian distributions.
+            weights: The weights of the Gaussian distributions.
+            threshold: The lower and upper threshold values.
+            bins: The number of bins in the histogram.
+            figsize: The size of the figure.
+            alpha: The transparency of the histogram bars.
+            save_figure: Whether to save the figure.
 
-        Returns
-        -------
-        fig : matplotlib.figure.Figure
+        Returns:
             The generated figure.
         """
 
@@ -273,34 +231,24 @@ class SizeFilter(_BaseFilter):
 
     def _get_histogram_plot(
         self,
-        values,
-        label=None,
-        bins=30,
-        alpha=0.5,
-        figsize=(5, 5),
-        save_figure=True,
-    ):
-        """
-        Plot a histogram of the given values.
+        values: np.ndarray,
+        label: str | None = None,
+        bins: int = 30,
+        alpha: float = 0.5,
+        figsize: tuple[int, int] = (5, 5),
+        save_figure: bool = True,
+    ) -> plt.Figure:
+        """Plot a histogram of the given values.
 
-        Parameters
-        ----------
-        values : array-like
-            The values to be plotted.
-        label : str, optional
-            The label for the histogram plot.
-        bins : int, optional
-            The number of bins in the histogram. Default is 30.
-        alpha : float, optional
-            The transparency of the histogram bars. Default is 0.5.
-        figsize : tuple, optional
-            The size of the figure. Default is (5, 5).
-        save_figure : bool, optional
-            Whether to save the figure as an image. Default is True.
+        Args:
+            values: The values to be plotted.
+            label: The label for the histogram plot.
+            bins: The number of bins in the histogram.
+            alpha: The transparency of the histogram bars.
+            figsize: The size of the figure.
+            save_figure: Whether to save the figure as an image.
 
-        Returns
-        -------
-        fig : matplotlib.figure.Figure
+        Returns:
             The generated figure object.
         """
 
