@@ -356,10 +356,8 @@ class sdata_filehandler(Logable):
         mask = sdata.labels[segmentation_label]
         if isinstance(mask, xarray.DataTree):
             mask = mask.scale0.image
-        if sc_any(mask):
-            centers = calculate_centroids(mask)
-        else:
-            centers = np.array([])
+
+        centers = calculate_centroids(mask)
 
         return centers
 
