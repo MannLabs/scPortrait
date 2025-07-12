@@ -30,6 +30,7 @@ from scportrait.pipeline._utils.constants import (
     DEFAULT_CHUNK_SIZE_3D,
     DEFAULT_NAME_SINGLE_CELL_IMAGES,
 )
+from scportrait.pipeline._utils.segmentation import sc_any
 
 
 class sdata_filehandler(Logable):
@@ -355,7 +356,11 @@ class sdata_filehandler(Logable):
         mask = sdata.labels[segmentation_label]
         if isinstance(mask, xarray.DataTree):
             mask = mask.scale0.image
-        centers = calculate_centroids(mask)
+        if sc_any(mask):
+            centers = calculate_centroids(mask)
+        else:
+            centers = np.array([])
+
         return centers
 
     def _add_centers(self, segmentation_label: str, overwrite: bool = False) -> None:
@@ -366,10 +371,8 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing centers
         """
         _sdata = self._read_sdata()
-        print("read sdata object")
         centroids_object = self._get_centers(_sdata, segmentation_label)
         centers_name = f"{self.centers_name}_{segmentation_label}"
-        print("centers calculated.")
         self._write_points_object_sdata(centroids_object, centers_name, overwrite=overwrite)
 
     ## load elements from sdata to a memory mapped array
