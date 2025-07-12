@@ -188,7 +188,7 @@ def calculate_centroids(mask: xarray.DataArray, coordinate_system: str = "global
         if sc_any(mask.values):
             centers, _, _ids = numba_mask_centroid(mask.values)
         else:
-            centers = np.array([])
+            centers = np.empty((0, 2))
             _ids = np.array([])
 
         return make_centers_object(centers, _ids, transform, coordinate_system)
