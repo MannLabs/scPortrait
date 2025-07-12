@@ -366,8 +366,10 @@ class sdata_filehandler(Logable):
             overwrite: Whether to overwrite existing centers
         """
         _sdata = self._read_sdata()
+        print("read sdata object")
         centroids_object = self._get_centers(_sdata, segmentation_label)
         centers_name = f"{self.centers_name}_{segmentation_label}"
+        print("centers calculated.")
         self._write_points_object_sdata(centroids_object, centers_name, overwrite=overwrite)
 
     ## load elements from sdata to a memory mapped array
