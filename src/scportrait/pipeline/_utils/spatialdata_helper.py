@@ -13,7 +13,7 @@ from spatialdata.models import PointsModel, TableModel
 from spatialdata.transformations.operations import get_transformation
 from spatialdata.transformations.transformations import BaseTransformation
 
-from scportrait.pipeline._utils.segmentation import numba_mask_centroid
+from scportrait.pipeline._utils.segmentation import numba_mask_centroid, sc_any
 
 # Type aliases
 DataElement: TypeAlias = xarray.DataTree | xarray.DataArray
@@ -182,8 +182,15 @@ def calculate_centroids(mask: xarray.DataArray, coordinate_system: str = "global
     transform = get_transformation(mask, coordinate_system)
 
     if check_memory(mask):
-        print("using numbe for centers calculation")
-        centers, _, _ids = numba_mask_centroid(mask.values)
+        print("using numba for centers calculation")
+
+        # ensure code is only run on non-empty masks otherwise code gets stuck in endless loop
+        if sc_any(mask.values):
+            centers, _, _ids = numba_mask_centroid(mask.values)
+        else:
+            centers = np.array([])
+            _ids = np.array([])
+
         return make_centers_object(centers, _ids, transform, coordinate_system)
 
     print("Array larger than memory, using dask-delayed calculation.")
