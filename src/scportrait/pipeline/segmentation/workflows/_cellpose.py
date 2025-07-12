@@ -521,6 +521,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
         all_classes = set(np.unique(masks_nucleus)) - {0}
 
         if len(all_classes) == 0:
+            self.total_time = timeit.default_timer() - total_time_start
             return None
 
         segmentation = self._finalize_segmentation_results(mask_nucleus=masks_nucleus, mask_cytosol=masks_cytosol)
