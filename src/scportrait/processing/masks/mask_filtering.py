@@ -530,10 +530,10 @@ class SizeFilter(_BaseFilter):
 
             # visualize masks
             if len(final_mask.shape) == 3:
-                axs.imshow(np.zeroes(final_mask[0]), cmap=cmap, norm=norm)
+                axs.imshow(np.zeros(final_mask[0]), cmap=cmap, norm=norm)
                 axs.imshow(final_mask[0], cmap=cmap, norm=norm)
             elif len(final_mask.shape) == 2:
-                axs.imshow(np.zeroes(final_mask), cmap=cmap, norm=norm)
+                axs.imshow(np.zeros(final_mask), cmap=cmap, norm=norm)
                 axs.imshow(final_mask, cmap=cmap, norm=norm)
 
             axs.axis("off")
