@@ -605,7 +605,7 @@ class _H5ScSingleCellDataset(Dataset):
             # get single cell index handle
             if index_list != [None]:
                 index_handle = np.zeros((len(index_list), 1), dtype=np.int64)
-                cell_id_handle = np.zeroes((len(index_list), 1), dtype=np.uint64)
+                cell_id_handle = np.zeros((len(index_list), 1), dtype=np.uint64)
 
                 # ensure that no out of bound elements are provided for the dataset
                 max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[0]
