@@ -577,14 +577,14 @@ class _H5ScSingleCellDataset(Dataset):
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
-        self.label_column: int | None = None
+        self.label_column: str | None = None
 
     def _add_hdf_to_index(
         self,
         path: str,
         index_list: list[int] | None = None,
         label: int | None = None,
-        label_column: int | None = None,
+        label_column: str | None = None,
         label_column_transform=None,
         read_label: bool = False,
     ):
@@ -999,7 +999,7 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
     def __init__(
         self,
         dir_list: list[str],
-        label_colum: int,
+        label_colum: str,
         label_column_transform: Callable | None = None,
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform: Callable | None = None,
