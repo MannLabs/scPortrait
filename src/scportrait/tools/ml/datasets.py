@@ -642,7 +642,10 @@ class _H5ScSingleCellDataset(Dataset):
                 assert label_column is not None, "Label column must be provided if read_label is set to True."
 
                 # get the column containing the labelling
-                label_col = input_hdf.get(f"obs/{label_column}")[:]
+                if index_list != [None]:
+                    label_col = input_hdf.get(f"obs/{label_column}")[index_list]
+                else:
+                    label_col = input_hdf.get(f"obs/{label_column}")[:]
 
                 # apply any mathematical transform to label column if specified (e.g. to change scale by dividing by 1000)
                 if label_column_transform is not None:
