@@ -366,7 +366,8 @@ class _HDF5SingleCellDataset(Dataset):
 
         if self.label_column_transform is not None:
             label = self.label_column_transform(label)
-            label = float(label)  # ensure its a numeric dtype
+
+        label = float(label)  # ensure its a numeric dtype
 
         if self.return_id:
             # return data, label, and cell_id
@@ -862,7 +863,7 @@ class _H5ScSingleCellDataset(Dataset):
 
         if self.label_column_transform is not None:
             label = self.label_column_transform(label)
-            label = float(label)  # ensure its a numeric dtype
+        label = float(label)  # ensure its a numeric dtype
 
         if self.return_id:
             # return data, label, and cell_id
