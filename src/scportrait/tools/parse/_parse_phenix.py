@@ -857,11 +857,10 @@ class CombinedPhenixParser(PhenixParser):
             compress_cols: Whether to compress columns in the parsed images.
             overwrite: Whether to overwrite existing files during the parsing process.
         """
+        self.get_datasets_to_combine()
         super().__init__(
             experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
         )
-
-        self.get_datasets_to_combine()
 
     def _get_xml_path(self):
         """Automatically get the XML files from all phenix experiments that should be combined."""
