@@ -857,6 +857,7 @@ class CombinedPhenixParser(PhenixParser):
             compress_cols: Whether to compress columns in the parsed images.
             overwrite: Whether to overwrite existing files during the parsing process.
         """
+        self.experiment_dir = experiment_dir
         self.get_datasets_to_combine()
         super().__init__(
             experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
