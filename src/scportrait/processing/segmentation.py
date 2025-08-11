@@ -16,7 +16,7 @@ import skfmm
 
 from scportrait.processing.utils import plot_image
 
-DEFAULT_SEGMENTATION_DTYPE = np.uint32
+DEFAULT_SEGMENTATION_DTYPE = np.uint64
 
 
 #### Thresholding Functions to binarize input images
