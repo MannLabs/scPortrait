@@ -935,9 +935,9 @@ class ShardedSegmentation(Segmentation):
                 # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
                 # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
 
-                class_id_shift += np.max(
+                class_id_shift = np.max(
                     shifted_map
-                )  # get highest existing cell id and add it to the shift
+                )  # get highest existing cell id and make it the new shift
                 unique_ids = set(
                     np.unique(shifted_map[0])[1:]
                 )  # get unique cellids in the shifted map
