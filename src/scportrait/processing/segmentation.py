@@ -367,7 +367,8 @@ def _numba_subtract(array1, number):
 
 
 @njit
-def _return_edge_labels_2d(input_map):
+def _return_edge_labels_2d(input_map) -> list[int]:
+    """Get labels touching edges in 2D array."""
     top_row = input_map[0]
     bottom_row = input_map[-1]
     first_column = input_map[:, 0]
@@ -380,35 +381,27 @@ def _return_edge_labels_2d(input_map):
         .union(set(last_column.flatten()))
     )
 
-    full_union = set([np.uint64(i) for i in full_union])
+    full_union = set([np.uint64(i) for i in full_union])  # noqa: C403
     full_union.discard(0)
 
     return list(full_union)
 
 
-def _return_edge_labels(input_map):
+def _return_edge_labels(input_map) -> list[int]:
+    """Get labels touching edges in 2D/3D array.
+
+    Args:
+        input_map: Input segmentation array (2D or 3D)
+
+    Returns:
+        List of unique labels touching edges
     """
-    Return the unique labels in contact with the edges of the input_map.
-
-    Parameters
-    ----------
-    input_map : np.ndarray
-        Input segmentation as a 2D or 3D numpy array of integers.
-
-    Returns
-    -------
-    edge_labels : list
-        List of unique labels in contact with the edges of the input_map.
-
-    """
-
     if len(input_map.shape) == 3:
-        full_union = []
+        full_union: list[int] = []
         for i in range(input_map.shape[0]):
             _ids = _return_edge_labels_2d(input_map[i])
             full_union.extend(_ids)
-
-    elif len(input_map.shape) == 2:
+    else:
         full_union = _return_edge_labels_2d(input_map)
 
     return list(full_union)
@@ -475,7 +468,7 @@ def shift_labels(
     imap = input_map[:].copy()
     shifted_map = np.where(imap == 0, 0, imap + shift)
 
-    edge_label = []
+    edge_label: list[int] = []
 
     if len(imap.shape) == 2:
         edge_label += _return_edge_labels(imap)
