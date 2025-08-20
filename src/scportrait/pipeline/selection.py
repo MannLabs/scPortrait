@@ -169,13 +169,21 @@ class LMDSelection(ProcessingStep):
         else:
             raise ValueError("Center and cell id files not found.")
 
-        centers = pd.DataFrame(centers, columns=["x", "y"])
+        # remove any cells that were not extracted (these cells don't have images and probably don't have proper coordinates either)
+        with h5py.File(
+            Path(self.project_location) / "extraction" / "data" / "single_cells.h5", "r"
+        ) as hf:
+            extracted_cell_ids = set(hf["single_cell_index"][:, 1])
+
+        _filter = [x in extracted_cell_ids for x in _ids]
+        centers = centers[_filter]
+        _ids = _ids[_filter]
+
+        centers = pd.DataFrame(centers, columns=["x", "y"], index=_ids)
 
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
         centers.y = centers.y.astype(int)
-        centers["cell_id"] = _ids
-        centers.set_index("cell_id", inplace=True)
 
         centers = centers.loc[cell_ids, :]
 
