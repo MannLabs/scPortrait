@@ -2,12 +2,12 @@ import numpy as np
 from mahotas import sobel
 
 
-def EDF(image):
+def EDF(image: np.ndarray) -> np.ndarray:
     """Calculate Extended Depth of Field for the given input image Z-stack.
     Based on implementation here: https://mahotas.readthedocs.io/en/latest/edf.html#id3
 
     Args:
-        image (np.array): Input image array of shape (Z, X, Y)
+        image: Input image array of shape (Z, X, Y)
 
     Returns:
         np.array: EDF selected image
@@ -30,13 +30,13 @@ def EDF(image):
     return r
 
 
-def maximum_intensity_projection(image):
+def maximum_intensity_projection(image: np.ndarray) -> np.ndarray:
     """Calculate Extended Depth of Field for the given input image Zstack.
 
     Args:
-        image (np.array): Input image array of shape (Z, X, Y)
+        image: Input image array of shape (Z, X, Y)
 
     Returns:
-        np.array: Maximum Intensity Projected Image.
+        Maximum Intensity Projected Image.
     """
     return np.max(image, axis=0)
