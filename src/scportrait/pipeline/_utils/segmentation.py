@@ -1,10 +1,12 @@
 """Functions for thresholding and segmenting images."""
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import skfmm
-from numba import njit, prange
+from numba import njit, objmode, prange
 from numpy.typing import NDArray
 from scipy import ndimage
 from skimage import filters
@@ -626,11 +628,7 @@ def numba_mask_centroid(
                 center[class_id] += np.array([x, y])
                 ids[class_id] = class_id
 
-    x = center[:, 0] / points_class
-    y = center[:, 1] / points_class
-    center = np.stack((y, x)).T
-
-    # Remove background and invalid IDs
+    # remove background and invalid IDs before computing centers
     valid_mask = ~np.isnan(ids)
     center = center[valid_mask]
     points_class = points_class[valid_mask]
@@ -640,6 +638,32 @@ def numba_mask_centroid(
     center = center[bg_mask]
     points_class = points_class[bg_mask]
     ids = ids[bg_mask]
+
+    # check for any classes that have 0 pixels to ensure that a division by 0 does not occur
+    safe_mask = points_class > 0
+    if not np.all(safe_mask):
+        with objmode():
+            warnings.warn("Some classes had zero pixels and were removed.", stacklevel=2)
+
+        # filtering only needs to be performed if there is a value that is not correct
+        points_class = points_class[safe_mask]
+        center = center[safe_mask]
+        ids = ids[safe_mask]
+
+    x = center[:, 0] / points_class
+    y = center[:, 1] / points_class
+    center = np.stack((y, x)).T
+
+    # ensure no NaN values are left
+    valid_mask = (~np.isnan(ids)) & (np.isnan(center).sum(axis=1) == 0)
+    if not np.all(valid_mask):
+        with objmode():
+            warnings.warn("NaN values encountered in centroid calculation and removed.", stacklevel=2)
+
+        # filtering only needs to be performed if there is a value that is not correct
+        center = center[valid_mask]
+        points_class = points_class[valid_mask]
+        ids = ids[valid_mask]
 
     return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 

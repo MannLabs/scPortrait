@@ -74,8 +74,8 @@ def test_get_item(hdf5_dataset):
     item = hdf5_dataset[0]
     assert len(item) == 3  # (data, label, id)
     assert isinstance(item[0], torch.Tensor)
-    assert isinstance(item[1], torch.Tensor)
-    assert isinstance(item[2], torch.Tensor)
+    assert item[1].ndim == 0  # scalar
+    assert item[2].ndim == 0  # scalar
 
 
 def test_get_item_out_of_bounds(hdf5_dataset):
@@ -90,7 +90,7 @@ def test_get_item_without_id(temp_hdf5_file):
     item = dataset_no_id[0]
     assert len(item) == 2  # (data, label)
     assert isinstance(item[0], torch.Tensor)
-    assert isinstance(item[1], torch.Tensor)
+    assert item[1].ndim == 0  # scalar
 
 
 def test_labelled_dataset_initialization(labelled_hdf5_dataset):
@@ -109,8 +109,8 @@ def test_labelled_get_item(labelled_hdf5_dataset):
     item = labelled_hdf5_dataset[0]
     assert len(item) == 3  # (data, label, id)
     assert isinstance(item[0], torch.Tensor)
-    assert isinstance(item[1], torch.Tensor)
-    assert isinstance(item[2], torch.Tensor)
+    assert item[1].ndim == 0  # scalar
+    assert item[2].ndim == 0  # scalar
 
 
 @pytest.mark.parametrize(
@@ -131,3 +131,132 @@ def test_add_hdf_to_index_file_not_found(mock_exists):
     dataset = _HDF5SingleCellDataset(dir_list=["nonexistent.hdf5"])
     with pytest.raises(FileNotFoundError):
         dataset._add_hdf_to_index("nonexistent.hdf5")
+
+
+def test_index_list_subset(temp_hdf5_file):
+    """Test that only specified indices are loaded via index_list."""
+    # Only use first 10 entries
+    index_list = [list(range(10))]
+    dataset = HDF5SingleCellDataset(
+        dir_list=[temp_hdf5_file],
+        dir_labels=[1],
+        index_list=index_list,
+        return_id=True,
+    )
+    assert len(dataset) == 10
+    for i in range(len(dataset)):
+        item = dataset[i]
+        assert isinstance(item[0], torch.Tensor)
+        assert item[1].ndim == 0  # scalar
+        assert item[2].ndim == 0  # scalar
+
+
+def test_labelled_index_list_subset(temp_hdf5_file):
+    """Test that only specified indices are loaded for labelled dataset via index_list."""
+    index_list = [list(range(5, 15))]  # 10 elements
+    dataset = LabelledHDF5SingleCellDataset(
+        dir_list=[temp_hdf5_file],
+        label_colum=0,
+        label_dtype=int,
+        index_list=index_list,
+        return_id=True,
+    )
+    assert len(dataset) == 10
+    for i in range(len(dataset)):
+        item = dataset[i]
+        assert isinstance(item[0], torch.Tensor)
+        assert item[1].ndim == 0  # scalar
+        assert item[2].ndim == 0  # scalar
+
+
+# ### test h5sc
+
+
+@pytest.fixture
+def temp_h5sc_file():
+    """Create a temporary H5SC (AnnData-like) HDF5 file for testing."""
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5sc")
+    with h5py.File(temp_file.name, "w") as f:
+        rng = np.random.default_rng()
+        f.attrs["encoding-type"] = "anndata"
+        f.create_dataset("obs/scportrait_cell_id", data=np.arange(100, dtype=np.uint64))  # cell ids
+        f.create_dataset("obs/pseudo_label", data=np.arange(100, dtype=np.uint64))  # add a pseudo label
+        f.create_dataset("obsm/single_cell_images", data=rng.random((100, 5, 64, 64)))  # single-cell images
+    yield temp_file.name
+    os.remove(temp_file.name)
+
+
+from scportrait.tools.ml.datasets import (
+    H5ScSingleCellDataset,
+    LabelledH5ScSingleCellDataset,
+)
+
+
+def test_h5sc_dataset_initialization(temp_h5sc_file):
+    dataset = H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1])
+    assert isinstance(dataset, H5ScSingleCellDataset)
+    assert len(dataset) == 100
+
+
+def test_labelled_h5sc_dataset_initialization(temp_h5sc_file):
+    dataset = LabelledH5ScSingleCellDataset(
+        dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
+    )
+    assert isinstance(dataset, LabelledH5ScSingleCellDataset)
+    assert len(dataset) == 100
+
+
+def test_h5sc_get_item(temp_h5sc_file):
+    dataset = H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1])
+    item = dataset[0]
+    assert len(item) == 3
+
+    img, label, idx = item
+    assert isinstance(img, torch.Tensor)
+
+
+def test_labelled_h5sc_get_item(temp_h5sc_file):
+    dataset = LabelledH5ScSingleCellDataset(
+        dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
+    )
+    item = dataset[0]
+    assert len(item) == 3
+
+    img, label, idx = item
+    assert isinstance(img, torch.Tensor)
+    assert label.ndim == 0  # scalar
+    assert idx.ndim == 0  # scalar
+
+
+def test_h5sc_index_list_subset(temp_h5sc_file):
+    dataset = H5ScSingleCellDataset(
+        dir_list=[temp_h5sc_file],
+        dir_labels=[0],
+        index_list=[[0, 1, 2, 3, 4]],
+    )
+    assert len(dataset) == 5
+    for i in range(len(dataset)):
+        item = dataset[i]
+        assert len(item) == 3
+
+        img, label, idx = item
+        assert isinstance(img, torch.Tensor)
+        assert label.ndim == 0  # scalar
+        assert idx.ndim == 0  # scalar
+
+
+def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
+    dataset = LabelledH5ScSingleCellDataset(
+        dir_list=[temp_h5sc_file],
+        label_colum="pseudo_label",
+        index_list=[[10, 11, 12]],
+        label_column_transform=None,
+    )
+    assert len(dataset) == 3
+    for i in range(len(dataset)):
+        item = dataset[i]
+        assert len(item) == 3
+        img, label, idx = item
+        assert isinstance(img, torch.Tensor)
+        assert label.ndim == 0  # scalar
+        assert idx.ndim == 0  # scalar

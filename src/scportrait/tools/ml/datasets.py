@@ -367,6 +367,8 @@ class _HDF5SingleCellDataset(Dataset):
         if self.label_column_transform is not None:
             label = self.label_column_transform(label)
 
+        label = float(label)  # ensure its a numeric dtype
+
         if self.return_id:
             # return data, label, and cell_id
             id = int(cell_id)  # ensure the cell_id is transformed to an int
@@ -576,14 +578,14 @@ class _H5ScSingleCellDataset(Dataset):
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
-        self.label_column: int | None = None
+        self.label_column: str | None = None
 
     def _add_hdf_to_index(
         self,
         path: str,
         index_list: list[int] | None = None,
         label: int | None = None,
-        label_column: int | None = None,
+        label_column: str | None = None,
         label_column_transform=None,
         read_label: bool = False,
     ):
@@ -604,8 +606,8 @@ class _H5ScSingleCellDataset(Dataset):
 
             # get single cell index handle
             if index_list != [None]:
-                index_handle = np.zeros((len(index_list), 1), dtype=np.int64)
-                cell_id_handle = np.zeroes((len(index_list), 1), dtype=np.uint64)
+                index_handle = np.zeros((len(index_list),), dtype=np.int64)
+                cell_id_handle = np.zeros((len(index_list),), dtype=np.uint64)
 
                 # ensure that no out of bound elements are provided for the dataset
                 max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[0]
@@ -642,7 +644,10 @@ class _H5ScSingleCellDataset(Dataset):
                 assert label_column is not None, "Label column must be provided if read_label is set to True."
 
                 # get the column containing the labelling
-                label_col = input_hdf.get(f"obsm/{label_column}")[:]
+                if index_list != [None]:
+                    label_col = input_hdf.get(f"obs/{label_column}")[index_list]
+                else:
+                    label_col = input_hdf.get(f"obs/{label_column}")[:]
 
                 # apply any mathematical transform to label column if specified (e.g. to change scale by dividing by 1000)
                 if label_column_transform is not None:
@@ -858,6 +863,7 @@ class _H5ScSingleCellDataset(Dataset):
 
         if self.label_column_transform is not None:
             label = self.label_column_transform(label)
+        label = float(label)  # ensure its a numeric dtype
 
         if self.return_id:
             # return data, label, and cell_id
@@ -994,7 +1000,7 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
     def __init__(
         self,
         dir_list: list[str],
-        label_colum: int,
+        label_colum: str,
         label_column_transform: Callable | None = None,
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform: Callable | None = None,
