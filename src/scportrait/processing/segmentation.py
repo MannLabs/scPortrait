@@ -1,10 +1,10 @@
+import warnings
 import numpy as np
 from scipy import ndimage
 import matplotlib.pyplot as plt
 
 import numba as nb
-from numba import njit
-from numba import prange
+from numba import njit, objmode, prange
 
 from skimage.transform import resize
 from skimage import filters
@@ -849,51 +849,26 @@ def size_filter(label, limits=[0, 100000], background=0, reindex=False):
 
 #### Function to get centers of cells
 @njit
-def numba_mask_centroid(mask, debug=False, skip_background=True):
+def numba_mask_centroid(mask, skip_background: bool = True):
+    """Calculate centroids of labeled regions.
+
+    Args:
+        mask: Input mask containing classes
+        skip_background: Skip background class calculation
+
+    Returns:
+        Tuple containing:
+            - Array of (y,x) centroid coordinates
+            - Array of region sizes
+            - Array of region IDs
+        Returns (None, None, None) if no cells found
+
+    Example:
+        >>> mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
+        >>> centers, sizes, ids = numba_mask_centroid(mask)
     """
-    Calculate the centroids of classes in a given mask.
-
-    This function calculates the centroids of each class in the mask and returns an array
-    with the (y, x) coordinates of the centroids, the number of pixels associated with
-    each class, and the id number of each class.
-
-    Parameters
-    ----------
-    mask : numpy.ndarray
-        Input mask containing classes.
-    debug : bool, optional
-        Debug flag (default is False).
-    skip_background : bool, optional
-        If True, skip background class (default is True).
-
-    Returns
-    -------
-    center : numpy.ndarray
-        Array containing the (y, x) coordinates of the centroids of each class.
-    points_class : numpy.ndarray
-        Array containing the number of pixels associated with each class.
-    ids : numpy.ndarray
-        Array containing the id number of each class.
-
-    Example
-    -------
-    >>> import numpy as np
-    >>> mask = np.array([[0, 1, 1], [0, 2, 1], [0, 0, 2]])
-    >>> numba_mask_centroid(mask)
-    (array([[0.33333333, 1.66666667],
-            [1.5       , 1.5       ]]),
-    array([3, 2], dtype=uint32),
-    array([1, 2], dtype=uint32))
-    """
-
-    # need to perform this adjustment here so that we can also work with segmentations that do not start with a seg index of 1!
-    # this is relevant when working with segmentations that have been reindexed over different tiles
-
-    # Get the unique cell_ids and remove the background (0)
     cell_ids = list(np.unique(mask).flatten())
-    if (
-        0 in cell_ids
-    ):  # this more cumbersone way of removing the background is necessary for masks that dont have any background
+    if 0 in cell_ids:
         cell_ids.remove(0)
     cell_ids = np.array(cell_ids)
 
@@ -901,26 +876,12 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
 
     if min_cell_id == 0:
         print("no cells in image. Only contains background with value 0.")
-
-        # return empty arrays
         return None, None, None
 
-    if skip_background:
-        num_classes = np.max(mask)
-    else:
-        num_classes = np.max(mask) + 1
+    num_classes = int(np.max(mask) if skip_background else np.max(mask) + 1)
 
-    # explicit conversion to int to ensure that numba can type the function correctly
-    num_classes = int(num_classes)
-
-    # initialize empty arrays for storing the results
-    points_class = np.zeros((num_classes,), dtype=nb.uint32)
-    center = np.zeros(
-        (
-            num_classes,
-            2,
-        )
-    )
+    points_class = np.zeros((num_classes,), dtype=nb.uint64)
+    center = np.zeros((num_classes, 2))
     ids = np.full((num_classes,), np.nan)
 
     if skip_background:
@@ -928,11 +889,9 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
             for x in range(len(mask[0])):
                 class_id = mask[y, x]
                 if class_id != 0:
-                    # index position is class_id - 1 since the smallest possible class id when skipping background is 1 but python is 0-indexed
                     points_class[class_id - 1] += 1
                     center[class_id - 1] += np.array([x, y])
                     ids[class_id - 1] = class_id
-
     else:
         for y in range(len(mask)):
             for x in range(len(mask[0])):
@@ -941,20 +900,47 @@ def numba_mask_centroid(mask, debug=False, skip_background=True):
                 center[class_id] += np.array([x, y])
                 ids[class_id] = class_id
 
+    # remove background and invalid IDs before computing centers
+    valid_mask = ~np.isnan(ids)
+    center = center[valid_mask]
+    points_class = points_class[valid_mask]
+    ids = ids[valid_mask]
+
+    bg_mask = ids != 0
+    center = center[bg_mask]
+    points_class = points_class[bg_mask]
+    ids = ids[bg_mask]
+
+    # check for any classes that have 0 pixels to ensure that a division by 0 does not occur
+    safe_mask = points_class > 0
+    if not np.all(safe_mask):
+        with objmode():
+            warnings.warn(
+                "Some classes had zero pixels and were removed.", stacklevel=2
+            )
+
+        # filtering only needs to be performed if there is a value that is not correct
+        points_class = points_class[safe_mask]
+        center = center[safe_mask]
+        ids = ids[safe_mask]
+
     x = center[:, 0] / points_class
     y = center[:, 1] / points_class
-
     center = np.stack((y, x)).T
 
-    # remove background ids
-    center = center[~np.isnan(ids)]
-    points_class = points_class[~np.isnan(ids)]
-    ids = ids[~np.isnan(ids)]
+    # ensure no NaN values are left
+    valid_mask = (~np.isnan(ids)) & (np.isnan(center).sum(axis=1) == 0)
+    if not np.all(valid_mask):
+        with objmode():
+            warnings.warn(
+                "NaN values encountered in centroid calculation and removed.",
+                stacklevel=2,
+            )
 
-    # remove background ids
-    center = center[ids != 0]
-    points_class = points_class[ids != 0]
-    ids = ids[ids != 0]
+        # filtering only needs to be performed if there is a value that is not correct
+        center = center[valid_mask]
+        points_class = points_class[valid_mask]
+        ids = ids[valid_mask]
 
     return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
