@@ -242,13 +242,13 @@ class MulticlassBatchAccumulatedMetricsCallback(Callback):
         pred_classes = classes
 
         data = []
-        for j, i in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             if labels is not None and (isinstance(pred_classes[i], int) or isinstance(pred_classes[0], np.integer)):
                 pred_dict = labels[pred_classes[i]]
                 true_dict = labels[true_classes[j]]
             else:
-                pred_dict = pred_classes[i]
-                true_dict = true_classes[j]
+                pred_dict = pred_classes[j]
+                true_dict = true_classes[i]
 
             data.append([pred_dict, true_dict, cm[i, j]])
 
