@@ -3,7 +3,7 @@ psutil
 numba
 h5py
 alphabase
-anndata
+anndata<0.12
 spatialdata>=0.3.0
 py-lmd>=1.3.1
 
