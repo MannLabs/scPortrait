@@ -4,6 +4,18 @@ from numba import jit
 from skimage.exposure import rescale_intensity
 
 
+def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16) -> np.ndarray:
+    """Convert a 0-1 normalized array to a uint dtype
+
+    Args:
+        array: input array
+        dtype: dtype to convert to
+
+    """
+    assert array.min() >= 0 and array.max() <= 1, "Array values must be in the range [0, 1]"
+    return (array * np.iinfo(dtype).max).astype(dtype)
+
+
 def rescale_image(
     image: np.ndarray,
     rescale_range: tuple[int, int],

@@ -384,14 +384,15 @@ class PhenixParser:
 
         if self.compress_rows:
             metadata["orig_Row"] = metadata["Row"]
-            for well in wells:
-                select_row_name = rows[0]
-                for i, row in enumerate(rows):
+            select_row_name = rows[0]
+            for i, row in enumerate(rows):
+                for well in wells:
                     if i == 0:
                         continue
                     else:
                         # get current highest index
                         max_y = metadata.loc[((metadata.Well == well) & (metadata.Row == select_row_name))].Y_pos.max()
+
                         # add current highest index to existing index
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] = (
                             metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Y_pos"] + int(max_y) + 1
@@ -399,7 +400,7 @@ class PhenixParser:
                         # update row name
                         metadata.loc[(metadata.Well == well) & (metadata.Row == row), "Row"] = select_row_name
 
-                metadata.loc[:, "Row"] = rows[-1]  # update nomenclature to start with the row 01
+            metadata.loc[:, "Row"] = rows[-1]  # update nomenclature to start with the row 01
 
         if self.compress_cols:
             metadata["orig_Well"] = metadata["Well"]
@@ -857,11 +858,11 @@ class CombinedPhenixParser(PhenixParser):
             compress_cols: Whether to compress columns in the parsed images.
             overwrite: Whether to overwrite existing files during the parsing process.
         """
+        self.experiment_dir = experiment_dir
+        self.get_datasets_to_combine()
         super().__init__(
             experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
         )
-
-        self.get_datasets_to_combine()
 
     def _get_xml_path(self):
         """Automatically get the XML files from all phenix experiments that should be combined."""

@@ -10,6 +10,26 @@ import numpy as np
 from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME, DEFAULT_NAME_SINGLE_CELL_IMAGES
 
 
+def get_image_index(adata, cell_id: int | list[int]) -> int | list[int]:
+    """
+    Retrieve the image index (row index) of a specific cell id in a H5SC object.
+
+    Args:
+        adata: An AnnData object with obsm["single_cell_images"] containing a memory-backed array of the single-cell images.
+        cell_id: A single cell ID or a list of cell IDs to retrieve indices for.
+
+    Returns:
+        The corresponding index or list of indices from `adata.obs.index`.
+
+    """
+    lookup = dict(zip(adata.obs[DEFAULT_CELL_ID_NAME], adata.obs.index.astype(int), strict=True))
+
+    if isinstance(cell_id, int):
+        return lookup[cell_id]
+
+    return [lookup[_id] for _id in cell_id]
+
+
 def get_image_with_cellid(adata, cell_id: list[int] | int, select_channel: int | list[int] | None = None) -> np.ndarray:
     """Get single cell images from the cells with the provided cell IDs. Images are returned in the order of the cell IDs.
 

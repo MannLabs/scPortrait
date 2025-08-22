@@ -22,6 +22,16 @@ This notebook walks you through the currently implemented segmentation workflows
 
    notebooks/_notebook_segmentation_workflows.nblink
 
+Fine-tuning the single-cell image extraction
+--------------------------------------------
+
+This notebook illustrates the different parameters available to configure a single-cell image extraction.
+
+.. toctree::
+   :maxdepth: 2
+
+   notebooks/_notebook_single_cell_extraction_configuration.nblink
+
 Deep Learning in scPortrait
 ---------------------------
 

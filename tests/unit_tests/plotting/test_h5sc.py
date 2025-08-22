@@ -50,7 +50,7 @@ def test_plot_image_grid(input_shape, nrows, ncols):
     _plot_image_grid(ax, arr, nrows=nrows, ncols=ncols)
 
     # ensure that there are only the expected number of elements in the grid
-    assert len(fig.axes) == nrows * ncols + 1  # 1 required for the main axes the others are the inset axes
+    assert len(ax.child_axes) == nrows * ncols
 
 
 # ---------- cell_grid_single_channel ----------

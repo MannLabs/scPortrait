@@ -96,7 +96,6 @@ def _plot_image_grid(
                 cell_height,  # Height
             ]
         )
-        ax.figure.add_axes(ax_sub)
 
         ax_sub.imshow(img, cmap=cmap, vmin=vmin, vmax=vmax)
         ax_sub.yaxis.set_visible(False)

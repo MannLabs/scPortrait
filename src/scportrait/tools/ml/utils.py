@@ -15,7 +15,14 @@ def combine_datasets_balanced(
     val_per_class: int,
     test_per_class: int,
     seed: int | None = None,
-) -> tuple[ConcatDataset, ConcatDataset, ConcatDataset]:
+    return_residual: bool = False,
+    concat_datasets: bool = True,
+) -> (
+    tuple[ConcatDataset, ConcatDataset, ConcatDataset]
+    | tuple[ConcatDataset, ConcatDataset, ConcatDataset, ConcatDataset]
+    | tuple[list[Dataset], list[Dataset], list[Dataset]]
+    | tuple[list[Dataset], list[Dataset], list[Dataset], list[Dataset]]
+):
     """Combine multiple datasets to create a balanced dataset for train, val, and test sets.
 
     Args:
@@ -25,12 +32,15 @@ def combine_datasets_balanced(
         val_per_class: Number of samples per class in the validation set
         test_per_class: Number of samples per class in the test set
         seed: Random seed for reproducibility
+        return_residual: boolean value indicating of left over elements not allocated to one of the datasets should be returned as a seperate dataset
+        concat_datasets: if the returned datasets should be concatenated or returned as a list
 
     Returns:
         Tuple containing:
-            - Combined train dataset with balanced samples per class
-            - Combined validation dataset with balanced samples per class
-            - Combined test dataset with balanced samples per class
+            - train dataset(s) with balanced samples per class
+            - validation dataset(s) with balanced samples per class
+            - test dataset(s) with balanced samples per class
+            - potentially: residual dataset(s) with all residual samples (unbalanced)
 
     Raises:
         ValueError: If dataset is too small to be split into requested sizes
@@ -38,8 +48,14 @@ def combine_datasets_balanced(
     elements = [len(el) for el in list_of_datasets]
     rows = np.arange(len(list_of_datasets))
 
+    # Map labels to 0-based consecutive integers
+    unique_labels = sorted(set(class_labels))
+    label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
+    indexed_labels = [label_to_index[label] for label in class_labels]
+
     # create dataset fraction array of len(list_of_datasets)
-    mat = csr_matrix((elements, (rows, class_labels))).toarray()
+    # mat = csr_matrix((elements, (rows, class_labels))).toarray()
+    mat = csr_matrix((elements, (rows, indexed_labels))).toarray()
     cells_per_class = np.sum(mat, axis=0)
     normalized = mat / cells_per_class
     dataset_fraction = np.sum(normalized, axis=1)
@@ -47,6 +63,7 @@ def combine_datasets_balanced(
     train_dataset: list[Dataset] = []
     test_dataset: list[Dataset] = []
     val_dataset: list[Dataset] = []
+    residual_dataset: list[Dataset] = []
 
     if np.sum(pd.Series(class_labels).value_counts() > 1) == 0:
         for dataset, label, fraction in zip(list_of_datasets, class_labels, dataset_fraction, strict=False):
@@ -74,10 +91,12 @@ def combine_datasets_balanced(
                 )
             else:
                 splits = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
-            train, test, val, _ = splits
+            train, test, val, residual = splits
             train_dataset.append(train)
             test_dataset.append(test)
             val_dataset.append(val)
+            if return_residual:
+                residual_dataset.append(residual)
     else:
         for dataset, fraction in zip(list_of_datasets, dataset_fraction, strict=False):
             train_size = int(np.round(train_per_class * fraction))
@@ -103,12 +122,25 @@ def combine_datasets_balanced(
             else:
                 splits = torch.utils.data.random_split(dataset, [train_size, test_size, val_size, residual_size])
 
-            train, test, val, _ = splits
+            train, test, val, residual = splits
             train_dataset.append(train)
             test_dataset.append(test)
             val_dataset.append(val)
 
-    return (ConcatDataset(train_dataset), ConcatDataset(val_dataset), ConcatDataset(test_dataset))
+            if return_residual:
+                residual_dataset.append(residual)
+
+    if concat_datasets:
+        train_dataset = ConcatDataset(train_dataset)
+        val_dataset = ConcatDataset(val_dataset)
+        test_dataset = ConcatDataset(test_dataset)
+        if return_residual:
+            residual_dataset = ConcatDataset(residual_dataset)
+
+    if return_residual:
+        return (train_dataset, val_dataset, test_dataset, residual_dataset)
+    else:
+        return (train_dataset, val_dataset, test_dataset)
 
 
 def split_dataset_fractions(

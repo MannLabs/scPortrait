@@ -869,7 +869,7 @@ class ShardedSegmentation(Segmentation):
             # potential issue: this does not check if we create a cytosol without a matching nucleus? But this should have been implemented in altanas segmentation method
             # for other segmentation methods this could cause issues?? Potentially something to revisit in the future
 
-            class_id_shift += np.max(shifted_map)  # get highest existing cell id and add it to the shift
+            class_id_shift = np.max(shifted_map)  # get highest existing cell id and add it to the shift
             unique_ids = set(np.unique(shifted_map[0])[1:])  # get unique cellids in the shifted map
 
             # save results to hdf_labels
@@ -1123,8 +1123,11 @@ class ShardedSegmentation(Segmentation):
         )
         self._clear_cache(vars_to_delete=[input_image])
 
-        input_image = tempmmap.mmap_array_from_path(self.input_image_path)
-        self.log("Mapped input image to memory-mapped array.")
+        if len(incomplete_indexes) > 0:
+            input_image = tempmmap.mmap_array_from_path(self.input_image_path)
+            self.log("Mapped input image to memory-mapped array.")
+        else:
+            self.log("All shards already segmented. Proceeding to resolve sharding")
 
         self.image_size = input_image.shape[1:]
 

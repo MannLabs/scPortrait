@@ -159,15 +159,18 @@ def plot_segmentation_mask(
     return fig
 
 
-def colorize(im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile: float = 0.0):
+def colorize(
+    im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile: float = 0.0, normalize_image: bool = False
+):
     """
     Helper function to create an RGB image from a single-channel image using a
     specific color.
 
     Args:
-        im (np.ndarray): A single-channel image.
-        color (tuple[int, ...], optional): The color to use for the image. Defaults to (1, 0, 0).
-        clip_percentile (float, optional): The percentile to clip the image at. Defaults to 0.0.
+        im: A single-channel input image. If normalize_image = False, ensure that its values fall between the [0, 1] range.
+        color: The color to use for the image. Defaults to (1, 0, 0).
+        clip_percentile: The percentile to clip the image at rescaling. Defaults to 0.0 which is equivalent to Min-Max scaling.
+        normalize_image: boolean value indicating if rescaling should be performed or not.
 
     Returns:
         np.ndarray: The colorized image.
@@ -177,9 +180,16 @@ def colorize(im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile
         raise ValueError("This function expects a single-channel image!")
 
     # Rescale the image according to how we want to display it
-    im_scaled = im.astype(np.float32) - np.percentile(im, clip_percentile)
-    im_scaled = im_scaled / np.percentile(im_scaled, 100 - clip_percentile)
-    im_scaled = np.clip(im_scaled, 0, 1)
+    if normalize_image:
+        im_scaled = im.astype(np.float32) - np.percentile(im, clip_percentile)
+        im_scaled = im_scaled / np.percentile(im_scaled, 100 - clip_percentile)
+        im_scaled = np.clip(im_scaled, 0, 1)
+    else:
+        im_scaled = im.astype(np.float32)
+        # ensure that its 0, 1 limited otherwise it will generate errors
+
+        assert im_scaled.min() >= 0.0, "If normalize_image = False, expected 0, 1 ranged input images"
+        assert im_scaled.max() <= 1.0, "If normalize_image = False, expected 0, 1 ranged input images"
 
     # Need to make sure we have a channels dimension for the multiplication to work
     im_scaled = np.atleast_3d(im_scaled)

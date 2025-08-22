@@ -1,10 +1,12 @@
 """Functions for thresholding and segmenting images."""
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import skfmm
-from numba import njit, prange
+from numba import njit, objmode, prange
 from numpy.typing import NDArray
 from scipy import ndimage
 from skimage import filters
@@ -14,9 +16,8 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.segmentation import watershed
 from skimage.transform import resize
 
+from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
 from scportrait.plotting.vis import plot_image
-
-DEFAULT_SEGMENTATION_DTYPE = np.uint32
 
 
 def global_otsu(image: NDArray) -> float:
@@ -530,7 +531,7 @@ def _class_size(mask: NDArray, debug: bool = False, background: int = 0) -> tupl
         for col in range(cols):
             return_id = mask[row, col]
             if return_id != background:
-                mean_sum[return_id] += np.array([row, col], dtype=np.uint32)
+                mean_sum[return_id] += np.array([row, col], dtype=DEFAULT_SEGMENTATION_DTYPE)
                 length[return_id][0] += 1
 
     mean_arr = np.divide(mean_sum, length)
@@ -607,7 +608,7 @@ def numba_mask_centroid(
 
     num_classes = int(np.max(mask) if skip_background else np.max(mask) + 1)
 
-    points_class = np.zeros((num_classes,), dtype=nb.uint32)
+    points_class = np.zeros((num_classes,), dtype=nb.uint64)
     center = np.zeros((num_classes, 2))
     ids = np.full((num_classes,), np.nan)
 
@@ -627,11 +628,7 @@ def numba_mask_centroid(
                 center[class_id] += np.array([x, y])
                 ids[class_id] = class_id
 
-    x = center[:, 0] / points_class
-    y = center[:, 1] / points_class
-    center = np.stack((y, x)).T
-
-    # Remove background and invalid IDs
+    # remove background and invalid IDs before computing centers
     valid_mask = ~np.isnan(ids)
     center = center[valid_mask]
     points_class = points_class[valid_mask]
@@ -642,7 +639,33 @@ def numba_mask_centroid(
     points_class = points_class[bg_mask]
     ids = ids[bg_mask]
 
-    return center, points_class, ids.astype(np.uint32)
+    # check for any classes that have 0 pixels to ensure that a division by 0 does not occur
+    safe_mask = points_class > 0
+    if not np.all(safe_mask):
+        with objmode():
+            warnings.warn("Some classes had zero pixels and were removed.", stacklevel=2)
+
+        # filtering only needs to be performed if there is a value that is not correct
+        points_class = points_class[safe_mask]
+        center = center[safe_mask]
+        ids = ids[safe_mask]
+
+    x = center[:, 0] / points_class
+    y = center[:, 1] / points_class
+    center = np.stack((y, x)).T
+
+    # ensure no NaN values are left
+    valid_mask = (~np.isnan(ids)) & (np.isnan(center).sum(axis=1) == 0)
+    if not np.all(valid_mask):
+        with objmode():
+            warnings.warn("NaN values encountered in centroid calculation and removed.", stacklevel=2)
+
+        # filtering only needs to be performed if there is a value that is not correct
+        center = center[valid_mask]
+        points_class = points_class[valid_mask]
+        ids = ids[valid_mask]
+
+    return center, points_class, ids.astype(DEFAULT_SEGMENTATION_DTYPE)
 
 
 @nb.jit(nopython=True)
@@ -695,7 +718,7 @@ def remap_mask(input_mask: np.ndarray) -> np.ndarray:
     """
     # Create lookup table as an array
     max_label = np.max(input_mask)
-    lookup_array = np.zeros(max_label + 1, dtype=np.int32)
+    lookup_array = np.zeros(max_label + 1, dtype=DEFAULT_SEGMENTATION_DTYPE)
 
     cell_ids = np.unique(input_mask)[1:]
     lookup_table = dict(zip(cell_ids, range(1, len(cell_ids) + 1), strict=True))

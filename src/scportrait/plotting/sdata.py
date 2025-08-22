@@ -332,6 +332,8 @@ def plot_labels(
     color: str = "grey",
     fill_alpha: float = 1,
     cmap: str = None,
+    palette: dict | list = None,
+    groups: list = None,
     vectorized: bool = False,
     dpi: int | None = None,
     ax: plt.Axes | None = None,
@@ -387,16 +389,16 @@ def plot_labels(
 
                     # check for annotating column
                     if color in annotating_table.obs:
-                        annotating_table.obs[color] = annotating_table.obs[color].astype(
-                            "str"
-                        )  # this resets the categories to only contain those present in the the datasubset
-                        annotating_table.obs[color] = annotating_table.obs[color].astype("category")
+                        annotating_table.obs[color] = (
+                            annotating_table.obs[color].astype("category").cat.remove_unused_categories()
+                        )
                         # check for NaN values
                         if annotating_table.obs[color].isna().sum() > 0:
                             # NaN values need to be filled as otherwise the plotting will throw an error
                             if "NaN" not in annotating_table.obs[color].cat.categories:
                                 annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
                             annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
+                    annotating_table = spatialdata.models.TableModel.parse(annotating_table)
                     break
         if found_annotation is not None:
             sdata["_annotation"] = annotating_table
@@ -406,18 +408,28 @@ def plot_labels(
                 fill_alpha=fill_alpha,
                 outline_alpha=0,
                 cmap=cmap,
+                palette=palette,
+                groups=groups,
             ).pl.show(ax=ax)
             del sdata["_annotation"]  # delete element again after plotting
         else:
             try:
                 sdata.pl.render_labels(
-                    f"{label_layer}", color=color, fill_alpha=fill_alpha, outline_alpha=1, cmap=cmap
+                    f"{label_layer}",
+                    color=color,
+                    fill_alpha=fill_alpha,
+                    outline_alpha=1,
+                    cmap=cmap,
+                    palette=palette,
+                    groups=groups,
                 ).pl.show(ax=ax)
             except Exception as err:
                 raise Exception from err
 
     else:
-        sdata.pl.render_labels(f"{label_layer}", color=color, fill_alpha=fill_alpha, cmap=cmap).pl.show(ax=ax)
+        sdata.pl.render_labels(
+            f"{label_layer}", color=color, fill_alpha=fill_alpha, cmap=cmap, palette=palette, groups=groups
+        ).pl.show(ax=ax)
 
     # configure axes
     ax.axis("off")
