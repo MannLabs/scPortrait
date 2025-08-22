@@ -334,7 +334,6 @@ class HDF5CellExtraction(ProcessingStep):
                 hdf_labels = hf.get(self.segmentation_label)
                 center_nuclei, length, _cell_ids = numba_mask_centroid(
                     hdf_labels[0].astype(self.DEFAULT_SEGMENTATION_DTYPE),
-                    debug=self.debug,
                 )
 
             px_centers = np.round(center_nuclei).astype(int)
