@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import skfmm
-from numba import njit, prange
+from numba import njit, objmode, prange
 from numpy.typing import NDArray
 from scipy import ndimage
 from skimage import filters
@@ -642,7 +642,8 @@ def numba_mask_centroid(
     # check for any classes that have 0 pixels to ensure that a division by 0 does not occur
     safe_mask = points_class > 0
     if not np.all(safe_mask):
-        warnings.warn("Some classes had zero pixels and were removed.", stacklevel=2)
+        with objmode():
+            warnings.warn("Some classes had zero pixels and were removed.", stacklevel=2)
 
         # filtering only needs to be performed if there is a value that is not correct
         points_class = points_class[safe_mask]
@@ -654,9 +655,10 @@ def numba_mask_centroid(
     center = np.stack((y, x)).T
 
     # ensure no NaN values are left
-    valid_mask = ~np.isnan(ids) & ~np.isnan(center).any(axis=1)
+    valid_mask = (~np.isnan(ids)) & (np.isnan(center).sum(axis=1) == 0)
     if not np.all(valid_mask):
-        warnings.warn("NaN values encountered in centroid calculation and removed.", stacklevel=2)
+        with objmode():
+            warnings.warn("NaN values encountered in centroid calculation and removed.", stacklevel=2)
 
         # filtering only needs to be performed if there is a value that is not correct
         center = center[valid_mask]
