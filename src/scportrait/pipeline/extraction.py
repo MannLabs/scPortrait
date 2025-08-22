@@ -1418,7 +1418,7 @@ class TimecourseHDF5CellExtraction(HDF5CellExtraction):
                     continue
                 else:
                     center_nuclei, _, _cell_ids = numba_mask_centroid(
-                        input_image, debug=self.debug
+                        input_image,
                     )
 
                     if center_nuclei is not None:
