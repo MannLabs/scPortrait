@@ -215,6 +215,7 @@ class LMDSelection(ProcessingStep):
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
             if self.segmentation_channel_to_select == 1:
+                print("subsetting ids")
                 centers.index = [filtered_classes[x] for x in centers.index.tolist()]
 
                 # perform sanity check
