@@ -199,7 +199,9 @@ class LMDSelection(ProcessingStep):
             except Exception:
                 raise ValueError("Need to run segmentation_filtering method ")
 
-            filtered_classes = pd.read_csv(self.filtered_classes_path, sep=":")
+            filtered_classes = pd.read_csv(
+                self.filtered_classes_path, sep=":", header=None
+            )
             filtered_classes = dict(zip(filtered_classes[0], filtered_classes[1]))
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
