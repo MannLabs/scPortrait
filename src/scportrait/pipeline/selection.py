@@ -221,9 +221,8 @@ class LMDSelection(ProcessingStep):
                 print(centers.head())
 
                 # perform sanity check
-                assert [
-                    x in centers.index for x in cell_ids
-                ], "incorrect cytosol cell ids supplied after filtering"
+                missing = [x for x in cell_ids if x not in centers.index]
+                assert not missing, f"IDs missing after filtering: {missing[:10]}..."
 
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
