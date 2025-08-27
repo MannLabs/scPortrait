@@ -221,8 +221,11 @@ class LMDSelection(ProcessingStep):
                 print(centers.head())
 
                 # perform sanity check
-                missing = [x for x in cell_ids if x not in centers.index]
-                assert not missing, f"IDs missing after filtering: {missing[:10]}..."
+                missing = sorted(set(cell_ids) - set(centers.index))
+                if missing:
+                    raise KeyError(
+                        f"{len(missing)} IDs missing after filtering. Examples: {missing[:20]}"
+                    )
 
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
