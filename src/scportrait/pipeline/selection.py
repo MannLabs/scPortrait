@@ -181,6 +181,31 @@ class LMDSelection(ProcessingStep):
 
         centers = pd.DataFrame(centers, columns=["x", "y"], index=_ids)
 
+        # check if additional filtering needed to be performed after segmentation
+        if os.path.isfile(
+            os.path.join(
+                self.project_location,
+                self.DEFAULT_SEGMENTATION_DIR_NAME,
+                "needs_additional_filtering.txt",
+            )
+        ):
+            try:
+                self.filtered_classes_path = os.path.join(
+                    self.project_location,
+                    self.DEFAULT_SEGMENTATION_FILTERING_DIR_NAME,
+                    self.DEFAULT_FILTERED_CLASSES_FILE,
+                )
+
+            except Exception:
+                raise ValueError("Need to run segmentation_filtering method ")
+
+            filtered_classes = pd.read_csv(self.filtered_classes_path, sep=":")
+            filtered_classes = dict(zip(filtered_classes[0], filtered_classes[1]))
+
+            # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
+            if self.segmentation_channel_to_select == 1:
+                centers.index = [filtered_classes[x] for x in centers.index.tolist()]
+
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
         centers.y = centers.y.astype(int)
