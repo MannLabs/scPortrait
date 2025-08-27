@@ -199,6 +199,7 @@ class LMDSelection(ProcessingStep):
             except Exception:
                 raise ValueError("Need to run segmentation_filtering method ")
 
+            self.log("Applying additional filtering")
             filtered_classes = pd.read_csv(
                 self.filtered_classes_path, sep=":", header=None
             )
