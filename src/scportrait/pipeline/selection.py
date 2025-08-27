@@ -205,6 +205,12 @@ class LMDSelection(ProcessingStep):
                 sep=":",
                 header=None,
             )
+            filtered_classes[0] = filtered_classes[0].astype(
+                self.DEFAULT_SEGMENTATION_DTYPE
+            )
+            filtered_classes[1] = filtered_classes[1].astype(
+                self.DEFAULT_SEGMENTATION_DTYPE
+            )
             filtered_classes = dict(zip(filtered_classes[0], filtered_classes[1]))
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
@@ -213,6 +219,11 @@ class LMDSelection(ProcessingStep):
                     filtered_classes[x].astype(self.DEFAULT_SEGMENTATION_DTYPE)
                     for x in centers.index.tolist()
                 ]
+
+                # perform sanity check
+                assert [
+                    x in centers.index for x in cell_ids
+                ], "incorrect cytosol cell ids supplied after filtering"
 
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
