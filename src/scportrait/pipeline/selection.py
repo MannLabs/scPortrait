@@ -201,15 +201,18 @@ class LMDSelection(ProcessingStep):
 
             self.log("Applying additional filtering")
             filtered_classes = pd.read_csv(
-                self.filtered_classes_path, sep=":", header=None
+                self.filtered_classes_path,
+                sep=":",
+                header=None,
             )
             filtered_classes = dict(zip(filtered_classes[0], filtered_classes[1]))
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
             print(self.segmentation_channel_to_select)
             if self.segmentation_channel_to_select == 1:
+                print(centers.head())
                 centers.index = [filtered_classes[x] for x in centers.index.tolist()]
-
+                print(centers.head())
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
         centers.y = centers.y.astype(int)
