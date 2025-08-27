@@ -208,11 +208,12 @@ class LMDSelection(ProcessingStep):
             filtered_classes = dict(zip(filtered_classes[0], filtered_classes[1]))
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
-            print(self.segmentation_channel_to_select)
             if self.segmentation_channel_to_select == 1:
-                print(centers.head())
-                centers.index = [filtered_classes[x] for x in centers.index.tolist()]
-                print(centers.head())
+                centers.index = [
+                    filtered_classes[x].astype(self.DEFAULT_SEGMENTATION_DTYPE)
+                    for x in centers.index.tolist()
+                ]
+
         # convert coordinates to integers for compatibility with indexing in segmentation mask
         centers.x = centers.x.astype(int)
         centers.y = centers.y.astype(int)
