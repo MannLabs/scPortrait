@@ -199,7 +199,6 @@ class LMDSelection(ProcessingStep):
             except Exception:
                 raise ValueError("Need to run segmentation_filtering method ")
 
-            self.log("Applying additional filtering")
             filtered_classes = pd.read_csv(
                 self.filtered_classes_path,
                 sep=":",
@@ -215,10 +214,7 @@ class LMDSelection(ProcessingStep):
 
             # update cell ids to cytosol ids if using this channel otherwise everything can stay the same
             if self.segmentation_channel_to_select == 1:
-                print("subsetting ids")
-                print(centers.head())
                 centers.index = [filtered_classes[x] for x in centers.index.tolist()]
-                print(centers.head())
 
                 # perform sanity check
                 missing = sorted(set(cell_ids) - set(centers.index))
