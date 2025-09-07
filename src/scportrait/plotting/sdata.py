@@ -2,6 +2,7 @@ import warnings
 from collections.abc import Iterable
 from numbers import Integral
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import spatialdata
 import xarray
@@ -334,6 +335,7 @@ def plot_labels(
     cmap: str = None,
     palette: dict | list = None,
     groups: list = None,
+    norm: mpl.colors.Normalize = None,
     vectorized: bool = False,
     dpi: int | None = None,
     ax: plt.Axes | None = None,
@@ -350,6 +352,9 @@ def plot_labels(
         color: color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
         fill_alpha: Alpha value of the fill of the segmentation masks.
         cmap: Colormap to use for the labels.
+        palette: Palette for discrete annotations. List of valid color names that should be used for the categories. Must match the number of groups. The list can contain multiple palettes (one per group) to be visualized. If groups is provided but not palette, palette is set to default “lightgray”.
+        groups: When using color and the key represents discrete labels, groups can be used to show only a subset of them. Other values are set to NA.
+        norm: Colormap normalization for continuous annotations
         vectorized: Whether to plot a vectorized version of the labels.
         dpi: Dots per inch of the plot.
         axs: Matplotlib axis object to plot on.
@@ -410,6 +415,7 @@ def plot_labels(
                 cmap=cmap,
                 palette=palette,
                 groups=groups,
+                norm=norm,
             ).pl.show(ax=ax)
             del sdata["_annotation"]  # delete element again after plotting
         else:
@@ -422,13 +428,20 @@ def plot_labels(
                     cmap=cmap,
                     palette=palette,
                     groups=groups,
+                    norm=norm,
                 ).pl.show(ax=ax)
             except Exception as err:
                 raise Exception from err
 
     else:
         sdata.pl.render_labels(
-            f"{label_layer}", color=color, fill_alpha=fill_alpha, cmap=cmap, palette=palette, groups=groups
+            f"{label_layer}",
+            color=color,
+            fill_alpha=fill_alpha,
+            cmap=cmap,
+            palette=palette,
+            groups=groups,
+            norm=norm,
         ).pl.show(ax=ax)
 
     # configure axes
