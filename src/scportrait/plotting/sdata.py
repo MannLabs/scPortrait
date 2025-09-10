@@ -84,9 +84,11 @@ def plot_image(
     image_name: str,
     channel_names: list[str] | list[int] | None = None,
     palette: list[str] | None = None,
+    cmap: mpl.colors.ListedColormap | None = None,
     title: str | None = None,
     title_fontsize: int = 20,
     dpi: int | None = None,
+    norm=None,
     ax: Axes = None,
     return_fig: bool = False,
     show_fig: bool = True,
@@ -120,14 +122,16 @@ def plot_image(
         # create figure and axis if it does not exist
         fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
-    if palette is None:
+    if palette is None and cmap is None:
         if channel_names is None:
             palette = None
         else:
             palette = PALETTE[: len(channel_names)]
 
     # plot figure
-    sdata.pl.render_images(image_name, channel=channel_names, palette=palette).pl.show(ax=ax, colorbar=False)
+    sdata.pl.render_images(image_name, channel=channel_names, palette=palette, cmap=cmap, norm=norm).pl.show(
+        ax=ax, colorbar=False
+    )
     ax.set_axis_off()
     ax.set_title(title, fontsize=title_fontsize)
 
