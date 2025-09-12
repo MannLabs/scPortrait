@@ -1114,16 +1114,18 @@ class ShardedSegmentation(Segmentation):
                 incomplete_indexes.append(int(tile))
                 self.log(f"Shard with ID {tile} not completed.")
 
-        # get input image size
+        # ensure we get the shape of the input image
         input_image = self._transform_input_image(input_image)
         input_image = self._select_relevant_channels(input_image)
 
-        self.input_image_path = self.filehandler._load_input_image_to_memmap(
-            image=input_image, tmp_dir_abs_path=self._tmp_dir_path
-        )
-        self._clear_cache(vars_to_delete=[input_image])
-
         if len(incomplete_indexes) > 0:
+            # only map input image to tempmap if there are incomplete indexes, otherwise
+            # we can directly proceed to resolving the sharding
+            self.input_image_path = self.filehandler._load_input_image_to_memmap(
+                image=input_image, tmp_dir_abs_path=self._tmp_dir_path
+            )
+            self._clear_cache(vars_to_delete=[input_image])
+
             input_image = tempmmap.mmap_array_from_path(self.input_image_path)
             self.log("Mapped input image to memory-mapped array.")
         else:
