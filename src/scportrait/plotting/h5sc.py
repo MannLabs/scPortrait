@@ -36,6 +36,7 @@ def _plot_image_grid(
     image_titles_fontsize: int = 10,
     row_labels: list[str] | None = None,
     col_labels: list[str] | None = None,
+    col_labels_rotation: float = 0,
     axs_title: str | None = None,
     axs_title_padding: float = 0,
     axs_title_fontsize: int = 12,
@@ -55,6 +56,7 @@ def _plot_image_grid(
         image_titles_fontsize: The fontsize of the image titles.
         row_labels: The labels for each row in the grid.
         col_labels: The labels for each column in the grid.
+        col_labels_rotation: The rotation of the column labels in degrees.
         axs_title: The title of the axes.
         axs_title_padding: The padding of the axes title.
         axs_title_fontsize: The fontsize of the axes title.
@@ -107,7 +109,7 @@ def _plot_image_grid(
             ax_sub.tick_params(left=False, labelleft=False)
 
         if col_labels is not None and row == 0:
-            ax_sub.set_title(f"{col_labels[col]}", fontsize=image_titles_fontsize)
+            ax_sub.set_title(f"{col_labels[col]}", fontsize=image_titles_fontsize, rotation=col_labels_rotation)
 
         if image_titles is not None:
             ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize, pad=2)
@@ -122,6 +124,7 @@ def cell_grid_single_channel(
     show_cell_id: bool = False,
     title: str | None = None,
     show_title: bool = True,
+    title_rotation: float = 0,
     cmap="viridis",
     ncols: int | None = None,
     nrows: int | None = None,
@@ -142,6 +145,7 @@ def cell_grid_single_channel(
         show_cell_id: Whether to show the cell ID as title for each single-cell image. Can not be used together with `cell_labels`.
         title: The title of the plot.
         show_title: Whether to show the title.
+        title_rotation: The rotation of the title in degrees.
         cmap: The colormap to use for the images.
         ncols: The number of columns in the grid. If not specified will be automatically calculated to make a square grid.
         nrows: The number of rows in the grid. If not specified will be automatically calculated to make a square grid.
@@ -215,7 +219,14 @@ def cell_grid_single_channel(
     spacing = spacing * single_cell_size
     images = get_image_with_cellid(adata, _cell_ids, channel_id)
     _plot_image_grid(
-        ax, images, nrows=nrows, ncols=ncols, axs_title=title, image_titles=cell_labels, cmap=cmap, spacing=spacing
+        ax,
+        images,
+        nrows=nrows,
+        ncols=ncols,
+        axs_title=title,
+        image_titles=cell_labels,
+        cmap=cmap,
+        spacing=spacing,
     )
 
     if return_fig:
@@ -235,6 +246,7 @@ def cell_grid_multi_channel(
     title: str | None = None,
     show_cell_id: bool = True,
     label_channels: bool = True,
+    channel_label_rotation: float = 0,
     row_labels: list[str] | None = None,
     cmap="viridis",
     spacing: float = 0.025,
@@ -253,6 +265,7 @@ def cell_grid_multi_channel(
         title: The title of the plot.
         show_cell_id: Whether to show the cell ID as row label for each cell in the image grid.
         label_channels: Whether to show the channel names as titles for column in the image grid.
+        channel_label_rotation: The rotation of the channel labels in degrees.
         row_labels: can override the labels plotted on the y-axis on the first element of each row. If using not compatible with passing `show_cell_id` as `True`.
         cmap: The colormap to use for the images.
         spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
@@ -327,6 +340,7 @@ def cell_grid_multi_channel(
         spacing=spacing,
         row_labels=row_labels,
         col_labels=channel_names if label_channels else None,
+        col_labels_rotation=channel_label_rotation,
         axs_title=title,
         cmap=cmap,
         vmin=0,
