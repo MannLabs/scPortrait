@@ -34,12 +34,14 @@ def _plot_image_grid(
     spacing: float = 0.01,
     image_titles: list[str] | None = None,
     image_titles_fontsize: int = 10,
+    image_title_rotation: float = 0,
     row_labels: list[str] | None = None,
     col_labels: list[str] | None = None,
     col_labels_rotation: float = 0,
     axs_title: str | None = None,
     axs_title_padding: float = 0,
     axs_title_fontsize: int = 12,
+    axs_title_rotation: float = 0,
     cmap="viridis",
     vmin: float = 0,
     vmax: float = 1,
@@ -54,12 +56,14 @@ def _plot_image_grid(
         spacing: The spacing between cells in the grid expressed as fraction of the cell image size.
         image_titles: The titles for each image in the grid.
         image_titles_fontsize: The fontsize of the image titles.
+        image_title_rotation: The rotation of the image titles in degrees.
         row_labels: The labels for each row in the grid.
         col_labels: The labels for each column in the grid.
         col_labels_rotation: The rotation of the column labels in degrees.
         axs_title: The title of the axes.
         axs_title_padding: The padding of the axes title.
         axs_title_fontsize: The fontsize of the axes title.
+        axs_title_rotation: The rotation of the axes title in degrees.
         cmap: The colormap to use for the images.
         vmin: The minimum value for the colormap.
         vmax: The maximum value for the colormap.
@@ -68,7 +72,7 @@ def _plot_image_grid(
         None
     """
 
-    ax.set_title(axs_title, fontsize=axs_title_fontsize, pad=axs_title_padding)
+    ax.set_title(axs_title, fontsize=axs_title_fontsize, pad=axs_title_padding, rotation=axs_title_rotation)
     ax.axis("off")
 
     # Adjust row spacing if image titles are provided
@@ -112,7 +116,7 @@ def _plot_image_grid(
             ax_sub.set_title(f"{col_labels[col]}", fontsize=image_titles_fontsize, rotation=col_labels_rotation)
 
         if image_titles is not None:
-            ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize, pad=2)
+            ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize, pad=2, rotation=image_title_rotation)
 
 
 def cell_grid_single_channel(
