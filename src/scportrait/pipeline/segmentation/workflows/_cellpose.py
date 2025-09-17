@@ -621,6 +621,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             input_image = (input_image - np.min(input_image)) / (
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
+            print("NORMALIZATION PERFORMED")
 
         if self.deep_debug:
             print("Input Image dtype:", input_image.dtype)
