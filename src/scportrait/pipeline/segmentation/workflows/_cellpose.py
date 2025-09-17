@@ -595,6 +595,8 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.deep_debug = True
+
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=self.MASK_NAMES)
 
@@ -619,6 +621,11 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             input_image = (input_image - np.min(input_image)) / (
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
+
+        if self.deep_debug:
+            print("Input Image dtype:", input_image.dtype)
+            print("Input Image min value:", np.min(input_image))
+            print("Input Image max value:", np.max(input_image))
 
         masks_cytosol = model.eval(
             [input_image],
