@@ -443,6 +443,10 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.read_labels_from_dataset = False
 
         self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
+
+        # Use numpy instead of lists of objects
+        self.data_locator = np.array(self.data_locator, dtype=np.uint32)
+
         self.stats()
 
 
