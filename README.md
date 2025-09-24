@@ -38,7 +38,7 @@ scPortrait was created by Sophia Mädler, Niklas Schmacke and Georg Wallmann in 
 If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1):
 
 scPortrait integrates single-cell images into multimodal modeling
-Sophia Clara Mädler, Niklas Arndt Schmacke, Alessandro Palma, Altana Namsaraeva, Ali Oğuz Can, Varvara Varlamova, Lukas Heumos, Mahima Arunkumar, Georg Wallmann, Veit Hornung, Fabian J. Theis, Matthias Mann
+Sophia Clara Mädler, Niklas Arndt Schmacke, Alessandro Palma, Altana Namsaraeva, Ali Oğuz Can, Varvara Varlamova, Lukas Heumos, Mahima Arunkumar, Georg Wallmann, Veit Hornung, Fabian J. Theis, Matthias Mann  
 https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1
 
 ## Contributing
