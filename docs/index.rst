@@ -23,11 +23,11 @@ Citing our Work
 
 scPortrait was developed by Sophia Mädler and Niklas Schmacke in the labs of `Matthias Mann <https://www.biochem.mpg.de/de/mann>`_, `Veit Hornung <https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html>`_ and `Fabian Theis <https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab>`_ in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
 
-If you use our code please cite the `following manuscript <https://doi.org/10.1101/2023.06.01.542416>`_:
+If you use our code please cite the `following manuscript <https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1>`_:
 
-SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
-Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
-bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
+scPortrait integrates single-cell images into multimodal modeling.
+Sophia Clara Mädler, Niklas Arndt Schmacke, Alessandro Palma, Altana Namsaraeva, Ali Oğuz Can, Varvara Varlamova, Lukas Heumos, Mahima Arunkumar, Georg Wallmann, Veit Hornung, Fabian J. Theis, Matthias Mann
+bioRxiv 2025.09.22.677590; doi: https://doi.org/10.1101/2025.09.22.677590
 
 Contributing
 ============
@@ -55,7 +55,7 @@ Documentation
    pages/example_notebooks.ipynb
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
    :includehidden:
    :caption: Module API
 
