@@ -14,8 +14,8 @@ dynamic = ["dependencies", "optional-dependencies"]
 authors = [
   {name = "Sophia Maedler", email = "hello@sophia-maedler.com"},
   {name = "Niklas Schmacke", email = "niklas@schmacke.bio"},
-  {name = "Altana Namsaraeva", email = ""},
-  {name = "Georg Wallmann", email = ""},
+  {name = "Altana Namsaraeva"},
+  {name = "Georg Wallmann"},
 ]
 maintainers = [
   {name = "Sophia Maedler", email = "hello@sophia-maedler.com"},
