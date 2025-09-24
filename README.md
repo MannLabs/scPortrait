@@ -35,13 +35,11 @@ Currently the scPortrait framework is being developed using Linux and macOS, and
 
 scPortrait was created by Sophia Mädler, Niklas Schmacke and Georg Wallmann in the labs of [Matthias Mann](https://www.biochem.mpg.de/de/mann), [Veit Hornung](https://www.genzentrum.uni-muenchen.de/research-groups/hornung/index.html) and [Fabian Theis](https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab) in 2024 and is actively being developed. If you are interested in contributing please reach out to the developers.
 
-If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2023.06.01.542416v1):
+If you use our code please cite [this manuscript](https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1):
 
-SPARCS, a platform for genome-scale CRISPR screening for spatial cellular phenotypes
-Niklas Arndt Schmacke, Sophia Clara Maedler, Georg Wallmann, Andreas Metousis, Marleen Berouti, Hartmann Harz, Heinrich Leonhardt, Matthias Mann, Veit Hornung
-bioRxiv 2023.06.01.542416; doi: https://doi.org/10.1101/2023.06.01.542416
-
-## Contributing
+scPortrait integrates single-cell images into multimodal modeling
+Sophia Clara Mädler, Niklas Arndt Schmacke, Alessandro Palma, Altana Namsaraeva, Ali Oğuz Can, Varvara Varlamova, Lukas Heumos, Mahima Arunkumar, Georg Wallmann, Veit Hornung, Fabian J. Theis, Matthias Mann
+https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1
 
 If you like this software, consider giving us a star to boost our visibility! For detailed guidelines on how to contribute, please refer to our [contributing guide](./docs/CONTRIBUTING.md).
 
