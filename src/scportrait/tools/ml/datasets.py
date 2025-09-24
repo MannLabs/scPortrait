@@ -18,6 +18,23 @@ def _check_type_input_list(var):
 
 from pathlib import PosixPath
 
+_open_h5: dict = {}
+
+
+def _get_h5(path: str):
+    """
+    Creates a *process-local* h5py.File and stores it in the module-level variable `_open_h5`.
+    Called from inside a DataLoader worker (or from the main process when num_workers == 0).
+    """
+    global _open_h5
+    file = _open_h5.get(path)
+
+    if file is None:  # first call in this process
+        file = h5py.File(path, mode="r")
+        _open_h5[path] = file
+
+    return file
+
 
 class _HDF5SingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files.
@@ -76,7 +93,7 @@ class _HDF5SingleCellDataset(Dataset):
         # check reading of an image element and ensure that the selected channels are valid
 
         # initialize placeholders to store dataset information
-        self.handle_list: list[Any] = []
+        self.paths: list[str] = []
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
@@ -130,8 +147,8 @@ class _HDF5SingleCellDataset(Dataset):
                 ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
 
             # add connection to singe cell datasets
-            handle_id = len(self.handle_list)
-            self.handle_list.append(input_hdf.get("single_cell_data"))  # add new dataset to list of datasets
+            handle_id = len(self.paths)
+            self.paths.append(path)  # add path to new dataset to list of paths
 
             # add single-cell labelling
             if read_label:
@@ -166,6 +183,8 @@ class _HDF5SingleCellDataset(Dataset):
                 # generate identifiers for all single-cells
                 for row in index_handle:
                     self.data_locator.append([label, handle_id] + list(row))
+
+            input_hdf.close()
 
         except (FileNotFoundError, KeyError, OSError) as e:
             print(f"Error: {e}")
@@ -339,8 +358,11 @@ class _HDF5SingleCellDataset(Dataset):
         data_info = self.data_locator[idx]
         label, dataset_id, index_loc, cell_id = data_info
 
+        path = self.paths[dataset_id]
+        sc_data = _get_h5(path).get("single_cell_data")
+
         if self.select_channel is not None:
-            cell_tensor = self.handle_list[dataset_id][index_loc, self.select_channel]
+            cell_tensor = sc_data[index_loc, self.select_channel]
 
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
@@ -352,7 +374,7 @@ class _HDF5SingleCellDataset(Dataset):
             assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor"  # add check to ensure 3D tensor
 
         else:
-            cell_tensor = self.handle_list[dataset_id][index_loc]
+            cell_tensor = sc_data[dataset_id][index_loc]
 
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
