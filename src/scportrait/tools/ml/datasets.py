@@ -374,7 +374,7 @@ class _HDF5SingleCellDataset(Dataset):
             assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor"  # add check to ensure 3D tensor
 
         else:
-            cell_tensor = sc_data[dataset_id][index_loc]
+            cell_tensor = sc_data[index_loc]
 
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
