@@ -18,23 +18,6 @@ def _check_type_input_list(var):
 
 from pathlib import PosixPath
 
-_open_h5: dict = {}
-
-
-def _get_h5(path: str):
-    """
-    Creates a *process-local* h5py.File and stores it in the module-level variable `_open_h5`.
-    Called from inside a DataLoader worker (or from the main process when num_workers == 0).
-    """
-    global _open_h5
-    file = _open_h5.get(path)
-
-    if file is None:  # first call in this process
-        file = h5py.File(path, mode="r")
-        _open_h5[path] = file
-
-    return file
-
 
 class _HDF5SingleCellDataset(Dataset):
     """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files.
@@ -94,10 +77,23 @@ class _HDF5SingleCellDataset(Dataset):
 
         # initialize placeholders to store dataset information
         self.paths: list[str] = []
+        self._open_hdf: dict[str, h5py.File | None] = {}
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
         self.label_column: int | None = None
+
+    def get_hdf(self, path: str) -> h5py.File:
+        """
+        Retrieve (or lazily create) a *process-local* file handle.
+        """
+        file = self._open_hdf.get(path)
+
+        if file is None:  # first call in this process
+            file = h5py.File(path, mode="r")
+            self._open_hdf[path] = file
+
+        return file
 
     def _add_hdf_to_index(
         self,
@@ -359,7 +355,7 @@ class _HDF5SingleCellDataset(Dataset):
         label, dataset_id, index_loc, cell_id = data_info
 
         path = self.paths[dataset_id]
-        sc_data = _get_h5(path).get("single_cell_data")
+        sc_data = self.get_hdf(path).get("single_cell_data")
 
         if self.select_channel is not None:
             cell_tensor = sc_data[index_loc, self.select_channel]
