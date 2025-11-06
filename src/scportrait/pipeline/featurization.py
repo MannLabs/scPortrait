@@ -1267,7 +1267,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         # silence warnings from transformers that are not relevant here
         # we do actually just want to load some of the weights to access the convnext features
 
-        model = ConvNextModel.from_pretrained(self.model_path)
+        model = ConvNextModel.from_pretrained(self.model_path, use_safetensors=True)
         model.eval()
         model.to(self.inference_device)
 
