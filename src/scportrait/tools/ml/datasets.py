@@ -76,11 +76,24 @@ class _HDF5SingleCellDataset(Dataset):
         # check reading of an image element and ensure that the selected channels are valid
 
         # initialize placeholders to store dataset information
-        self.handle_list: list[Any] = []
+        self.paths: list[str] = []
+        self._open_hdf: dict[str, h5py.File | None] = {}
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
         self.label_column: int | None = None
+
+    def get_hdf(self, path: str) -> h5py.File:
+        """
+        Retrieve (or lazily create) a *process-local* file handle.
+        """
+        file = self._open_hdf.get(path)
+
+        if file is None:  # first call in this process
+            file = h5py.File(path, mode="r")
+            self._open_hdf[path] = file
+
+        return file
 
     def _add_hdf_to_index(
         self,
@@ -130,8 +143,8 @@ class _HDF5SingleCellDataset(Dataset):
                 ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
 
             # add connection to singe cell datasets
-            handle_id = len(self.handle_list)
-            self.handle_list.append(input_hdf.get("single_cell_data"))  # add new dataset to list of datasets
+            handle_id = len(self.paths)
+            self.paths.append(path)  # add path to new dataset to list of paths
 
             # add single-cell labelling
             if read_label:
@@ -166,6 +179,8 @@ class _HDF5SingleCellDataset(Dataset):
                 # generate identifiers for all single-cells
                 for row in index_handle:
                     self.data_locator.append([label, handle_id] + list(row))
+
+            input_hdf.close()
 
         except (FileNotFoundError, KeyError, OSError) as e:
             print(f"Error: {e}")
@@ -339,8 +354,11 @@ class _HDF5SingleCellDataset(Dataset):
         data_info = self.data_locator[idx]
         label, dataset_id, index_loc, cell_id = data_info
 
+        path = self.paths[dataset_id]
+        sc_data = self.get_hdf(path).get("single_cell_data")
+
         if self.select_channel is not None:
-            cell_tensor = self.handle_list[dataset_id][index_loc, self.select_channel]
+            cell_tensor = sc_data[index_loc, self.select_channel]
 
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
@@ -352,7 +370,7 @@ class _HDF5SingleCellDataset(Dataset):
             assert t.ndim == 3, f"Expected 3D tensor, got {t.ndim}D tensor"  # add check to ensure 3D tensor
 
         else:
-            cell_tensor = self.handle_list[dataset_id][index_loc]
+            cell_tensor = sc_data[index_loc]
 
             # convert to tensor
             t = torch.from_numpy(cell_tensor)
@@ -443,6 +461,10 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.read_labels_from_dataset = False
 
         self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
+
+        # Use numpy instead of lists of objects
+        self.data_locator = np.array(self.data_locator, dtype=np.uint32)
+
         self.stats()
 
 
