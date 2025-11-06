@@ -68,9 +68,9 @@ def update_obs_on_disk(adata: AnnData) -> None:
     _update_obs_on_disk(adata)
 
 
-def get_image_index(adata, cell_id: int | list[int]) -> int | list[int]:
+def get_cell_id_index(adata, cell_id: int | list[int]) -> int | list[int]:
     """
-    Retrieve the image index (row index) of a specific cell id in a H5SC object.
+    Retrieve the index (row index) of a specific cell id in a H5SC object.
 
     Args:
         adata: An AnnData object with obsm["single_cell_images"] containing a memory-backed array of the single-cell images.
