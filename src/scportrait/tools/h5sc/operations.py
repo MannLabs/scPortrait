@@ -81,10 +81,12 @@ def get_cell_id_index(adata, cell_id: int | list[int]) -> int | list[int]:
 
     """
     lookup = dict(zip(adata.obs[DEFAULT_CELL_ID_NAME], adata.obs.index.astype(int), strict=True))
-
     if isinstance(cell_id, int):
+        assert cell_id in lookup, f"CellID {cell_id} not present in the AnnData object."
         return lookup[cell_id]
 
+    missing = [x for x in cell_id if x not in lookup]
+    assert not missing, f"CellIDs not present in the AnnData object: {missing}"
     return [lookup[_id] for _id in cell_id]
 
 
@@ -99,18 +101,15 @@ def get_image_with_cellid(adata, cell_id: list[int] | int, select_channel: int |
     Returns:
         The image(s) of the cell with the passed Cell IDs.
     """
-    lookup = dict(zip(adata.obs[DEFAULT_CELL_ID_NAME], adata.obs.index.astype(int), strict=True))
+    idxs = get_cell_id_index(adata, cell_id)
+    if isinstance(idxs, int):
+        idxs = [idxs]  # Ensure idxs is always a list
+
+    # get the image container from the AnnData object
     image_container = adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
 
-    if isinstance(cell_id, int):
-        cell_id = [cell_id]
-
-    for x in cell_id:
-        assert x in lookup.keys(), f"CellID {x} is not present in the AnnData object."
-
     images = []
-    for _id in cell_id:
-        idx = lookup[_id]
+    for idx in idxs:
         if select_channel is None:
             image = image_container[idx][:]
         else:
