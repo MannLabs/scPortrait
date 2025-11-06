@@ -49,5 +49,6 @@ def read_h5sc(filename: str | Path) -> AnnData:
 
     adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = f.get(IMAGE_DATACONTAINER_NAME)
     adata.uns[DEFAULT_IDENTIFIER_FILENAME] = filename
+    adata.uns["_h5sc_file_handle"] = f
 
     return adata

@@ -122,6 +122,9 @@ class Project(Logable):
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE = DEFAULT_SINGLE_CELL_IMAGE_DTYPE
     DEFAULT_CELL_ID_NAME = DEFAULT_CELL_ID_NAME
 
+    _h5sc_handle = None
+    _h5sc_adata = None
+
     PALETTE = [
         "blue",
         "green",
@@ -231,6 +234,15 @@ class Project(Logable):
     def __del__(self):
         self._clear_temp_dir()
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_h5sc_handle"] = None  # ensure closed before pickling
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._h5sc_handle = None  # will be reopened lazily
+
     @property
     def sdata_path(self) -> str:
         return self._get_sdata_path()
@@ -242,14 +254,22 @@ class Project(Logable):
 
     @property
     def h5sc(self) -> AnnData:
-        if self.extraction_f is None:
-            raise ValueError("No extraction method has been set.")
-        else:
-            if self.extraction_f.output_path is None:
-                path = self.extraction_f.extraction_file
-            else:
-                path = self.extraction_f.output_path
-            return read_h5sc(path)
+        # Always safely close previous handle if it exists
+        if hasattr(self, "_h5sc_handle") and self._h5sc_handle is not None:
+            try:
+                self._h5sc_handle.close()
+            except (ValueError, RuntimeError):
+                # handle was already closed or in invalid state
+                pass
+            self._h5sc_handle = None
+
+        # Load a fresh AnnData
+        adata = read_h5sc(self.extraction_f.output_path or self.extraction_f.extraction_file)
+
+        # Track only the handle, not the adata
+        self._h5sc_handle = adata.uns["_h5sc_file_handle"]
+
+        return adata
 
     ##### Setup Functions #####
 
