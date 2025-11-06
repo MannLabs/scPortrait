@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import timeit
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 
 import numpy as np
 import torch
@@ -55,6 +55,10 @@ class _CellposeSegmentation(_BaseSegmentation):
         if modeltype == "pretrained":
             model = models.Cellpose(model_type=name, gpu=gpu, device=device)
         elif modeltype == "custom":
+            if not Path(name).exists():
+                raise FileNotFoundError(
+                    f"The file containing the custom trained model {name} does not exist. Please provide a valid path."
+                )
             model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
         return model
 
