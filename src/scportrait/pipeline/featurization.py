@@ -125,7 +125,7 @@ class _FeaturizationBase(ProcessingStep):
 
         if torch.cuda.is_available():
             inference_device = "cuda"
-        if torch.backends.mps.is_available():
+        elif torch.backends.mps.is_available():
             inference_device = torch.device("mps")
         else:
             inference_device = "cpu"
