@@ -70,12 +70,22 @@ def image(
             # fix until #https://github.com/scverse/spatialdata/issues/528 is resolved
             Image2DModel().validate(image)
 
-            if channel_names is not None:
-                warnings.warn(
-                    "Channel names are ignored when passing a single scale image in the DataArray format. Channel names are read directly from the DataArray.",
-                    stacklevel=2,
-                )
+            # read channel names from the DataArray if not provided
+            if channel_names is None:
+                channel_names = image.coords["c"].values.tolist()
+            else:
+                if len(channel_names) != image.shape[0]:
+                    raise ValueError(
+                        f"Number of channel names ({len(channel_names)}) does not match the number of channels in the image ({image.shape[0]})."
+                    )
+                channel_names_old = image.coords["c"].values.tolist()
+                if channel_names_old != channel_names:
+                    warnings.warn(
+                        f"Channel names in the DataArray ({channel_names_old}) do not match the provided channel names ({channel_names}). The DataArray will be updated with the provided channel names.",
+                        stacklevel=2,
+                    )
 
+            # if so first validate the model since this means we are getting the image from a spatialdata object already
             if chunks is not None:
                 warnings.warn(
                     "Chunks are ignored when passing a single scale image in the DataArray format. Chunks are read directly from the DataArray.",
@@ -84,6 +94,7 @@ def image(
 
             image = Image2DModel.parse(
                 image,
+                c_coords=channel_names,
                 scale_factors=scale_factors,
                 rgb=rgb,
             )
