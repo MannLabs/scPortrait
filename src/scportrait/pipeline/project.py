@@ -1495,6 +1495,9 @@ class Project(Logable):
 
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
+        # read the sdata object from file to ensure we have access to all newly written elements
+        sdata = SpatialData.read(self.sdata_path)
+
         # ensure that if both an nucleus and cytosol segmentation mask are loaded that they match
         if self.nuc_seg_status and self.cyto_seg_status:
             ids_nuc = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.nuc_seg_name}"].index.values)
