@@ -30,4 +30,4 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest tests/e2e_tests --maxfail=1 --disable-warnings -q
+          pytest tests/e2e_tests --disable-warnings
