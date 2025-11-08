@@ -1,19 +1,19 @@
+import dask
+import numpy as np
+import rasterio
 import spatialdata as sd
 from napari_spatialdata import Interactive
-from shapely.geometry import mapping
 from rasterio.features import geometry_mask
-import rasterio
-import dask
-from spatialdata.models import Image2DModel
-import numpy as np
 from scipy import ndimage
-from skimage.measure import find_contours
-from shapely.geometry import Polygon
 from shapely import unary_union
-from skimage.segmentation import watershed
+from shapely.geometry import Polygon, mapping
 from skimage.draw import disk
+from skimage.measure import find_contours
+from skimage.segmentation import watershed
+from spatialdata.models import Image2DModel
 
-def mask_image(sdata, image, mask, invert, automatic_masking, threshold, overwrite, masked_image_name)
+
+def mask_image(sdata, image, mask, invert, automatic_masking, threshold, overwrite, masked_image_name):
     """
     Given an image and mask, either masks or crops the image.
 
@@ -51,14 +51,9 @@ def mask_image(sdata, image, mask, invert, automatic_masking, threshold, overwri
 
     polygon_geom = [mapping(polygon)]
 
-    transform = rasterio.transform.Affine(1, 0, 0, 0, 1, 0) # identity transform
+    transform = rasterio.transform.Affine(1, 0, 0, 0, 1, 0)  # identity transform
 
-    image_mask = geometry_mask(
-        polygon_geom,
-        invert=invert,
-        out_shape=(height, width),
-        transform=transform
-    )
+    image_mask = geometry_mask(polygon_geom, invert=invert, out_shape=(height, width), transform=transform)
 
     if channels > 1:
         image_mask = dask.array.broadcast_to(image_mask, (channels, height, width))
@@ -73,6 +68,7 @@ def mask_image(sdata, image, mask, invert, automatic_masking, threshold, overwri
         if masked_image_name is None:
             masked_image_name = f"{image}_masked"
         sdata.images[masked_image_name] = images["masked_image"]
+
 
 def _draw_polygons(image, threshold):
     """
@@ -101,6 +97,6 @@ def _draw_polygons(image, threshold):
     contours = find_contours(segmented, level=0.5)
 
     polygons = [Polygon(contour) for contour in contours if len(contour) > 2]
-    polygon = unary_union(polygons) 
+    polygon = unary_union(polygons)
 
     return polygon
