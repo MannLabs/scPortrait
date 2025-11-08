@@ -8,18 +8,24 @@ Functions to work with scPortrait's standardized single-cell data format.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from dask.dataframe.core import DataFrame as da_DataFrame
+    from spatialdata import SpatialData
+
+import os
+import shutil
+from pathlib import Path
 from warnings import warn
 
 import dask.array as da
+import geopandas as gpd
 import h5py
 import numpy as np
+from anndata import AnnData
+from shapely.geometry import Point
 
 from scportrait.io.h5sc import read_h5sc
-
-if TYPE_CHECKING:
-    from anndata import AnnData
-    from dask.dataframe.core import DataFrame as da_DataFrame
-
 from scportrait.pipeline._utils.constants import (
     DEFAULT_CELL_ID_NAME,
     DEFAULT_IDENTIFIER_FILENAME,
@@ -62,7 +68,7 @@ def update_obs_on_disk(adata: AnnData) -> None:
     adata.uns["_h5sc_file_handle"] = f
 
 
-def get_cell_id_index(adata, cell_id: int | list[int]) -> int | list[int]:
+def get_cell_id_index(adata: AnnData, cell_id: int | list[int]) -> int | list[int]:
     """
     Retrieve the index (row index) of a specific cell id in a H5SC object.
 
@@ -84,7 +90,9 @@ def get_cell_id_index(adata, cell_id: int | list[int]) -> int | list[int]:
     return [lookup[_id] for _id in cell_id]
 
 
-def get_image_with_cellid(adata, cell_id: list[int] | int, select_channel: int | list[int] | None = None) -> np.ndarray:
+def get_image_with_cellid(
+    adata: AnnData, cell_id: list[int] | int, select_channel: int | list[int] | None = None
+) -> np.ndarray:
     """Get single cell images from the cells with the provided cell IDs. Images are returned in the order of the cell IDs.
 
     Args:
@@ -150,3 +158,113 @@ def add_spatial_coordinates(
 
     if update_on_disk:
         update_obs_on_disk(adata)
+
+
+def subset_cells_region(
+    adata: AnnData,
+    sdata: SpatialData,
+    region_name: str,
+    outpath: str | Path = None,
+    within_region: bool = True,
+    to_disk: bool = True,
+    return_anndata: bool = True,
+) -> AnnData | None:
+    """
+    Subset cells in the specified region.
+
+    Args:
+        adata: AnnData object containing the cell data.
+        sdata: SpatialData object containing the region geometry.
+        region_name: Name of the region to subset cells from.
+        outpath: Path to save the subsetted AnnData object. If None, the subsetted file is saved in the same directory as the original h5sc file with a prefix "subset_{select_region}".
+        within_region: If True, select cells within the region. If False, select cells outside the region.
+        to_disk: If True, save the subsetted AnnData object to disk. If False, return the subsetted AnnData object in memory.
+        return_anndata: If True, return a memory mapped version of the subsetted AnnData object.
+
+    Returns:
+        If `to_disk` is False, returns the subsetted AnnData object. If `to_disk` is True, saves the subsetted AnnData object to disk and returns None.
+    """
+    if outpath is not None:
+        if not isinstance(outpath, (str | Path)):
+            raise ValueError("outpath must be a string or Path object.")
+        assert to_disk, "outpath is only used if to_disk is True."
+
+    if region_name not in sdata:
+        raise ValueError(f"Region '{region_name}' not found in spatialdata object.")
+
+    xs, ys = adata.obs.get(["x", "y"]).values.T
+    points = gpd.GeoSeries([Point(xi, yi) for xi, yi in zip(xs, ys, strict=True)])
+    is_inside = points.apply(lambda p: sdata[region_name].geometry.contains(p).any()).values
+
+    if not within_region:
+        selection = ~is_inside
+        key = "outside"
+    else:
+        selection = is_inside
+        key = "within"
+
+    if not to_disk:
+        return adata[selection]
+    else:
+        cell_ids = adata.obs.loc[selection, DEFAULT_CELL_ID_NAME].values
+
+        if outpath is None:
+            outpath = adata.uns["h5sc_source_path"].replace("single_cells.h5sc", f"subset_{key}_{region_name}.h5sc")
+        subset_h5sc(adata, cell_ids, outpath=outpath)
+
+        if return_anndata:
+            return read_h5sc(outpath)
+        else:
+            return None
+
+
+def subset_h5sc(adata: AnnData, cell_id: int | list[int], outpath: str | Path) -> None:
+    """
+    Write a subset of the AnnData object to disk based on the provided cell IDs.
+
+    Args:
+        adata: AnnData object containing the single-cell data.
+        cell_id: A single cell ID or a list of cell IDs to subset the AnnData
+        outpath: Path to save the subsetted AnnData object.
+
+    Returns:
+        None. The AnnData object is written to disk at the specified outpath.
+    """
+    idx = get_cell_id_index(adata, cell_id)
+
+    if isinstance(idx, int):
+        idx = [idx]  # Ensure idx is always a list
+
+    obs = adata.obs.iloc[idx, :].copy()
+    obs.reset_index(drop=True, inplace=True)
+    obs.index = obs.index.astype(str)  # Ensure index is string type for consistency
+    var = adata.var.copy()
+    uns = {DEFAULT_NAME_SINGLE_CELL_IMAGES: adata.uns[DEFAULT_NAME_SINGLE_CELL_IMAGES]}
+
+    adata_subset = AnnData(obs=obs, var=var, uns=uns)
+
+    if os.path.exists(outpath):
+        shutil.rmtree(outpath, ignore_errors=True)
+    adata_subset.write_h5ad(outpath)
+
+    # initialize the obsm with the single cell images
+    orig = adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
+    single_cell_data_shape = (len(idx),) + orig.shape[1:]
+    with h5py.File(outpath, "a") as hf:
+        hf.create_dataset(
+            IMAGE_DATACONTAINER_NAME,
+            shape=single_cell_data_shape,
+            chunks=orig.chunks,
+            compression=orig.compression,
+            dtype=orig.dtype,
+        )
+        for key, value in orig.attrs.items():
+            hf[IMAGE_DATACONTAINER_NAME].attrs[key] = value
+
+        # transfer the images
+        for i, ix in enumerate(idx):
+            hf[IMAGE_DATACONTAINER_NAME][i] = orig[ix]
+        hf.close()
+
+    print(f"Subsetted AnnData object saved to {outpath}.")
+    return None
