@@ -1,22 +1,27 @@
+import shutil
+
 import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
+from spatialdata import SpatialData
+from spatialdata.datasets import blobs
 
 rng = np.random.default_rng()
 
 
 @pytest.fixture
-def h5sc_object():
+def h5sc_object() -> AnnData:
     # Two cells, two channels, small images
-    n_cells = 2
+    cell_ids = [101, 102, 107, 109]
+    n_cells = 4
     channel_names = np.array(["seg_all_nucleus", "ch0", "ch1"])
     channel_mapping = np.array(["mask", "image", "image"])  # or whatever mapping your code expects
     n_channels = len(channel_names)
     H, W = 10, 10
 
     # --- obs ---
-    obs = pd.DataFrame({"scportrait_cell_id": [101, 102]}, index=[0, 1])
+    obs = pd.DataFrame({"scportrait_cell_id": cell_ids}, index=np.arange(n_cells))
 
     # --- var (channel metadata) ---
     var = pd.DataFrame(index=np.arange(n_channels).astype("str"))
@@ -36,4 +41,14 @@ def h5sc_object():
         "n_masks": np.int64(1),
     }
 
-    return adata
+    yield adata
+
+
+@pytest.fixture()
+def sdata(tmp_path) -> SpatialData:
+    sdata = blobs()
+    # Write to temporary location
+    sdata_path = tmp_path / "sdata.zarr"
+    sdata.write(sdata_path)
+    yield sdata
+    shutil.rmtree(sdata_path)
