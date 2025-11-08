@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -16,9 +14,8 @@ from scportrait.plotting.h5sc import (
     cell_grid_single_channel,
 )
 
+
 # ---------- _reshape_image_array ----------
-
-
 @pytest.mark.parametrize(
     "input_shape, expected_shape",
     [
@@ -34,8 +31,6 @@ def test_reshape_image_array(input_shape, expected_shape):
 
 
 # ---------- _plot_image_grid ----------
-
-
 @pytest.mark.parametrize(
     "input_shape, nrows, ncols, col_labels, col_labels_rotation",
     [
@@ -71,41 +66,22 @@ def test_plot_image_grid(input_shape, nrows, ncols, col_labels, col_labels_rotat
 
 
 # ---------- cell_grid_single_channel ----------
-
-
-@patch("scportrait.plotting.h5sc.get_image_with_cellid")
-def test_cell_grid_single_channel_returns_figure_with_title_rotation(mock_get_img):
-    mock_adata = MagicMock()
-    mock_adata.uns = {"single_cell_images": {"channel_names": np.array(["ch0", "ch1"])}}
-    mock_adata.obs = MagicMock()
-    mock_adata.obs.__getitem__.return_value.sample.return_value.values = [101, 102]
-    mock_get_img.return_value = rng.random((2, 10, 10))
-
+def test_cell_grid_single_channel_returns_figure_with_title_rotation(h5sc_object):
     fig = cell_grid_single_channel(
-        adata=mock_adata,
-        select_channel=0,
+        adata=h5sc_object,
+        select_channel="ch0",
         n_cells=2,
         return_fig=True,
         show_fig=False,
         title_rotation=30,  # new parameter
     )
     assert isinstance(fig, Figure)
-    # You could further check that fig.axes[0].get_title() is set, but rotation may not be directly visible
 
 
 # ---------- cell_grid_multi_channel ----------
-
-
-@patch("scportrait.plotting.h5sc.get_image_with_cellid")
-def test_cell_grid_multi_channel_returns_figure_with_channel_label_rotation(mock_get_img):
-    mock_adata = MagicMock()
-    mock_adata.uns = {"single_cell_images": {"channel_names": ["ch0", "ch1"], "n_channels": 2}}
-    mock_adata.obs = MagicMock()
-    mock_adata.obs.__getitem__.return_value.sample.return_value.values = [101, 102]
-    mock_get_img.return_value = rng.random((2, 2, 10, 10))
-
+def test_cell_grid_multi_channel_returns_figure_with_channel_label_rotation(h5sc_object):
     fig = cell_grid_multi_channel(
-        adata=mock_adata,
+        adata=h5sc_object,
         n_cells=2,
         return_fig=True,
         show_fig=False,
@@ -116,17 +92,9 @@ def test_cell_grid_multi_channel_returns_figure_with_channel_label_rotation(mock
 
 
 # ---------- cell_grid ----------
+def test_cell_grid_dispatches_to_single_channel(h5sc_object):
+    cell_grid(adata=h5sc_object, select_channel="ch1", n_cells=1, show_fig=False)
 
 
-@patch("scportrait.plotting.h5sc.cell_grid_single_channel")
-def test_cell_grid_dispatches_to_single_channel(mock_single):
-    mock_adata = MagicMock()
-    cell_grid(adata=mock_adata, select_channel=1, n_cells=1, show_fig=False)
-    assert mock_single.called
-
-
-@patch("scportrait.plotting.h5sc.cell_grid_multi_channel")
-def test_cell_grid_dispatches_to_multi_channel(mock_multi):
-    mock_adata = MagicMock()
-    cell_grid(adata=mock_adata, select_channel=[0, 1], n_cells=1, show_fig=False)
-    assert mock_multi.called
+def test_cell_grid_dispatches_to_multi_channel(h5sc_object):
+    cell_grid(adata=h5sc_object, select_channel=["ch0", "ch1"], n_cells=1, show_fig=False)
