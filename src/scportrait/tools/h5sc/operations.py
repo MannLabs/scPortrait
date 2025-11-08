@@ -28,11 +28,15 @@ from scportrait.pipeline._utils.constants import (
 )
 
 
-def _update_obs_on_disk(adata: AnnData) -> None:
+def update_obs_on_disk(adata: AnnData) -> None:
     """
     Temporarily close the HDF5 handle from a read-only AnnData,
     overwrite .obs on disk, then reopen it and restore the image dataset.
+
+    Args:
+        adata: AnnData object whose .obs will replace the existing one.
     """
+
     # 1. Get the open HDF5 file handle
     file_handle = adata.uns.get("_h5sc_file_handle", None)
 
@@ -56,16 +60,6 @@ def _update_obs_on_disk(adata: AnnData) -> None:
     f = h5py.File(adata.uns[DEFAULT_IDENTIFIER_FILENAME], "r")
     adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = f.get(IMAGE_DATACONTAINER_NAME)
     adata.uns["_h5sc_file_handle"] = f
-
-
-def update_obs_on_disk(adata: AnnData) -> None:
-    """
-    Overwrite the .obs table in an existing .h5sc file on disk.
-
-    Args:
-        adata: AnnData object whose .obs will replace the existing one.
-    """
-    _update_obs_on_disk(adata)
 
 
 def get_cell_id_index(adata, cell_id: int | list[int]) -> int | list[int]:
