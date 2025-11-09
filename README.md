@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache-brightgreen)](https://github.com/MannLabs/scPortrait/blob/main/LICENSE)
 [![Docs](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 [![Unit Tests](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml)
-<!-- [![E2E Tests](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml)-->
+[![E2E Tests](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/MannLabs/scPortrait/main.svg)](https://results.pre-commit.ci/latest/github/MannLabs/scPortrait/main)
 [![PyPI version](https://img.shields.io/pypi/v/scportrait.svg)](https://pypi.org/project/scportrait/)
 [![PyPI Downloads](https://static.pepy.tech/badge/scportrait)](https://pepy.tech/projects/scportrait)
