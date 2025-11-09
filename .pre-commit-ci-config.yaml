@@ -1,0 +1,5 @@
+# Enable autofixes on pull requests
+autofix_prs: true
+
+# Optionally: automatically update hook versions every week
+autoupdate_schedule: weekly

@@ -2,9 +2,11 @@
 ![Versions](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12-brightgreen)
 [![License](https://img.shields.io/badge/license-Apache-brightgreen)](https://github.com/MannLabs/scPortrait/blob/main/LICENSE)
 [![Docs](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
+[![Unit Tests](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml)
+[![E2E Tests](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/e2e_test.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/MannLabs/scPortrait/main.svg)](https://results.pre-commit.ci/latest/github/MannLabs/scPortrait/main)
 [![PyPI version](https://img.shields.io/pypi/v/scportrait.svg)](https://pypi.org/project/scportrait/)
 [![PyPI Downloads](https://static.pepy.tech/badge/scportrait)](https://pepy.tech/projects/scportrait)
-
 
 ![graphical_abstract](https://github.com/user-attachments/assets/02d07c03-243f-4468-8e77-09d703111d11)
 
@@ -42,7 +44,7 @@ Sophia Clara Mädler, Niklas Arndt Schmacke, Alessandro Palma, Altana Namsaraeva
 https://www.biorxiv.org/content/10.1101/2025.09.22.677590v1
 
 ## Contributing
-If you like this software, consider giving us a star to boost our visibility! For detailed guidelines on how to contribute, please refer to our [contributing guide](./docs/CONTRIBUTING.md).
+If you like this software, consider giving us a [star](https://github.com/MannLabs/scPortrait/stargazers) to boost our visibility! For detailed guidelines on how to contribute, please refer to our [contributing guide](./docs/CONTRIBUTING.md).
 
 We welcome all types of contributions! You can:
 

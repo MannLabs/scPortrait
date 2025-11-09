@@ -92,6 +92,17 @@ def autophagosome_h5sc() -> list[Path]:
     return [save_path / name for name in NAMES]
 
 
+def _test_dataset() -> Path:
+    """Download and extract the test dataset.
+
+    Returns:
+        Path to the downloaded and extracted test dataset.
+    """
+    DATASET = "test_dataset"
+    URL = "https://zenodo.org/api/records/17560340/files-archive"
+    return _get_remote_dataset(DATASET, URL)
+
+
 def dataset_1() -> Path:
     """Download and extract the example dataset 1 images.
 

@@ -1,13 +1,8 @@
-name: Perform Unit Test
+name: Perform e2e Tests
 
 on:
   push:
     branches: [main]
-  pull_request:
-    types:
-      - labeled
-      - opened
-      - synchronize
 
 jobs:
   build-linux:
@@ -35,4 +30,4 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest tests/unit_tests --disable-warnings
+          pytest tests/e2e_tests --disable-warnings
