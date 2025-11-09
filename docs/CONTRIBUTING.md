@@ -84,6 +84,49 @@ We assume some familiarity with `git`. For more detailed information we recommen
 [Atlassian's git tutorial][]: Beginner friendly introductions to the git command line interface
 [Setting up git for GitHub][]: Configuring git to work with your GitHub user account
 
+### Commit Message Guidelines
+
+To keep the commit history clear and easy to navigate, we use short, descriptive commit messages with a conventional prefix indicating the type of change:
+
+`[TAG] Short, clear description in imperative form`
+
+#### Format
+- **Use the imperative mood** (“Fix bug”, “Add feature”), not past tense.
+- **Keep it brief** (ideally under 60 characters).
+- **Do not include author names or PR numbers** in the commit message itself (GitHub tracks that automatically).
+
+#### Recommended Tags
+
+| Tag | Purpose | Examples |
+|---|---|---|
+| `FEATURE` | Adding new functionality | `[FEATURE] Add ConvNextFeaturizer` |
+| `FIX` | Bug fixes and corrections | `[FIX] Ensure sharding is resolved correctly` |
+| `IMPROVE` | Enhancements to existing code or performance | `[IMPROVE] Handling of empty SpatialData files` |
+| `DOCS` | Documentation updates | `[DOCS] Update cellpose segmentation guide` |
+| `REFactor` | Code restructuring without changing behavior | `[REFACTOR] Simplify project status tracking` |
+| `TEST` | New or updated test coverage | `[TEST] Add tests for HDF5 extraction workflow` |
+| `CI` | Continuous integration / workflow updates | `[CI] Run tests on pull requests` |
+| `VERSION` | Version updates performed by automation | `[VERSION] Bump version to 1.5.0` |
+
+#### Examples Based on Previous Commits
+
+| Original Commit | Improved Commit Message |
+|---|---|
+| fix some small bugs | `[FIX] Resolve minor segmentation edge cases` |
+| improve spatialdata file handling | `[IMPROVE] Robust handling of backed SpatialData stores` |
+| implement automatic workflow for bumping version numbers | `[CI] Add automated version bump workflow` |
+| Update docs | `[DOCS] Expand documentation for project setup` |
+| Ensure dtypes are consistent over all image tiles during stitching | `[FIX] Ensure dtype consistency across stitched tiles` |
+
+#### Why This Helps
+
+- Makes pull request histories easy to scan
+- Helps auto-generate release notes with meaningful summaries
+- Avoids noise and ambiguity
+- Works well with automated tools (e.g., GitHub Release Notes)
+
+Following this style is encouraged for all contributions, but do not worry if you forget — maintainers may adjust commit messages during PR squash-merge.
+
 ### Forking and cloning
 
 To get the code, and be able to push changes back to the main project, you'll need to (1) fork the repository on github and (2) clone the repository to your local machine.
