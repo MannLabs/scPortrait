@@ -18,6 +18,7 @@ from scportrait.pipeline.segmentation.segmentation import (
     ShardedSegmentation,
 )
 from scportrait.pipeline.segmentation.workflows._base_segmentation_workflow import _BaseSegmentation
+from scportrait.pipeline.segmentation.workflows._model_caches import _download_model
 
 
 class _CellposeSegmentation(_BaseSegmentation):
@@ -53,6 +54,14 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         """
         if modeltype == "pretrained":
+            try:
+                _download_model(name)
+
+            except FileNotFoundError as e:
+                raise FileNotFoundError(
+                    f"Could not download the requested Cellpose model '{name}'. "
+                    "Please check the model name or ensure that the Cellpose model server is available."
+                ) from e
             model = models.Cellpose(model_type=name, gpu=gpu, device=device)
         elif modeltype == "custom":
             if not Path(name).exists():
