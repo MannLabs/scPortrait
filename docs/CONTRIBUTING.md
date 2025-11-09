@@ -170,6 +170,62 @@ conda activate {dev_environment_name}
 pip install scportrait[dev]
 ```
 
+## Creating a New Release
+
+Before creating a release, ensure that **all tests pass** for the code currently on `main` (unit tests and end-to-end tests). If any tests fail, fix the issues before proceeding.
+
+Releases are versioned and published through automated GitHub workflows. The release process consists of the following steps:
+
+### 1. Bump the version
+
+The version is incremented using the **Bump version** workflow:
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/bump_version.yml>
+2. Run the workflow and specify the version increment (`patch`, `minor`, or `major`).
+
+This will create **two pull requests**:
+   - **`[VERSION] Bump version to X.Y.Z`** — *merge this now*
+   - **`[VERSION] Bump version to X.Y.Z-dev0`** — *merge this after the release*
+
+### 2. Merge the version bump PR
+
+1. Merge the PR titled: `[VERSION] Bump version to X.Y.Z`
+
+This sets the release version in the codebase.
+
+### 3. Create a draft release
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/create_release.yml>
+2. Run the workflow and specify:
+   - **Branch:** `main`
+
+This workflow will create a **draft release** automatically.
+
+### 4. Finalize the GitHub release
+
+1. Go to the Releases page: <https://github.com/MannLabs/scPortrait/releases>
+2. Select the **draft** release that was generated.
+3. Click **"Generate release notes"** to automatically populate the changelog from commit messages.
+4. Review and publish the release.
+
+### 5. Publish the release to PyPI
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/publish_on_pypi.yml>
+2. Run the **Publish on PyPI** workflow.
+3. Enter the version number you just released.
+4. Wait for the workflow to complete successfully.
+
+This workflow:
+- Builds and uploads the package to PyPI
+- Runs validation tests against the published package
+
+### 6. Merge the post-release development version bump
+
+Once PyPI publication is confirmed, merge the second PR: `[VERSION] Bump version to X.Y.Z-dev0`
+
+This transitions the project back into a development state.
+
+
 <!-- Links -->
 
 [Atlassian's git tutorial]: https://www.atlassian.com/git/tutorials
