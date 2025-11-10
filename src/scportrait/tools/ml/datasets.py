@@ -67,9 +67,9 @@ class _HDF5SingleCellDataset(Dataset):
                 raise ValueError("index_list should be as long as dir_list")
 
             # type check index list to make sure its correctly constructed
-            assert _check_type_input_list(
-                index_list
-            ), "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
+            assert _check_type_input_list(index_list), (
+                "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
+            )
 
         self.index_list: list[list[Any]] = index_list
 
@@ -125,9 +125,9 @@ class _HDF5SingleCellDataset(Dataset):
                 max_elements = input_hdf.get("single_cell_index").shape[0]
                 max_index = max(index_list)
 
-                assert (
-                    max_index < max_elements
-                ), f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                assert max_index < max_elements, (
+                    f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                )
 
                 for i, ix in enumerate(index_list):
                     index_handle[i] = input_hdf.get("single_cell_index")[ix]
@@ -138,9 +138,9 @@ class _HDF5SingleCellDataset(Dataset):
             # ensure that selected channels are within range
             if self.select_channel is not None:
                 max_channels = input_hdf.get("single_cell_data").shape[1]
-                assert np.all(
-                    [channel_ix < max_channels for channel_ix in self.select_channel]
-                ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
+                assert np.all([channel_ix < max_channels for channel_ix in self.select_channel]), (
+                    f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
+                )
 
             # add connection to singe cell datasets
             handle_id = len(self.paths)
@@ -195,9 +195,9 @@ class _HDF5SingleCellDataset(Dataset):
     ):
         """Adds a dataset to the index."""
         if read_label_from_dataset:
-            assert (
-                self.label_column is not None
-            ), "trying to read labels from dataset but no column to access information has been passed"
+            assert self.label_column is not None, (
+                "trying to read labels from dataset but no column to access information has been passed"
+            )
             self._add_hdf_to_index(
                 path=path,
                 index_list=current_index_list,
@@ -208,9 +208,9 @@ class _HDF5SingleCellDataset(Dataset):
                 read_label=True,
             )
         else:
-            assert (
-                self.bulk_labels is not None
-            ), "trying to apply bulk labels to all cells from dataset but no label provided"
+            assert self.bulk_labels is not None, (
+                "trying to apply bulk labels to all cells from dataset but no label provided"
+            )
 
             self._add_hdf_to_index(
                 path=path,
@@ -289,9 +289,9 @@ class _HDF5SingleCellDataset(Dataset):
         """
         # ensure that label_column_transform is not set to a value if read_label_from_dataset is False
         if not read_label_from_dataset:
-            assert (
-                label_column_transform is None
-            ), "label_column_transform should be None if read_label_from_dataset is False"
+            assert label_column_transform is None, (
+                "label_column_transform should be None if read_label_from_dataset is False"
+            )
         self.label_column_transform = label_column_transform
 
         # scan all directories provided
@@ -587,9 +587,9 @@ class _H5ScSingleCellDataset(Dataset):
                 raise ValueError("index_list should be as long as dir_list")
 
             # type check index list to make sure its correctly constructed
-            assert _check_type_input_list(
-                index_list
-            ), "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
+            assert _check_type_input_list(index_list), (
+                "The parameter index_list expects the following format [list_dataset1, list_dataset2, ...]. Please ensure that you provide an index list for each file listed in dir_list."
+            )
 
         self.index_list: list[list[Any]] = index_list
 
@@ -635,9 +635,9 @@ class _H5ScSingleCellDataset(Dataset):
                 max_elements = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[0]
                 max_index = max(index_list)
 
-                assert (
-                    max_index < max_elements
-                ), f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                assert max_index < max_elements, (
+                    f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                )
 
                 for i, ix in enumerate(index_list):
                     index_handle[i] = ix
@@ -651,9 +651,9 @@ class _H5ScSingleCellDataset(Dataset):
             # ensure that selected channels are within range
             if self.select_channel is not None:
                 max_channels = input_hdf.get(self.IMAGE_DATACONTAINTER_NAME).shape[1]
-                assert np.all(
-                    [channel_ix < max_channels for channel_ix in self.select_channel]
-                ), f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
+                assert np.all([channel_ix < max_channels for channel_ix in self.select_channel]), (
+                    f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
+                )
 
             # add connection to singe cell datasets
             handle_id = len(self.handle_list)
@@ -701,9 +701,9 @@ class _H5ScSingleCellDataset(Dataset):
     ):
         """Adds a dataset to the index."""
         if read_label_from_dataset:
-            assert (
-                self.label_column is not None
-            ), "trying to read labels from dataset but no column to access information has been passed"
+            assert self.label_column is not None, (
+                "trying to read labels from dataset but no column to access information has been passed"
+            )
             self._add_hdf_to_index(
                 path=path,
                 index_list=current_index_list,
@@ -713,9 +713,9 @@ class _H5ScSingleCellDataset(Dataset):
                 read_label=True,
             )
         else:
-            assert (
-                self.bulk_labels is not None
-            ), "trying to apply bulk labels to all cells from dataset but no label provided"
+            assert self.bulk_labels is not None, (
+                "trying to apply bulk labels to all cells from dataset but no label provided"
+            )
 
             self._add_hdf_to_index(
                 path=path,
@@ -793,9 +793,9 @@ class _H5ScSingleCellDataset(Dataset):
         """
         # ensure that label_column_transform is not set to a value if read_label_from_dataset is False
         if not read_label_from_dataset:
-            assert (
-                label_column_transform is None
-            ), "label_column_transform should be None if read_label_from_dataset is False"
+            assert label_column_transform is None, (
+                "label_column_transform should be None if read_label_from_dataset is False"
+            )
         self.label_column_transform = label_column_transform
 
         # scan all directories provided

@@ -445,9 +445,9 @@ class sdata_filehandler(Logable):
         """
         _sdata = self._check_sdata_status(return_sdata=True)
 
-        assert all(
-            seg in _sdata.labels for seg in seg_name
-        ), "Not all passed segmentation elements found in sdata object."
+        assert all(seg in _sdata.labels for seg in seg_name), (
+            "Not all passed segmentation elements found in sdata object."
+        )
 
         seg_objects = [_sdata.labels[seg] for seg in seg_name]
 
