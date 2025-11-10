@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import io
 import os
 import platform
 import shutil
 import warnings
-from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
 from pathlib import PosixPath
+from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
@@ -21,6 +23,11 @@ from torchvision import transforms
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import H5ScSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from dask.dataframe.core import DataFrame as da_DataFrame
 
 
 class _FeaturizationBase(ProcessingStep):
@@ -157,6 +164,7 @@ class _FeaturizationBase(ProcessingStep):
             n_masks = []
             channel_names = []
             channel_mapping = []
+            segmentation_channel = []
 
             # metadata that can be different across files -> saved directly into self
 
@@ -173,6 +181,15 @@ class _FeaturizationBase(ProcessingStep):
 
                     # variable metadata can be saved directly to self
                     self.n_cells.append(metadata["n_cells"][()])
+                    segmentation_channel.append(
+                        [
+                            (
+                                metadata["channel_names"].asstr()[i]
+                                for i, v in enumerate(metadata["channel_mapping"].asstr()[:])
+                                if v == "mask"
+                            )
+                        ][0]
+                    )
 
             # check to ensure that metadata that must be consistent between datasets is
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
@@ -188,6 +205,9 @@ class _FeaturizationBase(ProcessingStep):
             assert (
                 x == channel_names[0] for x in channel_names
             ), "channel names are not consistent over all passed input files."
+            assert (
+                x == segmentation_channel[0] for x in segmentation_channel
+            ), "segmentation channel is not consistent over all passed input files."
 
             # set variable names after assertions have passed to the first instance of each value
             self.n_masks = n_masks[0]
@@ -195,6 +215,7 @@ class _FeaturizationBase(ProcessingStep):
             self.n_image_channels = n_image_channels[0]
             self.channel_names = channel_names[0]
             self.channel_mapping = channel_mapping[0]
+            self.segmentation_channel = segmentation_channel[0]
 
         # get names for masks and image channels seperately
         self.mask_names = [
@@ -722,6 +743,16 @@ class _FeaturizationBase(ProcessingStep):
 
     #### Results writing functions ####
 
+    def _get_centers_object(self) -> None | da_DataFrame:
+        """Get the spatial coordinates to add to the results."""
+
+        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.segmentation_channel}"
+
+        if self.project is not None:
+            return self.project.sdata[centers_name]
+        else:
+            return None
+
     def _write_results_csv(self, results: pd.DataFrame, path: str | PosixPath) -> None:
         """Write results to a CSV file."""
         results.to_csv(path, index=False)
@@ -741,6 +772,14 @@ class _FeaturizationBase(ProcessingStep):
         var_names = results.columns
         obs_indices = results.index.astype(str)
 
+        if self._get_centers_object() is not None:
+            coords = self._get_centers_object().compute()
+            coords = coords.loc[
+                obs_indices, :
+            ].values  # ensure that the coordinates are in the same order as the results
+        else:
+            coords = None
+
         if self.project is not None:
             if self.project.nuc_seg_status:
                 # save nucleus segmentation
@@ -751,6 +790,8 @@ class _FeaturizationBase(ProcessingStep):
                 obs["region"] = obs["region"].astype("category")
 
                 table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                if coords is not None:
+                    table.obsm["spatial"] = coords
                 table = TableModel.parse(
                     table,
                     region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
@@ -773,6 +814,8 @@ class _FeaturizationBase(ProcessingStep):
                 obs["region"] = obs["region"].astype("category")
 
                 table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
+                if coords is not None:
+                    table.obsm["spatial"] = coords
                 table = TableModel.parse(
                     table,
                     region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
