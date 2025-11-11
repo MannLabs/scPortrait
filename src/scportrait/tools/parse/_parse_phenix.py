@@ -260,7 +260,7 @@ class PhenixParser:
         cols = [str(x).zfill(2) for x in cols]
         fields = [str(x).zfill(2) for x in fields]
         planes = [str(x).zfill(2) for x in planes]
-        timepoints = [int(x) + 1 for x in timepoints]
+        timepoints = [str(int(x) + 1) for x in timepoints]
 
         # get channelnames
         lookup_dict = self.channel_lookup.set_index("id").to_dict()["label"]
@@ -278,7 +278,7 @@ class PhenixParser:
             ):
                 image_names.append(f"r{row}c{col}f{field}p{plane}-ch{channel_id}sk{timepoint}fk1fl{flim_id}.tiff")
         elif version == "HarmonyV7":
-            timepoints = [(x - 1) for x in timepoints]
+            timepoints = [str(int(x) - 1) for x in timepoints]
             if self.flatfield_status:
                 for (
                     row,

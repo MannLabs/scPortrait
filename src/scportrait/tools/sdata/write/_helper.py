@@ -105,7 +105,7 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
     if element_name in sdata:
         if not overwrite:
             raise ValueError(
-                f"Object with name '{element_name}' already exists in SpatialData." f"Set overwrite=True to replace it."
+                f"Object with name '{element_name}' already exists in SpatialData.Set overwrite=True to replace it."
             )
 
         _force_delete_object(sdata, element_name)
@@ -142,9 +142,9 @@ def rename_image_element(sdata: SpatialData, image_element: str, new_element_nam
     short_path_elem = f"images/{image_element}"
     short_path_new_elem = f"images/{new_element_name}"
 
-    assert (
-        str(short_path_elem) in sdata.elements_paths_on_disk()
-    ), f"Element {image_element} needs to be on disk to rename it."
+    assert str(short_path_elem) in sdata.elements_paths_on_disk(), (
+        f"Element {image_element} needs to be on disk to rename it."
+    )
 
     # rename metadata
     zattrs_path = sdata.path / "images" / image_element / ".zattrs"

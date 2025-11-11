@@ -116,9 +116,9 @@ class HDF5CellExtraction(ProcessingStep):
 
             if normalization_range is not None:
                 assert len(normalization_range) == 2, "Normalization range must be a tuple or list of length 2."
-                assert all(
-                    isinstance(x, float | int) and (0 <= x <= 1) for x in normalization_range
-                ), "Normalization range must be defined as a float between 0 and 1."
+                assert all(isinstance(x, float | int) and (0 <= x <= 1) for x in normalization_range), (
+                    "Normalization range must be defined as a float between 0 and 1."
+                )
 
                 # conver to tuple to ensure consistency
                 if isinstance(normalization_range, list):
@@ -388,9 +388,9 @@ class HDF5CellExtraction(ProcessingStep):
         self.centers_cell_ids = _sdata[centers_name].index.values.compute()
 
         # ensure that the centers ids are unique
-        assert len(self.centers_cell_ids) == len(
-            set(self.centers_cell_ids)
-        ), "Cell ids in centers are not unique. Cannot proceed with extraction."
+        assert len(self.centers_cell_ids) == len(set(self.centers_cell_ids)), (
+            "Cell ids in centers are not unique. Cannot proceed with extraction."
+        )
 
         # double check that the cell_ids contained in the seg masks match to those from centers
         # THIS NEEDS TO BE IMPLEMENTED HERE

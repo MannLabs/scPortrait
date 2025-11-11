@@ -326,7 +326,7 @@ class ParallelEdgeAligner(EdgeAligner):
         if np.linalg.det(self.lr.coef_) < 1e-3:
             # FIXME We should probably exit here, not just warn. We may provide
             # an option to force it anyway.
-            warn_data("Could not align enough edges, proceeding anyway with original" " stage positions.")
+            warn_data("Could not align enough edges, proceeding anyway with original stage positions.")
             self.lr.coef_ = np.diag(np.ones(2))
             self.lr.intercept_ = np.zeros(2)
 
