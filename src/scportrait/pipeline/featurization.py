@@ -212,21 +212,21 @@ class _FeaturizationBase(ProcessingStep):
 
             # check to ensure that metadata that must be consistent between datasets is
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
-            assert (
-                x == n_channels[0] for x in n_channels
-            ), "number of channels are not consistent over all passed input files."
-            assert (
-                x == n_image_channels[0] for x in n_image_channels
-            ), "number of image channels are not consistent over all passed input files."
-            assert (
-                x == channel_mapping[0] for x in channel_mapping
-            ), "channel mapping is not consistent over all passed input files."
-            assert (
-                x == channel_names[0] for x in channel_names
-            ), "channel names are not consistent over all passed input files."
-            assert (
-                x == segmentation_channel[0] for x in segmentation_channel
-            ), "segmentation channel is not consistent over all passed input files."
+            assert (x == n_channels[0] for x in n_channels), (
+                "number of channels are not consistent over all passed input files."
+            )
+            assert (x == n_image_channels[0] for x in n_image_channels), (
+                "number of image channels are not consistent over all passed input files."
+            )
+            assert (x == channel_mapping[0] for x in channel_mapping), (
+                "channel mapping is not consistent over all passed input files."
+            )
+            assert (x == channel_names[0] for x in channel_names), (
+                "channel names are not consistent over all passed input files."
+            )
+            assert (x == segmentation_channel[0] for x in segmentation_channel), (
+                "segmentation channel is not consistent over all passed input files."
+            )
 
             # set variable names after assertions have passed to the first instance of each value
             self.n_masks = n_masks[0]
@@ -1107,7 +1107,7 @@ class MLClusterClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 # self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{self.label}_{model.__name__}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{self.label}_{model.__name__}")
             else:
                 all_results.append(results)
 
@@ -1273,7 +1273,7 @@ class EnsembleClassifier(_FeaturizationBase):
                 os.path.join(self.run_path, f"{output_name}.csv")
 
                 # self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{model_name}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{model_name}")
             else:
                 all_results[model_name] = results
 
