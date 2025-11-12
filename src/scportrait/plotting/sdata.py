@@ -4,8 +4,10 @@ from numbers import Integral
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import spatialdata
 import xarray
+from geopandas.geodataframe import GeoDataFrame
 from matplotlib.axes import Axes
 
 PALETTE = [
@@ -48,6 +50,11 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     """
     if isinstance(sdata[element_name], xarray.DataTree):
         shape = sdata[element_name].scale0.image.shape
+    elif isinstance(sdata[element_name], GeoDataFrame):
+        bounds = sdata[element_name].geometry.bounds
+        x = int(np.ceil(bounds["maxx"] - bounds["minx"]))
+        y = int(np.ceil(bounds["maxy"] - bounds["miny"]))
+        shape = (x, y)
     else:
         shape = sdata[element_name].data.shape
 
