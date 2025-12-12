@@ -29,7 +29,7 @@ class Segmentation(ProcessingStep):
     """Segmentation helper class used for creating segmentation workflows.
 
     Attributes:
-        maps (dict(str)): Segmentation workflows based on the :class:`.Segmentation` class can use maps for saving and loading checkpoints and perform. Maps can be numpy arrays
+        maps (dict(str)): Segmentation workflows based on the :class:`.Segmentation` class can use maps for saving and loading checkpoints and perform operations. Maps can be array like structures, e.g. memory-mapped temp arrays.
 
         DEFAULT_FILTER_ADDTIONAL_FILE (str, default ``filtered_classes.csv``)
         PRINT_MAPS_ON_DEBUG (bool, default ``False``)
@@ -59,8 +59,8 @@ class Segmentation(ProcessingStep):
     """
 
     # setup log and plotting behaviour
-    CLEAN_LOG = True
-    PRINT_MAPS_ON_DEBUG = True
+    CLEAN_LOG: bool = True
+    PRINT_MAPS_ON_DEBUG: bool = True
 
     # load default values from constants.py
     DEFAULT_FILTER_ADDTIONAL_FILE = DEFAULT_FILTER_ADDTIONAL_FILE
@@ -350,11 +350,11 @@ class Segmentation(ProcessingStep):
                     self.log("No cytosols found in segmentation mask. Please check your processing")
                     warnings.warn("No cytosols found in segmentation mask. Please check your processing", stacklevel=2)
 
-    def save_map(self, map_name):
+    def save_map(self, map_name: str) -> None:
         """Saves newly computed map.
 
-        Args
-            map_name (str): name of the map to be saved, as defined in ``self.maps``.
+        Args:
+            map_name: name of the map to be saved, as defined in ``self.maps``.
 
         Example:
 
@@ -395,6 +395,7 @@ class Segmentation(ProcessingStep):
                 if self.debug and self.PRINT_MAPS_ON_DEBUG:
                     self.save_image(self.maps[map_name], save_name=channel_path)
 
+    
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
         if np.issubdtype(array.dtype.type, np.integer):
             self.log(f"{save_name} will be saved as tif")
@@ -417,7 +418,7 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
-    def _initialize_as_shard(self, identifier, window, input_path, zarr_status=True):
+    def _initialize_as_shard(self, identifier: int, window, input_path, zarr_status=True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:

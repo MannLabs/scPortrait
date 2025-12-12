@@ -93,6 +93,7 @@ html_static_path = ["_static"]
 autodoc_default_options = {
     "member-order": "bysource",
 }
+autoclass_content = 'both'
 
 html_favicon = "favicon.png"
 html_logo = "_static/scPortrait_logo_light.svg"
