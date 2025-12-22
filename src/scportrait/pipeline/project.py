@@ -720,15 +720,15 @@ class Project(Logable):
 
         if channels is not None:
             if isinstance(channels[0], int):
-                assert all(
-                    x in range(c) for x in channels
-                ), "The specified channel indices are not found in the spatialdata object."
+                assert all(x in range(c) for x in channels), (
+                    "The specified channel indices are not found in the spatialdata object."
+                )
                 valid_channels = [i for i in channels if isinstance(i, int)]
                 channel_names = [channel_names[i] for i in valid_channels]
             if isinstance(channels[0], str):
-                assert all(
-                    x in channel_names for x in channels
-                ), "The specified channel names are not found in the spatialdata object."
+                assert all(x in channel_names for x in channels), (
+                    "The specified channel names are not found in the spatialdata object."
+                )
                 channel_names = channels
 
             c = len(channels)
@@ -1358,9 +1358,9 @@ class Project(Logable):
 
         self._cleanup_sdata_object()
 
-        assert (
-            len(channel_names) == dask_array.shape[0]
-        ), "Number of channel names does not match number of input images."
+        assert len(channel_names) == dask_array.shape[0], (
+            "Number of channel names does not match number of input images."
+        )
 
         self.channel_names = channel_names
 
@@ -1646,9 +1646,9 @@ class Project(Logable):
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
-        assert (
-            self.nuc_seg_status or self.cyto_seg_status
-        ), "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        assert self.nuc_seg_status or self.cyto_seg_status, (
+            "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        )
         assert self.extraction_status, "No single cell data extracted. Please extract single cell data first."
 
         extraction_dir = self.extraction_f.get_directory()

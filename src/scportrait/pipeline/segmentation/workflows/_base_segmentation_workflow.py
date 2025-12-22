@@ -36,12 +36,12 @@ class _BaseSegmentation(Segmentation):
         # check if channels that should be maximum intensity projected and combined are defined in the config
         if "combine_cytosol_channels" in self.config.keys():
             self.combine_cytosol_channels = self.config["combine_cytosol_channels"]
-            assert isinstance(
-                self.combine_cytosol_channels, list
-            ), "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
-            assert (
-                len(self.combine_cytosol_channels) > 1
-            ), "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
+            assert isinstance(self.combine_cytosol_channels, list), (
+                "combine_cytosol_channels must be a list of integers specifying the indexes of the channels to combine."
+            )
+            assert len(self.combine_cytosol_channels) > 1, (
+                "combine_cytosol_channels must contain at least two integers specifying the indexes of the channels to combine."
+            )
             self.maximum_project_cytosol = True
         else:
             self.combine_cytosol_channels = None
@@ -49,12 +49,12 @@ class _BaseSegmentation(Segmentation):
 
         if "combine_nucleus_channels" in self.config.keys():
             self.combine_nucleus_channels = self.config["combine_nucleus_channels"]
-            assert isinstance(
-                self.combine_nucleus_channels, list
-            ), "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
-            assert (
-                len(self.combine_nucleus_channels) > 1
-            ), "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
+            assert isinstance(self.combine_nucleus_channels, list), (
+                "combine_nucleus_channels must be a list of integers specifying the indexes of the channels to combine."
+            )
+            assert len(self.combine_nucleus_channels) > 1, (
+                "combine_nucleus_channels must contain at least two integers specifying the indexes of the channels to combine."
+            )
             self.maximum_project_nucleus = True
         else:
             self.combine_nucleus_channels = None
@@ -88,14 +88,14 @@ class _BaseSegmentation(Segmentation):
 
         # check validity of resulting list of segmentation channels
         assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
-        assert (
-            len(self.segmentation_channels) >= self.N_INPUT_CHANNELS
-        ), f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
+        assert len(self.segmentation_channels) >= self.N_INPUT_CHANNELS, (
+            f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
+        )
 
         if len(self.segmentation_channels) > self.N_INPUT_CHANNELS:
-            assert (
-                self.maximum_project_nucleus or self.maximum_project_cytosol
-            ), "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+            assert self.maximum_project_nucleus or self.maximum_project_cytosol, (
+                "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+            )
 
     def _remap_maximum_intensity_projection_channels(self):
         """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
@@ -153,9 +153,9 @@ class _BaseSegmentation(Segmentation):
 
         input_image = np.vstack(values)
 
-        assert (
-            input_image.shape[0] == self.N_INPUT_CHANNELS
-        ), f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
+        assert input_image.shape[0] == self.N_INPUT_CHANNELS, (
+            f"Number of channels in input image {input_image.shape[0]} does not match the number of channels expected by segmentation method {self.N_INPUT_CHANNELS}."
+        )
 
         stop_transform = timeit.default_timer()
         self.transform_time = stop_transform - start_transform
@@ -474,9 +474,9 @@ class _BaseSegmentation(Segmentation):
         If size filtering is turned on, the thresholds for filtering are loaded from the config file.
         """
 
-        assert all(
-            mask_type in self.MASK_NAMES for mask_type in mask_types
-        ), f"mask_types must be a list of strings that are valid mask names {self.MASK_NAMES}."
+        assert all(mask_type in self.MASK_NAMES for mask_type in mask_types), (
+            f"mask_types must be a list of strings that are valid mask names {self.MASK_NAMES}."
+        )
 
         if "filter_masks_size" in self.config.keys():
             self.filter_size = self.config["filter_masks_size"]
@@ -648,9 +648,9 @@ class _BaseSegmentation(Segmentation):
         # sanity check provided values
         assert isinstance(self.filter_match_masks, bool), "`match_masks` must be a boolean value."
         if self.filter_match_masks:
-            assert isinstance(
-                self.mask_matching_filtering_threshold, float
-            ), "`filtering_threshold_mask_matching` for mask matching must be a float."
+            assert isinstance(self.mask_matching_filtering_threshold, float), (
+                "`filtering_threshold_mask_matching` for mask matching must be a float."
+            )
 
     def _perform_mask_matching_filtering(
         self,

@@ -395,7 +395,6 @@ class Segmentation(ProcessingStep):
                 if self.debug and self.PRINT_MAPS_ON_DEBUG:
                     self.save_image(self.maps[map_name], save_name=channel_path)
 
-    
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
         if np.issubdtype(array.dtype.type, np.integer):
             self.log(f"{save_name} will be saved as tif")
@@ -1146,9 +1145,9 @@ class ShardedSegmentation(Segmentation):
         sharding_plan = self._get_sharding_plan(overwrite=False, force_read=True)
 
         # check to make sure that calculated sharding plan matches to existing sharding results
-        assert (
-            len(sharding_plan) == len(tile_directories)
-        ), "Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results."
+        assert len(sharding_plan) == len(tile_directories), (
+            "Calculated a different number of shards than found shard directories. This indicates a mismatch between the current loaded config file and the config file used to generate the exisiting partial segmentation. Please rerun the complete segmentation to ensure accurate results."
+        )
 
         # select only those shards that did not complete successfully for further processing
         sharding_plan_complete = sharding_plan

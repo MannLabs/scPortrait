@@ -32,7 +32,7 @@ class FilePatternReaderRescale(FilePatternReader):
             )
             found_files = os.listdir(path)
             print(
-                f"At the provided location the the files follow the naming convention:{found_files[0:max(5, len(found_files))]} "
+                f"At the provided location the the files follow the naming convention:{found_files[0 : max(5, len(found_files))]} "
             )
 
         self.do_rescale = do_rescale

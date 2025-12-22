@@ -10,8 +10,7 @@ try:
     import wandb
 except ImportError as err:
     raise ImportError(
-        "Wandb is not installed. Please install it via `pip install wandb` "
-        "if you want to utilize the callback metrics."
+        "Wandb is not installed. Please install it via `pip install wandb` if you want to utilize the callback metrics."
     ) from err
 
 # Check if Pytorch Lightning is installed as optional dependency

@@ -128,9 +128,9 @@ class _FeaturizationBase(ProcessingStep):
         if "channel_selection" in self.config.keys():
             channel_selection = self.config["channel_selection"]
             if isinstance(channel_selection, list):
-                assert all(
-                    isinstance(x, int) for x in channel_selection
-                ), "channel_selection should be a list of integers"
+                assert all(isinstance(x, int) for x in channel_selection), (
+                    "channel_selection should be a list of integers"
+                )
                 self.channel_selection = channel_selection
 
             elif isinstance(channel_selection, int):
@@ -212,21 +212,21 @@ class _FeaturizationBase(ProcessingStep):
 
             # check to ensure that metadata that must be consistent between datasets is
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
-            assert (
-                x == n_channels[0] for x in n_channels
-            ), "number of channels are not consistent over all passed input files."
-            assert (
-                x == n_image_channels[0] for x in n_image_channels
-            ), "number of image channels are not consistent over all passed input files."
-            assert (
-                x == channel_mapping[0] for x in channel_mapping
-            ), "channel mapping is not consistent over all passed input files."
-            assert (
-                x == channel_names[0] for x in channel_names
-            ), "channel names are not consistent over all passed input files."
-            assert (
-                x == segmentation_channel[0] for x in segmentation_channel
-            ), "segmentation channel is not consistent over all passed input files."
+            assert (x == n_channels[0] for x in n_channels), (
+                "number of channels are not consistent over all passed input files."
+            )
+            assert (x == n_image_channels[0] for x in n_image_channels), (
+                "number of image channels are not consistent over all passed input files."
+            )
+            assert (x == channel_mapping[0] for x in channel_mapping), (
+                "channel mapping is not consistent over all passed input files."
+            )
+            assert (x == channel_names[0] for x in channel_names), (
+                "channel names are not consistent over all passed input files."
+            )
+            assert (x == segmentation_channel[0] for x in segmentation_channel), (
+                "segmentation channel is not consistent over all passed input files."
+            )
 
             # set variable names after assertions have passed to the first instance of each value
             self.n_masks = n_masks[0]
@@ -567,9 +567,9 @@ class _FeaturizationBase(ProcessingStep):
         # generate dataset
         self.log(f"Reading data from path: {dataset_paths}")
 
-        assert isinstance(
-            self.transforms, transforms.Compose
-        ), f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        assert isinstance(self.transforms, transforms.Compose), (
+            f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        )
         t = self.transforms
 
         if self.expected_imagesize is not None:
@@ -577,15 +577,15 @@ class _FeaturizationBase(ProcessingStep):
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
         if isinstance(dataset_paths, list):
-            assert isinstance(
-                dataset_labels, list
-            ), "If multiple directories are provided, multiple labels must be provided."
+            assert isinstance(dataset_labels, list), (
+                "If multiple directories are provided, multiple labels must be provided."
+            )
             paths = dataset_paths
             dataset_labels = dataset_labels
         elif isinstance(dataset_paths, str):
-            assert isinstance(
-                dataset_labels, int
-            ), "If only one directory is provided, only one label must be provided."
+            assert isinstance(dataset_labels, int), (
+                "If only one directory is provided, only one label must be provided."
+            )
             paths = [dataset_paths]
             dataset_labels = [dataset_labels]
 
@@ -923,9 +923,9 @@ class MLClusterClassifier(_FeaturizationBase):
             self._clean_log_file()
 
         # checks for additional essential parameters in the config file
-        assert (
-            self.label is not None
-        ), "'label' must be specified in the config file. This is the label used to save the results."
+        assert self.label is not None, (
+            "'label' must be specified in the config file. This is the label used to save the results."
+        )
 
     def _get_network_dir(self) -> pl.LightningModule:
         if self.network_dir in self.PRETRAINED_MODEL_NAMES:
@@ -1107,7 +1107,7 @@ class MLClusterClassifier(_FeaturizationBase):
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
                 # self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{self.label}_{model.__name__}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{self.label}_{model.__name__}")
             else:
                 all_results.append(results)
 
@@ -1143,9 +1143,9 @@ class EnsembleClassifier(_FeaturizationBase):
             self._clean_log_file()
 
         # checks for additional essential parameters in the config file
-        assert (
-            self.label is not None
-        ), "'label' musst be specified in the config file. This is the label used to save the results."
+        assert self.label is not None, (
+            "'label' musst be specified in the config file. This is the label used to save the results."
+        )
 
     def _setup_transforms(self):
         if self.transforms is not None:
@@ -1273,7 +1273,7 @@ class EnsembleClassifier(_FeaturizationBase):
                 os.path.join(self.run_path, f"{output_name}.csv")
 
                 # self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{model_name}")
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{model_name}")
             else:
                 all_results[model_name] = results
 
