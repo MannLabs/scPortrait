@@ -143,9 +143,9 @@ def add_spatial_coordinates(
     """
 
     assert cell_id_identifier in adata.obs.columns, f"{cell_id_identifier} must be a column in h5sc.obs"
-    assert (
-        ["x", "y"] == list(centers_object.columns)
-    ), "centers_object must be scportrait's standardized centers object containing columns 'x' and 'y' and the scportrait cell id as index, but detected columns are {centers_object.columns}"
+    assert ["x", "y"] == list(centers_object.columns), (
+        "centers_object must be scportrait's standardized centers object containing columns 'x' and 'y' and the scportrait cell id as index, but detected columns are {centers_object.columns}"
+    )
 
     if ("x" in adata.obs.columns) or ("y" in adata.obs.columns):
         adata.obs.drop(columns=["x", "y"], inplace=True, errors="ignore")

@@ -7,8 +7,6 @@ import h5py
 import numpy as np
 import pandas as pd
 import pytest
-
-from scportrait.io import read_h5sc
 from scportrait.tl.h5sc import (
     add_spatial_coordinates,
     get_cell_id_index,
@@ -16,6 +14,8 @@ from scportrait.tl.h5sc import (
     subset_h5sc,
     update_obs_on_disk,
 )
+
+from scportrait.io import read_h5sc
 
 rng = np.random.default_rng()
 
