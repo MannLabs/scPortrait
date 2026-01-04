@@ -2,87 +2,60 @@
 
 Contributions to scPortrait are welcome! This section provides some guidelines and tips to follow when contributing.
 
-## Installing dev dependencies
+## Creating a development Environment and installing dev dependencies
 
-In addition to the packages needed to _use_ this package, you need additional python packages to _run tests_ and _build the documentation_. It's easy to install them using `pip`:
+It's recommended to do development work in an isolated environment.
+There are number of ways to do this, including virtual environments, conda environments, and virtual machines.
 
-```bash
+We use conda environments. To setup a conda environment please do the following:
+
+```console
+conda create -n "{dev_environment_name}" python=3.12
+conda activate {dev_environment_name}
+```
+
+In addition to the packages needed to _use_ this package, you need additional python packages to _run tests_ and _build the documentation_. It's easy to install them using `pip` by adding the `dev` tag:
+
+### Interactive Installation
+```console
 git clone https://github.com/MannLabs/scPortrait
 cd scPortrait
 pip install -e '.[dev]'
 ```
 
-## Code-style
-
-This project uses [pre-commit][] to enforce consistent code-styles. On every commit, pre-commit checks will either automatically fix issues with the code, or raise an error message.
-
-To enable pre-commit locally, simply run
-
+### Installation from PyPi
 ```console
-pre-commit install
+pip install scportrait[dev]
 ```
 
-in the root of the repository. Pre-commit will automatically download all dependencies when it is run for the first time.
+## Committing Code Changes
 
-Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub. If you didn't run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
+We assume some familiarity with `git`. For more detailed information, we recommend the following introductions:
 
-If pre-commit.ci added a commit on a branch you still have been working on locally, simply use
+- [Atlassian's git tutorial][] — beginner-friendly introduction to the git command line
+- [Setting up git for GitHub][] — configuring git to work with your GitHub account
 
-```console
-git pull --rebase
-```
-to integrate the changes into yours.
+In short, contributing changes to scPortrait follows this workflow:
 
-While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
+1. **Fork and clone the repository**
+   See: [Forking and cloning](#forking-and-cloning)
 
-## Writing documentation
+2. **Set up pre-commit hooks**
+   Ensures consistent formatting and linting across contributions.
+   See: [Setting up `pre-commit`](#setting-up-pre-commit)
 
-Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
+3. **Create a new branch for your changes**
+   Development should occur on a separate branch.
+   See: [Creating a branch for your feature](#creating-a-branch-for-your-feature)
 
--   Google-style docstrings, where the __init__ method should be documented in its own docstring, not at the class level.
--   there should be no specification of type in the docstrings (this should be done in the function call with mypy style type hints instead)
--   add type hints for use with mypy
--   example code
--   automatic building with Sphinx
+4. **Commit your changes with clear commit messages**
+   See: [Commit Message Guidelines](#commit-message-guidelines)
 
-Refer to [sphinx google style docstrings][] for detailed information on writing documentation.
+5. **Open a pull request**
+   Submit your branch to the `main` branch of the main repository.
+   See: [Open a pull request](#open-a-pull-request)
 
-## Writing Tests
-
-If you are adding a new function to scPortrait please also include a unit test.
-
-## Running Tests
-
-We use [pytest][] to test scProtrait. To run the tests, simply run `pytest .` in your local clone of the scPortrait repo.
-
-A lot of warnings can be thrown while running the test files. It’s often easier to read the test results with them hidden via the `--disable-pytest-warnings`  argument.
-
-## Building the Documentation
-
-The docs for scPortrait are updated and built automatically whenever code is merged or commited to the main branch. To test documentation locally you need to do the following:
-
-1. navigate into the `docs` folder in your local scPortrait clone
-2. ensure you have a functional development environment where the additional dev dependencies (these incldue those required to build the documentation) are installed
-3. execute:
-
-```console
-make clean
-make html
-```
-4. open the file `scportriat/docs/_build/html/index.html` in your favorite browser
-
-## Tutorials with jupyter notebooks
-
-Indepth tutorials using jupyter notebooks are hosted in a dedicated repository: [scPortrait Notebooks](https://github.com/MannLabs/scPortrait-notebooks).
-
-Please update and/or add new tutorials there.
-
-## Commiting Code Changes
-
-We assume some familiarity with `git`. For more detailed information we recommend checking out these tutorials:
-
-[Atlassian's git tutorial][]: Beginner friendly introductions to the git command line interface
-[Setting up git for GitHub][]: Configuring git to work with your GitHub user account
+We encourage small, focused pull requests, as these are easier to review and discuss.
 
 ### Forking and cloning
 
@@ -141,6 +114,42 @@ $ git pull                          # Syncing with the repo
 $ git switch -c {your-branch-name}  # Making and changing to the new branch
 ```
 
+### Commit Message Guidelines
+
+To keep the commit history clear and easy to navigate, we use short, descriptive commit messages with a conventional prefix indicating the type of change:
+
+`[TAG] Short, clear description in imperative form`
+
+Following this style is encouraged for all contributions, but do not worry if you forget — maintainers may adjust commit messages during PR squash-merge.
+
+#### Format
+- **Use the imperative mood** (“Fix bug”, “Add feature”), not past tense.
+- **Keep it brief** (ideally under 60 characters).
+- **Do not include author names or PR numbers** in the commit message itself (GitHub tracks that automatically).
+
+#### Recommended Tags
+
+| Tag | Purpose | Examples |
+|---|---|---|
+| `FEATURE` | Adding new functionality | `[FEATURE] Add ConvNextFeaturizer` |
+| `FIX` | Bug fixes and corrections | `[FIX] Ensure sharding is resolved correctly` |
+| `IMPROVE` | Enhancements to existing code or performance | `[IMPROVE] Handling of empty SpatialData files` |
+| `DOCS` | Documentation updates | `[DOCS] Update cellpose segmentation guide` |
+| `REFactor` | Code restructuring without changing behavior | `[REFACTOR] Simplify project status tracking` |
+| `TEST` | New or updated test coverage | `[TEST] Add tests for HDF5 extraction workflow` |
+| `CI` | Continuous integration / workflow updates | `[CI] Run tests on pull requests` |
+| `VERSION` | Version updates performed by automation | `[VERSION] Bump version to 1.5.0` |
+
+#### Examples Based on Previous Commits
+
+| Original Commit | Improved Commit Message |
+|---|---|
+| fix some small bugs | `[FIX] Resolve minor segmentation edge cases` |
+| improve spatialdata file handling | `[IMPROVE] Robust handling of backed SpatialData stores` |
+| implement automatic workflow for bumping version numbers | `[CI] Add automated version bump workflow` |
+| Update docs | `[DOCS] Expand documentation for project setup` |
+| Ensure dtypes are consistent over all image tiles during stitching | `[FIX] Ensure dtype consistency across stitched tiles` |
+
 ### Open a pull request
 
 When you're ready to have your code reviewed, push your changes up to your fork:
@@ -157,18 +166,159 @@ GitHub is also pretty good about prompting you to open PRs for recently pushed b
 
 We'll try and get back to you soon!
 
-## Creating a development Environment
 
-It's recommended to do development work in an isolated environment.
-There are number of ways to do this, including virtual environments, conda environments, and virtual machines.
+## Code-style
 
-We use conda environments. To setup a conda environment please do the following:
+This project uses [pre-commit][] to enforce consistent code-styles. On every commit, pre-commit checks will either automatically fix issues with the code, or raise an error message.
+
+To enable pre-commit locally, simply run
 
 ```console
-conda create -n "{dev_environment_name}" python=3.12
-conda activate {dev_environment_name}
-pip install scportrait[dev]
+pre-commit install
 ```
+
+in the root of the repository. Pre-commit will automatically download all dependencies when it is run for the first time.
+
+Alternatively, you can rely on the [pre-commit.ci][] service enabled on GitHub. If you didn't run `pre-commit` before pushing changes to GitHub it will automatically commit fixes to your pull request, or show an error message.
+
+If pre-commit.ci added a commit on a branch you still have been working on locally, simply use
+
+```console
+git pull --rebase
+```
+to integrate the changes into yours.
+
+While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
+
+## Writing documentation
+
+Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
+
+-   Google-style docstrings, where the __init__ method should be documented in its own docstring, not at the class level.
+-   there should be no specification of type in the docstrings (this should be done in the function call with mypy style type hints instead)
+-   add type hints for use with mypy
+-   example code
+-   automatic building with Sphinx
+
+Refer to [sphinx google style docstrings][] for detailed information on writing documentation.
+
+## Building the Documentation
+
+The docs for scPortrait are updated and built automatically whenever code is merged or commited to the main branch. To test documentation locally you need to do the following:
+
+1. navigate into the `docs` folder in your local scPortrait clone
+2. ensure you have a functional development environment where the additional dev dependencies (these incldue those required to build the documentation) are installed
+3. execute:
+
+```console
+make clean
+make html
+```
+4. open the file `scportriat/docs/_build/html/index.html` in your favorite browser
+
+## Writing Tests
+
+If you introduce a new function or modify existing functionality, be sure to include corresponding **unit tests**. Tests help ensure correctness, stability, and maintainability across the codebase.
+
+## Running Tests
+
+scPortrait uses [pytest][] for testing and maintains two categories of test suites:
+1.  Unit Tests
+2.  End-to-End (E2E) Tests
+
+Unit Tests are run whenever a commit is made in a PR. Before opening a pull request, ensure **unit tests pass locally**.
+
+The E2E tests are computationally more expensive and run the entire scPortrait processing pipeline and as such are much slower. These tests are only run on commits made in the main branch e.g. upon merging a PR. Before merging into `main`, please ensure **E2E tests pass**.
+
+A lot of warnings can be thrown while running the test files. It’s often easier to read the test results with them hidden via the `--disable-pytest-warnings`  argument.
+
+### Unit Tests
+
+Unit tests validate individual functions or modules in isolation (e.g., file readers, plotting utilities, segmentation helpers). These tests are designed to be fast and run frequently during development.
+
+Run only unit tests:
+```console
+pytest tests/unit_tests --disable-warnings
+```
+
+### End-to-End (E2E) Tests
+
+E2E tests run larger workflow scenarios to ensure that multiple components of the pipeline work correctly together (e.g., segmentation → extraction → featurization → selection).
+These tests are **much slower** and may require larger example data.
+
+Run only E2E tests:
+```console
+pytest tests/e2e_tests --disable-warnings
+```
+
+### Running All Tests
+
+To run both unit and E2E tests together:
+```console
+pytest .
+```
+
+## Tutorials with jupyter notebooks
+
+Indepth tutorials using jupyter notebooks are hosted in a dedicated repository: [scPortrait Notebooks](https://github.com/MannLabs/scPortrait-notebooks).
+
+Please update and/or add new tutorials there.
+
+## Creating a New Release
+
+Before creating a release, ensure that **all tests pass** for the code currently on `main` (unit tests and end-to-end tests). If any tests fail, fix the issues before proceeding.
+
+Releases are versioned and published through automated GitHub workflows. The release process consists of the following steps:
+
+### 1. Bump the version
+
+The version is incremented using the **Bump version** workflow:
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/bump_version.yml>
+2. Run the workflow and specify the version increment (`patch`, `minor`, or `major`).
+
+This will create **two pull requests**:
+   - **`[VERSION] Bump version to X.Y.Z`** — *merge this now*
+   - **`[VERSION] Bump version to X.Y.Z-dev0`** — *merge this after the release*
+
+### 2. Merge the version bump PR
+
+1. Merge the PR titled: `[VERSION] Bump version to X.Y.Z`
+
+This sets the release version in the codebase.
+
+### 3. Create a draft release
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/create_release.yml>
+2. Run the workflow and specify:
+   - **Branch:** `main`
+
+This workflow will create a **draft release** automatically.
+
+### 4. Finalize the GitHub release
+
+1. Go to the Releases page: <https://github.com/MannLabs/scPortrait/releases>
+2. Select the **draft** release that was generated.
+3. Click **"Generate release notes"** to automatically populate the changelog from commit messages.
+4. Review and publish the release.
+
+### 5. Publish the release to PyPI
+
+1. Open: <https://github.com/MannLabs/scPortrait/actions/workflows/publish_on_pypi.yml>
+2. Run the **Publish on PyPI** workflow.
+3. Enter the version number you just released.
+4. Wait for the workflow to complete successfully.
+
+This workflow:
+- Builds and uploads the package to PyPI
+- Runs validation tests against the published package
+
+### 6. Merge the post-release development version bump
+
+Once PyPI publication is confirmed, merge the second PR: `[VERSION] Bump version to X.Y.Z-dev0`
+
+This transitions the project back into a development state.
+
 
 <!-- Links -->
 

@@ -75,9 +75,9 @@ class MultilabelSupervisedModel(pl.LightningModule):
 
         if image_size_factor is not None:
             if "image_size_factor" in self.hparams:
-                assert (
-                    self.hparams["image_size_factor"] == image_size_factor
-                ), "image size factor in hparams and passed to model do not match"
+                assert self.hparams["image_size_factor"] == image_size_factor, (
+                    "image size factor in hparams and passed to model do not match"
+                )
             else:
                 self.hparams["image_size_factor"] = image_size_factor
 

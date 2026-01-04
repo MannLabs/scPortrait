@@ -2,10 +2,9 @@ import shutil
 
 import numpy as np
 import pytest
+import scportrait.tl.sdata.write as write
 from spatialdata import SpatialData, read_zarr
 from spatialdata.datasets import blobs
-
-import scportrait.tl.sdata.write as write
 
 
 @pytest.fixture()

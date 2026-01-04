@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import tempfile
+import warnings
 from pathlib import PosixPath
 from typing import TYPE_CHECKING, Literal
 
@@ -198,7 +199,7 @@ class Project(Logable):
         if not os.path.isdir(self.project_location):
             os.makedirs(self.project_location)
         else:
-            Warning("There is already a directory in the location path")
+            warnings.warn("There is already a directory in the location path", stacklevel=2)
 
         # === setup sdata reader/writer ===
         self.filehandler = sdata_filehandler(
@@ -499,8 +500,9 @@ class Project(Logable):
         """
 
         if not image.dtype == self.DEFAULT_IMAGE_DTYPE:
-            Warning(
-                f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results."
+            warnings.warn(
+                f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results.",
+                stacklevel=2,
             )
             self.log(
                 f"Image dtype is not {self.DEFAULT_IMAGE_DTYPE} but insteadt {image.dtype}. The workflow expects images to be of dtype {self.DEFAULT_IMAGE_DTYPE}. Proceeding with the incorrect dtype can lead to unexpected results."
@@ -638,7 +640,10 @@ class Project(Logable):
 
     def _check_for_interactive_session(self):
         if self.interactive is not None:
-            Warning("Interactive viewer is still open. Will automatically close before proceeding with processing.")
+            warnings.warn(
+                "Interactive viewer is still open. Will automatically close before proceeding with processing.",
+                stacklevel=2,
+            )
             self.close_interactive_viewer()
 
     #### Functions to visualize results ####
@@ -715,15 +720,15 @@ class Project(Logable):
 
         if channels is not None:
             if isinstance(channels[0], int):
-                assert all(
-                    x in range(c) for x in channels
-                ), "The specified channel indices are not found in the spatialdata object."
+                assert all(x in range(c) for x in channels), (
+                    "The specified channel indices are not found in the spatialdata object."
+                )
                 valid_channels = [i for i in channels if isinstance(i, int)]
                 channel_names = [channel_names[i] for i in valid_channels]
             if isinstance(channels[0], str):
-                assert all(
-                    x in channel_names for x in channels
-                ), "The specified channel names are not found in the spatialdata object."
+                assert all(x in channel_names for x in channels), (
+                    "The specified channel names are not found in the spatialdata object."
+                )
                 channel_names = channels
 
             c = len(channels)
@@ -1353,9 +1358,9 @@ class Project(Logable):
 
         self._cleanup_sdata_object()
 
-        assert (
-            len(channel_names) == dask_array.shape[0]
-        ), "Number of channel names does not match number of input images."
+        assert len(channel_names) == dask_array.shape[0], (
+            "Number of channel names does not match number of input images."
+        )
 
         self.channel_names = channel_names
 
@@ -1452,8 +1457,9 @@ class Project(Logable):
             table = sdata_input[table_elem]
             rename_columns = {}
             if self.DEFAULT_CELL_ID_NAME in table.obs:
-                Warning(
-                    f"Column {self.DEFAULT_CELL_ID_NAME} already exists in table. Renaming to `f{self.DEFAULT_CELL_ID_NAME}_orig` to preserve compatibility with scPortrait workflow."
+                warnings.warn(
+                    f"Column {self.DEFAULT_CELL_ID_NAME} already exists in table. Renaming to `f{self.DEFAULT_CELL_ID_NAME}_orig` to preserve compatibility with scPortrait workflow.",
+                    stacklevel=2,
                 )
                 rename_columns[self.DEFAULT_CELL_ID_NAME] = f"{self.DEFAULT_CELL_ID_NAME}_orig"
                 self.log(
@@ -1495,11 +1501,31 @@ class Project(Logable):
 
             self.filehandler._add_centers(segmentation_label=self.cyto_seg_name)
 
+        # read the sdata object from file to ensure we have access to all newly written elements
+        sdata = SpatialData.read(self.sdata_path)
+
         # ensure that if both an nucleus and cytosol segmentation mask are loaded that they match
         if self.nuc_seg_status and self.cyto_seg_status:
-            ids_nuc = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.nuc_seg_name}"].index.values)
-            ids_cyto = set(sdata[f"{self.DEFAULT_CENTERS_NAME}_{self.cyto_seg_name}"].index.values)
-            assert ids_nuc == ids_cyto, "Nucleus and cytosol segmentation masks do not match."
+            ids_nuc = set(sdata["centers_seg_all_nucleus"].index.compute().values)
+            ids_cyto = set(sdata["centers_seg_all_cytosol"].index.compute().values)
+
+            if ids_nuc.issubset(ids_cyto):
+                if not ids_nuc == ids_cyto:
+                    warnings.warn(
+                        "Nucleus segmentation mask is a subset of cytosol segmentation mask, but they do not match exactly. \n This means that cells exist which do not have a nucleus mask but do have a cytosol mask. \n Please be careful when configuring your extraction workflow.",
+                        stacklevel=2,
+                    )
+
+            elif ids_cyto.issubset(ids_nuc):
+                if not ids_cyto == ids_nuc:
+                    warnings.warn(
+                        "Cytosol segmentation mask is a subset of nucleus segmentation mask, but they do not match exactly. \n  This means cells exist which do not have a cytosol mask but do have a nucleus mask. \n Please be careful when configuring your extraction workflow.",
+                        stacklevel=2,
+                    )
+            else:
+                raise ValueError(
+                    "Nucleus and cytosol segmentation masks do not match. This is unexpected and should be investigated."
+                )
 
         self.get_project_status()
 
@@ -1620,9 +1646,9 @@ class Project(Logable):
 
         # check that prerequisits are fullfilled to featurize cells
         assert self.featurization_f is not None, "No featurization method defined."
-        assert (
-            self.nuc_seg_status or self.cyto_seg_status
-        ), "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        assert self.nuc_seg_status or self.cyto_seg_status, (
+            "No nucleus or cytosol segmentation loaded. Please load a segmentation first."
+        )
         assert self.extraction_status, "No single cell data extracted. Please extract single cell data first."
 
         extraction_dir = self.extraction_f.get_directory()
