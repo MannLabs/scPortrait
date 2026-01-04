@@ -6,10 +6,10 @@ Plot single-cell image grid with colorized images
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from scportrait.data._single_cell_images import dataset2_h5sc
 from scportrait.pl.h5sc import _plot_image_grid
 from scportrait.pl.vis import colorize
+
+from scportrait.data._single_cell_images import dataset2_h5sc
 
 # get dataset
 h5sc = dataset2_h5sc()

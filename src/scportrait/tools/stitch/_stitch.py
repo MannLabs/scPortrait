@@ -220,11 +220,11 @@ class Stitcher:
 
             # if all channels should be rescaled to the same range, initialize dictionary with all channels
             if type(self.rescale_range) is tuple:
-                self.rescale_range = {k: self.rescale_range for k in self.channel_names}
+                self.rescale_range = dict.fromkeys(self.channel_names, self.rescale_range)
             else:
-                assert isinstance(
-                    self.rescale_range, dict
-                ), "Please provide either a dictionary containing unique rescale ranges for each channel that should be rescaled individually, or a tuple for all channels."
+                assert isinstance(self.rescale_range, dict), (
+                    "Please provide either a dictionary containing unique rescale ranges for each channel that should be rescaled individually, or a tuple for all channels."
+                )
 
             # check if all channels are in dictionary for rescaling
             rescale_channels = list(self.rescale_range.keys())

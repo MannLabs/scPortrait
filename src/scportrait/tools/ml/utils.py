@@ -228,8 +228,6 @@ def split_dataset_fractions(
     test_concat = ConcatDataset(test_dataset)
     val_concat = ConcatDataset(val_dataset)
 
-    print(
-        f"Total sizes:\n" f"Train: {len(train_concat)}\n" f"Test: {len(test_concat)}\n" f"Validation: {len(val_concat)}"
-    )
+    print(f"Total sizes:\nTrain: {len(train_concat)}\nTest: {len(test_concat)}\nValidation: {len(val_concat)}")
 
     return train_concat, test_concat, val_concat
