@@ -188,9 +188,9 @@ class PhenixParser:
         channel_ids = []
         channel_names = []
         flim_ids = []
-        timepoints = []
-        x_positions = []
-        y_positions = []
+        timepoints: list[int] = []
+        x_positions: list[int] = []
+        y_positions: list[int] = []
         times = []
         url = []
 
@@ -239,13 +239,13 @@ class PhenixParser:
                     flim_ids.append(child.text)
                     continue
                 elif tag == "TimepointID":
-                    timepoints.append(child.text)
+                    timepoints.append(int(child.text))
                     continue
                 elif tag == "PositionX":
-                    x_positions.append(child.text)
+                    x_positions.append(int(child.text))
                     continue
                 elif tag == "PositionY":
-                    y_positions.append(child.text)
+                    y_positions.append(int(child.text))
                     continue
                 elif tag == "AbsTime":
                     times.append(child.text)

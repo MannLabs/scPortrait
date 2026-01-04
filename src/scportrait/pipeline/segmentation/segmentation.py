@@ -7,6 +7,7 @@ import timeit
 import traceback
 import warnings
 from multiprocessing import current_process
+from typing import Optional
 
 import h5py
 import matplotlib.pyplot as plt
@@ -37,24 +38,6 @@ class Segmentation(ProcessingStep):
         identifier (int, default ``None``): Only set if called by :class:`ShardedSegmentation`. Unique index of the shard.
         window (list(tuple), default ``None``): Only set if called by :class:`ShardedSegmentation`. Defines the window which is assigned to the shard. The window will be applied to the input. The first element refers to the first dimension of the image and so on. For example use ``[(0,1000),(0,2000)]`` To crop the image to `1000 px height` and `2000 px width` from the top left corner.
         input_path (str, default ``None``): Only set if called by :class:`ShardedSegmentation`. Location of the input hdf5 file. During sharded segmentation the :class:`ShardedSegmentation` derived helper class will save the input image in form of a hdf5 file. This makes the input image available for parallel reading by the segmentation processes.
-
-    Example:
-        .. code-block:: python
-
-            def process(self):
-                # two maps are initialized
-                self.maps = {"map0": None, "map1": None}
-
-                # its checked if the segmentation directory already contains these maps and they are then loaded. The index of the first map which has not been found is returned. It indicates the step where computation needs to resume
-                current_step = self.load_maps_from_disk()
-
-                if current_step <= 0:
-                    # do stuff and generate map0
-                    self.save_map("map0")
-
-                if current_step <= 1:
-                    # do stuff and generate map1
-                    self.save_map("map1")
 
     """
 
@@ -119,7 +102,7 @@ class Segmentation(ProcessingStep):
             # remove _tmp_seg from kwargs so that underlying classes do not need to account for it
             kwargs.pop("_tmp_seg_path")
 
-        self.identifier = None
+        self.identifier: int | None = None
         self.window = None
         self.input_path = None
         self.is_shard = False
@@ -350,51 +333,6 @@ class Segmentation(ProcessingStep):
                     self.log("No cytosols found in segmentation mask. Please check your processing")
                     warnings.warn("No cytosols found in segmentation mask. Please check your processing", stacklevel=2)
 
-    def save_map(self, map_name: str) -> None:
-        """Saves newly computed map.
-
-        Args:
-            map_name: name of the map to be saved, as defined in ``self.maps``.
-
-        Example:
-
-            .. code-block:: python
-
-                # declare all intermediate maps
-                self.maps = {"myMap": None}
-
-                # load intermediate maps if possible and get current processing step
-                current_step = self.load_maps_from_disk()
-
-                if current_step <= 0:
-                    # do some computations
-
-                    self.maps["myMap"] = myNumpyArray
-
-                    # save map
-                    self.save_map("myMap")
-        """
-
-        if self.maps[map_name] is None:
-            self.log(f"Error saving map {map_name}, map is None")
-        else:
-            map_index = list(self.maps.keys()).index(map_name)
-
-            # check if map contains more than one channel (3, 1024, 1024) vs (1024, 1024)
-            if len(self.maps[map_name].shape) > 2:
-                for i, channel in enumerate(self.maps[map_name]):
-                    channel_name = f"{map_index}_{map_name}_{i}_map"
-                    channel_path = os.path.join(self.directory, channel_name)
-
-                    if self.debug and self.PRINT_MAPS_ON_DEBUG:
-                        self.save_image(channel, save_name=channel_path)
-            else:
-                channel_name = f"{map_index}_{map_name}_map"
-                channel_path = os.path.join(self.directory, channel_name)
-
-                if self.debug and self.PRINT_MAPS_ON_DEBUG:
-                    self.save_image(self.maps[map_name], save_name=channel_path)
-
     def save_image(self, array, save_name="", cmap="magma", **kwargs):
         if np.issubdtype(array.dtype.type, np.integer):
             self.log(f"{save_name} will be saved as tif")
@@ -417,7 +355,7 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
-    def _initialize_as_shard(self, identifier: int, window, input_path, zarr_status=True):
+    def _initialize_as_shard(self, identifier: int | None, window, input_path, zarr_status=True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
         Important:
