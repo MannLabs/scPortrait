@@ -89,9 +89,9 @@ class LMDSelection(ProcessingStep):
         self.savepath = os.path.join(self.directory, savename)
 
         # check that the segmentation label exists
-        assert (
-            self.segmentation_channel_to_select in self.project.filehandler.get_sdata()._shared_keys
-        ), f"Segmentation channel {self.segmentation_channel_to_select} not found in sdata."
+        assert self.segmentation_channel_to_select in self.project.filehandler.get_sdata()._shared_keys, (
+            f"Segmentation channel {self.segmentation_channel_to_select} not found in sdata."
+        )
 
     def __get_coords(
         self, cell_ids: list, centers: list[tuple[int, int]], width: int = 60

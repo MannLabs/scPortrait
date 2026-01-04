@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import io
 import os
 import platform
 import shutil
 import warnings
-from collections.abc import Callable
 from contextlib import redirect_stdout
 from functools import partial as func_partial
 from pathlib import PosixPath
+from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
@@ -22,6 +24,24 @@ from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import H5ScSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from dask.dataframe.core import DataFrame as da_DataFrame
+
+
+from dataclasses import dataclass
+
+
+@dataclass
+class InferenceMemmap:
+    features_path: str
+    labels_path: str
+    cell_ids_path: str
+    n_rows: int
+    n_cols: int
+    var_names: list[str]  # set later
+
 
 class _FeaturizationBase(ProcessingStep):
     DEFAULT_DATA_LOADER = H5ScSingleCellDataset
@@ -31,6 +51,7 @@ class _FeaturizationBase(ProcessingStep):
     ]
     MASK_NAMES = ["nucleus", "cytosol"]
     LABEL: str | None = None
+    FEATURE_DTYPE = np.float32
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -107,9 +128,9 @@ class _FeaturizationBase(ProcessingStep):
         if "channel_selection" in self.config.keys():
             channel_selection = self.config["channel_selection"]
             if isinstance(channel_selection, list):
-                assert all(
-                    isinstance(x, int) for x in channel_selection
-                ), "channel_selection should be a list of integers"
+                assert all(isinstance(x, int) for x in channel_selection), (
+                    "channel_selection should be a list of integers"
+                )
                 self.channel_selection = channel_selection
 
             elif isinstance(channel_selection, int):
@@ -146,6 +167,11 @@ class _FeaturizationBase(ProcessingStep):
                 # strings are encoded as bytes in HDF5 files, decode them to strings
                 self.channel_names = metadata["channel_names"].asstr()[:]
                 self.channel_mapping = metadata["channel_mapping"].asstr()[:]
+                self.segmentation_channel = [
+                    metadata["channel_names"].asstr()[i]
+                    for i, v in enumerate(metadata["channel_mapping"].asstr()[:])
+                    if v == "mask"
+                ][0]
 
                 # variable metadata can be saved directly to self
                 self.n_cells.append(metadata["n_cells"][()])
@@ -157,6 +183,7 @@ class _FeaturizationBase(ProcessingStep):
             n_masks = []
             channel_names = []
             channel_mapping = []
+            segmentation_channel = []
 
             # metadata that can be different across files -> saved directly into self
 
@@ -173,21 +200,33 @@ class _FeaturizationBase(ProcessingStep):
 
                     # variable metadata can be saved directly to self
                     self.n_cells.append(metadata["n_cells"][()])
+                    segmentation_channel.append(
+                        [
+                            (
+                                metadata["channel_names"].asstr()[i]
+                                for i, v in enumerate(metadata["channel_mapping"].asstr()[:])
+                                if v == "mask"
+                            )
+                        ][0]
+                    )
 
             # check to ensure that metadata that must be consistent between datasets is
             assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
-            assert (
-                x == n_channels[0] for x in n_channels
-            ), "number of channels are not consistent over all passed input files."
-            assert (
-                x == n_image_channels[0] for x in n_image_channels
-            ), "number of image channels are not consistent over all passed input files."
-            assert (
-                x == channel_mapping[0] for x in channel_mapping
-            ), "channel mapping is not consistent over all passed input files."
-            assert (
-                x == channel_names[0] for x in channel_names
-            ), "channel names are not consistent over all passed input files."
+            assert (x == n_channels[0] for x in n_channels), (
+                "number of channels are not consistent over all passed input files."
+            )
+            assert (x == n_image_channels[0] for x in n_image_channels), (
+                "number of image channels are not consistent over all passed input files."
+            )
+            assert (x == channel_mapping[0] for x in channel_mapping), (
+                "channel mapping is not consistent over all passed input files."
+            )
+            assert (x == channel_names[0] for x in channel_names), (
+                "channel names are not consistent over all passed input files."
+            )
+            assert (x == segmentation_channel[0] for x in segmentation_channel), (
+                "segmentation channel is not consistent over all passed input files."
+            )
 
             # set variable names after assertions have passed to the first instance of each value
             self.n_masks = n_masks[0]
@@ -195,6 +234,7 @@ class _FeaturizationBase(ProcessingStep):
             self.n_image_channels = n_image_channels[0]
             self.channel_names = channel_names[0]
             self.channel_mapping = channel_mapping[0]
+            self.segmentation_channel = segmentation_channel[0]
 
         # get names for masks and image channels seperately
         self.mask_names = [
@@ -336,6 +376,8 @@ class _FeaturizationBase(ProcessingStep):
         if self.inference_device == "cpu":
             return None
 
+        if isinstance(self.inference_device, str):
+            self.inference_device = torch.device(self.inference_device)
         elif self.inference_device == torch.device("cuda"):
             try:
                 memory_usage = []
@@ -525,9 +567,9 @@ class _FeaturizationBase(ProcessingStep):
         # generate dataset
         self.log(f"Reading data from path: {dataset_paths}")
 
-        assert isinstance(
-            self.transforms, transforms.Compose
-        ), f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        assert isinstance(self.transforms, transforms.Compose), (
+            f"Transforms should be a torchvision.transforms.Compose object but recieved {self.transforms.__class__} instead."
+        )
         t = self.transforms
 
         if self.expected_imagesize is not None:
@@ -535,15 +577,15 @@ class _FeaturizationBase(ProcessingStep):
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
         if isinstance(dataset_paths, list):
-            assert isinstance(
-                dataset_labels, list
-            ), "If multiple directories are provided, multiple labels must be provided."
+            assert isinstance(dataset_labels, list), (
+                "If multiple directories are provided, multiple labels must be provided."
+            )
             paths = dataset_paths
             dataset_labels = dataset_labels
         elif isinstance(dataset_paths, str):
-            assert isinstance(
-                dataset_labels, int
-            ), "If only one directory is provided, only one label must be provided."
+            assert isinstance(dataset_labels, int), (
+                "If only one directory is provided, only one label must be provided."
+            )
             paths = [dataset_paths]
             dataset_labels = [dataset_labels]
 
@@ -625,7 +667,8 @@ class _FeaturizationBase(ProcessingStep):
         pooler_output: bool = False,
         column_names: list | None = None,
         out_of_memory: bool = True,
-    ) -> pd.DataFrame:
+        return_memmap: bool = True,
+    ) -> pd.DataFrame | InferenceMemmap:
         """performs inference on a specific provided model and dataloader.
 
         Args:
@@ -660,10 +703,10 @@ class _FeaturizationBase(ProcessingStep):
             if out_of_memory:
                 # use memory-mapped temp arrays to provide out-of-memory support
                 features_path = tempmmap.create_empty_mmap(
-                    shape_features, dtype=np.float32, tmp_dir_abs_path=self._tmp_dir_path
+                    shape_features, dtype=self.FEATURE_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
                 )
                 cell_ids_path = tempmmap.create_empty_mmap(
-                    shape_labels, dtype=np.int64, tmp_dir_abs_path=self._tmp_dir_path
+                    shape_labels, dtype=self.DEFAULT_SEGMENTATION_DTYPE, tmp_dir_abs_path=self._tmp_dir_path
                 )
                 labels_path = tempmmap.create_empty_mmap(
                     shape_labels, dtype=np.int64, tmp_dir_abs_path=self._tmp_dir_path
@@ -675,8 +718,8 @@ class _FeaturizationBase(ProcessingStep):
 
             else:
                 # use numpy arrays
-                features = np.zeros(shape_features, dtype=np.float32)
-                cell_ids = np.zeros(shape_labels, dtype=np.int64)
+                features = np.zeros(shape_features, dtype=self.FEATURE_DTYPE)
+                cell_ids = np.zeros(shape_labels, dtype=self.DEFAULT_SEGMENTATION_DTYPE)
                 labels = np.zeros(shape_labels, dtype=np.int64)
 
             # save the results for each batch into the storage container at the specified indices
@@ -712,22 +755,43 @@ class _FeaturizationBase(ProcessingStep):
         if column_names is None:
             column_names = [f"result_{i}" for i in range(features.shape[1])]
 
+        if return_memmap and out_of_memory:
+            # does not build a dataframe in memory but instead only preserves the paths to the memmap files
+            self.log("Finished processing, returning results as memmap files.")
+            return InferenceMemmap(
+                features_path=features_path,
+                labels_path=labels_path,
+                cell_ids_path=cell_ids_path,
+                n_rows=shape_features[0],
+                n_cols=shape_features[1],
+                var_names=column_names,
+            )
+
+        # old behavior preserved when return_memmap=False
         dataframe = pd.DataFrame(data=features, columns=column_names)
         dataframe["label"] = labels
         dataframe[self.DEFAULT_CELL_ID_NAME] = cell_ids.astype("int")
-
-        self.log("finished processing.")
-
+        self.log("Finished processing, returning results as pandas DataFrame.")
         return dataframe
 
     #### Results writing functions ####
+
+    def _get_centers_object(self) -> None | da_DataFrame:
+        """Get the spatial coordinates to add to the results."""
+
+        centers_name = f"{self.DEFAULT_CENTERS_NAME}_{self.segmentation_channel}"
+
+        if self.project is not None:
+            return self.project.sdata[centers_name]
+        else:
+            return None
 
     def _write_results_csv(self, results: pd.DataFrame, path: str | PosixPath) -> None:
         """Write results to a CSV file."""
         results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")
 
-    def _write_results_sdata(self, results: pd.DataFrame, label: str, mask_type: str = "seg_all") -> None:
+    def _write_results_sdata(self, mm: InferenceMemmap, label: str, mask_type: str = "seg_all") -> None:
         """Add results to the spatialdata object.
 
         Args:
@@ -735,29 +799,42 @@ class _FeaturizationBase(ProcessingStep):
             label: Label for the results.
             mask_type: Type of mask used for the results. Defaults to "seg_all".
         """
-        cell_ids = results[self.DEFAULT_CELL_ID_NAME].values.astype(self.DEFAULT_SEGMENTATION_DTYPE)
-        results.drop(columns=[self.DEFAULT_CELL_ID_NAME, "label"], inplace=True)
-        feature_matrix = results.to_numpy()
-        var_names = results.columns
-        obs_indices = results.index.astype(str)
+        # reopen as memmaps
+        feature_matrix = tempmmap.mmap_array_from_path(mm.features_path)
+        cell_ids = tempmmap.mmap_array_from_path(mm.cell_ids_path)
+
+        var_names = mm.var_names
+        obs_indices = np.arange(mm.n_rows).astype(str)  # or your original index order if you have one
+
+        if self._get_centers_object() is not None:
+            coords = self._get_centers_object().compute()
+            coords = coords.loc[
+                cell_ids.ravel(), :
+            ].values  # ensure that the coordinates are in the same order as the results
+        else:
+            coords = None
+
+        def _make_table(region_suffix: str) -> AnnData:
+            obs = pd.DataFrame(index=obs_indices)
+            obs[self.DEFAULT_CELL_ID_NAME] = np.asarray(cell_ids).ravel().astype(self.DEFAULT_SEGMENTATION_DTYPE)
+            obs["region"] = f"{mask_type}_{region_suffix}"
+            obs["region"] = obs["region"].astype("category")
+
+            var = pd.DataFrame(index=pd.Index(var_names, name=None))
+            X = feature_matrix  # np.memmap, zero-copy view
+            ad = AnnData(X=X, var=var, obs=obs)
+            if coords is not None:
+                ad.obsm["spatial"] = coords
+            return TableModel.parse(
+                ad,
+                region=[f"{mask_type}_{region_suffix}"],
+                region_key="region",
+                instance_key=self.DEFAULT_CELL_ID_NAME,
+            )
 
         if self.project is not None:
             if self.project.nuc_seg_status:
-                # save nucleus segmentation
-                obs = pd.DataFrame()
-                obs.index = obs_indices
-                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-                obs["region"] = f"{mask_type}_{self.MASK_NAMES[0]}"
-                obs["region"] = obs["region"].astype("category")
-
-                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-                table = TableModel.parse(
-                    table,
-                    region=[f"{mask_type}_{self.MASK_NAMES[0]}"],
-                    region_key="region",
-                    instance_key=self.DEFAULT_CELL_ID_NAME,
-                )
-
+                table = _make_table(self.MASK_NAMES[0])
                 self.filehandler._write_table_object_sdata(
                     table,
                     f"{label}_{self.MASK_NAMES[0]}",
@@ -765,21 +842,7 @@ class _FeaturizationBase(ProcessingStep):
                 )
 
             if self.project.cyto_seg_status:
-                # save cytoplasm segmentation
-                obs = pd.DataFrame()
-                obs.index = obs_indices
-                obs[self.DEFAULT_CELL_ID_NAME] = cell_ids
-                obs["region"] = f"{mask_type}_{self.MASK_NAMES[1]}"
-                obs["region"] = obs["region"].astype("category")
-
-                table = AnnData(X=feature_matrix, var=pd.DataFrame(index=var_names), obs=obs)
-                table = TableModel.parse(
-                    table,
-                    region=[f"{mask_type}_{self.MASK_NAMES[1]}"],
-                    region_key="region",
-                    instance_key=self.DEFAULT_CELL_ID_NAME,
-                )
-
+                table = _make_table(self.MASK_NAMES[1])
                 self.filehandler._write_table_object_sdata(
                     table,
                     f"{label}_{self.MASK_NAMES[1]}",
@@ -860,9 +923,9 @@ class MLClusterClassifier(_FeaturizationBase):
             self._clean_log_file()
 
         # checks for additional essential parameters in the config file
-        assert (
-            self.label is not None
-        ), "'label' must be specified in the config file. This is the label used to save the results."
+        assert self.label is not None, (
+            "'label' must be specified in the config file. This is the label used to save the results."
+        )
 
     def _get_network_dir(self) -> pl.LightningModule:
         if self.network_dir in self.PRETRAINED_MODEL_NAMES:
@@ -1043,8 +1106,8 @@ class MLClusterClassifier(_FeaturizationBase):
                 output_name = f"inference_{model.__name__}"
                 path = os.path.join(self.run_path, f"{output_name}.csv")
 
-                self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{self.label}_{model.__name__}")
+                # self._write_results_csv(results, path)
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{self.label}_{model.__name__}")
             else:
                 all_results.append(results)
 
@@ -1080,9 +1143,9 @@ class EnsembleClassifier(_FeaturizationBase):
             self._clean_log_file()
 
         # checks for additional essential parameters in the config file
-        assert (
-            self.label is not None
-        ), "'label' musst be specified in the config file. This is the label used to save the results."
+        assert self.label is not None, (
+            "'label' musst be specified in the config file. This is the label used to save the results."
+        )
 
     def _setup_transforms(self):
         if self.transforms is not None:
@@ -1207,10 +1270,10 @@ class EnsembleClassifier(_FeaturizationBase):
             output_name = f"ensemble_inference_{model_name}"
 
             if not return_results:
-                path = os.path.join(self.run_path, f"{output_name}.csv")
+                os.path.join(self.run_path, f"{output_name}.csv")
 
-                self._write_results_csv(results, path)
-                self._write_results_sdata(results, label=f"{self.__class__.__name__ }_{model_name}")
+                # self._write_results_csv(results, path)
+                self._write_results_sdata(results, label=f"{self.__class__.__name__}_{model_name}")
             else:
                 all_results[model_name] = results
 
@@ -1407,9 +1470,9 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             return results
         else:
             output_name = "calculated_image_features"
-            path = os.path.join(self.run_path, f"{output_name}.csv")
+            os.path.join(self.run_path, f"{output_name}.csv")
 
-            self._write_results_csv(results, path)
+            # self._write_results_csv(results, path)
             self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
@@ -1661,9 +1724,9 @@ class CellFeaturizer(_cellFeaturizerBase):
             return results
         else:
             output_name = "calculated_image_features"
-            path = os.path.join(self.run_path, f"{output_name}.csv")
+            os.path.join(self.run_path, f"{output_name}.csv")
 
-            self._write_results_csv(results, path)
+            # self._write_results_csv(results, path)
             self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup
@@ -1786,9 +1849,9 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             return results
         else:
             output_name = f"calculated_image_features_Channel_{channel_name}"
-            path = os.path.join(self.run_path, f"{output_name}.csv")
+            os.path.join(self.run_path, f"{output_name}.csv")
 
-            self._write_results_csv(results, path)
+            # self._write_results_csv(results, path)
             self._write_results_sdata(results, label=self.label)
 
             # perform post processing cleanup

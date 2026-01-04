@@ -313,9 +313,9 @@ def cell_grid_multi_channel(
         _cell_ids = adata.obs[DEFAULT_CELL_ID_NAME].sample(n_cells).values
 
     if row_labels is not None:
-        assert (
-            show_cell_id is False
-        ), "If manually providing row_labels, can not automatically annotate rows with cell IDs. Set `show_cell_id` to False."
+        assert show_cell_id is False, (
+            "If manually providing row_labels, can not automatically annotate rows with cell IDs. Set `show_cell_id` to False."
+        )
         assert len(row_labels) == n_cells, "Length of `row_labels` must match the number of cells to be visualized."
     else:
         row_labels = [f"cell ID {_id}" for _id in _cell_ids] if show_cell_id else None
