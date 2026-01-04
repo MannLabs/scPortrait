@@ -1583,12 +1583,7 @@ class _cellFeaturizerBase(_FeaturizationBase):
             img_selected = img[:, channel]
 
             for mask in masks:
-                mask[mask == 0] = torch.nan
-
-                # apply mask to channel to only compute the statistics over the pixels that are relevant
-                _img_selected = (img_selected * mask).to(
-                    torch.float32
-                )  # ensure we have correct dytpe for subsequent calculations
+                _img_selected = img_selected.masked_fill(~mask, torch.nan).to(torch.float32)
 
                 mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
                 median = _img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
