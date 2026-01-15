@@ -63,7 +63,7 @@ def _download(
                 return
             else:
                 print(f"{warning} Overwriting...")
-        
+
         headers = {"User-Agent": "scPortrait"}
         response = requests.get(url, stream=True, headers=headers)
         response.raise_for_status()
