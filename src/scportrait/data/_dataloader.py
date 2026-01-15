@@ -64,7 +64,9 @@ def _download(
             else:
                 print(f"{warning} Overwriting...")
 
-        response = requests.get(url, stream=True)
+        headers = {"User-Agent": "scPortrait"}
+        response = requests.get(url, stream=True, headers=headers)
+        response.raise_for_status()
         total = int(response.headers.get("content-length", 0))
 
         temp_file_name = f"{download_to_path}.part"
