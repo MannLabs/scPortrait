@@ -3,8 +3,10 @@
 import warnings
 from collections.abc import Iterable
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from anndata import AnnData
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -221,7 +223,20 @@ def cell_grid_single_channel(
         fig = ax.get_figure()
 
     spacing = spacing * single_cell_size
-    images = get_image_with_cellid(adata, _cell_ids, channel_id)
+
+    # Collect images in a list
+    if isinstance(adata.obsm["single_cell_images"], h5py.Dataset):
+        # if working on a memory-backed array
+        images = get_image_with_cellid(adata, _cell_ids, channel_id)
+
+    else:
+        # non backed h5sc adata objects can be accessed directly
+        # these are created by slicing original h5sc objects
+        col = "scportrait_cell_id"
+        mapping = pd.Series(data=np.arange(len(adata.obs), dtype=int), index=adata.obs[col].values)
+        idx = mapping.loc[_cell_ids].to_numpy()
+        images = adata.obsm["single_cell_images"][idx, channel_id, :, :]
+
     _plot_image_grid(
         ax,
         images,
@@ -309,7 +324,18 @@ def cell_grid_multi_channel(
     channel_names = adata.uns["single_cell_images"]["channel_names"]
 
     # Collect images in a list
-    images = get_image_with_cellid(adata, _cell_ids)
+    if isinstance(adata.obsm["single_cell_images"], h5py.Dataset):
+        # if working on a memory-backed array
+        images = get_image_with_cellid(adata, _cell_ids)
+
+    else:
+        # non backed h5sc adata objects can be accessed directly
+        # these are created by slicing original h5sc objects
+        col = "scportrait_cell_id"
+        mapping = pd.Series(data=np.arange(len(adata.obs), dtype=int), index=adata.obs[col].values)
+        idx = mapping.loc[_cell_ids].to_numpy()
+        images = adata.obsm["single_cell_images"][idx]
+
     if select_channels is not None:
         if not isinstance(select_channels, Iterable):
             select_channels = [select_channels]
