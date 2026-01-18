@@ -250,16 +250,19 @@ def subset_h5sc(adata: AnnData, cell_id: int | list[int], outpath: str | Path) -
     # initialize the obsm with the single cell images
     orig = adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
     single_cell_data_shape = (len(idx),) + orig.shape[1:]
+    chunks = orig.chunks if hasattr(orig, "chunks") else None
+    compression = orig.compression if hasattr(orig, "compression") else None
     with h5py.File(outpath, "a") as hf:
         hf.create_dataset(
             IMAGE_DATACONTAINER_NAME,
             shape=single_cell_data_shape,
-            chunks=orig.chunks,
-            compression=orig.compression,
+            chunks=chunks,
+            compression=compression,
             dtype=orig.dtype,
         )
-        for key, value in orig.attrs.items():
-            hf[IMAGE_DATACONTAINER_NAME].attrs[key] = value
+        if hasattr(orig, "attrs"):
+            for key, value in orig.attrs.items():
+                hf[IMAGE_DATACONTAINER_NAME].attrs[key] = value
 
         # transfer the images
         for i, ix in enumerate(idx):
