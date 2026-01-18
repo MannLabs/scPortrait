@@ -15,13 +15,13 @@ def get_bounding_box_sdata(
     """apply bounding box to sdata object
 
     Args:
-        sdata: spatialdata object
+        sdata: SpatialData object
         max_width: maximum width of the bounding box
         center_x: x coordinate of the center of the bounding box
         center_y: y coordinate of the center of the bounding box
 
     Returns:
-        spatialdata object with bounding box applied
+        SpatialData object with bounding box applied
     """
     _sdata = sdata
     # remove points object to improve subsetting
