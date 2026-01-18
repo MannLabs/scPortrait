@@ -10,14 +10,6 @@ from spatialdata.datasets import blobs
 from scportrait.plotting import sdata as plotting
 
 
-@pytest.fixture
-def sdata():
-    sdata = blobs()
-    sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
-    sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
-    return sdata  # provides images and labels used in tests
-
-
 @pytest.mark.parametrize(
     "channel_names, palette, return_fig, show_fig",
     [
@@ -26,9 +18,9 @@ def sdata():
         ([0, 1], None, False, False),
     ],
 )
-def test_plot_image(sdata, channel_names, palette, return_fig, show_fig):
+def test_plot_image(sdata_with_labels, channel_names, palette, return_fig, show_fig):
     fig = plotting.plot_image(
-        sdata=sdata,
+        sdata=sdata_with_labels,
         image_name="blobs_image",
         channel_names=channel_names,
         palette=palette,
@@ -51,9 +43,9 @@ def test_plot_image(sdata, channel_names, palette, return_fig, show_fig):
         (None, None),  # test only mask overlay without image
     ],
 )
-def test_plot_segmentation_mask(sdata, selected_channels, background_image):
+def test_plot_segmentation_mask(sdata_with_labels, selected_channels, background_image):
     fig = plotting.plot_segmentation_mask(
-        sdata=sdata,
+        sdata=sdata_with_labels,
         masks=["blobs_labels"],
         background_image=background_image,
         selected_channels=selected_channels,
@@ -73,9 +65,9 @@ def test_plot_segmentation_mask(sdata, selected_channels, background_image):
         (True, "labelling_continous"),
     ],
 )
-def test_plot_labels(sdata, vectorized, color):
+def test_plot_labels(sdata_with_labels, vectorized, color):
     fig = plotting.plot_labels(
-        sdata=sdata,
+        sdata=sdata_with_labels,
         label_layer="blobs_labels",
         vectorized=vectorized,
         color=color,

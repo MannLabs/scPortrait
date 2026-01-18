@@ -1,0 +1,62 @@
+import shutil
+
+import numpy as np
+import pandas as pd
+import pytest
+from anndata import AnnData
+from spatialdata import SpatialData
+from spatialdata.datasets import blobs
+
+rng = np.random.default_rng()
+
+
+@pytest.fixture
+def h5sc_object() -> AnnData:
+    # Two cells, two channels, small images
+    cell_ids = [101, 102, 107, 109]
+    n_cells = 4
+    channel_names = np.array(["seg_all_nucleus", "ch0", "ch1"])
+    channel_mapping = np.array(["mask", "image", "image"])  # or whatever mapping your code expects
+    n_channels = len(channel_names)
+    H, W = 10, 10
+
+    # --- obs ---
+    obs = pd.DataFrame({"scportrait_cell_id": cell_ids}, index=np.arange(n_cells))
+
+    # --- var (channel metadata) ---
+    var = pd.DataFrame(index=np.arange(n_channels).astype("str"))
+    var["channels"] = channel_names
+    var["channel_mapping"] = channel_mapping
+
+    adata = AnnData(obs=obs, var=var)
+    adata.obsm["single_cell_images"] = rng.random((n_cells, n_channels, H, W))
+    adata.uns["single_cell_images"] = {
+        "channel_mapping": channel_mapping,
+        "channel_names": channel_names,
+        "compression": "lzf",
+        "image_size": np.int64(H),
+        "n_cells": np.int64(n_cells),
+        "n_channels": np.int64(n_channels),
+        "n_image_channels": np.int64(n_channels - 1),
+        "n_masks": np.int64(1),
+    }
+
+    yield adata
+
+
+@pytest.fixture()
+def sdata(tmp_path) -> SpatialData:
+    sdata = blobs()
+    # Write to temporary location
+    sdata_path = tmp_path / "sdata.zarr"
+    sdata.write(sdata_path)
+    yield sdata
+    shutil.rmtree(sdata_path)
+
+
+@pytest.fixture
+def sdata_with_labels() -> SpatialData:
+    sdata = blobs()
+    sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
+    sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
+    return sdata

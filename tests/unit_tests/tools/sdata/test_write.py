@@ -8,16 +8,6 @@ from spatialdata.datasets import blobs
 
 
 @pytest.fixture()
-def sdata(tmp_path):
-    sdata = blobs()
-    # Write to temporary location
-    sdata_path = tmp_path / "sdata.zarr"
-    sdata.write(sdata_path)
-    yield sdata
-    shutil.rmtree(sdata_path)
-
-
-@pytest.fixture()
 def sdata_path(tmp_path):
     # Write to temporary location
     sdata_path = tmp_path / "sdata_new.zarr"
