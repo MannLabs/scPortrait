@@ -52,3 +52,11 @@ def sdata(tmp_path) -> SpatialData:
     sdata.write(sdata_path)
     yield sdata
     shutil.rmtree(sdata_path)
+
+
+@pytest.fixture
+def sdata_with_labels() -> SpatialData:
+    sdata = blobs()
+    sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
+    sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
+    return sdata
