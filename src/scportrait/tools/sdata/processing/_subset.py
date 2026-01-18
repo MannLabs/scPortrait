@@ -1,12 +1,12 @@
 import copy
 import warnings
 
-import spatialdata
+from spatialdata import SpatialData
 
 
 def get_bounding_box_sdata(
-    sdata: spatialdata, max_width: int, center_x: int, center_y: int, drop_points: bool = True
-) -> spatialdata:
+    sdata: SpatialData, max_width: int, center_x: int, center_y: int, drop_points: bool = True
+) -> SpatialData:
     """apply bounding box to sdata object
 
     Args:
@@ -16,7 +16,7 @@ def get_bounding_box_sdata(
         center_y: y coordinate of the center of the bounding box
 
     Returns:
-        spatialdata: spatialdata object with bounding box applied
+        spatialdata object with bounding box applied
     """
     _sdata = sdata
     # remove points object to improve subsetting
@@ -54,7 +54,7 @@ def get_bounding_box_sdata(
 
     if drop_points:
         # re-add points object
-        __sdata = spatialdata.SpatialData.read(sdata.path, selection=["points"])
+        __sdata = SpatialData.read(sdata.path, selection=["points"])
         for x in points_keys:
             sdata[x] = __sdata[x]
         del __sdata
