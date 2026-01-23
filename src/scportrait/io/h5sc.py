@@ -2,10 +2,18 @@ from pathlib import Path
 from typing import Literal
 
 import h5py
+import numpy as np
+import pandas as pd
 from anndata import AnnData
 from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
 
-from scportrait.pipeline._utils.constants import DEFAULT_NAME_SINGLE_CELL_IMAGES, IMAGE_DATACONTAINER_NAME
+from scportrait.pipeline._utils.constants import (
+    DEFAULT_CELL_ID_NAME,
+    DEFAULT_NAME_SINGLE_CELL_IMAGES,
+    DEFAULT_SEGMENTATION_DTYPE,
+    DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+    IMAGE_DATACONTAINER_NAME,
+)
 
 
 def read_h5sc(filename: str | Path) -> AnnData:
@@ -45,3 +53,200 @@ def read_h5sc(filename: str | Path) -> AnnData:
 
     adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = f.get(IMAGE_DATACONTAINER_NAME)
     return adata
+
+
+def numpy_to_h5sc(
+    mask_names,
+    channel_names,
+    mask_imgs,
+    channel_imgs,
+    output_path,
+    cell_ids,
+    cell_metadata=None,
+    compression_type="gzip",
+):
+    """
+    Create and write an scPortrait-style `.h5sc` file from NumPy arrays of single-cell
+    masks and image channels, with optional per-cell metadata.
+
+    This function builds a valid AnnData-backed HDF5 container following the scPortrait
+    “H5SC” convention. Internally, the file is a standard AnnData `.h5ad` structure whose
+    filename ends in `.h5sc`, and which contains a 4D image tensor stored at:
+
+        /obsm/single_cell_images
+
+    with shape:
+
+        (N, C, H, W)
+
+    where:
+        N = number of cells
+        C = n_masks + n_image_channels
+        H = image height
+        W = image width
+
+    The mask channels are stored first, followed by the image channels. All data are
+    written as a single float16 HDF5 dataset, with mask values encoded as 0.0 and 1.0.
+
+    Cell identifiers and optional per-cell metadata are written to `adata.obs`.
+
+    Metadata are written redundantly:
+        - At the AnnData level in `adata.uns[...]`
+        - At the HDF5 level as attributes on `/obsm/single_cell_images`
+
+    This allows the file to be read both via AnnData and as a standalone HDF5 image
+    container.
+
+    Parameters
+    ----------
+    mask_names : sequence of str
+        Names of the mask channels. Length must match `mask_imgs.shape[1]`.
+
+    channel_names : sequence of str
+        Names of the image channels. Length must match `channel_imgs.shape[1]`.
+
+    mask_imgs : np.ndarray
+        Array of mask images with shape `(N, n_masks, H, W)`.
+        Masks are expected to be binary (0 or 1) and will be stored as float16.
+
+    channel_imgs : np.ndarray
+        Array of image channels with shape `(N, n_image_channels, H, W)`.
+        Images should already be normalized (e.g., to [0, 1]) before writing.
+
+    output_path : str
+        Path of the `.h5sc` file to create, e.g. `"/path/to/file.h5sc"`.
+        The file will be overwritten if it already exists.
+
+    cell_ids : np.ndarray
+        Array of segmentation cell identifiers with shape `(N,)`.
+        These values are written into `adata.obs[DEFAULT_CELL_ID_NAME]` and define the
+        mapping between row index and original segmentation label.
+
+    cell_metadata : pandas.DataFrame or None, optional (default: None)
+        Optional per-cell metadata to be written into `adata.obs`.
+        Must have exactly `N` rows. Columns will be merged into `obs` alongside the
+        cell ID column. The index is ignored and replaced by AnnData’s internal index.
+
+    compression_type : {"gzip", "lzf"}, optional (default: "gzip")
+        HDF5 compression algorithm used for the image tensor.
+        - "gzip": better compression, slower I/O
+        - "lzf" : faster I/O, lower compression ratio
+
+    File layout created
+    -------------------
+    The resulting file contains:
+
+        /obs
+            Per-cell metadata including cell IDs and optional user-provided metadata.
+        /var
+            Channel metadata (channel names and channel mapping).
+        /uns
+            scPortrait metadata describing the image container.
+        /obsm/single_cell_images
+            HDF5 dataset with shape (N, C, H, W), dtype float16, chunked as
+            (1, 1, H, W), compressed.
+
+    Notes
+    -----
+    - The file is technically an AnnData `.h5ad` file with a `.h5sc` extension.
+    - Masks and image channels share a single dataset and dtype (`float16`).
+    - The function performs a single-threaded write; no file locking is used.
+    - All input arrays are cast to the storage dtype before writing.
+
+    Raises
+    ------
+    Exception
+        If:
+        - `mask_imgs` and `channel_imgs` have different numbers of cells,
+        - the number of provided channel names does not match the array shapes,
+        - `cell_metadata` does not have `N` rows,
+        - an unsupported compression type is requested.
+    """
+    if mask_imgs.shape[0] != channel_imgs.shape[0]:
+        raise Exception(
+            "mask_imgs and channel_imgs do not contain the same number of cells. The expected shape is (N, C, H, W)."
+        )
+    # check mask_names and channel_names fit to imgs shape-wise
+    if len(mask_names) != mask_imgs.shape[1]:
+        raise Exception(
+            "mask_names needs to match mask_imgs.shape[0]. You need to pass the same number of masks and labels."
+        )
+    if len(channel_names) != channel_imgs.shape[1]:
+        raise Exception(
+            "channel_names needs to match channel_imgs.shape[0]. You need to pass the same number of image channels and labels."
+        )
+    if compression_type not in ["gzip", "lzf"]:
+        raise Exception("Compression needs to be lzf or gzip.")
+
+    channels = np.concatenate([mask_names, channel_names])
+    num_cells = channel_imgs.shape[0]
+    img_size = channel_imgs.shape[2:4]
+    cell_ids = cell_ids.astype(DEFAULT_SEGMENTATION_DTYPE, copy=False)
+    all_imgs = np.concatenate([mask_imgs, channel_imgs], axis=1)
+    all_imgs = all_imgs.astype(DEFAULT_SINGLE_CELL_IMAGE_DTYPE, copy=False)
+
+    channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
+
+    # create var object with channel names and their mapping to mask or image channels
+    vars = pd.DataFrame(index=np.arange(len(channels)).astype("str"))
+    vars["channels"] = channels
+    vars["channel_mapping"] = channel_mapping
+
+    obs = pd.DataFrame({DEFAULT_CELL_ID_NAME: cell_ids})
+    obs.index = obs.index.values.astype("str")
+    if cell_metadata is not None:
+        for col in cell_metadata.columns:
+            obs[col] = cell_metadata[col].values
+
+    # create anndata object
+    adata = AnnData(obs=obs, var=vars)
+
+    # add additional metadata to `uns`
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = num_cells
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = len(channels)
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = mask_imgs.shape[1]
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = channel_imgs.shape[1]
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = img_size[0]
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_y"] = img_size[1]
+    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
+    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
+    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channels
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(channel_mapping, dtype="<U15")
+    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = compression_type
+
+    # write to file
+    adata.write(output_path)
+
+    # add an empty HDF5 dataset to the obsm group of the anndata object
+    with h5py.File(output_path, "a") as hf:
+        hf.create_dataset(
+            IMAGE_DATACONTAINER_NAME,
+            shape=all_imgs.shape,
+            chunks=(1, 1, img_size[0], img_size[1]),
+            compression=compression_type,
+            dtype=DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+        )
+
+        # add required metadata from anndata package
+        hf[IMAGE_DATACONTAINER_NAME].attrs["encoding-type"] = "array"
+        hf[IMAGE_DATACONTAINER_NAME].attrs["encoding-version"] = "0.2.0"
+
+        # add relevant metadata to the single-cell image container
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_cells"] = num_cells
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_channels"] = len(channels)
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_masks"] = mask_imgs.shape[1]
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"] = channel_imgs.shape[1]
+        hf[IMAGE_DATACONTAINER_NAME].attrs["image_size_x"] = img_size[0]
+        hf[IMAGE_DATACONTAINER_NAME].attrs["image_size_y"] = img_size[1]
+        # hf[IMAGE_DATACONTAINER_NAME].attrs["normalization"] = self.normalization
+        # hf[IMAGE_DATACONTAINER_NAME].attrs["normalization_range"] = self.normalization_range
+        hf[IMAGE_DATACONTAINER_NAME].attrs["channel_names"] = np.array([x.encode("utf-8") for x in channels])
+        mapping_values = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
+        hf[IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"] = np.array([x.encode("utf-8") for x in mapping_values])
+        hf[IMAGE_DATACONTAINER_NAME].attrs["compression"] = compression_type
+
+        # Write images to .h5sc file, single thread
+        with h5py.File(output_path, "a") as hf:
+            single_cell_data_container: h5py.Dataset = hf[IMAGE_DATACONTAINER_NAME]
+            single_cell_data_container[0 : all_imgs.shape[0], :, :, :] = all_imgs
