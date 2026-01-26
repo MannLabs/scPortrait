@@ -1,13 +1,28 @@
 import shutil
 
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
+from matplotlib.figure import Figure
 from spatialdata import SpatialData
 from spatialdata.datasets import blobs
 
+from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
+
 rng = np.random.default_rng()
+
+
+@pytest.fixture(autouse=True)
+def _disable_matplotlib_show(monkeypatch):
+    # Force a non-interactive backend for e2e runs
+    matplotlib.use("Agg", force=True)
+
+    # Disable any implicit rendering during tests
+    monkeypatch.setattr(plt, "show", lambda *args, **kwargs: None)
+    monkeypatch.setattr(Figure, "show", lambda *args, **kwargs: None)
 
 
 @pytest.fixture
@@ -47,6 +62,7 @@ def h5sc_object() -> AnnData:
 @pytest.fixture()
 def sdata(tmp_path) -> SpatialData:
     sdata = blobs()
+    _normalize_anndata_strings(sdata["table"])
     # Write to temporary location
     sdata_path = tmp_path / "sdata.zarr"
     sdata.write(sdata_path)
@@ -57,6 +73,7 @@ def sdata(tmp_path) -> SpatialData:
 @pytest.fixture
 def sdata_with_labels() -> SpatialData:
     sdata = blobs()
+    _normalize_anndata_strings(sdata["table"])
     sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
     sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
     return sdata

@@ -1,8 +1,10 @@
 import shutil
 
 import numpy as np
+import pandas as pd
 import pytest
 import scportrait.tl.sdata.write as write
+from anndata import AnnData
 from spatialdata import SpatialData, read_zarr
 from spatialdata.datasets import blobs
 
@@ -57,6 +59,31 @@ def test_add_element_sdata(sdata, sdata_path, element_name):
     # ensure it was written to disk
     sdata = read_zarr(sdata_path)
     assert element_name in sdata
+
+
+def _make_table_from_dataframe() -> AnnData:
+    obs = pd.DataFrame(
+        {
+            "region": pd.Series(["1", "2", "3"], dtype="string"),
+            "group": pd.Series(["a", "b", "a"], dtype="string").astype("category"),
+        },
+        index=pd.Index(["1", "2", "3"], dtype="string"),
+    )
+    var = pd.DataFrame(index=pd.Index(["feature_0"], dtype="string"))
+    X = np.zeros((3, 1), dtype=np.float32)
+    return AnnData(X=X, obs=obs, var=var)
+
+
+def test_add_element_sdata_table_from_dataframe(sdata_path):
+    sdata_new = SpatialData()
+    sdata_new.write(sdata_path)
+
+    table = _make_table_from_dataframe()
+    write._helper.add_element_sdata(sdata_new, table, "table", overwrite=True)
+
+    assert "table" in sdata_new
+    sdata = read_zarr(sdata_path)
+    assert "table" in sdata
 
 
 ### test scportrait.tools.sdata.write._helper.rename_image_element
