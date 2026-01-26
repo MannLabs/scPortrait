@@ -1,7 +1,7 @@
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
-import warnings
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 import h5py
 import numpy as np
