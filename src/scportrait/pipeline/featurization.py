@@ -1582,15 +1582,15 @@ class _cellFeaturizerBase(_FeaturizationBase):
         for channel in range(n_masks, img.shape[1]):
             img_selected = img[:, channel]
 
-            for mask in masks:
+            for mask, area in zip(masks, mask_statistics, strict=False):
                 _img_selected = img_selected.masked_fill(~mask, torch.nan).to(torch.float32)
 
                 mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
                 median = _img_selected.view(N, -1).nanquantile(q=0.5, dim=1, keepdim=True)
                 quant75 = _img_selected.view(N, -1).nanquantile(q=0.75, dim=1, keepdim=True)
                 quant25 = _img_selected.view(N, -1).nanquantile(q=0.25, dim=1, keepdim=True)
-                summed_intensity = _img_selected.view(N, -1).sum(1, keepdim=True)
-                summed_intensity_area_normalized = summed_intensity / mask_statistics[-1]
+                summed_intensity = _img_selected.view(N, -1).nansum(1, keepdim=True)
+                summed_intensity_area_normalized = summed_intensity / area
 
                 # save results
                 channel_statistics.extend(
