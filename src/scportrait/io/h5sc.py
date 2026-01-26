@@ -269,6 +269,7 @@ def numpy_to_h5sc(
         hf[IMAGE_DATACONTAINER_NAME].attrs["compression"] = compression_type
 
         # Write images to .h5sc file, single thread
-        with h5py.File(output_path, "a") as hf:
-            single_cell_data_container: h5py.Dataset = hf[IMAGE_DATACONTAINER_NAME]
-            single_cell_data_container[0 : all_imgs.shape[0], :, :, :] = all_imgs
+        single_cell_data_container: h5py.Dataset = hf[IMAGE_DATACONTAINER_NAME]
+
+        for save_index, img in enumerate(all_imgs):
+            single_cell_data_container[save_index] = img
