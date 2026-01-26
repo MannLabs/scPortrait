@@ -179,7 +179,7 @@ def numpy_to_h5sc(
     channels = np.concatenate([mask_names, channel_names])
     num_cells = channel_imgs.shape[0]
     img_size = channel_imgs.shape[2:4]
-    cell_ids = cell_ids.astype(image_dtype, copy=False)
+    cell_ids = cell_ids.astype(DEFAULT_SEGMENTATION_DTYPE, copy=False)
     channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
     # prepare images
