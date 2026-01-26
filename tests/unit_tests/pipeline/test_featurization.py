@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 
@@ -52,9 +53,9 @@ def test_cell_featurizer(tmp_path):
     assert abs(nuc_mean - cyto_mean) > 1.0
 
     # Ensure masks are applied and sums are finite (no NaNs from masked sum).
-    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_nucleus"]))
-    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_cytosol"]))
-    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_cytosol_only"]))
+    assert not np.isnan(feat_map["ch0_summed_intensity_nucleus"])
+    assert not np.isnan(feat_map["ch0_summed_intensity_cytosol"])
+    assert not np.isnan(feat_map["ch0_summed_intensity_cytosol_only"])
 
     # Check exact expected values for this synthetic setup.
     assert feat_map["ch0_summed_intensity_nucleus"] == pytest.approx(10.0)
