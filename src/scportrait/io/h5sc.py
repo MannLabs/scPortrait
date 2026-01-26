@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 import warnings
 from typing import Any, Literal, Sequence
@@ -152,9 +153,7 @@ def numpy_to_h5sc(
             - an unsupported compression type is requested.
     """
     if mask_imgs.ndim != 4 or channel_imgs.ndim != 4:
-        raise Exception(
-            "mask_imgs and channel_imgs must have shape (N, C, H, W) with exactly 4 dimensions."
-        )
+        raise Exception("mask_imgs and channel_imgs must have shape (N, C, H, W) with exactly 4 dimensions.")
     if mask_imgs.shape[0] != channel_imgs.shape[0]:
         raise Exception(
             "mask_imgs and channel_imgs do not contain the same number of cells. The expected shape is (N, C, H, W)."
@@ -182,7 +181,6 @@ def numpy_to_h5sc(
     cell_ids = cell_ids.astype(DEFAULT_SEGMENTATION_DTYPE, copy=False)
     channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
-
     # prepare images
     if mask_imgs.min() < 0 or mask_imgs.max() > 1:
         warnings.warn(
@@ -205,7 +203,6 @@ def numpy_to_h5sc(
         )
     all_imgs = np.concatenate([mask_imgs, channel_imgs], axis=1)
     all_imgs = all_imgs.astype(DEFAULT_SINGLE_CELL_IMAGE_DTYPE, copy=False)
-
 
     # create var object with channel names and their mapping to mask or image channels
     vars = pd.DataFrame(index=np.arange(len(channels)).astype("str"))
