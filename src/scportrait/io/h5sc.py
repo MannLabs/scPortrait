@@ -137,6 +137,8 @@ def numpy_to_h5sc(
 
     Raises:
         Exception: If:
+            - `mask_imgs` contains values outside [0, 1],
+            - `channel_imgs` contains values outside [0, 1],
             - `mask_imgs` or `channel_imgs` do not have 4 dimensions `(N, C, H, W)`,
             - `mask_imgs` and `channel_imgs` have different numbers of cells,
             - `mask_imgs` and `channel_imgs` have different image sizes,
@@ -168,14 +170,24 @@ def numpy_to_h5sc(
     if compression_type not in ["gzip", "lzf"]:
         raise Exception("Compression needs to be lzf or gzip.")
 
+    # prepare metadata
     channels = np.concatenate([mask_names, channel_names])
     num_cells = channel_imgs.shape[0]
     img_size = channel_imgs.shape[2:4]
     cell_ids = cell_ids.astype(DEFAULT_SEGMENTATION_DTYPE, copy=False)
+    channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
+
+
+    # prepare images
+    if mask_imgs.min() < 0 or mask_imgs.max() > 1:
+        raise Exception("Mask images must be normalized with values between 0 or 1.")
+    
+    if channel_imgs.min() < 0 or channel_imgs.max() > 1:
+        raise Exception("Image channels must be normalized with values between 0 or 1.")
+    
     all_imgs = np.concatenate([mask_imgs, channel_imgs], axis=1)
     all_imgs = all_imgs.astype(DEFAULT_SINGLE_CELL_IMAGE_DTYPE, copy=False)
 
-    channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
     # create var object with channel names and their mapping to mask or image channels
     vars = pd.DataFrame(index=np.arange(len(channels)).astype("str"))
