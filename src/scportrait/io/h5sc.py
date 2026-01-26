@@ -185,7 +185,7 @@ def numpy_to_h5sc(
     # prepare images
     if mask_imgs.min() < 0 or mask_imgs.max() > 1:
         warnings.warn(
-            "Mask images are outside the expected [0, 1] range. This does not align with"
+            "Mask images are outside the expected [0, 1] range. This does not align with "
             "scPortrait's convention and unscaled data can produce unexpected results in downstream "
             "functions or require additional preprocessing before passing images to "
             "deep learning models.",
