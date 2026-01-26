@@ -66,6 +66,7 @@ def numpy_to_h5sc(
     output_path: str | Path,
     cell_ids: npt.NDArray[np.integer[Any]],
     cell_metadata: pd.DataFrame | None = None,
+    image_dtype=DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
     compression_type: Literal["gzip", "lzf"] = "gzip",
 ) -> None:
     """Create and write an scPortrait-style `.h5sc` file from NumPy arrays of single-cell
@@ -178,7 +179,7 @@ def numpy_to_h5sc(
     channels = np.concatenate([mask_names, channel_names])
     num_cells = channel_imgs.shape[0]
     img_size = channel_imgs.shape[2:4]
-    cell_ids = cell_ids.astype(DEFAULT_SEGMENTATION_DTYPE, copy=False)
+    cell_ids = cell_ids.astype(image_dtype, copy=False)
     channel_mapping = ["mask" for x in mask_names] + ["image_channel" for x in channel_names]
 
     # prepare images
@@ -202,7 +203,7 @@ def numpy_to_h5sc(
             stacklevel=2,
         )
     all_imgs = np.concatenate([mask_imgs, channel_imgs], axis=1)
-    all_imgs = all_imgs.astype(DEFAULT_SINGLE_CELL_IMAGE_DTYPE, copy=False)
+    all_imgs = all_imgs.astype(image_dtype, copy=False)
 
     # create var object with channel names and their mapping to mask or image channels
     vars = pd.DataFrame(index=np.arange(len(channels)).astype("str"))
@@ -242,7 +243,7 @@ def numpy_to_h5sc(
             shape=all_imgs.shape,
             chunks=(1, 1, img_size[0], img_size[1]),
             compression=compression_type,
-            dtype=DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
+            dtype=image_dtype,
         )
 
         # add required metadata from anndata package
