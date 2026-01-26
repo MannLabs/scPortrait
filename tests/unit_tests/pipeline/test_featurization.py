@@ -51,6 +51,21 @@ def test_cell_featurizer(tmp_path):
     assert nuc_mean > cyto_mean
     assert abs(nuc_mean - cyto_mean) > 1.0
 
+    # Ensure masks are applied and sums are finite (no NaNs from masked sum).
+    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_nucleus"]))
+    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_cytosol"]))
+    assert not torch.isnan(torch.tensor(feat_map["ch0_summed_intensity_cytosol_only"]))
+
+    # Check exact expected values for this synthetic setup.
+    assert feat_map["ch0_summed_intensity_nucleus"] == pytest.approx(10.0)
+    assert feat_map["ch0_summed_intensity_cytosol"] == pytest.approx(13.0)
+    assert feat_map["ch0_summed_intensity_cytosol_only"] == pytest.approx(3.0)
+
+    # Area-normalized sums should use each mask's own area (not the last mask).
+    assert feat_map["ch0_summed_intensity_area_normalized_nucleus"] == pytest.approx(10.0)
+    assert feat_map["ch0_summed_intensity_area_normalized_cytosol"] == pytest.approx(13.0 / 4.0)
+    assert feat_map["ch0_summed_intensity_area_normalized_cytosol_only"] == pytest.approx(1.0)
+
 
 def test_mask_bool_integrity_not_corrupted():
     mask = torch.tensor([[True, False], [False, True]])
