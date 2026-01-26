@@ -66,8 +66,7 @@ def numpy_to_h5sc(
     cell_metadata: pd.DataFrame | None = None,
     compression_type: Literal["gzip", "lzf"] = "gzip",
 ) -> None:
-    """
-    Create and write an scPortrait-style `.h5sc` file from NumPy arrays of single-cell
+    """Create and write an scPortrait-style `.h5sc` file from NumPy arrays of single-cell
     masks and image channels, with optional per-cell metadata.
 
     This function builds a valid AnnData-backed HDF5 container following the scPortrait
@@ -98,70 +97,50 @@ def numpy_to_h5sc(
     This allows the file to be read both via AnnData and as a standalone HDF5 image
     container.
 
-    Parameters
-    ----------
-    mask_names : sequence of str
-        Names of the mask channels. Length must match `mask_imgs.shape[1]`.
+    Args:
+        mask_names: Names of the mask channels. Length must match `mask_imgs.shape[1]`.
+        channel_names: Names of the image channels. Length must match `channel_imgs.shape[1]`.
+        mask_imgs: Array of mask images with shape `(N, n_masks, H, W)`.
+            Masks are expected to be binary (0 or 1) and will be stored as float16.
+        channel_imgs: Array of image channels with shape `(N, n_image_channels, H, W)`.
+            Images should already be normalized (e.g., to [0, 1]) before writing.
+        output_path: Path of the `.h5sc` file to create, e.g. `"/path/to/file.h5sc"`.
+            The file will be overwritten if it already exists.
+        cell_ids: Array of segmentation cell identifiers with shape `(N,)`.
+            These values are written into `adata.obs[DEFAULT_CELL_ID_NAME]` and define the
+            mapping between row index and original segmentation label.
+        cell_metadata: Optional per-cell metadata to be written into `adata.obs`.
+            Must have exactly `N` rows. Columns will be merged into `obs` alongside the
+            cell ID column. The index is ignored and replaced by AnnData’s internal index.
+        compression_type: HDF5 compression algorithm used for the image tensor.
+            - "gzip": better compression, slower I/O
+            - "lzf" : faster I/O, lower compression ratio
 
-    channel_names : sequence of str
-        Names of the image channels. Length must match `channel_imgs.shape[1]`.
+    File layout created:
+        The resulting file contains:
 
-    mask_imgs : np.ndarray
-        Array of mask images with shape `(N, n_masks, H, W)`.
-        Masks are expected to be binary (0 or 1) and will be stored as float16.
+            /obs
+                Per-cell metadata including cell IDs and optional user-provided metadata.
+            /var
+                Channel metadata (channel names and channel mapping).
+            /uns
+                scPortrait metadata describing the image container.
+            /obsm/single_cell_images
+                HDF5 dataset with shape (N, C, H, W), dtype float16, chunked as
+                (1, 1, H, W), compressed.
 
-    channel_imgs : np.ndarray
-        Array of image channels with shape `(N, n_image_channels, H, W)`.
-        Images should already be normalized (e.g., to [0, 1]) before writing.
+    Notes:
+        - The file is technically an AnnData `.h5ad` file with a `.h5sc` extension.
+        - Masks and image channels share a single dataset and dtype (`float16`).
+        - The function performs a single-threaded write; no file locking is used.
+        - All input arrays are cast to the storage dtype before writing.
 
-    output_path : str
-        Path of the `.h5sc` file to create, e.g. `"/path/to/file.h5sc"`.
-        The file will be overwritten if it already exists.
-
-    cell_ids : np.ndarray
-        Array of segmentation cell identifiers with shape `(N,)`.
-        These values are written into `adata.obs[DEFAULT_CELL_ID_NAME]` and define the
-        mapping between row index and original segmentation label.
-
-    cell_metadata : pandas.DataFrame or None, optional (default: None)
-        Optional per-cell metadata to be written into `adata.obs`.
-        Must have exactly `N` rows. Columns will be merged into `obs` alongside the
-        cell ID column. The index is ignored and replaced by AnnData’s internal index.
-
-    compression_type : {"gzip", "lzf"}, optional (default: "gzip")
-        HDF5 compression algorithm used for the image tensor.
-        - "gzip": better compression, slower I/O
-        - "lzf" : faster I/O, lower compression ratio
-
-    File layout created
-    -------------------
-    The resulting file contains:
-
-        /obs
-            Per-cell metadata including cell IDs and optional user-provided metadata.
-        /var
-            Channel metadata (channel names and channel mapping).
-        /uns
-            scPortrait metadata describing the image container.
-        /obsm/single_cell_images
-            HDF5 dataset with shape (N, C, H, W), dtype float16, chunked as
-            (1, 1, H, W), compressed.
-
-    Notes
-    -----
-    - The file is technically an AnnData `.h5ad` file with a `.h5sc` extension.
-    - Masks and image channels share a single dataset and dtype (`float16`).
-    - The function performs a single-threaded write; no file locking is used.
-    - All input arrays are cast to the storage dtype before writing.
-
-    Raises
-    ------
-    Exception
-        If:
-        - `mask_imgs` and `channel_imgs` have different numbers of cells,
-        - the number of provided channel names does not match the array shapes,
-        - `cell_metadata` does not have `N` rows,
-        - an unsupported compression type is requested.
+    Raises:
+        Exception: If:
+            - `mask_imgs` and `channel_imgs` have different numbers of cells,
+            - the number of provided channel names does not match the array shapes,
+            - `cell_metadata` does not have `N` rows,
+            - an unsupported compression type is requested.
     """
     if mask_imgs.shape[0] != channel_imgs.shape[0]:
         raise Exception(
