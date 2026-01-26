@@ -22,6 +22,7 @@ from tqdm.auto import tqdm
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.helper import flatten
 from scportrait.processing.images._image_processing import percentile_normalization
+from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
 
 
 class HDF5CellExtraction(ProcessingStep):
@@ -753,6 +754,7 @@ class HDF5CellExtraction(ProcessingStep):
         adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = self.compression_type
 
         # write to file
+        _normalize_anndata_strings(adata)
         adata.write(self.output_path)
 
     def _create_output_files(self) -> None:
