@@ -213,6 +213,10 @@ def numpy_to_h5sc(
     obs = pd.DataFrame({DEFAULT_CELL_ID_NAME: cell_ids})
     obs.index = obs.index.values.astype("str")
     if cell_metadata is not None:
+        if len(cell_metadata) != num_cells:
+            raise Exception(
+                f"cell_metadata must have {num_cells} rows to match the number of cells, got {len(cell_metadata)}."
+            )
         for col in cell_metadata.columns:
             obs[col] = cell_metadata[col].values
 
