@@ -137,14 +137,24 @@ def numpy_to_h5sc(
 
     Raises:
         Exception: If:
+            - `mask_imgs` or `channel_imgs` do not have 4 dimensions `(N, C, H, W)`,
             - `mask_imgs` and `channel_imgs` have different numbers of cells,
+            - `mask_imgs` and `channel_imgs` have different image sizes,
             - the number of provided channel names does not match the array shapes,
             - `cell_metadata` does not have `N` rows,
             - an unsupported compression type is requested.
     """
+    if mask_imgs.ndim != 4 or channel_imgs.ndim != 4:
+        raise Exception(
+            "mask_imgs and channel_imgs must have shape (N, C, H, W) with exactly 4 dimensions."
+        )
     if mask_imgs.shape[0] != channel_imgs.shape[0]:
         raise Exception(
             "mask_imgs and channel_imgs do not contain the same number of cells. The expected shape is (N, C, H, W)."
+        )
+    if mask_imgs.shape[2:4] != channel_imgs.shape[2:4]:
+        raise Exception(
+            "mask_imgs and channel_imgs do not contain the same image size. The expected shape is (N, C, H, W)."
         )
     # check mask_names and channel_names fit to imgs shape-wise
     if len(mask_names) != mask_imgs.shape[1]:
