@@ -1,7 +1,7 @@
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
-import warnings
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 import h5py
 import numpy as np
@@ -64,7 +64,7 @@ def numpy_to_h5sc(
     mask_imgs: npt.NDArray,
     channel_imgs: npt.NDArray,
     output_path: str | Path,
-    cell_ids: Sequence,
+    cell_ids: npt.NDArray[np.integer[Any]],
     cell_metadata: pd.DataFrame | None = None,
     compression_type: Literal["gzip", "lzf"] = "gzip",
 ) -> None:
