@@ -1582,7 +1582,7 @@ class _cellFeaturizerBase(_FeaturizationBase):
         for channel in range(n_masks, img.shape[1]):
             img_selected = img[:, channel]
 
-            for mask, area in zip(masks, mask_statistics, strict=False):
+            for mask, area in zip(masks, mask_statistics, strict=True):
                 _img_selected = img_selected.masked_fill(~mask, torch.nan).to(torch.float32)
 
                 mean = _img_selected.view(N, -1).nanmean(1, keepdim=True)
