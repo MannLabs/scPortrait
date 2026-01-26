@@ -136,13 +136,9 @@ def _plot_contour_grid(
         ax: The matplotlib axes object that already contains the image grid.
         masks: The masks to plot contours from. Shape should be (N, H, W) where N matches
             the number of images in the grid, or (H, W) for a single mask.
-        nrows: The number of rows in the grid (must match the value used in `_plot_image_grid`).
-        ncols: The number of columns in the grid (must match the value used in `_plot_image_grid`).
         level: The contour level passed to `skimage.measure.find_contours`. For binary masks,
             this is typically 0.5.
         linewidth: The line width used when plotting the contour outlines.
-        colors: A list of colors used to draw the contours. If None, a default palette is
-            used and cycled over for multiple contours per mask.
 
     Returns:
         None
