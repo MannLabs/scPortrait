@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, Sequence
 
 import h5py
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from anndata import AnnData
 from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
@@ -56,15 +57,15 @@ def read_h5sc(filename: str | Path) -> AnnData:
 
 
 def numpy_to_h5sc(
-    mask_names,
-    channel_names,
-    mask_imgs,
-    channel_imgs,
-    output_path,
-    cell_ids,
-    cell_metadata=None,
-    compression_type="gzip",
-):
+    mask_names: Sequence[str],
+    channel_names: Sequence[str],
+    mask_imgs: npt.NDArray,
+    channel_imgs: npt.NDArray,
+    output_path: str | Path,
+    cell_ids: Sequence,
+    cell_metadata: pd.DataFrame | None = None,
+    compression_type: Literal["gzip", "lzf"] = "gzip",
+) -> None:
     """
     Create and write an scPortrait-style `.h5sc` file from NumPy arrays of single-cell
     masks and image channels, with optional per-cell metadata.
