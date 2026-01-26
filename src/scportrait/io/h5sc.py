@@ -166,11 +166,11 @@ def numpy_to_h5sc(
     # check mask_names and channel_names fit to imgs shape-wise
     if len(mask_names) != mask_imgs.shape[1]:
         raise Exception(
-            "mask_names needs to match mask_imgs.shape[0]. You need to pass the same number of masks and labels."
+            "mask_names needs to match mask_imgs.shape[1]. You need to pass the same number of masks and labels."
         )
     if len(channel_names) != channel_imgs.shape[1]:
         raise Exception(
-            "channel_names needs to match channel_imgs.shape[0]. You need to pass the same number of image channels and labels."
+            "channel_names needs to match channel_imgs.shape[1]. You need to pass the same number of image channels and labels."
         )
     if compression_type not in ["gzip", "lzf"]:
         raise Exception("Compression needs to be lzf or gzip.")
