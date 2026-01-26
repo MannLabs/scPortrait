@@ -1,4 +1,5 @@
 from pathlib import Path
+import warnings
 from typing import Any, Literal, Sequence
 
 import h5py
@@ -135,10 +136,14 @@ def numpy_to_h5sc(
         - The function performs a single-threaded write; no file locking is used.
         - All input arrays are cast to the storage dtype before writing.
 
+    Warnings:
+        UserWarning: If `mask_imgs` or `channel_imgs` contain values outside [0, 1].
+            Mask images  or channel images are outside the expected [0, 1] range. This does not align with
+            scPortrait's convention and unscaled data can produce unexpected results in downstream
+            functions or require additional preprocessing before passing images to deep learning models.
+
     Raises:
         Exception: If:
-            - `mask_imgs` contains values outside [0, 1],
-            - `channel_imgs` contains values outside [0, 1],
             - `mask_imgs` or `channel_imgs` do not have 4 dimensions `(N, C, H, W)`,
             - `mask_imgs` and `channel_imgs` have different numbers of cells,
             - `mask_imgs` and `channel_imgs` have different image sizes,
@@ -180,11 +185,24 @@ def numpy_to_h5sc(
 
     # prepare images
     if mask_imgs.min() < 0 or mask_imgs.max() > 1:
-        raise Exception("Mask images must be normalized with values between 0 or 1.")
-    
+        warnings.warn(
+            "Mask images are outside the expected [0, 1] range. This does not align with"
+            "scPortrait's convention and unscaled data can produce unexpected results in downstream "
+            "functions or require additional preprocessing before passing images to "
+            "deep learning models.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     if channel_imgs.min() < 0 or channel_imgs.max() > 1:
-        raise Exception("Image channels must be normalized with values between 0 or 1.")
-    
+        warnings.warn(
+            "   Image channels are outside the expected [0, 1] range. This does not align with"
+            "scPortrait's convention and unscaled data can produce unexpected results in downstream "
+            "functions or require additional preprocessing before passing images to "
+            "deep learning models.",
+            UserWarning,
+            stacklevel=2,
+        )
     all_imgs = np.concatenate([mask_imgs, channel_imgs], axis=1)
     all_imgs = all_imgs.astype(DEFAULT_SINGLE_CELL_IMAGE_DTYPE, copy=False)
 
