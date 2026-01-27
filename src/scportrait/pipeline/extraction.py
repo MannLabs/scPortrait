@@ -741,17 +741,19 @@ class HDF5CellExtraction(ProcessingStep):
         adata = AnnData(obs=obs, var=vars)
 
         # add additional metadata to `uns`
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = self.num_classes
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = self.n_masks + self.n_image_channels
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = self.n_masks
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = self.n_image_channels
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size"] = self.image_size
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channels
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(channel_mapping, dtype="<U15")
-        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = self.compression_type
+        adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}"] = {
+            "n_cells": self.num_classes,
+            "n_channels": self.n_masks + self.n_image_channels,
+            "n_masks": self.n_masks,
+            "n_image_channels": self.n_image_channels,
+            "image_size": self.image_size,
+            "normalization": self.normalization,
+            "normalization_range_lower": self.normalization_range[0],
+            "normalization_range_upper": self.normalization_range[1],
+            "channel_names": channels,
+            "channel_mapping": np.array(channel_mapping, dtype="<U15"),
+            "compression": self.compression_type,
+        }
 
         # write to file
         _normalize_anndata_strings(adata)
