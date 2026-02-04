@@ -27,7 +27,7 @@ methods chosen in a specific scPortrait Project run.
         threads: 80 # threads used in multithreading
         image_size: 128 # image size in pixel
         normalize_output: True
-        normalization_range: (0.01, 0.99)
+        normalization_range: [0.01, 0.99]
         cache: "."
     CellFeaturizer:
         batch_size: 900
