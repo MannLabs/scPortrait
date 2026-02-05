@@ -55,6 +55,8 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
         _, x, y = shape
     elif len(shape) == 2:
         x, y = shape
+    else:
+        raise ValueError(f"Unsupported shape for element '{element_name}': expected 2D or 3D array, got {shape}.")
     return x, y
 
 
@@ -217,6 +219,12 @@ def plot_segmentation_mask(
         if selected_channels is not None:
             if not isinstance(selected_channels, Iterable):
                 selected_channels = [selected_channels]
+            if any(i < 0 or i >= len(channel_names) for i in selected_channels):
+                raise ValueError(
+                    f"selected_channels contains out-of-range indices for background image '{background_image}'."
+                )
+            if any(i < 0 or i >= len(PALETTE) for i in selected_channels):
+                raise ValueError("selected_channels contains indices that exceed the available palette length.")
             channel_names = [channel_names[i] for i in selected_channels]
             c = len(channel_names)
             palette = [PALETTE[x] for x in selected_channels]
@@ -230,7 +238,8 @@ def plot_segmentation_mask(
 
     # plot selected segmentation masks
     for mask in masks:
-        assert mask in sdata, f"Mask {mask} not found in sdata object."
+        if mask not in sdata:
+            raise KeyError(f"Mask {mask} not found in sdata object.")
         if f"{mask}_vectorized" not in sdata:
             sdata[f"{mask}_vectorized"] = spatialdata.to_polygons(sdata[mask])
         sdata.pl.render_shapes(
@@ -306,7 +315,8 @@ def plot_shapes(
         fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot selected shapes layer
-    assert shapes_layer in sdata, f"Shapes layer {shapes_layer} not found in sdata object."
+    if shapes_layer not in sdata:
+        raise KeyError(f"Shapes layer {shapes_layer} not found in sdata object.")
 
     sdata.pl.render_shapes(
         f"{shapes_layer}",
