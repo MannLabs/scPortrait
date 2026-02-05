@@ -225,11 +225,11 @@ def plot_segmentation_mask(
                 raise ValueError(
                     f"selected_channels contains out-of-range indices for background image '{background_image}'."
                 )
-            if any(i < 0 or i >= len(PALETTE) for i in selected_channels):
-                raise ValueError("selected_channels contains indices that exceed the available palette length.")
+            if len(selected_channels) > len(PALETTE):
+                raise ValueError("selected_channels has more entries than the available palette length.")
             channel_names = [channel_names[i] for i in selected_channels]
             c = len(channel_names)
-            palette = [PALETTE[x] for x in selected_channels]
+            palette = PALETTE[:c]
         else:
             if c > max_channels_to_plot:
                 c = max_channels_to_plot
