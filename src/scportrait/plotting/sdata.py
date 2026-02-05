@@ -232,7 +232,7 @@ def plot_segmentation_mask(
             palette = [PALETTE[x] for x in selected_channels]
         else:
             if c > max_channels_to_plot:
-                c = 4
+                c = max_channels_to_plot
             palette = PALETTE[:c]
             channel_names = list(channel_names[:c])
 
