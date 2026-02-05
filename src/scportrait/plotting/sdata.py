@@ -424,18 +424,25 @@ def plot_labels(
                     annotating_table = spatialdata.models.TableModel.parse(annotating_table)
                     break
         if found_annotation is not None:
+            had_annotation = "_annotation" in sdata
+            prev_annotation = sdata["_annotation"] if had_annotation else None
             sdata["_annotation"] = annotating_table
-            sdata.pl.render_shapes(
-                f"{label_layer}_vectorized",
-                color=color,
-                fill_alpha=fill_alpha,
-                outline_alpha=0,
-                cmap=cmap,
-                palette=palette,
-                groups=groups,
-                norm=norm,
-            ).pl.show(ax=ax)
-            del sdata["_annotation"]  # delete element again after plotting
+            try:
+                sdata.pl.render_shapes(
+                    f"{label_layer}_vectorized",
+                    color=color,
+                    fill_alpha=fill_alpha,
+                    outline_alpha=0,
+                    cmap=cmap,
+                    palette=palette,
+                    groups=groups,
+                    norm=norm,
+                ).pl.show(ax=ax)
+            finally:
+                if had_annotation:
+                    sdata["_annotation"] = prev_annotation
+                else:
+                    del sdata["_annotation"]  # delete element again after plotting
         else:
             try:
                 sdata.pl.render_labels(
