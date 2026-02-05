@@ -37,7 +37,7 @@ from scportrait.pipeline._utils.spatialdata_helper import (
     get_chunk_size,
     rechunk_image,
 )
-from scportrait.tools.sdata.write._helper import _get_image, _get_shape
+from scportrait.tools.sdata.write._helper import _get_image, _get_shape, _normalize_anndata_strings
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -1493,6 +1493,7 @@ class Project(Logable):
                 table.obs["region"] = new_name
                 table.obs["region"] = table.obs["region"].astype("category")
             table.obs.rename(columns=rename_columns, inplace=True)
+            _normalize_anndata_strings(table)
 
         if keep_all:
             shutil.rmtree(self.sdata_path, ignore_errors=True)

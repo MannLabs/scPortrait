@@ -11,6 +11,7 @@ from anndata import AnnData
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from skimage import measure
 
 from scportrait.pipeline._utils.constants import DEFAULT_CELL_ID_NAME
 from scportrait.tools.h5sc import get_image_with_cellid
@@ -121,9 +122,56 @@ def _plot_image_grid(
             ax_sub.set_title(f"{image_titles[i]}", fontsize=image_titles_fontsize, pad=2, rotation=image_title_rotation)
 
 
+def _plot_contour_grid(
+    ax: Axes,
+    masks: np.ndarray,
+    level: float = 0.5,
+    linewidth: float = 0.5,
+) -> None:
+    """Helper function to plot contour overlays on an existing image grid.
+
+    This function assumes that `_plot_image_grid` has already been called on the same
+    `ax`, and that the inset axes created there are available in `ax.child_axes` in the
+    same order as the images and masks.
+
+    Args:
+        ax: The matplotlib axes object that already contains the image grid.
+        masks: The masks to plot contours from. Shape should be (N, H, W) where N matches
+            the number of images in the grid, or (H, W) for a single mask.
+        level: The contour level passed to `skimage.measure.find_contours`. For binary masks,
+            this is typically 0.5.
+        linewidth: The line width used when plotting the contour outlines.
+
+    Returns:
+        None
+    """
+
+    sub_axes = ax.child_axes
+    if not sub_axes:
+        raise RuntimeError("No inset axes found. Call _plot_image_grid(...) before calling this function.")
+
+    # Convert single mask (H, W) to (N, H, W)
+    if masks.ndim == 2:
+        masks = masks[None, ...]
+
+    if len(sub_axes) != masks.shape[0]:
+        raise ValueError(f"Number of masks ({masks.shape[0]}) must match number of grid cells ({len(sub_axes)}).")
+
+    for ax_sub, mask in zip(sub_axes, masks, strict=False):
+        contours = measure.find_contours(mask, level=level)
+        for contour in contours:
+            ax_sub.plot(
+                contour[:, 1],  # x = column
+                contour[:, 0],  # y = row
+                linewidth=linewidth,
+                color="white",
+            )
+
+
 def cell_grid_single_channel(
     adata,
     select_channel: int | str,
+    mask_id: int | None = None,
     n_cells: int = 16,
     cell_ids: int | list[int] | None = None,
     cell_labels: list[str] | None = None,
@@ -135,6 +183,8 @@ def cell_grid_single_channel(
     ncols: int | None = None,
     nrows: int | None = None,
     single_cell_size: int = 2,
+    vmin: float = 0,
+    vmax: float = 1,
     spacing: float = 0.025,
     ax: Axes = None,
     return_fig: bool = False,
@@ -145,6 +195,7 @@ def cell_grid_single_channel(
     Args:
         adata: An scPortrait single-cell image dataset.
         select_channel: The channel to visualize.
+        mask_id: The index of a mask to visualize as outlines.
         n_cells: The number of cells to visualize. This number of cells will randomly be selected. If `None`, `cell_ids` must be provided.
         cell_ids: cell IDs for the specific cells that should be visualized. If `None`, `n_cells` must be provided.
         cell_labels: Label to plot as title for each single-cell image if provided.
@@ -246,7 +297,15 @@ def cell_grid_single_channel(
         image_titles=cell_labels,
         cmap=cmap,
         spacing=spacing,
+        vmin=vmin,
+        vmax=vmax,
     )
+    if mask_id is not None:
+        masks = get_image_with_cellid(adata, _cell_ids, mask_id)
+        _plot_contour_grid(
+            ax,
+            masks,
+        )
 
     if return_fig:
         return fig

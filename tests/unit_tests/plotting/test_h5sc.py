@@ -7,6 +7,7 @@ from matplotlib.figure import Figure
 rng = np.random.default_rng()
 
 from scportrait.plotting.h5sc import (
+    _plot_contour_grid,
     _plot_image_grid,
     _reshape_image_array,
     cell_grid,
@@ -63,6 +64,28 @@ def test_plot_image_grid(input_shape, nrows, ncols, col_labels, col_labels_rotat
                     ]
                 )
                 break
+
+
+# ---------- _plot_contour_grid ----------
+
+
+def test_plot_contour_grid_requires_image_grid():
+    fig, ax = plt.subplots(1, 1)
+    masks = rng.random((2, 10, 10)) > 0.5
+    with pytest.raises(RuntimeError):
+        _plot_contour_grid(ax, masks)
+
+
+def test_plot_contour_grid_draws_on_existing_grid():
+    images = rng.random((4, 10, 10))
+    masks = np.zeros((4, 10, 10), dtype=float)
+    masks[:, 2:8, 2:8] = 1.0
+    fig, ax = plt.subplots(1, 1)
+    _plot_image_grid(ax, images, nrows=2, ncols=2)
+    _plot_contour_grid(ax, masks)
+    # Verify contours were added to each inset axis
+    for ax_sub in ax.child_axes:
+        assert len(ax_sub.lines) > 0
 
 
 # ---------- cell_grid_single_channel ----------

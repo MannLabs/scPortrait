@@ -62,6 +62,8 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
         _, x, y = shape
     elif len(shape) == 2:
         x, y = shape
+    else:
+        raise ValueError(f"Unsupported shape for element '{element_name}': expected 2D or 3D array, got {shape}.")
     return x, y
 
 
@@ -122,6 +124,7 @@ def plot_image(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, image_name)
@@ -196,6 +199,7 @@ def plot_segmentation_mask(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, masks[0])
@@ -224,12 +228,18 @@ def plot_segmentation_mask(
         if selected_channels is not None:
             if not isinstance(selected_channels, Iterable):
                 selected_channels = [selected_channels]
+            if any(i < 0 or i >= len(channel_names) for i in selected_channels):
+                raise ValueError(
+                    f"selected_channels contains out-of-range indices for background image '{background_image}'."
+                )
+            if len(selected_channels) > len(PALETTE):
+                raise ValueError("selected_channels has more entries than the available palette length.")
             channel_names = [channel_names[i] for i in selected_channels]
             c = len(channel_names)
-            palette = [PALETTE[x] for x in selected_channels]
+            palette = PALETTE[:c]
         else:
             if c > max_channels_to_plot:
-                c = 4
+                c = min(c, max_channels_to_plot)
             palette = PALETTE[:c]
             channel_names = list(channel_names[:c])
 
@@ -237,7 +247,8 @@ def plot_segmentation_mask(
 
     # plot selected segmentation masks
     for mask in masks:
-        assert mask in sdata, f"Mask {mask} not found in sdata object."
+        if mask not in sdata:
+            raise KeyError(f"Mask {mask} not found in sdata object.")
         if f"{mask}_vectorized" not in sdata:
             sdata[f"{mask}_vectorized"] = spatialdata.to_polygons(sdata[mask])
         sdata.pl.render_shapes(
@@ -305,6 +316,7 @@ def plot_shapes(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, shapes_layer)
@@ -313,7 +325,8 @@ def plot_shapes(
         fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot selected shapes layer
-    assert shapes_layer in sdata, f"Shapes layer {shapes_layer} not found in sdata object."
+    if shapes_layer not in sdata:
+        raise KeyError(f"Shapes layer {shapes_layer} not found in sdata object.")
 
     sdata.pl.render_shapes(
         f"{shapes_layer}",
@@ -381,6 +394,7 @@ def plot_labels(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, label_layer)
@@ -417,18 +431,25 @@ def plot_labels(
                     annotating_table = spatialdata.models.TableModel.parse(annotating_table)
                     break
         if found_annotation is not None:
+            had_annotation = "_annotation" in sdata
+            prev_annotation = sdata["_annotation"] if had_annotation else None
             sdata["_annotation"] = annotating_table
-            sdata.pl.render_shapes(
-                f"{label_layer}_vectorized",
-                color=color,
-                fill_alpha=fill_alpha,
-                outline_alpha=0,
-                cmap=cmap,
-                palette=palette,
-                groups=groups,
-                norm=norm,
-            ).pl.show(ax=ax)
-            del sdata["_annotation"]  # delete element again after plotting
+            try:
+                sdata.pl.render_shapes(
+                    f"{label_layer}_vectorized",
+                    color=color,
+                    fill_alpha=fill_alpha,
+                    outline_alpha=0,
+                    cmap=cmap,
+                    palette=palette,
+                    groups=groups,
+                    norm=norm,
+                ).pl.show(ax=ax)
+            finally:
+                if had_annotation:
+                    sdata["_annotation"] = prev_annotation
+                else:
+                    del sdata["_annotation"]  # delete element again after plotting
         else:
             try:
                 sdata.pl.render_labels(
