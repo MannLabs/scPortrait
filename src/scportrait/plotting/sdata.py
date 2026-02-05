@@ -117,6 +117,7 @@ def plot_image(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, image_name)
@@ -191,6 +192,7 @@ def plot_segmentation_mask(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, masks[0])
@@ -307,6 +309,7 @@ def plot_shapes(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, shapes_layer)
@@ -384,6 +387,7 @@ def plot_labels(
     if ax is not None:
         if dpi is not None:
             warnings.warn("DPI is ignored when an axis is provided.", stacklevel=2)
+        fig = ax.figure
     else:
         # get size of spatialdata object to plot (required for calculating figure size if DPI is set)
         x, y = _get_shape_element(sdata, label_layer)
