@@ -11,8 +11,8 @@ from anndata import AnnData
 from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
 
 from scportrait.pipeline._utils.constants import (
-    DEFAULT_IDENTIFIER_FILENAME,
     DEFAULT_CELL_ID_NAME,
+    DEFAULT_IDENTIFIER_FILENAME,
     DEFAULT_NAME_SINGLE_CELL_IMAGES,
     DEFAULT_SEGMENTATION_DTYPE,
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE,

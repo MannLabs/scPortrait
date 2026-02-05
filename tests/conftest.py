@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
-from shapely.geometry import box
 from matplotlib.figure import Figure
+from shapely.geometry import box
 from spatialdata import SpatialData
 from spatialdata.datasets import blobs
 from spatialdata.models import Image2DModel, ShapesModel
