@@ -35,6 +35,21 @@ def test_plot_image(sdata_with_labels, channel_names, palette, return_fig, show_
         assert fig is None
 
 
+def test_plot_image_with_ax_returns_fig(sdata_with_labels):
+    fig, ax = plt.subplots()
+    returned = plotting.plot_image(
+        sdata=sdata_with_labels,
+        image_name="blobs_image",
+        channel_names=[0],
+        palette=["red"],
+        return_fig=True,
+        show_fig=False,
+        ax=ax,
+    )
+    assert returned is fig
+    plt.close(fig)
+
+
 @pytest.mark.parametrize(
     "selected_channels, background_image",
     [
@@ -53,6 +68,33 @@ def test_plot_segmentation_mask(sdata_with_labels, selected_channels, background
         show_fig=False,
     )
     assert isinstance(fig, plt.Figure)
+    plt.close(fig)
+
+
+def test_plot_segmentation_mask_selected_channels_out_of_range(sdata_with_labels):
+    with pytest.raises(ValueError):
+        plotting.plot_segmentation_mask(
+            sdata=sdata_with_labels,
+            masks=["blobs_labels"],
+            background_image="blobs_image",
+            selected_channels=[999],
+            return_fig=False,
+            show_fig=False,
+        )
+
+
+def test_plot_segmentation_mask_with_ax_returns_fig(sdata_with_labels):
+    fig, ax = plt.subplots()
+    returned = plotting.plot_segmentation_mask(
+        sdata=sdata_with_labels,
+        masks=["blobs_labels"],
+        background_image="blobs_image",
+        selected_channels=[0],
+        return_fig=True,
+        show_fig=False,
+        ax=ax,
+    )
+    assert returned is fig
     plt.close(fig)
 
 
@@ -75,4 +117,32 @@ def test_plot_labels(sdata_with_labels, vectorized, color):
         show_fig=False,
     )
     assert isinstance(fig, plt.Figure)
+    plt.close(fig)
+
+
+def test_plot_labels_with_ax_returns_fig(sdata_with_labels):
+    fig, ax = plt.subplots()
+    returned = plotting.plot_labels(
+        sdata=sdata_with_labels,
+        label_layer="blobs_labels",
+        vectorized=False,
+        color="labelling_categorical",
+        return_fig=True,
+        show_fig=False,
+        ax=ax,
+    )
+    assert returned is fig
+    plt.close(fig)
+
+
+def test_plot_shapes_with_ax_returns_fig(sdata_with_labels):
+    fig, ax = plt.subplots()
+    returned = plotting.plot_shapes(
+        sdata=sdata_with_labels,
+        shapes_layer="blobs_polygons",
+        return_fig=True,
+        show_fig=False,
+        ax=ax,
+    )
+    assert returned is fig
     plt.close(fig)
