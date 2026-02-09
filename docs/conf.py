@@ -23,7 +23,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "scPortrait"
-copyright = "2024 Sophia Mädler and Niklas Schmacke"
+copyright = "2026 Sophia Mädler and Niklas Schmacke"
 author = "Sophia Mädler and Niklas Schmacke"
 
 # -- General configuration ---------------------------------------------------
