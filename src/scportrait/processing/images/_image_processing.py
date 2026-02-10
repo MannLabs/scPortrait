@@ -216,7 +216,11 @@ def downsample_img(img: np.ndarray, N: int = 2, return_dtype=np.uint16) -> np.nd
         downsampled array
     """
     downsampled = xr.DataArray(img, dims=["c", "x", "y"]).coarsen(c=1, x=N, y=N, boundary="exact").mean()
-    downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(return_dtype)
+    max_val = float(downsampled.max())
+    if max_val > 0:
+        downsampled = (downsampled / max_val * np.iinfo(return_dtype).max).astype(return_dtype)
+    else:
+        downsampled = downsampled.astype(return_dtype)
     return np.array(downsampled)
 
 
@@ -343,7 +347,8 @@ def rolling_window_mean(array: np.ndarray, size: int, scaling: bool = False) -> 
 
             # Scale the chunk, if scaling is True
             if scaling:
-                chunk = chunk / std
+                if std > 0:
+                    chunk = chunk / std
 
             # Compute the mean and remove it from the chunk
             mean = np.median(chunk.flatten())
@@ -355,7 +360,9 @@ def rolling_window_mean(array: np.ndarray, size: int, scaling: bool = False) -> 
             array[y:yd, x:xd] = chunk
 
     if scaling:
-        array = array / np.max(array.flatten())
+        max_val = np.max(array.flatten())
+        if max_val > 0:
+            array = array / max_val
     return array
 
 
