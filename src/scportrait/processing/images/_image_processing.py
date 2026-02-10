@@ -284,10 +284,11 @@ def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     else:
         pad_y = (0, N - y % N)
 
-    logger.info(
-        "Performing image padding to ensure that image is compatible with selected downsample kernel size of %s.",
-        N,
-    )
+    if pad_x != (0, 0) or pad_y != (0, 0):
+        logger.info(
+            "Performing image padding to ensure that image is compatible with selected downsample kernel size of %s.",
+            N,
+        )
 
     # perform image padding to ensure that image is compatible with downsample kernel size
     if len(img.shape) == 3:
