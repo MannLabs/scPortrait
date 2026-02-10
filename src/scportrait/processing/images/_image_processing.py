@@ -78,6 +78,10 @@ def _normalize_image(im: np.ndarray, lower_value: int, upper_value: int) -> np.n
     >>> norm_img = _normalize_image(img, 200, 15000)
     """
 
+    # Avoid unsigned integer underflow during subtraction
+    if np.issubdtype(im.dtype, np.integer):
+        im = im.astype(np.float32)
+
     # Compute inter-percentile range (IPR)
     IPR = upper_value - lower_value
 
