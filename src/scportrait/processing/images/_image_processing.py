@@ -32,6 +32,8 @@ def rescale_image(
         factor = 65535
     elif dtype == "uint8":
         factor = 255
+    else:
+        raise ValueError("dtype must be 'uint16' or 'uint8'")
 
     # get cutoff values
     cutoff1, cutoff2 = rescale_range
