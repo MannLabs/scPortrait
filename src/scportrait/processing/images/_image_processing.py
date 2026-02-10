@@ -349,27 +349,28 @@ def rolling_window_mean(array: np.ndarray, size: int, scaling: bool = False) -> 
 
             # Extract the current window (chunk) and calculate statistics
             chunk = array[y:yd, x:xd]
-            std = np.std(chunk.flatten())
-            max_val = np.max(chunk.flatten())
+            std = np.std(chunk)
+            max_val = np.max(chunk)
 
             # Scale the chunk, if scaling is True
             if scaling:
                 if std > 0:
-                    chunk = chunk / std
+                    chunk /= std
 
             # Compute the mean and remove it from the chunk
-            mean = np.median(chunk.flatten())
+            mean = np.median(chunk)
 
             if max_val > 0:
-                chunk = chunk - mean
-                chunk = np.where(chunk < 0, 0, chunk)
-
-            array[y:yd, x:xd] = chunk
+                chunk -= mean
+                for yy in range(chunk.shape[0]):
+                    for xx in range(chunk.shape[1]):
+                        if chunk[yy, xx] < 0:
+                            chunk[yy, xx] = 0
 
     if scaling:
-        max_val = np.max(array.flatten())
+        max_val = np.max(array)
         if max_val > 0:
-            array = array / max_val
+            array /= max_val
     return array
 
 
