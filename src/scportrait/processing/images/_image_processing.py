@@ -42,7 +42,7 @@ def rescale_image(
     if cutoff_threshold is not None:
         if img.max() > cutoff_threshold:
             _img = img.copy()
-            values = _img[_img < (cutoff_threshold / factor)]
+            values = _img[_img < cutoff_threshold]
     else:
         values = img
 
