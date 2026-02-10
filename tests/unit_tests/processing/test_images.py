@@ -12,6 +12,7 @@ from scportrait.processing.images._image_processing import (
     downsample_img_padding,
     percentile_normalization,
     rolling_window_mean,
+    value_range_normalization,
 )
 
 rng = np.random.default_rng(seed=42)
@@ -90,3 +91,25 @@ def test_MinMax():
     normalized_array = MinMax(array)
     assert np.min(normalized_array) == 0
     assert np.max(normalized_array) == 1
+
+
+def test_value_range_normalization_returns_float():
+    img = np.array([[0, 5], [10, 15]], dtype=np.float32)
+    norm = value_range_normalization(img, 5, 10, return_float=True)
+    assert norm.dtype == np.float32
+    assert np.min(norm) == pytest.approx(0)
+    assert np.max(norm) == pytest.approx(1)
+
+
+def test_value_range_normalization_uint16_default_for_float_input():
+    img = np.array([[0, 5], [10, 15]], dtype=np.float32)
+    norm = value_range_normalization(img, 5, 10)
+    assert norm.dtype == np.uint16
+    assert np.min(norm) == 0
+    assert np.max(norm) == np.iinfo(np.uint16).max
+
+
+def test_value_range_normalization_invalid_range_raises():
+    img = np.array([[0, 1], [2, 3]], dtype=np.uint16)
+    with pytest.raises(ValueError):
+        value_range_normalization(img, 5, 5)
