@@ -158,6 +158,49 @@ def percentile_normalization(
     return im
 
 
+def value_range_normalization(
+    im: np.ndarray,
+    lower_value: int,
+    upper_value: int,
+    *,
+    out_dtype: np.dtype | None = None,
+    return_float: bool = False,
+) -> np.ndarray:
+    """
+    Normalize an input 2D image (np.array) based on input values.
+
+    Args:
+        im: Numpy array of shape (height, width).
+        lower_value: Lower image value used for normalization, all lower values will be clipped to 0.
+        upper_value: Upper image value used for normalization, all higher values will be clipped to 1.
+        out_dtype: Output dtype for integer images. Defaults to the input dtype if integer, otherwise uint16.
+        return_float: If True, return a float array in [0, 1] without casting to an integer dtype.
+
+    Returns:
+        out_im (np.array): Normalized Numpy array.
+
+    Example:
+    >>> img = np.random.rand(4, 4)
+    >>> norm_img = value_range_normalization(img, 200, 15000, return_float=True)
+    """
+
+    if upper_value <= lower_value:
+        raise ValueError("upper_value must be greater than lower_value.")
+
+    norm_image = _normalize_image(im, lower_value, upper_value)
+
+    if return_float:
+        return norm_image
+
+    if out_dtype is None:
+        out_dtype = im.dtype if np.issubdtype(im.dtype, np.integer) else np.uint16
+
+    if not np.issubdtype(out_dtype, np.integer):
+        raise TypeError("out_dtype must be an integer dtype when return_float is False.")
+
+    return convert_float_to_uint(norm_image, dtype=out_dtype)
+
+
 def downsample_img(img: np.ndarray, N: int = 2, return_dtype=np.uint16) -> np.ndarray:
     """
     Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels.
