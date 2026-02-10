@@ -161,3 +161,9 @@ def test_value_range_normalization_out_dtype():
     img = np.array([[0, 5], [10, 15]], dtype=np.uint16)
     norm = value_range_normalization(img, 5, 10, out_dtype=np.uint8)
     assert norm.dtype == np.uint8
+
+
+def test_value_range_normalization_out_dtype_accepts_np_dtype():
+    img = np.array([[0, 5], [10, 15]], dtype=np.uint16)
+    norm = value_range_normalization(img, 5, 10, out_dtype=np.dtype("uint16"))
+    assert norm.dtype == np.uint16

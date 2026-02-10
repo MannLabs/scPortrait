@@ -8,7 +8,7 @@ from skimage.exposure import rescale_intensity
 logger = logging.getLogger(__name__)
 
 
-def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16) -> np.ndarray:
+def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] | np.dtype = np.uint16) -> np.ndarray:
     """Convert a 0-1 normalized array to a uint dtype
 
     Args:
@@ -17,6 +17,7 @@ def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16
 
     """
     assert array.min() >= 0 and array.max() <= 1, "Array values must be in the range [0, 1]"
+    dtype = np.dtype(dtype).type
     return (array * np.iinfo(dtype).max).astype(dtype)
 
 
@@ -173,7 +174,7 @@ def value_range_normalization(
     lower_value: int,
     upper_value: int,
     *,
-    out_dtype: np.dtype | None = None,
+    out_dtype: np.dtype | type[np.integer] | None = None,
     return_float: bool = False,
 ) -> np.ndarray:
     """
@@ -204,6 +205,7 @@ def value_range_normalization(
 
     if out_dtype is None:
         out_dtype = im.dtype if np.issubdtype(im.dtype, np.integer) else np.uint16
+    out_dtype = np.dtype(out_dtype).type
 
     if not np.issubdtype(out_dtype, np.integer):
         raise TypeError("out_dtype must be an integer dtype when return_float is False.")
