@@ -141,7 +141,7 @@ def percentile_normalization(
         im = im.copy()  # ensure we are working on a copy not the original data
 
     # ensure that the dtype is converted to a float before running this function
-    if not isinstance(im.dtype, float):
+    if not np.issubdtype(im.dtype, np.floating):
         im = im.astype(np.float32)
 
     # chek if data is passed as (height, width) or (channels, height, width)
