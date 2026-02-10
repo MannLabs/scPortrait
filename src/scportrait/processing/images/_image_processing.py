@@ -1,7 +1,11 @@
+import logging
+
 import numpy as np
 import xarray as xr
 from numba import jit
 from skimage.exposure import rescale_intensity
+
+logger = logging.getLogger(__name__)
 
 
 def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16) -> np.ndarray:
@@ -280,7 +284,10 @@ def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     else:
         pad_y = (0, N - y % N)
 
-    print(f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {N}.")
+    logger.info(
+        "Performing image padding to ensure that image is compatible with selected downsample kernel size of %s.",
+        N,
+    )
 
     # perform image padding to ensure that image is compatible with downsample kernel size
     if len(img.shape) == 3:
@@ -288,7 +295,7 @@ def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     else:
         img = np.pad(img, (pad_x, pad_y))
 
-    print(f"Downsampling image by a factor of {N}x{N}")
+    logger.info("Downsampling image by a factor of %sx%s", N, N)
 
     # actually perform downsampling
     img = downsample_img(img, N=N)
