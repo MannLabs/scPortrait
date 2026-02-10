@@ -704,7 +704,7 @@ class Project(Logable):
 
             # subset spatialdata object if its too large
             if x > max_width or y > max_width:
-                _sdata = get_bounding_box_sdata(_sdata, max_width, center_x, center_y)
+                _sdata = get_bounding_box_sdata(_sdata, max_width, center_y, center_x)
 
         if normalize:
             lower_percentile, upper_percentile = normalization_percentile
