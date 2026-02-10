@@ -243,7 +243,7 @@ def downsample_img_pxs(img: np.ndarray, N: int = 2) -> np.ndarray:
 
     Example:
     >>> img = np.random.rand(10, 10)
-    >>> downsampled_img = downsample_img
+    >>> downsampled_img = downsample_img_pxs(img)
     """
 
     downsampled = img[:, 0:-1:N, 0:-1:N]
