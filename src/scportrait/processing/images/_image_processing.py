@@ -187,7 +187,7 @@ def value_range_normalization(
 
     Example:
     >>> img = np.random.rand(4, 4)
-    >>> norm_img = value_range_normalization(img, 200, 15000, return_float=True)
+    >>> norm_img = value_range_normalization(img, 0.2, 0.8, return_float=True)
     """
 
     if upper_value <= lower_value:
