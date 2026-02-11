@@ -36,6 +36,46 @@ PALETTE = [
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot
 
 
+def _is_valid_matplotlib_color(color: str | None) -> bool:
+    """Return True if the input is a valid Matplotlib color specification."""
+    if color is None:
+        return False
+    try:
+        mpl.colors.to_rgba(color)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _annotation_columns_for_layer(sdata: spatialdata.SpatialData, label_layer: str) -> set[str]:
+    """Collect annotation columns from tables annotating a specific labels layer."""
+    columns: set[str] = set()
+    for table in sdata.tables:
+        annotated_regions = sdata.get_annotated_regions(sdata[table])
+        if label_layer in annotated_regions:
+            columns.update(sdata[table].obs.columns)
+    return columns
+
+
+def _render_labels_as_fixed_color_shapes(
+    sdata: spatialdata.SpatialData,
+    label_layer: str,
+    color: str,
+    fill_alpha: float,
+    ax: Axes,
+) -> None:
+    """Render a labels layer as polygons with a fixed color."""
+    vectorized_layer = f"{label_layer}_vectorized"
+    if vectorized_layer not in sdata:
+        sdata[vectorized_layer] = spatialdata.to_polygons(sdata[label_layer])
+    sdata.pl.render_shapes(
+        vectorized_layer,
+        color=color,
+        fill_alpha=fill_alpha,
+        outline_alpha=0,
+    ).pl.show(ax=ax)
+
+
 def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     """Get the x, y shape of the element in the spatialdata object.
 
@@ -396,53 +436,90 @@ def plot_labels(
         fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot selected segmentation masks
-    if vectorized:
-        if f"{label_layer}_vectorized" not in sdata:
-            sdata[f"{label_layer}_vectorized"] = spatialdata.to_polygons(sdata[label_layer])
-        found_annotation = None
-        for table in sdata.tables:
-            annotated_regions = sdata.get_annotated_regions(sdata[table])
-            for region in annotated_regions:
-                if region == label_layer:
-                    found_annotation = region
-                    annotating_table = sdata[table].copy()
-                    annotating_table.uns["spatialdata_attrs"]["region"] = f"{label_layer}_vectorized"
-                    annotating_table.obs["region"] = f"{label_layer}_vectorized"
-                    annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+    annotation_columns = _annotation_columns_for_layer(sdata, label_layer)
+    use_fixed_color_fallback = (
+        isinstance(color, str) and color not in annotation_columns and _is_valid_matplotlib_color(color)
+    )
 
-                    # check for annotating column
-                    if color in annotating_table.obs:
-                        annotating_table.obs[color] = (
-                            annotating_table.obs[color].astype("category").cat.remove_unused_categories()
-                        )
-                        # check for NaN values
-                        if annotating_table.obs[color].isna().sum() > 0:
-                            # NaN values need to be filled as otherwise the plotting will throw an error
-                            if "NaN" not in annotating_table.obs[color].cat.categories:
-                                annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
-                            annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
-                    annotating_table = spatialdata.models.TableModel.parse(annotating_table)
-                    break
-        if found_annotation is not None:
-            had_annotation = "_annotation" in sdata
-            prev_annotation = sdata["_annotation"] if had_annotation else None
-            sdata["_annotation"] = annotating_table
-            try:
-                sdata.pl.render_shapes(
-                    f"{label_layer}_vectorized",
-                    color=color,
-                    fill_alpha=fill_alpha,
-                    outline_alpha=0,
-                    cmap=cmap,
-                    palette=palette,
-                    groups=groups,
-                    norm=norm,
-                ).pl.show(ax=ax)
-            finally:
-                if had_annotation:
-                    sdata["_annotation"] = prev_annotation
-                else:
-                    del sdata["_annotation"]  # delete element again after plotting
+    if vectorized:
+        if use_fixed_color_fallback:
+            _render_labels_as_fixed_color_shapes(
+                sdata=sdata,
+                label_layer=label_layer,
+                color=color,
+                fill_alpha=fill_alpha,
+                ax=ax,
+            )
+        else:
+            if f"{label_layer}_vectorized" not in sdata:
+                sdata[f"{label_layer}_vectorized"] = spatialdata.to_polygons(sdata[label_layer])
+            found_annotation = None
+            for table in sdata.tables:
+                annotated_regions = sdata.get_annotated_regions(sdata[table])
+                for region in annotated_regions:
+                    if region == label_layer:
+                        found_annotation = region
+                        annotating_table = sdata[table].copy()
+                        annotating_table.uns["spatialdata_attrs"]["region"] = f"{label_layer}_vectorized"
+                        annotating_table.obs["region"] = f"{label_layer}_vectorized"
+                        annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+
+                        # check for annotating column
+                        if color in annotating_table.obs:
+                            annotating_table.obs[color] = (
+                                annotating_table.obs[color].astype("category").cat.remove_unused_categories()
+                            )
+                            # check for NaN values
+                            if annotating_table.obs[color].isna().sum() > 0:
+                                # NaN values need to be filled as otherwise the plotting will throw an error
+                                if "NaN" not in annotating_table.obs[color].cat.categories:
+                                    annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
+                                annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
+                        annotating_table = spatialdata.models.TableModel.parse(annotating_table)
+                        break
+            if found_annotation is not None:
+                had_annotation = "_annotation" in sdata
+                prev_annotation = sdata["_annotation"] if had_annotation else None
+                sdata["_annotation"] = annotating_table
+                try:
+                    sdata.pl.render_shapes(
+                        f"{label_layer}_vectorized",
+                        color=color,
+                        fill_alpha=fill_alpha,
+                        outline_alpha=0,
+                        cmap=cmap,
+                        palette=palette,
+                        groups=groups,
+                        norm=norm,
+                    ).pl.show(ax=ax)
+                finally:
+                    if had_annotation:
+                        sdata["_annotation"] = prev_annotation
+                    else:
+                        del sdata["_annotation"]  # delete element again after plotting
+            else:
+                try:
+                    sdata.pl.render_labels(
+                        f"{label_layer}",
+                        color=color,
+                        fill_alpha=fill_alpha,
+                        outline_alpha=1,
+                        cmap=cmap,
+                        palette=palette,
+                        groups=groups,
+                        norm=norm,
+                    ).pl.show(ax=ax)
+                except Exception as err:
+                    raise Exception from err
+    else:
+        if use_fixed_color_fallback:
+            _render_labels_as_fixed_color_shapes(
+                sdata=sdata,
+                label_layer=label_layer,
+                color=color,
+                fill_alpha=fill_alpha,
+                ax=ax,
+            )
         else:
             try:
                 sdata.pl.render_labels(
@@ -457,17 +534,6 @@ def plot_labels(
                 ).pl.show(ax=ax)
             except Exception as err:
                 raise Exception from err
-
-    else:
-        sdata.pl.render_labels(
-            f"{label_layer}",
-            color=color,
-            fill_alpha=fill_alpha,
-            cmap=cmap,
-            palette=palette,
-            groups=groups,
-            norm=norm,
-        ).pl.show(ax=ax)
 
     # configure axes
     ax.axis("off")

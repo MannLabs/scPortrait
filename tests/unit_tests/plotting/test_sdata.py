@@ -105,6 +105,8 @@ def test_plot_segmentation_mask_with_ax_returns_fig(sdata_with_labels):
         (True, "labelling_categorical"),
         (False, "labelling_continous"),
         (True, "labelling_continous"),
+        (False, "red"),
+        (True, "red"),
     ],
 )
 def test_plot_labels(sdata_with_labels, vectorized, color):
