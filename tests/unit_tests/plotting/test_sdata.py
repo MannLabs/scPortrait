@@ -148,3 +148,33 @@ def test_plot_shapes_with_ax_returns_fig(sdata_with_labels):
     )
     assert returned is fig
     plt.close(fig)
+
+
+def test_plot_shapes_from_label_layer(sdata_with_labels):
+    fig = plotting.plot_shapes(
+        sdata=sdata_with_labels,
+        label_layer="blobs_labels",
+        return_fig=True,
+        show_fig=False,
+    )
+    assert isinstance(fig, plt.Figure)
+    assert "blobs_labels_vectorized" in sdata_with_labels
+    plt.close(fig)
+
+
+def test_plot_shapes_requires_exactly_one_layer_arg(sdata_with_labels):
+    with pytest.raises(ValueError):
+        plotting.plot_shapes(
+            sdata=sdata_with_labels,
+            return_fig=False,
+            show_fig=False,
+        )
+
+    with pytest.raises(ValueError):
+        plotting.plot_shapes(
+            sdata=sdata_with_labels,
+            shapes_layer="blobs_polygons",
+            label_layer="blobs_labels",
+            return_fig=False,
+            show_fig=False,
+        )

@@ -307,7 +307,8 @@ def plot_segmentation_mask(
 
 def plot_shapes(
     sdata: spatialdata.SpatialData,
-    shapes_layer: str,
+    shapes_layer: str | None = None,
+    label_layer: str | None = None,
     title: str | None = None,
     title_fontsize: int = 20,
     fill_color: str = "grey",
@@ -321,11 +322,12 @@ def plot_shapes(
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
-    """Visualize shapes layer.
+    """Visualize a shapes layer.
 
     Args:
-        sdata: SpatialData object containing the shapes layer.
+        sdata: SpatialData object containing the shapes or labels layer.
         shapes_layer: Key identifying the shapes layer to plot.
+        label_layer: Key identifying a labels layer to convert to shapes and plot.
         title: Title of the plot.
         title_fontsize: Font size of the title in points.
         fill_color: Color of the fill of the shapes.
@@ -342,6 +344,18 @@ def plot_shapes(
     Returns:
         Matplotlib figure object if return_fig is True.
     """
+    if (shapes_layer is None and label_layer is None) or (shapes_layer is not None and label_layer is not None):
+        raise ValueError("Provide exactly one of 'shapes_layer' or 'label_layer'.")
+
+    if label_layer is not None:
+        if label_layer not in sdata:
+            raise KeyError(f"Label layer {label_layer} not found in sdata object.")
+        shapes_layer = f"{label_layer}_vectorized"
+        if shapes_layer not in sdata:
+            sdata[shapes_layer] = spatialdata.to_polygons(sdata[label_layer])
+
+    if shapes_layer is None:
+        raise ValueError("Unable to resolve shapes layer for plotting.")
 
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
