@@ -1,5 +1,6 @@
 import warnings
 from collections.abc import Iterable
+from math import ceil
 from numbers import Integral
 
 import matplotlib as mpl
@@ -86,10 +87,18 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     Returns:
         Tuple containing the shape of the x, y coordinates of the element.
     """
-    if isinstance(sdata[element_name], xarray.DataTree):
-        shape = sdata[element_name].scale0.image.shape
+    element = sdata[element_name]
+    if isinstance(element, xarray.DataTree):
+        shape = element.scale0.image.shape
+    elif hasattr(element, "data") and hasattr(element.data, "shape"):
+        shape = element.data.shape
+    elif hasattr(element, "total_bounds"):
+        min_x, min_y, max_x, max_y = element.total_bounds
+        x = max(1, ceil(max_y - min_y))
+        y = max(1, ceil(max_x - min_x))
+        return x, y
     else:
-        shape = sdata[element_name].data.shape
+        raise ValueError(f"Unsupported element type for '{element_name}': {type(element)}.")
 
     if len(shape) == 3:
         _, x, y = shape

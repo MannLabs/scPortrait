@@ -150,6 +150,17 @@ def test_plot_shapes_with_ax_returns_fig(sdata_with_labels):
     plt.close(fig)
 
 
+def test_plot_shapes_from_shapes_layer(sdata_with_labels):
+    fig = plotting.plot_shapes(
+        sdata=sdata_with_labels,
+        shapes_layer="blobs_polygons",
+        return_fig=True,
+        show_fig=False,
+    )
+    assert isinstance(fig, plt.Figure)
+    plt.close(fig)
+
+
 def test_plot_shapes_from_label_layer(sdata_with_labels):
     fig = plotting.plot_shapes(
         sdata=sdata_with_labels,
