@@ -58,6 +58,23 @@ def _annotation_columns_for_layer(sdata: spatialdata.SpatialData, label_layer: s
     return columns
 
 
+def _get_vectorized_annotating_table(
+    sdata: spatialdata.SpatialData,
+    label_layer: str,
+) -> spatialdata.models.TableModel | None:
+    """Return an annotation table remapped to the vectorized labels layer."""
+    vectorized_layer = f"{label_layer}_vectorized"
+    for table in sdata.tables:
+        annotated_regions = sdata.get_annotated_regions(sdata[table])
+        if label_layer in annotated_regions:
+            annotating_table = sdata[table].copy()
+            annotating_table.uns["spatialdata_attrs"]["region"] = vectorized_layer
+            annotating_table.obs["region"] = vectorized_layer
+            annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+            return spatialdata.models.TableModel.parse(annotating_table)
+    return None
+
+
 def _render_labels_as_fixed_color_shapes(
     sdata: spatialdata.SpatialData,
     label_layer: str,
@@ -388,17 +405,40 @@ def plot_shapes(
     if shapes_layer not in sdata:
         raise KeyError(f"Shapes layer {shapes_layer} not found in sdata object.")
 
-    sdata.pl.render_shapes(
-        f"{shapes_layer}",
-        fill_alpha=fill_alpha,
-        color=fill_color,
-        outline_alpha=outline_alpha,
-        outline_color=outline_color,
-        outline_width=outline_width,
-        cmap=cmap,
-        palette=palette,
-        groups=groups,
-    ).pl.show(ax=ax)
+    annotating_table = _get_vectorized_annotating_table(sdata, label_layer) if label_layer is not None else None
+    if annotating_table is not None:
+        had_annotation = "_annotation" in sdata
+        prev_annotation = sdata["_annotation"] if had_annotation else None
+        sdata["_annotation"] = annotating_table
+        try:
+            sdata.pl.render_shapes(
+                f"{shapes_layer}",
+                fill_alpha=fill_alpha,
+                color=fill_color,
+                outline_alpha=outline_alpha,
+                outline_color=outline_color,
+                outline_width=outline_width,
+                cmap=cmap,
+                palette=palette,
+                groups=groups,
+            ).pl.show(ax=ax)
+        finally:
+            if had_annotation:
+                sdata["_annotation"] = prev_annotation
+            else:
+                del sdata["_annotation"]
+    else:
+        sdata.pl.render_shapes(
+            f"{shapes_layer}",
+            fill_alpha=fill_alpha,
+            color=fill_color,
+            outline_alpha=outline_alpha,
+            outline_color=outline_color,
+            outline_width=outline_width,
+            cmap=cmap,
+            palette=palette,
+            groups=groups,
+        ).pl.show(ax=ax)
 
     ax.axis("off")
     ax.set_title(title, fontsize=title_fontsize)

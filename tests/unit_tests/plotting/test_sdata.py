@@ -175,6 +175,21 @@ def test_plot_shapes_from_label_layer(sdata_with_labels):
     plt.close(fig)
 
 
+def test_plot_shapes_from_label_layer_with_annotation_color(sdata_with_labels):
+    first_group = sdata_with_labels["table"].obs["labelling_categorical"].iloc[0]
+    fig = plotting.plot_shapes(
+        sdata=sdata_with_labels,
+        label_layer="blobs_labels",
+        fill_color="labelling_categorical",
+        palette=["red"],
+        groups=[first_group],
+        return_fig=True,
+        show_fig=False,
+    )
+    assert isinstance(fig, plt.Figure)
+    plt.close(fig)
+
+
 def test_plot_shapes_requires_exactly_one_layer_arg(sdata_with_labels):
     with pytest.raises(ValueError):
         plotting.plot_shapes(
