@@ -326,6 +326,8 @@ def plot_shapes(
     outline_alpha: float = 0,
     outline_width: float = 1,
     cmap: str = None,
+    palette: dict | list | None = None,
+    groups: list | None = None,
     dpi: int | None = None,
     ax: plt.Axes | None = None,
     return_fig: bool = False,
@@ -345,6 +347,8 @@ def plot_shapes(
         outline_alpha: Alpha value of the outline of the shapes.
         outline_width: Width of the outline of the shapes.
         cmap: Colormap to use for the shapes.
+        palette: Palette for discrete annotations.
+        groups: Groups to plot when the color key refers to discrete annotations.
         dpi: Dots per inch of the plot.
         ax: Matplotlib axis object to plot on.
         return_fig: Whether to return the figure.
@@ -392,6 +396,8 @@ def plot_shapes(
         outline_color=outline_color,
         outline_width=outline_width,
         cmap=cmap,
+        palette=palette,
+        groups=groups,
     ).pl.show(ax=ax)
 
     ax.axis("off")

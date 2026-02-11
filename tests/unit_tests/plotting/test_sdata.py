@@ -1,3 +1,5 @@
+import inspect
+
 import matplotlib
 
 matplotlib.use("Agg")  # Ensure no GUI rendering during tests
@@ -189,3 +191,9 @@ def test_plot_shapes_requires_exactly_one_layer_arg(sdata_with_labels):
             return_fig=False,
             show_fig=False,
         )
+
+
+def test_plot_shapes_exposes_palette_and_groups_kwargs():
+    signature = inspect.signature(plotting.plot_shapes)
+    assert "palette" in signature.parameters
+    assert "groups" in signature.parameters
