@@ -393,6 +393,13 @@ def plot_shapes(
     if (shapes_layer is None and label_layer is None) or (shapes_layer is not None and label_layer is not None):
         raise ValueError("Provide exactly one of 'shapes_layer' or 'label_layer'.")
 
+    normalized_groups = None
+    if groups is not None:
+        if isinstance(groups, str):
+            normalized_groups = [groups]
+        else:
+            normalized_groups = [str(group) for group in groups]
+
     if label_layer is not None:
         if label_layer not in sdata:
             raise KeyError(f"Label layer {label_layer} not found in sdata object.")
@@ -423,6 +430,9 @@ def plot_shapes(
 
     annotating_table = _get_vectorized_annotating_table(sdata, label_layer) if label_layer is not None else None
     if annotating_table is not None:
+        if normalized_groups is not None and isinstance(fill_color, str) and fill_color in annotating_table.obs:
+            annotating_table.obs[fill_color] = annotating_table.obs[fill_color].astype("string")
+            annotating_table.obs[fill_color] = annotating_table.obs[fill_color].astype("category")
         had_annotation = "_annotation" in sdata
         prev_annotation = sdata["_annotation"] if had_annotation else None
         sdata["_annotation"] = annotating_table
@@ -436,7 +446,7 @@ def plot_shapes(
                 outline_width=outline_width,
                 cmap=cmap,
                 palette=palette,
-                groups=groups,
+                groups=normalized_groups,
                 method=method,
             ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
         finally:
@@ -454,7 +464,7 @@ def plot_shapes(
             outline_width=outline_width,
             cmap=cmap,
             palette=palette,
-            groups=groups,
+            groups=normalized_groups,
             method=method,
         ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
 
