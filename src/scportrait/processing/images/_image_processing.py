@@ -16,7 +16,8 @@ def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] | np.dtype 
         dtype: dtype to convert to
 
     """
-    assert array.min() >= 0 and array.max() <= 1, "Array values must be in the range [0, 1]"
+    if array.min() < 0 or array.max() > 1:
+        raise ValueError("Array values must be in the range [0, 1]")
     dtype = np.dtype(dtype).type
     return (array * np.iinfo(dtype).max).astype(dtype)
 
