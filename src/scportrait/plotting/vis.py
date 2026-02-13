@@ -167,17 +167,22 @@ def colorize(
     im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile: float = 0.0, normalize_image: bool = False
 ):
     """
-    Helper function to create an RGB image from a single-channel image using a
-    specific color.
+    Create an RGB image from a single-channel image using a specified color.
 
     Args:
-        im: A single-channel input image. If normalize_image = False, ensure that its values fall between the [0, 1] range.
+        im: A single-channel input image. If normalize_image = False, ensure that its values fall between [0, 1].
         color: The color to use for the image. Defaults to (1, 0, 0).
-        clip_percentile: The percentile to clip the image at rescaling. Defaults to 0.0 which is equivalent to Min-Max scaling.
-        normalize_image: boolean value indicating if rescaling should be performed or not.
+        clip_percentile: Percentile to clip the image at when rescaling. Defaults to 0.0 (min-max scaling).
+        normalize_image: Whether to rescale the image before colorizing.
 
     Returns:
         np.ndarray: The colorized image.
+
+    Example:
+        >>> import numpy as np
+        >>> from scportrait.plotting.vis import colorize
+        >>> im = np.random.rand(64, 64)
+        >>> rgb = colorize(im, color=(0, 1, 0), normalize_image=True)
     """
     # Check that we do just have a 2D image
     if im.ndim > 2 and im.shape[2] != 1:
