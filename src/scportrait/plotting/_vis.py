@@ -37,7 +37,7 @@ def plot_image_array(
         **kwargs: Additional keyword arguments to be passed to `ax.imshow`.
 
     Returns:
-        None: The function will display the image but does not return any values.
+        Matplotlib figure if `return_fig=True`, otherwise `None`.
 
     Example:
     >>> array = np.random.rand(10, 10)
