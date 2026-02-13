@@ -208,7 +208,7 @@ def colorize(
 
     Example:
         >>> import numpy as np
-        >>> from scportrait.plotting.vis import colorize
+        >>> from scportrait.plotting import colorize
         >>> im = np.random.rand(64, 64)
         >>> rgb = colorize(im, color=(0, 1, 0), normalize_image=True)
     """
