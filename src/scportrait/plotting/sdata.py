@@ -123,8 +123,8 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
         shape = element.data.shape
     elif hasattr(element, "total_bounds"):
         min_x, min_y, max_x, max_y = element.total_bounds
-        x = max(1, ceil(max_y - min_y))
-        y = max(1, ceil(max_x - min_x))
+        x = max(1, ceil(max_x - min_x))
+        y = max(1, ceil(max_y - min_y))
         return x, y
     else:
         raise ValueError(f"Unsupported element type for '{element_name}': {type(element)}.")
