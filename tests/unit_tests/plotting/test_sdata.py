@@ -100,6 +100,19 @@ def test_plot_segmentation_mask_with_ax_returns_fig(sdata_with_labels):
     plt.close(fig)
 
 
+def test_plot_segmentation_mask_selected_channels_scalar(sdata_with_labels):
+    fig = plotting.plot_segmentation_mask(
+        sdata=sdata_with_labels,
+        masks=["blobs_labels"],
+        background_image="blobs_image",
+        selected_channels=0,
+        return_fig=True,
+        show_fig=False,
+    )
+    assert isinstance(fig, plt.Figure)
+    plt.close(fig)
+
+
 @pytest.mark.parametrize(
     "vectorized, color",
     [
@@ -136,6 +149,21 @@ def test_plot_labels_with_ax_returns_fig(sdata_with_labels):
         ax=ax,
     )
     assert returned is fig
+    plt.close(fig)
+
+
+def test_plot_labels_groups_normalized(sdata_with_labels):
+    first_group = sdata_with_labels["table"].obs["labelling_categorical"].iloc[0]
+    fig = plotting.plot_labels(
+        sdata=sdata_with_labels,
+        label_layer="blobs_labels",
+        vectorized=True,
+        color="labelling_categorical",
+        groups=[first_group],
+        return_fig=True,
+        show_fig=False,
+    )
+    assert isinstance(fig, plt.Figure)
     plt.close(fig)
 
 
