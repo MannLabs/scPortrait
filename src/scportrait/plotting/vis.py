@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from scportrait.pipeline.project import Project
 
 
+from scportrait._utils.deprecation import deprecated
+
+
 def plot_image(
     array: np.ndarray,
     size: tuple[int, int] = (10, 10),
@@ -60,11 +63,24 @@ def plot_image(
         plt.close()
 
 
+@deprecated(
+    deprecated_in="1.6.2",
+    removed_in="1.7.0",
+    details=(
+        "This function is not used internally and will be removed in a future release. "
+        "Prefer scportrait.plotting.sdata.plot_labels or scportrait.plotting.sdata.plot_shapes."
+    ),
+)
 def visualize_class(
     class_ids: np.ndarray | list[int], seg_map: np.ndarray, image: np.ndarray, all_ids=None, return_fig=False, **kwargs
 ):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
+
+    .. deprecated:: 1.6.2
+        This function is not used internally and will be removed in a future release. Prefer
+        `scportrait.plotting.sdata.plot_labels` or `scportrait.plotting.sdata.plot_shapes` for
+        SpatialData-based workflows.
 
     This function takes in class IDs and a segmentation map, and creates an output visualization
     where the specified classes are highlighted on top of the provided background image.
@@ -112,6 +128,14 @@ def visualize_class(
         return fig
 
 
+@deprecated(
+    deprecated_in="1.6.2",
+    removed_in="1.7.0",
+    details=(
+        "This helper is superseded by scportrait.plotting.sdata.plot_segmentation_mask and "
+        "is not used internally. It will be removed in a future release."
+    ),
+)
 def plot_segmentation_mask(
     project: Project,
     mask_channel: int = 0,
@@ -123,6 +147,10 @@ def plot_segmentation_mask(
     figsize: tuple[int, int] = (10, 10),
 ) -> object:
     """Visualize the segmentation mask overlayed with a channel of the input image.
+
+    .. deprecated:: 1.6.2
+        This helper is superseded by `scportrait.plotting.sdata.plot_segmentation_mask` and
+        is not used internally. It will be removed in a future release.
 
     Args:
        project: Instance of a scPortrait project.
