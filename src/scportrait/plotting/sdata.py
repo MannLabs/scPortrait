@@ -97,6 +97,15 @@ def _render_labels_as_fixed_color_shapes(
     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
 
 
+def _normalize_groups(groups: list | None) -> list[str] | None:
+    """Normalize groups to a list of strings for plotting."""
+    if groups is None:
+        return None
+    if isinstance(groups, str):
+        return [groups]
+    return [str(group) for group in groups]
+
+
 def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     """Get the x, y shape of the element in the spatialdata object.
 
@@ -154,7 +163,6 @@ def plot_image(
     sdata: spatialdata.SpatialData,
     image_name: str,
     coordinate_systems: str | list[str] | None = None,
-    method: str | None = None,
     channel_names: list[str] | list[int] | None = None,
     palette: list[str] | None = None,
     cmap: mpl.colors.ListedColormap | None = None,
@@ -168,11 +176,15 @@ def plot_image(
 ) -> plt.Figure | None:
     """Plot the image with the given name from the spatialdata object.
 
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
+
     Args:
         sdata: SpatialData object containing the image.
         image_name: Name of the image to plot.
         coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
-        method: Plotting backend passed to spatialdata_plot (`None`, "matplotlib", or "datashader").
         channel_names: List of channel names to plot. If None then all channels will be plotted. Defaults to None.
         palette: List of colors to use for the channels. If None then the default palette will be used. Defaults to None.
         title: Title of the plot. Defaults to None.
@@ -184,6 +196,19 @@ def plot_image(
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_image(
+        ...     sdata=sdata,
+        ...     image_name="blobs_image",
+        ...     channel_names=[0],
+        ...     palette=["red"],
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     _check_for_spatialdata_plot()
 
@@ -205,13 +230,16 @@ def plot_image(
             palette = PALETTE[: len(channel_names)]
 
     # plot figure
+    render_kwargs = {
+        "channel": channel_names,
+        "palette": palette,
+        "cmap": cmap,
+        "norm": norm,
+    }
+
     sdata.pl.render_images(
         image_name,
-        channel=channel_names,
-        palette=palette,
-        cmap=cmap,
-        norm=norm,
-        method=method,
+        **render_kwargs,
     ).pl.show(coordinate_systems=coordinate_systems, ax=ax, colorbar=False)
     ax.set_axis_off()
     ax.set_title(title, fontsize=title_fontsize)
@@ -237,19 +265,24 @@ def plot_segmentation_mask(
     fill_alpha: float = 0,
     fill_color: str | None = None,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
     """Visualize segmentation masks over selected background image.
     Will transform the provided labels layers to polygons and plot them over the background image.
-    Requires an installed spatialdata_plot package.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
         sdata: SpatialData object containing the input image and segmentation mask.
         masks: List of keys identifying the segmentation masks to plot.
         background_image: Key identifying the background image to plot the segmentation masks on. Defaults to "input_image". If set to None then only the segmentation masks will be plotted as outlines.
-        selected_channels: List of indices of the channels in the background image to plot. If None then the first `max_channels_to_plot` channels will be plotted. Defaults to None.
+        selected_channels: Index or list of indices of background-image channels to plot. If None then the first
+            `max_channels_to_plot` channels will be plotted. Defaults to None.
         title: Title of the plot. Defaults to None.
         title_fontsize: Font size of the title in points.
         line_width: Width of the outline of the segmentation masks.
@@ -258,9 +291,22 @@ def plot_segmentation_mask(
         fill_alpha: Alpha value of the fill of the segmentation masks.
         fill_color: Color of the fill of the segmentation masks. If None then no fill will be used. Defaults to None.
         dpi: Dots per inch of the plot. Defaults to None.
-        axs: Matplotlib axis object to plot on. Defaults to None.
+        ax: Matplotlib axis object to plot on. Defaults to None.
         return_fig: Whether to return the figure. Defaults to False.
         show_fig: Whether to show the figure. Defaults to True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_segmentation_mask(
+        ...     sdata=sdata,
+        ...     masks=["blobs_labels"],
+        ...     background_image="blobs_image",
+        ...     selected_channels=0,
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
@@ -360,11 +406,16 @@ def plot_shapes(
     palette: dict | list | None = None,
     groups: list | None = None,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
     """Visualize a shapes layer.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
         sdata: SpatialData object containing the shapes or labels layer.
@@ -389,16 +440,22 @@ def plot_shapes(
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_shapes(
+        ...     sdata=sdata,
+        ...     shapes_layer="blobs_polygons",
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     if (shapes_layer is None and label_layer is None) or (shapes_layer is not None and label_layer is not None):
         raise ValueError("Provide exactly one of 'shapes_layer' or 'label_layer'.")
 
-    normalized_groups = None
-    if groups is not None:
-        if isinstance(groups, str):
-            normalized_groups = [groups]
-        else:
-            normalized_groups = [str(group) for group in groups]
+    normalized_groups = _normalize_groups(groups)
 
     if label_layer is not None:
         if label_layer not in sdata:
@@ -489,38 +546,55 @@ def plot_labels(
     color: str = "grey",
     fill_alpha: float = 1,
     cmap: str = None,
-    palette: dict | list = None,
-    groups: list = None,
+    palette: dict | list | None = None,
+    groups: list | None = None,
     norm: mpl.colors.Normalize = None,
     vectorized: bool = False,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
-    """Plot the segmentation mask on the input image.
+    """Plot a labels layer.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
         sdata: SpatialData object containing the input image and segmentation mask.
-        labels_layer: Key identifying the label layer to plot.
+        label_layer: Key identifying the label layer to plot.
         coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
         method: Plotting backend passed to spatialdata_plot (`None`, "matplotlib", or "datashader").
         title: Title of the plot.
         title_fontsize: Font size of the title in points.
-        color: color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
+        color: Color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
         fill_alpha: Alpha value of the fill of the segmentation masks.
         cmap: Colormap to use for the labels.
         palette: Palette for discrete annotations. List of valid color names that should be used for the categories. Must match the number of groups. The list can contain multiple palettes (one per group) to be visualized. If groups is provided but not palette, palette is set to default “lightgray”.
         groups: When using color and the key represents discrete labels, groups can be used to show only a subset of them. Other values are set to NA.
-        norm: Colormap normalization for continuous annotations
+        norm: Colormap normalization for continuous annotations.
         vectorized: Whether to plot a vectorized version of the labels.
         dpi: Dots per inch of the plot.
-        axs: Matplotlib axis object to plot on.
+        ax: Matplotlib axis object to plot on.
         return_fig: Whether to return the figure.
         show_fig: Whether to show the figure.
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_labels(
+        ...     sdata=sdata,
+        ...     label_layer="blobs_labels",
+        ...     color="labelling_categorical",
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
@@ -538,6 +612,7 @@ def plot_labels(
 
     # plot selected segmentation masks
     annotation_columns = _annotation_columns_for_layer(sdata, label_layer)
+    normalized_groups = _normalize_groups(groups)
     use_fixed_color_fallback = (
         isinstance(color, str) and color not in annotation_columns and _is_valid_matplotlib_color(color)
     )
@@ -569,6 +644,9 @@ def plot_labels(
 
                         # check for annotating column
                         if color in annotating_table.obs:
+                            if normalized_groups is not None:
+                                annotating_table.obs[color] = annotating_table.obs[color].astype("string")
+                                annotating_table.obs[color] = annotating_table.obs[color].astype("category")
                             annotating_table.obs[color] = (
                                 annotating_table.obs[color].astype("category").cat.remove_unused_categories()
                             )
@@ -592,7 +670,7 @@ def plot_labels(
                         outline_alpha=0,
                         cmap=cmap,
                         palette=palette,
-                        groups=groups,
+                        groups=normalized_groups,
                         norm=norm,
                         method=method,
                     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
@@ -610,7 +688,7 @@ def plot_labels(
                         outline_alpha=1,
                         cmap=cmap,
                         palette=palette,
-                        groups=groups,
+                        groups=normalized_groups,
                         norm=norm,
                         method=method,
                     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
@@ -636,7 +714,7 @@ def plot_labels(
                     outline_alpha=1,
                     cmap=cmap,
                     palette=palette,
-                    groups=groups,
+                    groups=normalized_groups,
                     norm=norm,
                     method=method,
                 ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
