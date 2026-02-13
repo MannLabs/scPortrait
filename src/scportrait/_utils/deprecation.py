@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 T = TypeVar("T", bound=Callable[..., object])
 
@@ -23,9 +24,7 @@ def deprecated(*args, **kwargs):
     if _deprecated is not None:
         return _deprecated(*args, **kwargs)
 
-    details = kwargs.get(
-        "details", "This function is deprecated and will be removed in a future release."
-    )
+    details = kwargs.get("details", "This function is deprecated and will be removed in a future release.")
 
     def _decorator(func: T) -> T:
         def _wrapped(*f_args, **f_kwargs):
