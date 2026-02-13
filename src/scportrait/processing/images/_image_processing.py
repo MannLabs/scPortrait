@@ -172,8 +172,8 @@ def percentile_normalization(
 
 def value_range_normalization(
     im: np.ndarray,
-    lower_value: float | int,
-    upper_value: float | int,
+    lower_value: int,
+    upper_value: int,
     *,
     out_dtype: np.dtype | type[np.integer] | None = None,
     return_float: bool = False,
@@ -192,8 +192,9 @@ def value_range_normalization(
         out_im (np.array): Normalized Numpy array.
 
     Example:
-    >>> img = np.random.rand(4, 4)
-    >>> norm_img = value_range_normalization(img, 0.2, 0.8, return_float=True)
+    >>> rng = np.random.default_rng()
+    >>> img = rng.integers(0, np.iinfo(np.uint16).max + 1, size=(4, 4), dtype=np.uint16)
+    >>> norm_img = value_range_normalization(img, 200, 15800, return_float=True)
     """
 
     if upper_value <= lower_value:
