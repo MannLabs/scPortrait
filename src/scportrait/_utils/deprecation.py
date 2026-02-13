@@ -9,7 +9,7 @@ T = TypeVar("T", bound=Callable[..., object])
 
 try:
     from deprecation import deprecated as _deprecated
-except Exception:  # pragma: no cover - optional dependency
+except (ImportError, ModuleNotFoundError):  # pragma: no cover - optional dependency
     _deprecated = None
 
 
