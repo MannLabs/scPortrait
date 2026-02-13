@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import warnings
 from collections.abc import Callable
 from typing import TypeVar
@@ -27,6 +28,7 @@ def deprecated(*args, **kwargs):
     details = kwargs.get("details", "This function is deprecated and will be removed in a future release.")
 
     def _decorator(func: T) -> T:
+        @functools.wraps(func)
         def _wrapped(*f_args, **f_kwargs):
             warnings.warn(details, DeprecationWarning, stacklevel=2)
             return func(*f_args, **f_kwargs)
