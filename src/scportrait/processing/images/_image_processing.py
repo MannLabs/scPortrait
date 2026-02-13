@@ -172,8 +172,8 @@ def percentile_normalization(
 
 def value_range_normalization(
     im: np.ndarray,
-    lower_value: int,
-    upper_value: int,
+    lower_value: float | int,
+    upper_value: float | int,
     *,
     out_dtype: np.dtype | type[np.integer] | None = None,
     return_float: bool = False,
@@ -306,7 +306,10 @@ def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     logger.info("Downsampling image by a factor of %sx%s", N, N)
 
     # actually perform downsampling
-    img = downsample_img(img, N=N)
+    if len(img.shape) == 2:
+        img = downsample_img(img[None, ...], N=N)[0]
+    else:
+        img = downsample_img(img, N=N)
 
     return img
 

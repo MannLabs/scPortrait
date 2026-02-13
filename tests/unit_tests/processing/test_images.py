@@ -115,6 +115,12 @@ def test_downsample_img_padding_3d_shape():
     assert downsampled.shape == (2, 3, 3)
 
 
+def test_downsample_img_padding_2d_shape():
+    img = np.zeros((5, 5), dtype=np.float32)
+    downsampled = downsample_img_padding(img, N=2)
+    assert downsampled.shape == (3, 3)
+
+
 def test_rescale_image_invalid_dtype_raises():
     img = np.array([[0, 1], [2, 3]], dtype=np.uint16)
     with pytest.raises(ValueError):
