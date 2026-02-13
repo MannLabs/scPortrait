@@ -692,8 +692,8 @@ def plot_labels(
                         norm=norm,
                         method=method,
                     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
-                except Exception as err:
-                    raise Exception from err
+                except Exception:
+                    raise
     else:
         if use_fixed_color_fallback:
             _render_labels_as_fixed_color_shapes(
@@ -718,8 +718,8 @@ def plot_labels(
                     norm=norm,
                     method=method,
                 ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
-            except Exception as err:
-                raise Exception from err
+            except Exception:
+                raise
 
     # configure axes
     ax.axis("off")
