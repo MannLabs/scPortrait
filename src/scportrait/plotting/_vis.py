@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 from scportrait._utils.deprecation import deprecated
 
 
-def plot_image(
+def plot_image_array(
     array: np.ndarray,
     size: tuple[int, int] = (10, 10),
     save_name: str | None = "",
@@ -41,7 +41,7 @@ def plot_image(
 
     Example:
     >>> array = np.random.rand(10, 10)
-    >>> plot_image(array, size=(5, 5))
+    >>> plot_image_array(array, size=(5, 5))
     """
 
     fig = plt.figure(frameon=False)
@@ -122,7 +122,7 @@ def visualize_class(
 
     vis_map = label2rgb(outmap, image=image, colors=["red", "blue"], alpha=0.4, bg_label=0)
 
-    fig = plot_image(vis_map, return_fig=True, **kwargs)
+    fig = plot_image_array(vis_map, return_fig=True, **kwargs)
 
     if return_fig:
         return fig
