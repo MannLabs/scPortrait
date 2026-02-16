@@ -9,9 +9,12 @@ import pytest
 from scportrait.processing.images._image_processing import (
     MinMax,
     _percentile_norm,
+    downsample_img,
     downsample_img_padding,
     percentile_normalization,
+    rescale_image,
     rolling_window_mean,
+    value_range_normalization,
 )
 
 rng = np.random.default_rng(seed=42)
@@ -84,9 +87,89 @@ def test_rolling_window_mean():
     assert np.all(array.shape == rolling_array.shape)
 
 
+def test_rolling_window_mean_scaling_constant():
+    array = np.zeros((6, 6), dtype=np.float32)
+    rolling_array = rolling_window_mean(array, size=3, scaling=True)
+    assert np.all(np.isfinite(rolling_array))
+    assert np.max(rolling_array) == 0
+
+
 def test_MinMax():
     rng = np.random.default_rng()
     array = rng.random((10, 10))
     normalized_array = MinMax(array)
     assert np.min(normalized_array) == 0
     assert np.max(normalized_array) == 1
+
+
+def test_downsample_img_zero_max():
+    img = np.zeros((1, 4, 4), dtype=np.float32)
+    downsampled = downsample_img(img, N=2, return_dtype=np.uint16)
+    assert downsampled.dtype == np.uint16
+    assert np.all(downsampled == 0)
+
+
+def test_downsample_img_padding_3d_shape():
+    img = np.zeros((2, 5, 5), dtype=np.float32)
+    downsampled = downsample_img_padding(img, N=2)
+    assert downsampled.shape == (2, 3, 3)
+
+
+def test_downsample_img_padding_2d_shape():
+    img = np.zeros((5, 5), dtype=np.float32)
+    downsampled = downsample_img_padding(img, N=2)
+    assert downsampled.shape == (3, 3)
+
+
+def test_rescale_image_invalid_dtype_raises():
+    img = np.array([[0, 1], [2, 3]], dtype=np.uint16)
+    with pytest.raises(ValueError):
+        rescale_image(img, (1, 99), dtype="float32")
+
+
+def test_rescale_image_return_float_range():
+    img = np.array([[0, 10], [20, 30]], dtype=np.uint16)
+    out = rescale_image(img, (0, 100), return_float=True)
+    assert np.issubdtype(out.dtype, np.floating)
+    assert np.min(out) == pytest.approx(0)
+    assert np.max(out) == pytest.approx(1)
+
+
+def test_value_range_normalization_returns_float():
+    img = np.array([[0, 5], [10, 15]], dtype=np.float32)
+    norm = value_range_normalization(img, 5, 10, return_float=True)
+    assert norm.dtype == np.float32
+    assert np.min(norm) == pytest.approx(0)
+    assert np.max(norm) == pytest.approx(1)
+
+
+def test_value_range_normalization_uint16_default_for_float_input():
+    img = np.array([[0, 5], [10, 15]], dtype=np.float32)
+    norm = value_range_normalization(img, 5, 10)
+    assert norm.dtype == np.uint16
+    assert np.min(norm) == 0
+    assert np.max(norm) == np.iinfo(np.uint16).max
+
+
+def test_value_range_normalization_invalid_range_raises():
+    img = np.array([[0, 1], [2, 3]], dtype=np.uint16)
+    with pytest.raises(ValueError):
+        value_range_normalization(img, 5, 5)
+
+
+def test_value_range_normalization_preserves_integer_dtype():
+    img = np.array([[0, 5], [10, 15]], dtype=np.uint8)
+    norm = value_range_normalization(img, 5, 10)
+    assert norm.dtype == np.uint8
+
+
+def test_value_range_normalization_out_dtype():
+    img = np.array([[0, 5], [10, 15]], dtype=np.uint16)
+    norm = value_range_normalization(img, 5, 10, out_dtype=np.uint8)
+    assert norm.dtype == np.uint8
+
+
+def test_value_range_normalization_out_dtype_accepts_np_dtype():
+    img = np.array([[0, 5], [10, 15]], dtype=np.uint16)
+    norm = value_range_normalization(img, 5, 10, out_dtype=np.dtype("uint16"))
+    assert norm.dtype == np.uint16

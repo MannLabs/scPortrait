@@ -306,8 +306,6 @@ class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
         else:
             self.kernel_size = 20  # default value
 
-        print(self.kernel_size)
-
     def _expand_nucleus_mask(self, nucleus_mask: np.ndarray, kernel_size: int) -> np.ndarray:
         """
         Expands the nucleus mask by a given kernel size using dilation

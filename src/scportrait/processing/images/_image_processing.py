@@ -1,10 +1,14 @@
+import logging
+
 import numpy as np
 import xarray as xr
 from numba import jit
 from skimage.exposure import rescale_intensity
 
+logger = logging.getLogger(__name__)
 
-def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16) -> np.ndarray:
+
+def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] | np.dtype = np.uint16) -> np.ndarray:
     """Convert a 0-1 normalized array to a uint dtype
 
     Args:
@@ -12,7 +16,9 @@ def convert_float_to_uint(array: np.ndarray, dtype: type[np.integer] = np.uint16
         dtype: dtype to convert to
 
     """
-    assert array.min() >= 0 and array.max() <= 1, "Array values must be in the range [0, 1]"
+    if array.min() < 0 or array.max() > 1:
+        raise ValueError("Array values must be in the range [0, 1]")
+    dtype = np.dtype(dtype).type
     return (array * np.iinfo(dtype).max).astype(dtype)
 
 
@@ -32,6 +38,8 @@ def rescale_image(
         factor = 65535
     elif dtype == "uint8":
         factor = 255
+    else:
+        raise ValueError("dtype must be 'uint16' or 'uint8'")
 
     # get cutoff values
     cutoff1, cutoff2 = rescale_range
@@ -40,7 +48,9 @@ def rescale_image(
     if cutoff_threshold is not None:
         if img.max() > cutoff_threshold:
             _img = img.copy()
-            values = _img[_img < (cutoff_threshold / factor)]
+            values = _img[_img < cutoff_threshold]
+        else:
+            values = img
     else:
         values = img
 
@@ -71,6 +81,10 @@ def _normalize_image(im: np.ndarray, lower_value: int, upper_value: int) -> np.n
     >>> img = np.random.rand(4, 4)
     >>> norm_img = _normalize_image(img, 200, 15000)
     """
+
+    # Avoid unsigned integer underflow during subtraction
+    if np.issubdtype(im.dtype, np.integer):
+        im = im.astype(np.float32)
 
     # Compute inter-percentile range (IPR)
     IPR = upper_value - lower_value
@@ -141,7 +155,7 @@ def percentile_normalization(
         im = im.copy()  # ensure we are working on a copy not the original data
 
     # ensure that the dtype is converted to a float before running this function
-    if not isinstance(im.dtype, float):
+    if not np.issubdtype(im.dtype, np.floating):
         im = im.astype(np.float32)
 
     # chek if data is passed as (height, width) or (channels, height, width)
@@ -158,6 +172,51 @@ def percentile_normalization(
     return im
 
 
+def value_range_normalization(
+    im: np.ndarray,
+    lower_value: int,
+    upper_value: int,
+    *,
+    out_dtype: np.dtype | type[np.integer] | None = None,
+    return_float: bool = False,
+) -> np.ndarray:
+    """
+    Normalize an input 2D image (np.array) based on input values.
+
+    Args:
+        im: Numpy array of shape (height, width).
+        lower_value: Lower image value used for normalization, all lower values will be clipped to 0.
+        upper_value: Upper image value used for normalization, all higher values will be clipped to 1.
+        out_dtype: Output dtype for integer images. Defaults to the input dtype if integer, otherwise uint16.
+        return_float: If True, return a float array in [0, 1] without casting to an integer dtype.
+
+    Returns:
+        out_im (np.array): Normalized Numpy array.
+
+    Example:
+    >>> rng = np.random.default_rng()
+    >>> img = rng.integers(0, np.iinfo(np.uint16).max + 1, size=(4, 4), dtype=np.uint16)
+    >>> norm_img = value_range_normalization(img, 200, 15800, return_float=True)
+    """
+
+    if upper_value <= lower_value:
+        raise ValueError("upper_value must be greater than lower_value.")
+
+    norm_image = _normalize_image(im, lower_value, upper_value)
+
+    if return_float:
+        return norm_image
+
+    if out_dtype is None:
+        out_dtype = im.dtype if np.issubdtype(im.dtype, np.integer) else np.uint16
+    out_dtype = np.dtype(out_dtype).type
+
+    if not np.issubdtype(out_dtype, np.integer):
+        raise TypeError("out_dtype must be an integer dtype when return_float is False.")
+
+    return convert_float_to_uint(norm_image, dtype=out_dtype)
+
+
 def downsample_img(img: np.ndarray, N: int = 2, return_dtype=np.uint16) -> np.ndarray:
     """
     Function to downsample an image in shape CXY equivalent to NxN binning using the mean between pixels.
@@ -171,7 +230,11 @@ def downsample_img(img: np.ndarray, N: int = 2, return_dtype=np.uint16) -> np.nd
         downsampled array
     """
     downsampled = xr.DataArray(img, dims=["c", "x", "y"]).coarsen(c=1, x=N, y=N, boundary="exact").mean()
-    downsampled = (downsampled / downsampled.max() * np.iinfo(return_dtype).max).astype(return_dtype)
+    max_val = float(downsampled.max())
+    if max_val > 0:
+        downsampled = (downsampled / max_val * np.iinfo(return_dtype).max).astype(return_dtype)
+    else:
+        downsampled = downsampled.astype(return_dtype)
     return np.array(downsampled)
 
 
@@ -190,7 +253,7 @@ def downsample_img_pxs(img: np.ndarray, N: int = 2) -> np.ndarray:
 
     Example:
     >>> img = np.random.rand(10, 10)
-    >>> downsampled_img = downsample_img
+    >>> downsampled_img = downsample_img_pxs(img)
     """
 
     downsampled = img[:, 0:-1:N, 0:-1:N]
@@ -231,15 +294,25 @@ def downsample_img_padding(img: np.ndarray, N: int = 2) -> np.ndarray:
     else:
         pad_y = (0, N - y % N)
 
-    print(f"Performing image padding to ensure that image is compatible with selected downsample kernel size of {N}.")
+    if pad_x != (0, 0) or pad_y != (0, 0):
+        logger.info(
+            "Performing image padding to ensure that image is compatible with selected downsample kernel size of %s.",
+            N,
+        )
 
     # perform image padding to ensure that image is compatible with downsample kernel size
-    img = np.pad(img, ((0, 0), pad_x, pad_y))
+    if len(img.shape) == 3:
+        img = np.pad(img, ((0, 0), pad_x, pad_y))
+    else:
+        img = np.pad(img, (pad_x, pad_y))
 
-    print(f"Downsampling image by a factor of {N}x{N}")
+    logger.info("Downsampling image by a factor of %sx%s", N, N)
 
     # actually perform downsampling
-    img = downsample_img(img, N=N)
+    if len(img.shape) == 2:
+        img = downsample_img(img[None, ...], N=N)[0]
+    else:
+        img = downsample_img(img, N=N)
 
     return img
 
@@ -290,24 +363,28 @@ def rolling_window_mean(array: np.ndarray, size: int, scaling: bool = False) -> 
 
             # Extract the current window (chunk) and calculate statistics
             chunk = array[y:yd, x:xd]
-            std = np.std(chunk.flatten())
-            max = np.max(chunk.flatten())
+            std = np.std(chunk)
+            max_val = np.max(chunk)
 
             # Scale the chunk, if scaling is True
             if scaling:
-                chunk = chunk / std
+                if std > 0:
+                    chunk /= std
 
             # Compute the mean and remove it from the chunk
-            mean = np.median(chunk.flatten())
+            mean = np.median(chunk)
 
-            if max > 0:
-                chunk = chunk - mean
-                chunk = np.where(chunk < 0, 0, chunk)
-
-            array[y:yd, x:xd] = chunk
+            if max_val > 0:
+                chunk -= mean
+                for yy in range(chunk.shape[0]):
+                    for xx in range(chunk.shape[1]):
+                        if chunk[yy, xx] < 0:
+                            chunk[yy, xx] = 0
 
     if scaling:
-        array = array / np.max(array.flatten())
+        max_val = np.max(array)
+        if max_val > 0:
+            array /= max_val
     return array
 
 

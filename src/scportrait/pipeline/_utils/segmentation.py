@@ -17,7 +17,7 @@ from skimage.segmentation import watershed
 from skimage.transform import resize
 
 from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
-from scportrait.plotting.vis import plot_image
+from scportrait.plotting._vis import plot_image_array
 
 
 def global_otsu(image: NDArray) -> float:
@@ -72,7 +72,7 @@ def _segment_threshold(
     image_mask = image > threshold
 
     if debug:
-        plot_image(image_mask, cmap="Greys_r")
+        plot_image_array(image_mask, cmap="Greys_r")
 
     image_mask_clean = binary_erosion(image_mask, footprint=disk(speckle_kernel))
     image_mask_clean = sk_dilation(image_mask_clean, footprint=disk(speckle_kernel - 1))
