@@ -16,7 +16,7 @@ Check out the installation instructions :ref:`here<installation>`. You can valid
 Getting Started
 ===============
 
-You can check out our :ref:`worfklow overview<workflow>` or our `in-depth tutorial <https://mannlabs.github.io/scPortrait/pages/notebooks/_notebook_workflow_walkthrough.html>`_ to get started with scPortrait. For more detailed information on the package, checkout the more detailed guides :ref:`here<detailed_guide>`. You can find a collection of example projects which run on datasets provided within scPortrait in the `example projects repository <https://github.com/MannLabs/scPortrait-notebooks/tree/main/example_projects>`_. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
+You can check out our :ref:`workflow overview<workflow>` or our `in-depth tutorial <https://mannlabs.github.io/scPortrait/pages/notebooks/_notebook_workflow_walkthrough.html>`_ to get started with scPortrait. For more detailed information on the package, checkout the more detailed guides :ref:`here<detailed_guide>`. You can find a collection of example projects which run on datasets provided within scPortrait in the `example projects repository <https://github.com/MannLabs/scPortrait-notebooks/tree/main/example_projects>`_. If you encounter issues feel free to `open up a git issue <https://github.com/MannLabs/scPortrait/issues>`_.
 
 Citing our Work
 ================
