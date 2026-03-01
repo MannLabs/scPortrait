@@ -30,10 +30,19 @@ def _get_remote_dataset(
         data_dir.mkdir(parents=True, exist_ok=True)
     save_path = data_dir / dataset
 
-    if force_download:
-        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
-    elif not save_path.exists():
-        _download(url=url, output_path=str(save_path), output_file_name=outfile_name, archive_format=archive_format)
+    expected_path = save_path / name if name is not None else None
+    missing_expected_file = expected_path is not None and not expected_path.exists()
+    should_download = force_download or not save_path.exists() or missing_expected_file
+
+    if should_download:
+        _download(
+            url=url,
+            output_path=str(save_path),
+            output_file_name=outfile_name,
+            archive_format=archive_format,
+            overwrite=force_download or missing_expected_file,
+        )
+
     if name is None:
         return save_path
     else:
