@@ -420,7 +420,7 @@ class Stitcher:
                 # warning this has not been tested for memory efficiency
                 print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
                 self.assembled_mosaic[i, :, :] = rescale_image(
-                    self.assembled_mosaic[i, :, :], self.rescale_range[channel]
+                    self.assembled_mosaic[i, :, :], self.reader.rescale_range[channel]
                 )
 
         # convery to dask array
@@ -641,7 +641,7 @@ class ParallelStitcher(Stitcher):
         if self.rescale_full_image:
             # warning this has not been tested for memory efficiency
             print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
-            out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
+            out[i, :, :] = rescale_image(out[i, :, :], self.reader.rescale_range[channel])
 
     def _assemble_mosaic(self):
         # get dimensions of assembled final mosaic
