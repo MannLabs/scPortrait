@@ -116,8 +116,8 @@ def numpy_to_h5sc(
             Must have exactly `N` rows. Columns will be merged into `obs` alongside the
             cell ID column. The index is ignored and replaced by AnnData’s internal index.
         compression_type: HDF5 compression algorithm used for the image tensor.
-            - "gzip": better compression, slower I/O
-            - "lzf" : faster I/O, lower compression ratio
+            Use ``"gzip"`` for better compression with slower I/O, or ``"lzf"``
+            for faster I/O with lower compression ratio.
 
     File layout created:
         The resulting file contains:
@@ -146,12 +146,12 @@ def numpy_to_h5sc(
 
     Raises:
         Exception: If:
-            - `mask_imgs` or `channel_imgs` do not have 4 dimensions `(N, C, H, W)`,
-            - `mask_imgs` and `channel_imgs` have different numbers of cells,
-            - `mask_imgs` and `channel_imgs` have different image sizes,
-            - the number of provided channel names does not match the array shapes,
-            - `cell_metadata` does not have `N` rows,
-            - an unsupported compression type is requested.
+            * `mask_imgs` or `channel_imgs` do not have 4 dimensions `(N, C, H, W)`.
+            * `mask_imgs` and `channel_imgs` have different numbers of cells.
+            * `mask_imgs` and `channel_imgs` have different image sizes.
+            * The number of provided channel names does not match the array shapes.
+            * `cell_metadata` does not have `N` rows.
+            * An unsupported compression type is requested.
     """
     if mask_imgs.ndim != 4 or channel_imgs.ndim != 4:
         raise Exception("mask_imgs and channel_imgs must have shape (N, C, H, W) with exactly 4 dimensions.")
