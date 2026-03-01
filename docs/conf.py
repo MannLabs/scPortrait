@@ -61,6 +61,7 @@ exclude_patterns = [
     "auto_examples/**.py",
     "auto_examples/**.md5",
 ]
+suppress_warnings = ["config.cache"]
 
 # autodoc_mock_imports = []
 autodoc_mock_imports = []  # type: ignore

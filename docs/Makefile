@@ -2,12 +2,13 @@
 #
 
 github:
-	@make html
+	@$(MAKE) html
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
+PYTHON        ?= python
+SPHINXBUILD   ?= $(PYTHON) -m sphinx.cmd.build
 SOURCEDIR     = .
 BUILDDIR      = ./_build
 
@@ -15,7 +16,7 @@ BUILDDIR      = ./_build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+.PHONY: help clean github Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
