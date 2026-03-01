@@ -1,5 +1,6 @@
 sphinx
 ipython
+setuptools<81  # spatialdata -> xarray_schema currently imports pkg_resources
 sphinx-argparse
 sphinx-rtd-theme==2.0.0
 nbsphinx
