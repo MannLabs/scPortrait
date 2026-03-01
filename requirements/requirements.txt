@@ -1,3 +1,5 @@
+setuptools<81  # xarray_schema still imports pkg_resources
+
 tqdm
 psutil
 numba
