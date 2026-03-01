@@ -10,6 +10,7 @@ from scportrait.pipeline.selection import LMDSelection
 
 
 @pytest.mark.slow
+@pytest.mark.requires_dataset("dataset_1_config", "test_dataset")
 def test_full_pipeline_e2e(tmp_path):
     project_path = tmp_path / "test_project"
     config_path = scportrait.data.get_config_file("dataset_1_config")
