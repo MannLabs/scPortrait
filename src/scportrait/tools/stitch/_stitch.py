@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -245,9 +246,10 @@ class Stitcher:
             missing_channels = set.difference(set(self.channel_names), set(rescale_channels))
 
             if len(missing_channels) > 0:
-                Warning(
+                warnings.warn(
                     "The rescale_range dictionary does not contain all channels in the experiment."
-                    "This may lead to unexpected results. For the missing channels rescaling will be turned off."
+                    "This may lead to unexpected results. For the missing channels rescaling will be turned off.",
+                    stacklevel=2,
                 )
 
                 for missing_channel in missing_channels:
@@ -615,8 +617,9 @@ class ParallelStitcher(Stitcher):
             print(
                 "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
             )
-            Warning(
-                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
+            warnings.warn(
+                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread.",
+                stacklevel=2,
             )
 
         self.threads = threads
