@@ -12,6 +12,7 @@ from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
 
 from scportrait.pipeline._utils.constants import (
     DEFAULT_CELL_ID_NAME,
+    DEFAULT_IDENTIFIER_FILENAME,
     DEFAULT_NAME_SINGLE_CELL_IMAGES,
     DEFAULT_SEGMENTATION_DTYPE,
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
@@ -55,6 +56,9 @@ def read_h5sc(filename: str | Path) -> AnnData:
         _clean_uns(adata)
 
     adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = f.get(IMAGE_DATACONTAINER_NAME)
+    adata.uns[DEFAULT_IDENTIFIER_FILENAME] = filename
+    adata.uns["_h5sc_file_handle"] = f
+
     return adata
 
 
