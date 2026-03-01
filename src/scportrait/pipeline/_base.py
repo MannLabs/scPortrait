@@ -174,7 +174,22 @@ class Logable:
 
 
 class ProcessingStep(Logable):
-    """Processing step base class used by pipeline stages."""
+    """Base class for executable pipeline stages in scPortrait.
+
+    A `ProcessingStep` is the common runtime wrapper around stage-specific
+    implementations such as segmentation, extraction, featurization, and
+    selection. It provides shared behavior that all stages rely on:
+
+    - configuration loading and step-specific config scoping
+    - directory and overwrite handling
+    - temporary workspace lifecycle management
+    - unified logging and debug behavior
+    - project-aware execution context when called via `Project`
+
+    Subclasses are expected to implement stage logic via `process(...)` for
+    standard execution, or `return_empty_mask(...)` for workflows that need a
+    structured empty result path.
+    """
 
     DEFAULT_CONFIG_NAME = DEFAULT_CONFIG_NAME
     DEFAULT_INPUT_IMAGE_NAME = DEFAULT_INPUT_IMAGE_NAME
@@ -233,14 +248,18 @@ class ProcessingStep(Logable):
         """Initialize a processing step and normalize configuration handling.
 
         Args:
-            config: Either a parsed configuration dictionary or a path to a config file.
+            config: Parsed configuration dictionary or path to a config file.
+                If the top-level config contains a key matching the concrete
+                step class name, that sub-dictionary is used as the step config.
             directory: Working directory for this step.
             project_location: Project root when running as part of ``Project``.
             debug: Enable verbose stdout logging in addition to file logging.
-            overwrite: If ``True``, existing step output may be removed before processing.
+            overwrite: If ``True``, existing step output may be removed before
+                processing.
             project: Active ``Project`` instance when this step is project-managed.
             filehandler: Shared SpatialData file handler for project-managed runs.
-            from_project: Flag indicating whether this step is invoked from ``Project``.
+            from_project: Whether this step is invoked from a project-managed
+                execution context.
         """
         super().__init__(directory=directory)
 
@@ -279,6 +298,16 @@ class ProcessingStep(Logable):
 
     def __call__(self, *args, debug: bool | None = None, overwrite: bool | None = None, **kwargs):
         """Execute the processing step.
+
+        This method runs a processing step from start to finish.
+
+        Execution order:
+            1. Apply optional runtime ``debug``/``overwrite`` overrides.
+            2. If ``overwrite=True``, remove any existing step output directory.
+            3. Ensure the step output directory exists.
+            4. Create a temporary working directory in the configured cache.
+            5. Call subclass ``process(...)`` if implemented.
+            6. Clean up temporary files unless ``deep_debug=True``.
 
         Args:
             debug: Optional runtime override for debug logging.
@@ -321,6 +350,10 @@ class ProcessingStep(Logable):
 
     def __call_empty__(self, *args, debug: bool | None = None, overwrite: bool | None = None, **kwargs):
         """Execute ``return_empty_mask`` for workflows without normal processing.
+
+        This is used for code paths where a step needs to return a valid
+        empty placeholder output while still participating in the standard
+        directory/setup lifecycle.
 
         Args:
             debug: Optional runtime override for debug logging.
