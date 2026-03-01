@@ -20,7 +20,7 @@ repos:
               scportrait_data
           )
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.2
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --unsafe-fixes]
@@ -39,7 +39,7 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--no-strict-optional, --ignore-missing-imports]
+        args: [--python-version=3.10, --no-strict-optional, --ignore-missing-imports]
         additional_dependencies:
           ["types-requests", "types-attrs", "types-PyYAML"]
   - repo: local

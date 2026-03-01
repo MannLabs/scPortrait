@@ -59,7 +59,6 @@ def _download(
             warning = f"File {download_to_path} already exists!"
             if not overwrite:
                 print(warning)
-                Path(lock_path).unlink()
                 return
             else:
                 print(f"{warning} Overwriting...")
@@ -84,7 +83,3 @@ def _download(
         if archive_format:
             shutil.unpack_archive(download_to_path, output_path, format=archive_format)
             os.remove(download_to_path)
-        else:
-            download_to_path.with_name(output_file_name)
-
-    Path(lock_path).unlink()
