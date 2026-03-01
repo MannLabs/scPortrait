@@ -130,6 +130,7 @@ show_error_codes = true
 show_error_context = true
 ignore_missing_imports = true
 no_strict_optional = true
+explicit_package_bases = true
 
 [tool.pytest.ini_options]
 markers = [
