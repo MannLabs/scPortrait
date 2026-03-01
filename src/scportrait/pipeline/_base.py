@@ -237,7 +237,7 @@ class ProcessingStep(Logable):
 
     def __init__(
         self,
-        config: str | dict | PosixPath,
+        config: str | PosixPath | dict[str, Any],
         directory: str | PosixPath = None,
         project_location: str | PosixPath = None,
         debug: bool = False,
@@ -261,21 +261,24 @@ class ProcessingStep(Logable):
             self.project = None
             self.filehandler = None
 
+        raw_config: dict[str, Any]
         if isinstance(config, str | PosixPath):
-            config = read_config(config)
-            if self.__class__.__name__ in config.keys():
-                self.config = config[self.__class__.__name__]
-            else:
-                self.config = config
+            raw_config = read_config(config)
         else:
-            self.config = config
+            raw_config = config
+
+        class_config = raw_config.get(self.__class__.__name__)
+        if isinstance(class_config, dict):
+            self.config: dict[str, Any] = class_config
+        else:
+            self.config = raw_config
         self.overwrite = overwrite
 
         self.get_context()
 
         self.deep_debug = False
 
-        if "cache" not in self.config.keys():
+        if "cache" not in self.config:
             self.config["cache"] = os.path.abspath(os.getcwd())
             self.log(f"No cache directory specified in config using current working directory {self.config['cache']}.")
 
@@ -359,7 +362,7 @@ class ProcessingStep(Logable):
         """
 
         if isinstance(key, str):
-            config_handle = self.config
+            config_handle: dict[str, Any] = self.config
 
         elif isinstance(key, list):
             raise NotImplementedError("registration of parameters is not yet supported for nested parameters")
@@ -384,8 +387,8 @@ class ProcessingStep(Logable):
         Create a temporary directory at the location specified in `cache` of the config.
         If `cache` is not specified in the config for the method this will raise a ValueError.
         """
-        if "cache" in self.config.keys():
-            path = os.path.join(self.config["cache"], f"{self.__class__.__name__}_")
+        if "cache" in self.config:
+            path = os.path.join(str(self.config["cache"]), f"{self.__class__.__name__}_")
             self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
             self._tmp_dir_path = self._tmp_dir.name
 
