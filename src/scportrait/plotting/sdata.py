@@ -1,5 +1,6 @@
 import warnings
 from collections.abc import Iterable
+from math import ceil
 from numbers import Integral
 
 import matplotlib as mpl
@@ -36,6 +37,75 @@ PALETTE = [
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot
 
 
+def _is_valid_matplotlib_color(color: str | None) -> bool:
+    """Return True if the input is a valid Matplotlib color specification."""
+    if color is None:
+        return False
+    try:
+        mpl.colors.to_rgba(color)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _annotation_columns_for_layer(sdata: spatialdata.SpatialData, label_layer: str) -> set[str]:
+    """Collect annotation columns from tables annotating a specific labels layer."""
+    columns: set[str] = set()
+    for table in sdata.tables:
+        annotated_regions = sdata.get_annotated_regions(sdata[table])
+        if label_layer in annotated_regions:
+            columns.update(sdata[table].obs.columns)
+    return columns
+
+
+def _get_vectorized_annotating_table(
+    sdata: spatialdata.SpatialData,
+    label_layer: str,
+) -> spatialdata.models.TableModel | None:
+    """Return an annotation table remapped to the vectorized labels layer."""
+    vectorized_layer = f"{label_layer}_vectorized"
+    for table in sdata.tables:
+        annotated_regions = sdata.get_annotated_regions(sdata[table])
+        if label_layer in annotated_regions:
+            annotating_table = sdata[table].copy()
+            annotating_table.uns["spatialdata_attrs"]["region"] = vectorized_layer
+            annotating_table.obs["region"] = vectorized_layer
+            annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+            return spatialdata.models.TableModel.parse(annotating_table)
+    return None
+
+
+def _render_labels_as_fixed_color_shapes(
+    sdata: spatialdata.SpatialData,
+    label_layer: str,
+    color: str,
+    fill_alpha: float,
+    ax: Axes,
+    coordinate_systems: str | list[str] | None = None,
+    method: str | None = None,
+) -> None:
+    """Render a labels layer as polygons with a fixed color."""
+    vectorized_layer = f"{label_layer}_vectorized"
+    if vectorized_layer not in sdata:
+        sdata[vectorized_layer] = spatialdata.to_polygons(sdata[label_layer])
+    sdata.pl.render_shapes(
+        vectorized_layer,
+        color=color,
+        fill_alpha=fill_alpha,
+        outline_alpha=0,
+        method=method,
+    ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+
+
+def _normalize_groups(groups: list | None) -> list[str] | None:
+    """Normalize groups to a list of strings for plotting."""
+    if groups is None:
+        return None
+    if isinstance(groups, str):
+        return [groups]
+    return [str(group) for group in groups]
+
+
 def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     """Get the x, y shape of the element in the spatialdata object.
 
@@ -46,10 +116,18 @@ def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     Returns:
         Tuple containing the shape of the x, y coordinates of the element.
     """
-    if isinstance(sdata[element_name], xarray.DataTree):
-        shape = sdata[element_name].scale0.image.shape
+    element = sdata[element_name]
+    if isinstance(element, xarray.DataTree):
+        shape = element.scale0.image.shape
+    elif hasattr(element, "data") and hasattr(element.data, "shape"):
+        shape = element.data.shape
+    elif hasattr(element, "total_bounds"):
+        min_x, min_y, max_x, max_y = element.total_bounds
+        x = max(1, ceil(max_x - min_x))
+        y = max(1, ceil(max_y - min_y))
+        return x, y
     else:
-        shape = sdata[element_name].data.shape
+        raise ValueError(f"Unsupported element type for '{element_name}': {type(element)}.")
 
     if len(shape) == 3:
         _, x, y = shape
@@ -84,6 +162,7 @@ def _create_figure_dpi(x: float, y: float, dpi: int | None = 300) -> tuple[plt.F
 def plot_image(
     sdata: spatialdata.SpatialData,
     image_name: str,
+    coordinate_systems: str | list[str] | None = None,
     channel_names: list[str] | list[int] | None = None,
     palette: list[str] | None = None,
     cmap: mpl.colors.ListedColormap | None = None,
@@ -97,9 +176,15 @@ def plot_image(
 ) -> plt.Figure | None:
     """Plot the image with the given name from the spatialdata object.
 
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
+
     Args:
         sdata: SpatialData object containing the image.
         image_name: Name of the image to plot.
+        coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
         channel_names: List of channel names to plot. If None then all channels will be plotted. Defaults to None.
         palette: List of colors to use for the channels. If None then the default palette will be used. Defaults to None.
         title: Title of the plot. Defaults to None.
@@ -111,6 +196,19 @@ def plot_image(
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_image(
+        ...     sdata=sdata,
+        ...     image_name="blobs_image",
+        ...     channel_names=[0],
+        ...     palette=["red"],
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     _check_for_spatialdata_plot()
 
@@ -132,9 +230,17 @@ def plot_image(
             palette = PALETTE[: len(channel_names)]
 
     # plot figure
-    sdata.pl.render_images(image_name, channel=channel_names, palette=palette, cmap=cmap, norm=norm).pl.show(
-        ax=ax, colorbar=False
-    )
+    render_kwargs = {
+        "channel": channel_names,
+        "palette": palette,
+        "cmap": cmap,
+        "norm": norm,
+    }
+
+    sdata.pl.render_images(
+        image_name,
+        **render_kwargs,
+    ).pl.show(coordinate_systems=coordinate_systems, ax=ax, colorbar=False)
     ax.set_axis_off()
     ax.set_title(title, fontsize=title_fontsize)
 
@@ -159,19 +265,24 @@ def plot_segmentation_mask(
     fill_alpha: float = 0,
     fill_color: str | None = None,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
     """Visualize segmentation masks over selected background image.
     Will transform the provided labels layers to polygons and plot them over the background image.
-    Requires an installed spatialdata_plot package.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
         sdata: SpatialData object containing the input image and segmentation mask.
         masks: List of keys identifying the segmentation masks to plot.
         background_image: Key identifying the background image to plot the segmentation masks on. Defaults to "input_image". If set to None then only the segmentation masks will be plotted as outlines.
-        selected_channels: List of indices of the channels in the background image to plot. If None then the first `max_channels_to_plot` channels will be plotted. Defaults to None.
+        selected_channels: Index or list of indices of background-image channels to plot. If None then the first
+            `max_channels_to_plot` channels will be plotted. Defaults to None.
         title: Title of the plot. Defaults to None.
         title_fontsize: Font size of the title in points.
         line_width: Width of the outline of the segmentation masks.
@@ -180,9 +291,22 @@ def plot_segmentation_mask(
         fill_alpha: Alpha value of the fill of the segmentation masks.
         fill_color: Color of the fill of the segmentation masks. If None then no fill will be used. Defaults to None.
         dpi: Dots per inch of the plot. Defaults to None.
-        axs: Matplotlib axis object to plot on. Defaults to None.
+        ax: Matplotlib axis object to plot on. Defaults to None.
         return_fig: Whether to return the figure. Defaults to False.
         show_fig: Whether to show the figure. Defaults to True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_segmentation_mask(
+        ...     sdata=sdata,
+        ...     masks=["blobs_labels"],
+        ...     background_image="blobs_image",
+        ...     selected_channels=0,
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
@@ -267,7 +391,10 @@ def plot_segmentation_mask(
 
 def plot_shapes(
     sdata: spatialdata.SpatialData,
-    shapes_layer: str,
+    shapes_layer: str | None = None,
+    label_layer: str | None = None,
+    coordinate_systems: str | list[str] | None = None,
+    method: str | None = None,
     title: str | None = None,
     title_fontsize: int = 20,
     fill_color: str = "grey",
@@ -276,16 +403,26 @@ def plot_shapes(
     outline_alpha: float = 0,
     outline_width: float = 1,
     cmap: str = None,
+    palette: dict | list | None = None,
+    groups: list | None = None,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
-    """Visualize shapes layer.
+    """Visualize a shapes layer.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
-        sdata: SpatialData object containing the shapes layer.
+        sdata: SpatialData object containing the shapes or labels layer.
         shapes_layer: Key identifying the shapes layer to plot.
+        label_layer: Key identifying a labels layer to convert to shapes and plot.
+        coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
+        method: Plotting backend passed to spatialdata_plot (`None`, "matplotlib", or "datashader").
         title: Title of the plot.
         title_fontsize: Font size of the title in points.
         fill_color: Color of the fill of the shapes.
@@ -294,6 +431,8 @@ def plot_shapes(
         outline_alpha: Alpha value of the outline of the shapes.
         outline_width: Width of the outline of the shapes.
         cmap: Colormap to use for the shapes.
+        palette: Palette for discrete annotations.
+        groups: Groups to plot when the color key refers to discrete annotations.
         dpi: Dots per inch of the plot.
         ax: Matplotlib axis object to plot on.
         return_fig: Whether to return the figure.
@@ -301,7 +440,32 @@ def plot_shapes(
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_shapes(
+        ...     sdata=sdata,
+        ...     shapes_layer="blobs_polygons",
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
+    if (shapes_layer is None and label_layer is None) or (shapes_layer is not None and label_layer is not None):
+        raise ValueError("Provide exactly one of 'shapes_layer' or 'label_layer'.")
+
+    normalized_groups = _normalize_groups(groups)
+
+    if label_layer is not None:
+        if label_layer not in sdata:
+            raise KeyError(f"Label layer {label_layer} not found in sdata object.")
+        shapes_layer = f"{label_layer}_vectorized"
+        if shapes_layer not in sdata:
+            sdata[shapes_layer] = spatialdata.to_polygons(sdata[label_layer])
+
+    if shapes_layer is None:
+        raise ValueError("Unable to resolve shapes layer for plotting.")
 
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
@@ -321,15 +485,45 @@ def plot_shapes(
     if shapes_layer not in sdata:
         raise KeyError(f"Shapes layer {shapes_layer} not found in sdata object.")
 
-    sdata.pl.render_shapes(
-        f"{shapes_layer}",
-        fill_alpha=fill_alpha,
-        color=fill_color,
-        outline_alpha=outline_alpha,
-        outline_color=outline_color,
-        outline_width=outline_width,
-        cmap=cmap,
-    ).pl.show(ax=ax)
+    annotating_table = _get_vectorized_annotating_table(sdata, label_layer) if label_layer is not None else None
+    if annotating_table is not None:
+        if normalized_groups is not None and isinstance(fill_color, str) and fill_color in annotating_table.obs:
+            annotating_table.obs[fill_color] = annotating_table.obs[fill_color].astype("string")
+            annotating_table.obs[fill_color] = annotating_table.obs[fill_color].astype("category")
+        had_annotation = "_annotation" in sdata
+        prev_annotation = sdata["_annotation"] if had_annotation else None
+        sdata["_annotation"] = annotating_table
+        try:
+            sdata.pl.render_shapes(
+                f"{shapes_layer}",
+                fill_alpha=fill_alpha,
+                color=fill_color,
+                outline_alpha=outline_alpha,
+                outline_color=outline_color,
+                outline_width=outline_width,
+                cmap=cmap,
+                palette=palette,
+                groups=normalized_groups,
+                method=method,
+            ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+        finally:
+            if had_annotation:
+                sdata["_annotation"] = prev_annotation
+            else:
+                del sdata["_annotation"]
+    else:
+        sdata.pl.render_shapes(
+            f"{shapes_layer}",
+            fill_alpha=fill_alpha,
+            color=fill_color,
+            outline_alpha=outline_alpha,
+            outline_color=outline_color,
+            outline_width=outline_width,
+            cmap=cmap,
+            palette=palette,
+            groups=normalized_groups,
+            method=method,
+        ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
 
     ax.axis("off")
     ax.set_title(title, fontsize=title_fontsize)
@@ -345,41 +539,62 @@ def plot_shapes(
 def plot_labels(
     sdata: spatialdata.SpatialData,
     label_layer: str,
+    coordinate_systems: str | list[str] | None = None,
+    method: str | None = None,
     title: str | None = None,
     title_fontsize: int = 20,
     color: str = "grey",
     fill_alpha: float = 1,
     cmap: str = None,
-    palette: dict | list = None,
-    groups: list = None,
+    palette: dict | list | None = None,
+    groups: list | None = None,
     norm: mpl.colors.Normalize = None,
     vectorized: bool = False,
     dpi: int | None = None,
-    ax: plt.Axes | None = None,
+    ax: Axes | None = None,
     return_fig: bool = False,
     show_fig: bool = True,
 ) -> plt.Figure | None:
-    """Plot the segmentation mask on the input image.
+    """Plot a labels layer.
+
+    .. note::
+        Requires a working installation of `spatialdata_plot`. Can be installed via
+        `pip install spatialdata_plot` or is shipped with scPortrait when installing
+        with the `plotting` extra (`pip install scportrait[plotting]`).
 
     Args:
         sdata: SpatialData object containing the input image and segmentation mask.
-        labels_layer: Key identifying the label layer to plot.
+        label_layer: Key identifying the label layer to plot.
+        coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
+        method: Plotting backend passed to spatialdata_plot (`None`, "matplotlib", or "datashader").
         title: Title of the plot.
         title_fontsize: Font size of the title in points.
-        color: color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
+        color: Color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
         fill_alpha: Alpha value of the fill of the segmentation masks.
         cmap: Colormap to use for the labels.
         palette: Palette for discrete annotations. List of valid color names that should be used for the categories. Must match the number of groups. The list can contain multiple palettes (one per group) to be visualized. If groups is provided but not palette, palette is set to default “lightgray”.
         groups: When using color and the key represents discrete labels, groups can be used to show only a subset of them. Other values are set to NA.
-        norm: Colormap normalization for continuous annotations
+        norm: Colormap normalization for continuous annotations.
         vectorized: Whether to plot a vectorized version of the labels.
         dpi: Dots per inch of the plot.
-        axs: Matplotlib axis object to plot on.
+        ax: Matplotlib axis object to plot on.
         return_fig: Whether to return the figure.
         show_fig: Whether to show the figure.
 
     Returns:
         Matplotlib figure object if return_fig is True.
+
+    Examples:
+        >>> from spatialdata.datasets import blobs
+        >>> from scportrait.plotting import sdata as splot
+        >>> sdata = blobs()
+        >>> fig = splot.plot_labels(
+        ...     sdata=sdata,
+        ...     label_layer="blobs_labels",
+        ...     color="labelling_categorical",
+        ...     return_fig=True,
+        ...     show_fig=False,
+        ... )
     """
     # check for spatialdata_plot
     _check_for_spatialdata_plot()
@@ -396,53 +611,100 @@ def plot_labels(
         fig, ax = _create_figure_dpi(x=x, y=y, dpi=dpi)
 
     # plot selected segmentation masks
-    if vectorized:
-        if f"{label_layer}_vectorized" not in sdata:
-            sdata[f"{label_layer}_vectorized"] = spatialdata.to_polygons(sdata[label_layer])
-        found_annotation = None
-        for table in sdata.tables:
-            annotated_regions = sdata.get_annotated_regions(sdata[table])
-            for region in annotated_regions:
-                if region == label_layer:
-                    found_annotation = region
-                    annotating_table = sdata[table].copy()
-                    annotating_table.uns["spatialdata_attrs"]["region"] = f"{label_layer}_vectorized"
-                    annotating_table.obs["region"] = f"{label_layer}_vectorized"
-                    annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+    annotation_columns = _annotation_columns_for_layer(sdata, label_layer)
+    normalized_groups = _normalize_groups(groups)
+    use_fixed_color_fallback = (
+        isinstance(color, str) and color not in annotation_columns and _is_valid_matplotlib_color(color)
+    )
 
-                    # check for annotating column
-                    if color in annotating_table.obs:
-                        annotating_table.obs[color] = (
-                            annotating_table.obs[color].astype("category").cat.remove_unused_categories()
-                        )
-                        # check for NaN values
-                        if annotating_table.obs[color].isna().sum() > 0:
-                            # NaN values need to be filled as otherwise the plotting will throw an error
-                            if "NaN" not in annotating_table.obs[color].cat.categories:
-                                annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
-                            annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
-                    annotating_table = spatialdata.models.TableModel.parse(annotating_table)
-                    break
-        if found_annotation is not None:
-            had_annotation = "_annotation" in sdata
-            prev_annotation = sdata["_annotation"] if had_annotation else None
-            sdata["_annotation"] = annotating_table
-            try:
-                sdata.pl.render_shapes(
-                    f"{label_layer}_vectorized",
-                    color=color,
-                    fill_alpha=fill_alpha,
-                    outline_alpha=0,
-                    cmap=cmap,
-                    palette=palette,
-                    groups=groups,
-                    norm=norm,
-                ).pl.show(ax=ax)
-            finally:
-                if had_annotation:
-                    sdata["_annotation"] = prev_annotation
-                else:
-                    del sdata["_annotation"]  # delete element again after plotting
+    if vectorized:
+        if use_fixed_color_fallback:
+            _render_labels_as_fixed_color_shapes(
+                sdata=sdata,
+                label_layer=label_layer,
+                color=color,
+                fill_alpha=fill_alpha,
+                ax=ax,
+                coordinate_systems=coordinate_systems,
+                method=method,
+            )
+        else:
+            if f"{label_layer}_vectorized" not in sdata:
+                sdata[f"{label_layer}_vectorized"] = spatialdata.to_polygons(sdata[label_layer])
+            found_annotation = None
+            for table in sdata.tables:
+                annotated_regions = sdata.get_annotated_regions(sdata[table])
+                for region in annotated_regions:
+                    if region == label_layer:
+                        found_annotation = region
+                        annotating_table = sdata[table].copy()
+                        annotating_table.uns["spatialdata_attrs"]["region"] = f"{label_layer}_vectorized"
+                        annotating_table.obs["region"] = f"{label_layer}_vectorized"
+                        annotating_table.obs["region"] = annotating_table.obs["region"].astype("category")
+
+                        # check for annotating column
+                        if color in annotating_table.obs:
+                            if normalized_groups is not None:
+                                annotating_table.obs[color] = annotating_table.obs[color].astype("string")
+                                annotating_table.obs[color] = annotating_table.obs[color].astype("category")
+                            annotating_table.obs[color] = (
+                                annotating_table.obs[color].astype("category").cat.remove_unused_categories()
+                            )
+                            # check for NaN values
+                            if annotating_table.obs[color].isna().sum() > 0:
+                                # NaN values need to be filled as otherwise the plotting will throw an error
+                                if "NaN" not in annotating_table.obs[color].cat.categories:
+                                    annotating_table.obs[color] = annotating_table.obs[color].cat.add_categories("NaN")
+                                annotating_table.obs[color] = annotating_table.obs[color].fillna("NaN")
+                        annotating_table = spatialdata.models.TableModel.parse(annotating_table)
+                        break
+            if found_annotation is not None:
+                had_annotation = "_annotation" in sdata
+                prev_annotation = sdata["_annotation"] if had_annotation else None
+                sdata["_annotation"] = annotating_table
+                try:
+                    sdata.pl.render_shapes(
+                        f"{label_layer}_vectorized",
+                        color=color,
+                        fill_alpha=fill_alpha,
+                        outline_alpha=0,
+                        cmap=cmap,
+                        palette=palette,
+                        groups=normalized_groups,
+                        norm=norm,
+                        method=method,
+                    ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+                finally:
+                    if had_annotation:
+                        sdata["_annotation"] = prev_annotation
+                    else:
+                        del sdata["_annotation"]  # delete element again after plotting
+            else:
+                try:
+                    sdata.pl.render_labels(
+                        f"{label_layer}",
+                        color=color,
+                        fill_alpha=fill_alpha,
+                        outline_alpha=1,
+                        cmap=cmap,
+                        palette=palette,
+                        groups=normalized_groups,
+                        norm=norm,
+                        method=method,
+                    ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+                except Exception:
+                    raise
+    else:
+        if use_fixed_color_fallback:
+            _render_labels_as_fixed_color_shapes(
+                sdata=sdata,
+                label_layer=label_layer,
+                color=color,
+                fill_alpha=fill_alpha,
+                ax=ax,
+                coordinate_systems=coordinate_systems,
+                method=method,
+            )
         else:
             try:
                 sdata.pl.render_labels(
@@ -452,22 +714,12 @@ def plot_labels(
                     outline_alpha=1,
                     cmap=cmap,
                     palette=palette,
-                    groups=groups,
+                    groups=normalized_groups,
                     norm=norm,
-                ).pl.show(ax=ax)
-            except Exception as err:
-                raise Exception from err
-
-    else:
-        sdata.pl.render_labels(
-            f"{label_layer}",
-            color=color,
-            fill_alpha=fill_alpha,
-            cmap=cmap,
-            palette=palette,
-            groups=groups,
-            norm=norm,
-        ).pl.show(ax=ax)
+                    method=method,
+                ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+            except Exception:
+                raise
 
     # configure axes
     ax.axis("off")

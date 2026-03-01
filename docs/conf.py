@@ -33,6 +33,7 @@ author = "Sophia Mädler and Niklas Schmacke"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
     "sphinxarg.ext",
@@ -95,6 +96,7 @@ autodoc_default_options = {
     "member-order": "bysource",
 }
 autoclass_content = "both"
+autosummary_generate = True
 
 html_favicon = "favicon.png"
 html_logo = "_static/scPortrait_logo_light.svg"

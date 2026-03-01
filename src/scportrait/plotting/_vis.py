@@ -12,7 +12,10 @@ if TYPE_CHECKING:
     from scportrait.pipeline.project import Project
 
 
-def plot_image(
+from scportrait._utils.deprecation import deprecated
+
+
+def plot_image_array(
     array: np.ndarray,
     size: tuple[int, int] = (10, 10),
     save_name: str | None = "",
@@ -34,11 +37,11 @@ def plot_image(
         **kwargs: Additional keyword arguments to be passed to `ax.imshow`.
 
     Returns:
-        None: The function will display the image but does not return any values.
+        Matplotlib figure if `return_fig=True`, otherwise `None`.
 
     Example:
     >>> array = np.random.rand(10, 10)
-    >>> plot_image(array, size=(5, 5))
+    >>> plot_image_array(array, size=(5, 5))
     """
 
     fig = plt.figure(frameon=False)
@@ -60,11 +63,24 @@ def plot_image(
         plt.close()
 
 
+@deprecated(
+    deprecated_in="1.6.2",
+    removed_in="1.7.0",
+    details=(
+        "This function is not used internally and will be removed in a future release. "
+        "Prefer scportrait.plotting.sdata.plot_labels or scportrait.plotting.sdata.plot_shapes."
+    ),
+)
 def visualize_class(
     class_ids: np.ndarray | list[int], seg_map: np.ndarray, image: np.ndarray, all_ids=None, return_fig=False, **kwargs
 ):
     """
     Visualize specific classes in a segmentation map by highlighting them on top of a background image.
+
+    .. deprecated:: 1.6.2
+        This function is not used internally and will be removed in a future release. Prefer
+        `scportrait.plotting.sdata.plot_labels` or `scportrait.plotting.sdata.plot_shapes` for
+        SpatialData-based workflows.
 
     This function takes in class IDs and a segmentation map, and creates an output visualization
     where the specified classes are highlighted on top of the provided background image.
@@ -106,12 +122,20 @@ def visualize_class(
 
     vis_map = label2rgb(outmap, image=image, colors=["red", "blue"], alpha=0.4, bg_label=0)
 
-    fig = plot_image(vis_map, return_fig=True, **kwargs)
+    fig = plot_image_array(vis_map, return_fig=True, **kwargs)
 
     if return_fig:
         return fig
 
 
+@deprecated(
+    deprecated_in="1.6.2",
+    removed_in="1.7.0",
+    details=(
+        "This helper is superseded by scportrait.plotting.sdata.plot_segmentation_mask and "
+        "is not used internally. It will be removed in a future release."
+    ),
+)
 def plot_segmentation_mask(
     project: Project,
     mask_channel: int = 0,
@@ -123,6 +147,10 @@ def plot_segmentation_mask(
     figsize: tuple[int, int] = (10, 10),
 ) -> object:
     """Visualize the segmentation mask overlayed with a channel of the input image.
+
+    .. deprecated:: 1.6.2
+        This helper is superseded by `scportrait.plotting.sdata.plot_segmentation_mask` and
+        is not used internally. It will be removed in a future release.
 
     Args:
        project: Instance of a scPortrait project.
@@ -167,17 +195,22 @@ def colorize(
     im: np.ndarray, color: tuple[int, ...] = (1, 0, 0), clip_percentile: float = 0.0, normalize_image: bool = False
 ):
     """
-    Helper function to create an RGB image from a single-channel image using a
-    specific color.
+    Create an RGB image from a single-channel image using a specified color.
 
     Args:
-        im: A single-channel input image. If normalize_image = False, ensure that its values fall between the [0, 1] range.
+        im: A single-channel input image. If normalize_image = False, ensure that its values fall between [0, 1].
         color: The color to use for the image. Defaults to (1, 0, 0).
-        clip_percentile: The percentile to clip the image at rescaling. Defaults to 0.0 which is equivalent to Min-Max scaling.
-        normalize_image: boolean value indicating if rescaling should be performed or not.
+        clip_percentile: Percentile to clip the image at when rescaling. Defaults to 0.0 (min-max scaling).
+        normalize_image: Whether to rescale the image before colorizing.
 
     Returns:
         np.ndarray: The colorized image.
+
+    Example:
+        >>> import numpy as np
+        >>> from scportrait.plotting import colorize
+        >>> im = np.random.rand(64, 64)
+        >>> rgb = colorize(im, color=(0, 1, 0), normalize_image=True)
     """
     # Check that we do just have a 2D image
     if im.ndim > 2 and im.shape[2] != 1:
