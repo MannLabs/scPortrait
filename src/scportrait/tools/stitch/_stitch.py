@@ -92,9 +92,17 @@ class Stitcher:
         self.reader_type = reader_type
         self.image_dtype = image_dtype
 
-        # workaround for lazy imports of module
-        if self.reader_type == "FilePatternReaderRescale":
-            self.reader_type = self.FilePatternReaderRescale
+        # allow reader type selection by class or known class-name strings
+        if isinstance(self.reader_type, str):
+            if self.reader_type == "FilePatternReaderRescale":
+                self.reader_type = self.FilePatternReaderRescale
+            elif self.reader_type == "BioformatsReaderRescale":
+                self.reader_type = self.BioformatsReaderRescale
+            else:
+                raise ValueError(
+                    f"Unknown reader_type '{self.reader_type}'. Supported values are "
+                    "'FilePatternReaderRescale', 'BioformatsReaderRescale', or the corresponding class."
+                )
 
         # workflow setup
         self.plot_QC = plot_QC
