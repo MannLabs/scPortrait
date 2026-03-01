@@ -32,8 +32,8 @@ class Stitcher:
         filter_sigma: Sigma value for Gaussian filter applied during alignment
         do_intensity_rescale: Flag to rescale image intensities or "full_image" to rescale entire image
         rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys. If passed as a dictionary, channels not listed will not be rescaled.
-        channel_order: Order of channels in output mosaic
-        reader_type: Type of reader for image tiles
+        channel_order: Optional order of channels in output mosaic (channel names).
+        reader_type: Reader class or reader class-name string ("FilePatternReaderRescale" or "BioformatsReaderRescale")
         image_dtype: dtype of the images that are to be stitched, mainly relevant when stitching with the BioformatsReaderRescale
         orientation: Dict specifying dimensions to flip {'flip_x', 'flip_y'}
         plot_QC: Generate quality control figures
@@ -377,7 +377,7 @@ class Stitcher:
 
     def _perform_alignment(self):
         """Perform alignment of the image tiles."""
-        # intitialize reader for getting individual image tiles
+        # initialize reader for getting individual image tiles
         self._initialize_reader()
 
         print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
@@ -415,7 +415,7 @@ class Stitcher:
         shape = (self.n_channels, x, y)
         print(f"assembling mosaic with shape {shape}")
 
-        # initialize tempmmap array to save assemled mosaic to
+        # initialize tempmmap array to save assembled mosaic to
         # if no cache is specified the tempmmap will be created in the outdir
 
         self._create_cache()
@@ -439,7 +439,7 @@ class Stitcher:
                     self.assembled_mosaic[i, :, :], self.reader.rescale_range[channel]
                 )
 
-        # convery to dask array
+        # convert to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
     def _generate_mosaic(self):
@@ -465,7 +465,7 @@ class Stitcher:
                 This XML file is compatible with loading the generated TIFF files into BIAS.
 
         Returns:
-            The assembled mosaic are written to file as TIFF files in the specified output directory.
+            The assembled mosaic is written to TIFF files in the specified output directory.
         """
 
         from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
@@ -562,8 +562,8 @@ class ParallelStitcher(Stitcher):
         filter_sigma: Sigma value for Gaussian filter applied during alignment (default is 0).
         do_intensity_rescale: Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
         rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range. Channels not present in the dictionary won't be rescaled.
-        channel_order: Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-        reader_type: Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
+        channel_order: Order of channels in the generated output mosaic. If None (default), the original order is used.
+        reader_type: Reader class or reader class-name string (default is "FilePatternReaderRescale").
         orientation: Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
         plot_QC: Flag to indicate whether to plot quality control (QC) figures (default is True).
         overwrite: Flag to indicate whether to overwrite the output directory if it already exists (default is False).
@@ -614,7 +614,7 @@ class ParallelStitcher(Stitcher):
             cache=cache,
         )
 
-        # dirty fix to avoide multithreading error with BioformatsReader until this can be fixed
+        # workaround to avoid multithreading errors with BioformatsReader until this can be fixed
         if self.reader_type == self.BioformatsReaderRescale:
             threads = 1
             print(
@@ -687,7 +687,7 @@ class ParallelStitcher(Stitcher):
         with ThreadPoolExecutor(max_workers=workers) as executor:
             list(executor.map(self._assemble_channel, args))
 
-        # conver to dask array
+        # convert to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
     def write_tif_parallel(self, export_xml: bool = True):
@@ -695,7 +695,7 @@ class ParallelStitcher(Stitcher):
 
         Args:
             export_xml: Whether to export an XML file for the TIFF files.
-                This XML file is compatible with loading the generarted TIFF files into BIAS.
+                This XML file is compatible with loading the generated TIFF files into BIAS.
 
         """
         from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
