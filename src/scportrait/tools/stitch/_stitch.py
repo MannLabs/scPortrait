@@ -250,7 +250,6 @@ class Stitcher:
                     "This may lead to unexpected results. For the missing channels rescaling will be turned off."
                 )
 
-                missing_channels = set.difference(self.channel_names, rescale_channels)
                 for missing_channel in missing_channels:
                     self.rescale_range[missing_channel] = (0, 1)
 
