@@ -63,16 +63,14 @@ class Logable:
     DEFAULT_LOG_NAME: str = DEFAULT_LOG_NAME
     DEFAULT_FORMAT: str = DEFAULT_FORMAT
 
-    def __init__(self, directory: str | PosixPath, debug: bool = False):
+    def __init__(self, directory: str | os.PathLike[str], debug: bool = False):
         """Initialize logging configuration.
 
         Args:
             directory: Directory where log files should be written.
             debug: If ``True``, log entries are also printed to stdout.
         """
-        if isinstance(directory, PosixPath):
-            directory = str(directory)
-        self.directory = directory
+        self.directory = os.fspath(directory)
         self.debug = debug
 
     def log(self, message: str | list[str] | dict[str, Any] | Any):
@@ -351,9 +349,9 @@ class ProcessingStep(Logable):
     def __call_empty__(self, *args, debug: bool | None = None, overwrite: bool | None = None, **kwargs):
         """Execute ``return_empty_mask`` for workflows without normal processing.
 
-        This is used for code paths where a step needs to return a valid
-        empty placeholder output while still participating in the standard
-        directory/setup lifecycle.
+        This is used for code paths where a step needs to return a valid empty
+        placeholder output while still participating in the standard
+        directory/setup/temp-workspace lifecycle.
 
         Args:
             debug: Optional runtime override for debug logging.
@@ -372,15 +370,22 @@ class ProcessingStep(Logable):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        process = getattr(self, "return_empty_mask", None)
-        if callable(process):
-            x = self.return_empty_mask(*args, **kwargs)  # type: ignore[attr-defined]
-            return x
-        else:
-            warnings.warn("No return_empty_mask method defined.", UserWarning, stacklevel=2)
+        # create a temporary directory for processing step
+        self.create_temp_dir()
+        if not os.path.isdir(self._tmp_dir_path):
+            raise RuntimeError("Temporary directory not found after initialization.")
 
-        # also clear empty temp directory here
-        self.clear_temp_dir()
+        process = getattr(self, "return_empty_mask", None)
+        try:
+            if callable(process):
+                return self.return_empty_mask(*args, **kwargs)  # type: ignore[attr-defined]
+            warnings.warn("No return_empty_mask method defined.", UserWarning, stacklevel=2)
+            return None
+        finally:
+            if not self.deep_debug:
+                self.clear_temp_dir()
+            else:
+                self.log("Deep debugging enabled, keeping temporary directory")
 
     def register_parameter(self, key: str | list[str], value: Any) -> None:
         """Register a missing configuration parameter.

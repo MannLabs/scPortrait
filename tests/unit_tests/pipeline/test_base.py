@@ -20,9 +20,10 @@ def _make_step(tmp_path, config: dict | str | None = None) -> ProcessingStep:
 
 
 def test_logable_init_sets_debug_flag(tmp_path):
-    """Logable should store the debug flag exactly as provided."""
+    """Logable should store the debug flag and normalize directory paths to str."""
     logable = Logable(directory=tmp_path, debug=False)
     assert logable.debug is False
+    assert isinstance(logable.directory, str)
 
 
 @pytest.mark.parametrize(
@@ -102,6 +103,20 @@ def test_processing_step_emits_warnings_when_required_methods_are_missing(tmp_pa
     with pytest.warns(UserWarning, match=warning_text):
         result = invoker(step)
     assert result is None
+
+
+def test_processing_step_call_empty_uses_temp_dir_lifecycle_for_callable(tmp_path):
+    """__call_empty__ should create and cleanup a temporary workspace when method exists."""
+
+    class EmptyStep(ProcessingStep):
+        def return_empty_mask(self):
+            return {"tmp_dir_exists": Path(self._tmp_dir_path).is_dir()}
+
+    step = EmptyStep(config={"cache": str(tmp_path / "cache")}, directory=tmp_path / "step")
+    result = step.__call_empty__()
+
+    assert result == {"tmp_dir_exists": True}
+    assert not hasattr(step, "_tmp_dir_path")
 
 
 def test_processing_step_register_parameter_nested_keys_not_supported(tmp_path):
