@@ -246,9 +246,38 @@ pytest tests/unit_tests --disable-warnings
 E2E tests run larger workflow scenarios to ensure that multiple components of the pipeline work correctly together (e.g., segmentation → extraction → featurization → selection).
 These tests are **much slower** and may require larger example data.
 
+If an E2E test depends on remotely downloaded data/config files, it must be annotated with `@pytest.mark.requires_dataset(...)`.
+This is required because scPortrait runs a preflight data check before executing E2E test bodies and exits early if required data cannot be downloaded, avoiding misleading downstream failures.
+See [Test Markers](#test-markers) for details and examples.
+
 Run only E2E tests:
 ```console
 pytest tests/e2e_tests --disable-warnings
+```
+
+### Test Markers
+
+scPortrait uses pytest markers to describe test metadata and e2e data requirements.
+
+- `@pytest.mark.slow`: marks slow-running tests (used to identify expensive tests such as full-pipeline e2e runs).
+- `@pytest.mark.requires_dataset(...)`: declares which remote datasets/configs an e2e test needs.
+
+The e2e preflight fixture in `tests/e2e_tests/conftest.py` reads `requires_dataset(...)` markers from the selected tests and preloads only those datasets before test bodies execute. If preloading fails, pytest exits early and the remaining e2e tests are not executed.
+
+Example:
+
+```python
+@pytest.mark.slow
+@pytest.mark.requires_dataset("dataset_1_config", "test_dataset")
+def test_full_pipeline_e2e(tmp_path):
+    ...
+```
+
+Run marker-filtered tests:
+
+```console
+pytest -m slow
+pytest -m "not slow"
 ```
 
 ### Running All Tests
