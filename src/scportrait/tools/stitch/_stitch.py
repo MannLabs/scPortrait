@@ -3,7 +3,6 @@ import shutil
 import sys
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import numpy as np
 from alphabase.io.tempmmap import (
@@ -652,7 +651,6 @@ class ParallelStitcher(Stitcher):
         return mosaic
 
     def _assemble_channel(self, args):
-        hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
         out = mmap_array_from_path(hdf5_path)
         self.mosaic.assemble_channel_parallel(channel=channel, ch_index=i, hdf5_path=hdf5_path)
