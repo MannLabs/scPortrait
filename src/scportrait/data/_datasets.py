@@ -30,9 +30,10 @@ def _get_remote_dataset(
         data_dir.mkdir(parents=True, exist_ok=True)
     save_path = data_dir / dataset
 
+    dataset_exists = save_path.exists()
     expected_path = save_path / name if name is not None else None
-    missing_expected_file = expected_path is not None and not expected_path.exists()
-    should_download = force_download or not save_path.exists() or missing_expected_file
+    missing_expected_file = dataset_exists and expected_path is not None and not expected_path.exists()
+    should_download = force_download or not dataset_exists or missing_expected_file
 
     if should_download:
         _download(
