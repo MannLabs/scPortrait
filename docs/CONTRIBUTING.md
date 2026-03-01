@@ -214,7 +214,7 @@ The docs for scPortrait are updated and built automatically whenever code is mer
 make clean
 make html
 ```
-4. open the file `scportriat/docs/_build/html/index.html` in your favorite browser
+4. open the file `scportrait/docs/_build/html/index.html` in your favorite browser
 
 ## Writing Tests
 
