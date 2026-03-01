@@ -4,10 +4,10 @@ import gc
 import os
 import platform
 import shutil
-import sys
 import tempfile
+import warnings
 from datetime import datetime
-from pathlib import Path, PosixPath
+from pathlib import PosixPath
 from typing import TYPE_CHECKING, Any
 
 import torch
@@ -55,10 +55,6 @@ if TYPE_CHECKING:
 class Logable:
     """Create log entries.
 
-    Args:
-        directory: path to a directory where the Logable entity should write it's log files.
-        debug: When set to ``True`` log entries will be printed to the console otherwise they will only be written to the log file.
-
     Attributes:
         DEFAULT_LOG_NAME: Name of the log file.
         DEFAULT_FORMAT: Date and time format used for logging. See `datetime.strftime <https://docs.python.org/3/library/datetime.html#datetime.date.strftime>`_.
@@ -67,57 +63,53 @@ class Logable:
     DEFAULT_LOG_NAME: str = DEFAULT_LOG_NAME
     DEFAULT_FORMAT: str = DEFAULT_FORMAT
 
-    def __init__(self, directory: str | PosixPath, debug: bool = False):
-        if isinstance(directory, PosixPath):
-            directory = str(directory)
-        self.directory = directory
-        self.debug = debug
-
-    def log(self, message: str | list[str] | dict[str, Any]):
-        """log a message
+    def __init__(self, directory: str | os.PathLike[str], debug: bool = False):
+        """Initialize logging configuration.
 
         Args:
-            message: strings which should be written to the log file. Can be a single string, a list of strings or a dictionary.
+            directory: Directory where log files should be written.
+            debug: If ``True``, log entries are also printed to stdout.
+        """
+        self.directory = os.fspath(directory)
+        self.debug = debug
+
+    def log(self, message: str | list[str] | dict[str, Any] | Any):
+        """Write one or more messages to the step log file.
+
+        Args:
+            message: Message payload to write. Strings are split on newlines, lists are written line-by-line,
+                dictionaries are written as ``key: value`` pairs, and other objects are coerced to ``str``.
         """
 
         if not hasattr(self, "directory"):
-            raise ValueError("Please define a valid self.directory in every descended of the Logable class")
+            raise ValueError("Please define a valid self.directory in every descendant of the Logable class")
 
         if isinstance(message, str):
             lines = message.split("\n")
-
-        if isinstance(message, list):
+        elif isinstance(message, list):
             lines = message
-
-        if isinstance(message, dict):
+        elif isinstance(message, dict):
             lines = []
             for key, value in message.items():
                 lines.append(f"{key}: {value}")
-
         else:
-            try:
-                lines = [str(message)]
-            except (TypeError, ValueError):
-                raise TypeError(
-                    "Message must be a string, list of strings or a dictionary, but received type: ", type(message)
-                ) from None
+            lines = [str(message)]
+
+        log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
+
+        # check that log path exists if not create
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
 
         for line in lines:
-            log_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
-
-            # check that log path exists if not create
-            if not os.path.isdir(self.directory):
-                os.makedirs(self.directory)
-
             with open(log_path, "a") as myfile:
-                myfile.write(self.get_timestamp() + line + " \n")
+                myfile.write(self.get_timestamp() + str(line) + " \n")
 
             if self.debug:
-                print(self.get_timestamp() + line)
+                print(self.get_timestamp() + str(line))
 
     def get_timestamp(self) -> str:
-        """
-        Get the current timestamp in the DEFAULT_FORMAT.
+        """Get the current timestamp in ``DEFAULT_FORMAT``.
 
         Returns:
             Formatted timestamp.
@@ -130,11 +122,7 @@ class Logable:
         return "[" + dt_string + "] "
 
     def _clean_log_file(self) -> None:
-        """Helper function to clean up log files in the processing step directory.
-
-        Returns:
-            The log file is deleted on disk if it exists.
-        """
+        """Delete the current log file if it exists."""
         log_file_path = os.path.join(self.directory, self.DEFAULT_LOG_NAME)
 
         if os.path.exists(log_file_path):
@@ -163,7 +151,11 @@ class Logable:
     #     gc.collect()
 
     def _clear_cache(self, vars_to_delete=None):
-        """Helper function to help clear memory usage. Mainly relevant for GPU based segmentations."""
+        """Release GPU/MPS cache and trigger garbage collection.
+
+        Args:
+            vars_to_delete: Optional iterable of local variables to delete references for before cleanup.
+        """
 
         # delete all specified variables
         if vars_to_delete is not None:
@@ -180,16 +172,21 @@ class Logable:
 
 
 class ProcessingStep(Logable):
-    """Processing step. Can load a configuration file and create a subdirectory under the project class for the processing step.
+    """Base class for executable pipeline stages in scPortrait.
 
-    Args:
-        config: Config file which is passed by the Project class when called. Is loaded from the project based on the name of the class.
-        directory: Directory which should be used by the processing step. The directory will be newly created if it doesn't exist yet. When used with the :class:`scportrait.pipeline.project.Project` class, a subdirectory of the project directory is passed.
-        debug: When set to True debug outputs will be printed where applicable. Otherwise they will only be written to file.
-        overwrite: When set to True, the processing step directory will be completely deleted and newly created when called.
-        project: Project class which is passed by the Project class when called.
-        filehandler: Filehandler class which is passed by the Project class when called
-        from_project: When set to True, the processing step is called from the Project class.
+    A `ProcessingStep` is the common runtime wrapper around stage-specific
+    implementations such as segmentation, extraction, featurization, and
+    selection. It provides shared behavior that all stages rely on:
+
+    - configuration loading and step-specific config scoping
+    - directory and overwrite handling
+    - temporary workspace lifecycle management
+    - unified logging and debug behavior
+    - project-aware execution context when called via `Project`
+
+    Subclasses are expected to implement stage logic via `process(...)` for
+    standard execution, or `return_empty_mask(...)` for workflows that need a
+    structured empty result path.
     """
 
     DEFAULT_CONFIG_NAME = DEFAULT_CONFIG_NAME
@@ -237,7 +234,7 @@ class ProcessingStep(Logable):
 
     def __init__(
         self,
-        config: str | dict | PosixPath,
+        config: str | PosixPath | dict[str, Any],
         directory: str | PosixPath = None,
         project_location: str | PosixPath = None,
         debug: bool = False,
@@ -246,6 +243,22 @@ class ProcessingStep(Logable):
         filehandler: sdata_filehandler | None = None,
         from_project: bool = False,
     ) -> None:
+        """Initialize a processing step and normalize configuration handling.
+
+        Args:
+            config: Parsed configuration dictionary or path to a config file.
+                If the top-level config contains a key matching the concrete
+                step class name, that sub-dictionary is used as the step config.
+            directory: Working directory for this step.
+            project_location: Project root when running as part of ``Project``.
+            debug: Enable verbose stdout logging in addition to file logging.
+            overwrite: If ``True``, existing step output may be removed before
+                processing.
+            project: Active ``Project`` instance when this step is project-managed.
+            filehandler: Shared SpatialData file handler for project-managed runs.
+            from_project: Whether this step is invoked from a project-managed
+                execution context.
+        """
         super().__init__(directory=directory)
 
         self.debug = debug
@@ -261,31 +274,45 @@ class ProcessingStep(Logable):
             self.project = None
             self.filehandler = None
 
+        raw_config: dict[str, Any]
         if isinstance(config, str | PosixPath):
-            config = read_config(config)
-            if self.__class__.__name__ in config.keys():
-                self.config = config[self.__class__.__name__]
-            else:
-                self.config = config
+            raw_config = read_config(config)
         else:
-            self.config = config
-        self.overwrite = overwrite
+            raw_config = config
+
+        class_config = raw_config.get(self.__class__.__name__)
+        if isinstance(class_config, dict):
+            self.config: dict[str, Any] = class_config
+        else:
+            self.config = raw_config
 
         self.get_context()
 
         self.deep_debug = False
 
-        if "cache" not in self.config.keys():
+        if "cache" not in self.config:
             self.config["cache"] = os.path.abspath(os.getcwd())
             self.log(f"No cache directory specified in config using current working directory {self.config['cache']}.")
 
     def __call__(self, *args, debug: bool | None = None, overwrite: bool | None = None, **kwargs):
-        """
-        Call the processing step.
+        """Execute the processing step.
+
+        This method runs a processing step from start to finish.
+
+        Execution order:
+            1. Apply optional runtime ``debug``/``overwrite`` overrides.
+            2. If ``overwrite=True``, remove any existing step output directory.
+            3. Ensure the step output directory exists.
+            4. Create a temporary working directory in the configured cache.
+            5. Call subclass ``process(...)`` if implemented.
+            6. Clean up temporary files unless ``deep_debug=True``.
 
         Args:
-            debug: Allows overriding the value set on initiation if not specified as None. When set to True debug outputs will be printed where applicable.
-            overwrite: Allows overriding the value set on initiation if not specified as None. When set to True, the processing step directory will be completely deleted and newly created when called.
+            debug: Optional runtime override for debug logging.
+            overwrite: Optional runtime override for overwrite behavior.
+
+        Raises:
+            RuntimeError: If temporary directory setup fails unexpectedly.
         """
 
         # set flags if provided
@@ -304,7 +331,7 @@ class ProcessingStep(Logable):
         # create a temporary directory for processing step
         self.create_temp_dir()
         if not os.path.isdir(self._tmp_dir_path):
-            sys.exit("Temporary directory not found, exiting...")
+            raise RuntimeError("Temporary directory not found after initialization.")
 
         process = getattr(self, "process", None)
         if callable(process):
@@ -317,14 +344,18 @@ class ProcessingStep(Logable):
             return x
         else:
             self.clear_temp_dir()  # also ensure clearing if not callable just to make sure everything is cleaned up
-            Warning("no process method defined.")
+            warnings.warn("No process method defined.", UserWarning, stacklevel=2)
 
     def __call_empty__(self, *args, debug: bool | None = None, overwrite: bool | None = None, **kwargs):
-        """Call the empty processing step.
+        """Execute ``return_empty_mask`` for workflows without normal processing.
+
+        This is used for code paths where a step needs to return a valid empty
+        placeholder output while still participating in the standard
+        directory/setup/temp-workspace lifecycle.
 
         Args:
-            debug: Allows overriding the value set on initiation if not specified as None. When set to True debug outputs will be printed where applicable.
-            overwrite: Allows overriding the value set on initiation if not specified as None. When set to True, the processing step directory will be completely deleted and newly created when called.
+            debug: Optional runtime override for debug logging.
+            overwrite: Optional runtime override for overwrite behavior.
         """
         # set flags if provided
         self.debug = debug if debug is not None else self.debug
@@ -339,27 +370,33 @@ class ProcessingStep(Logable):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
+        # create a temporary directory for processing step
+        self.create_temp_dir()
+        if not os.path.isdir(self._tmp_dir_path):
+            raise RuntimeError("Temporary directory not found after initialization.")
+
         process = getattr(self, "return_empty_mask", None)
-        if callable(process):
-            x = self.return_empty_mask(*args, **kwargs)  # type: ignore[attr-defined]
-            return x
-        else:
-            Warning("no return_empty_mask method defined")
+        try:
+            if callable(process):
+                return self.return_empty_mask(*args, **kwargs)  # type: ignore[attr-defined]
+            warnings.warn("No return_empty_mask method defined.", UserWarning, stacklevel=2)
+            return None
+        finally:
+            if not self.deep_debug:
+                self.clear_temp_dir()
+            else:
+                self.log("Deep debugging enabled, keeping temporary directory")
 
-        # also clear empty temp directory here
-        self.clear_temp_dir()
-
-    def register_parameter(self, key: str, value: Any) -> None:
-        """
-        Registers a new parameter by updating the configuration dictionary with the provided key value pair.
+    def register_parameter(self, key: str | list[str], value: Any) -> None:
+        """Register a missing configuration parameter.
 
         Args:
-            key: Name of the parameter.
+            key: Name of the parameter. Nested key registration via list is not yet supported.
             value: Value of the parameter.
         """
 
         if isinstance(key, str):
-            config_handle = self.config
+            config_handle: dict[str, Any] = self.config
 
         elif isinstance(key, list):
             raise NotImplementedError("registration of parameters is not yet supported for nested parameters")
@@ -371,8 +408,7 @@ class ProcessingStep(Logable):
             config_handle[key] = value
 
     def get_directory(self) -> str:
-        """
-        Get the directory for this processing step.
+        """Return the configured working directory for this step.
 
         Returns:
             Directory path.
@@ -380,13 +416,15 @@ class ProcessingStep(Logable):
         return self.directory
 
     def create_temp_dir(self) -> None:
+        """Create a temporary directory inside the configured cache directory.
+
+        Raises:
+            ValueError: If ``cache`` is missing from the step configuration.
         """
-        Create a temporary directory at the location specified in `cache` of the config.
-        If `cache` is not specified in the config for the method this will raise a ValueError.
-        """
-        if "cache" in self.config.keys():
-            path = os.path.join(self.config["cache"], f"{self.__class__.__name__}_")
-            self._tmp_dir = tempfile.TemporaryDirectory(prefix=path)
+        if "cache" in self.config:
+            cache_dir = str(self.config["cache"])
+            os.makedirs(cache_dir, exist_ok=True)
+            self._tmp_dir = tempfile.TemporaryDirectory(prefix=f"{self.__class__.__name__}_", dir=cache_dir)
             self._tmp_dir_path = self._tmp_dir.name
 
             self.log(f"Initialized temporary directory at {self._tmp_dir_path} for {self.__class__.__name__}")
@@ -394,11 +432,12 @@ class ProcessingStep(Logable):
             raise ValueError("No cache directory specified in config.")
 
     def clear_temp_dir(self) -> None:
-        """Delete created temporary directory."""
+        """Delete the temporary directory if one is currently active."""
 
-        if "_tmp_dir" in self.__dict__.keys():
-            shutil.rmtree(self._tmp_dir_path)
-            self.log(f"Cleaned up temporary directory at {self._tmp_dir}")
+        if "_tmp_dir" in self.__dict__:
+            tmp_dir_path = self._tmp_dir_path
+            self._tmp_dir.cleanup()
+            self.log(f"Cleaned up temporary directory at {tmp_dir_path}")
 
             del self._tmp_dir, self._tmp_dir_path
         else:
@@ -406,14 +445,17 @@ class ProcessingStep(Logable):
                 self.log("Temporary directory not found, skipping cleanup")
 
     def get_context(self) -> None:
-        """
-        Define context for multiprocessing steps that should be used.
-        The context is platform dependent.
-        """
+        """Define multiprocessing context used by the pipeline.
 
-        if platform.system() == "Windows":
+        Context selection is explicitly split by platform to make targeted
+        OS-specific changes straightforward when backend behavior changes.
+        """
+        system = platform.system()
+        if system == "Windows":
             self.context = "spawn"
-        elif platform.system() == "Darwin":
+        elif system == "Darwin":
             self.context = "spawn"
-        elif platform.system() == "Linux":
+        elif system == "Linux":
+            self.context = "spawn"
+        else:
             self.context = "spawn"

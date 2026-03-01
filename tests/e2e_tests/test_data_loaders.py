@@ -82,6 +82,7 @@ def test_project_load_input_from_sdata_multiscale_image(
     )
 
 
+@pytest.mark.requires_dataset("dataset_1_omezarr")
 def test_project_load_from_omezarr(config_path, tmp_path):
     project_path = str(tmp_path / "scportrait/project/")
     omezarr_path = dataset_1_omezarr()
