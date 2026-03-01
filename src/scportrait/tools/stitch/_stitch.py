@@ -536,7 +536,7 @@ class Stitcher:
         write_spatialdata(
             filepath,
             image=self.assembled_mosaic,
-            channel_names=self.channels,
+            channel_names=self._current_channel_names(),
             scale_factors=scale_factors,
             overwrite=self.overwrite,
         )
