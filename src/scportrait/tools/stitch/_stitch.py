@@ -275,7 +275,7 @@ class Stitcher:
     def _reorder_channels(self):
         """Reorder the channels in the mosaic based on the specified channel_order."""
         if self.channel_order is None:
-            self.channels = self.channels
+            return
         else:
             print("current channel order: ", self.channels)
 
@@ -285,6 +285,10 @@ class Stitcher:
             print("new channel order", channels)
 
             self.channels = channels
+
+    def _current_channel_names(self) -> list[str]:
+        """Return channel names in the current output channel order."""
+        return [self.channel_lookup[channel] for channel in self.channels]
 
     def _initialize_reader(self):
         """Initialize the reader for reading image tiles."""
@@ -461,14 +465,15 @@ class Stitcher:
 
         from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
 
+        channel_names = self._current_channel_names()
         filenames = []
-        for i, channel in enumerate(self.channel_names):
+        for i, channel in enumerate(channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
             filenames.append(filename)
             write_tif(filename, self.assembled_mosaic[i, :, :])
 
         if export_xml:
-            write_xml(filenames, self.channel_names, self.slidename)
+            write_xml(filenames, channel_names, self.slidename)
 
     def write_ome_zarr(
         self,
@@ -490,7 +495,7 @@ class Stitcher:
         write_ome_zarr(
             filepath,
             self.assembled_mosaic,
-            self.channel_names,
+            self._current_channel_names(),
             self.slidename,
             overwrite=self.overwrite,
             downscaling_size=downscaling_size,
@@ -692,7 +697,8 @@ class ParallelStitcher(Stitcher):
 
         filenames = []
         args = []
-        for i, channel in enumerate(self.channel_names):
+        channel_names = self._current_channel_names()
+        for i, channel in enumerate(channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
             filenames.append(filename)
             args.append((filename, i))
@@ -716,4 +722,4 @@ class ParallelStitcher(Stitcher):
         # write_tif(filename, self.assembled_mosaic[i, :, :])
 
         if export_xml:
-            write_xml(filenames, self.channel_names, self.slidename)
+            write_xml(filenames, channel_names, self.slidename)
