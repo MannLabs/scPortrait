@@ -505,7 +505,7 @@ If you utilize this segmentation workflow please also consider citing the `cellp
 Cytosol Only Cellpose segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation. Unlike the :ref:`DAPI segmentation cellpose <DAPI_segmentation_cellpose>` workflow it uses two input channels to generate a single output mask. The generated single cell datasets using this segmentation method will contain all signal from within the cytosolic region.
+This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation. It supports one or two input channels to generate a single output mask. The generated single cell datasets using this segmentation method will contain all signal from within the cytosolic region.
 
 As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
@@ -520,6 +520,8 @@ If you utilize this segmentation workflow please also consider citing the `cellp
         nGPUs: 1
         threads: 2 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
         cache: "."
+        segmentation_channel_cytosol: [0] # required
+        segmentation_channel_nuclei: null # optional; set channel index to include an additional nucleus cue
         cytosol_segmentation:
             model: "cyto2"
         match_masks: True
