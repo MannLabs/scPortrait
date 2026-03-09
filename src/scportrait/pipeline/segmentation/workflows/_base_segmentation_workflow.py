@@ -71,6 +71,9 @@ class _BaseSegmentation(Segmentation):
             else:
                 self.nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
 
+            if isinstance(self.nucleus_segmentation_channel, int):
+                self.nucleus_segmentation_channel = [self.nucleus_segmentation_channel]
+
             self.segmentation_channels.extend(self.nucleus_segmentation_channel)
 
         if "cytosol" in self.MASK_NAMES:
@@ -80,6 +83,9 @@ class _BaseSegmentation(Segmentation):
                 self.cytosol_segmentation_channel = self.combine_cytosol_channels
             else:
                 self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
+
+            if isinstance(self.cytosol_segmentation_channel, int):
+                self.cytosol_segmentation_channel = [self.cytosol_segmentation_channel]
 
             self.segmentation_channels.extend(self.cytosol_segmentation_channel)
 
@@ -125,7 +131,7 @@ class _BaseSegmentation(Segmentation):
                 if len(nucleus_channel.shape) == 4:
                     nucleus_channel = nucleus_channel.squeeze()
             else:
-                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS]
+                nucleus_channel = input_image[self.nucleus_segmentation_channel]
                 if len(nucleus_channel.shape) == 2:
                     nucleus_channel = nucleus_channel[np.newaxis, ...]
                 if len(nucleus_channel.shape) == 4:
@@ -143,7 +149,7 @@ class _BaseSegmentation(Segmentation):
                 if len(cytosol_channel.shape) == 2:
                     cytosol_channel = cytosol_channel[np.newaxis, ...]
             else:
-                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS]
+                cytosol_channel = input_image[self.cytosol_segmentation_channel]
                 if len(cytosol_channel.shape) == 4:
                     cytosol_channel = cytosol_channel.squeeze()
                 if len(cytosol_channel.shape) == 2:
