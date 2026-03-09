@@ -953,13 +953,24 @@ class Project(Logable):
             idx = masks.index(mask)
             if "nucleus" in mask:
                 channel = [0]
+                if self.segmentation_f is not None and hasattr(self.segmentation_f, "nucleus_segmentation_channel"):
+                    channel = self.segmentation_f.nucleus_segmentation_channel
                 name = "Nucleus Mask"
             elif "cytosol" in mask:
                 channel = [1]
+                if self.segmentation_f is not None and hasattr(self.segmentation_f, "cytosol_segmentation_channel"):
+                    channel = self.segmentation_f.cytosol_segmentation_channel
                 name = "Cytosol Mask"
             else:
                 channel = list(range(len(channel_names)))
                 name = mask
+
+            if not isinstance(channel, list):
+                channel = [channel]
+            channel = [int(c) for c in channel if isinstance(c, (int, np.integer))]
+            channel = [c for c in channel if 0 <= c < len(channel_names)]
+            if len(channel) == 0:
+                channel = [0] if len(channel_names) > 0 else []
 
             plot_segmentation_mask(
                 _sdata,
