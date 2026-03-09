@@ -1015,12 +1015,8 @@ class HDF5CellExtraction(ProcessingStep):
                 with mp.get_context("fork").Pool(
                     processes=self.threads
                 ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
-                    for result in list(
-                        tqdm(
-                            pool.imap(self._extract_classes_multi, args),
-                            total=len(args),
-                            desc="Extracting cell batches",
-                        )
+                    for result in tqdm(
+                        pool.imap(self._extract_classes_multi, args), total=len(args), desc="Extracting cell batches"
                     ):
                         self._write_to_hdf5(result, lock)
                     pool.close()
