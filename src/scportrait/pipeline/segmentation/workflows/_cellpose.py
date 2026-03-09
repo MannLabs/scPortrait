@@ -606,6 +606,86 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # override expected number of input channels for the case where we only run a segmentation on the cytosol channel
+        if len(self.segmentation_channels) == 1:
+            self.N_INPUT_CHANNELS = 1
+
+    def _define_channels_to_extract_for_segmentation(self):
+        """Select channels for cytosol-only segmentation.
+
+        A cytosol channel is required. A nucleus channel is optional and can be
+        disabled via ``segmentation_channel_nucleus: None``.
+        """
+        self.segmentation_channels = []
+
+        # get cytosol segmentation channel(s) from config, default to channels [0, 1] if not provided
+        if "segmentation_channel_cytosol" in self.config.keys():
+            self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
+        elif "combine_cytosol_channels" in self.config.keys():
+            self.cytosol_segmentation_channel = self.combine_cytosol_channels
+        else:
+            if "segmentation_channel_nucleus" in self.config.keys():
+                raise ValueError(
+                    "segmentation_channel_cytosol must be provided when segmentation_channel_nucleus is set. "
+                    "Otherwise cytosol falls back to default channels [0, 1] and can overlap with nucleus assignment."
+                )
+            self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
+
+        # ensure cytosol segmentation channels are in a list format for consistent processing downstream
+        if isinstance(self.cytosol_segmentation_channel, int):
+            self.cytosol_segmentation_channel = [self.cytosol_segmentation_channel]
+
+        # support optional nucleus cue channel for cytosol-only segmentation
+        if "segmentation_channel_nucleus" in self.config.keys() and self.config["segmentation_channel_nucleus"] is None:
+            self.nucleus_segmentation_channel = []
+        elif "segmentation_channel_nucleus" in self.config.keys() and self.config["segmentation_channel_nucleus"] is not None:
+            self.nucleus_segmentation_channel = self.config["segmentation_channel_nucleus"]
+
+            # ensure nucleus segmentation channels are in a list format for consistent processing downstream
+            if isinstance(self.nucleus_segmentation_channel, int):
+                self.nucleus_segmentation_channel = [self.nucleus_segmentation_channel]
+        else:
+            # Preserve historical behavior when no explicit nucleus config is supplied.
+            self.nucleus_segmentation_channel = []
+
+        # combine all selected channels for segmentation into one list while preserving order and removing duplicates
+        self.segmentation_channels.extend(self.cytosol_segmentation_channel)
+        self.segmentation_channels.extend(self.nucleus_segmentation_channel)
+        self.segmentation_channels = list(dict.fromkeys(self.segmentation_channels))
+
+        # perform sanity checks 
+        if len(self.segmentation_channels) == 0:
+            raise ValueError(
+                "No channels selected for segmentation. Please specify at least one channel for cytosol segmentation in the config file."
+            )
+        
+        if len(self.segmentation_channels) > 2:
+            if not self.maximum_project_cytosol:
+                raise ValueError(
+                    "More than two input channels are only supported when combine_cytosol_channels "
+                    "is used to perform maximum intensity projection."
+                )
+        if len(self.segmentation_channels) < 1 or len(self.segmentation_channels) > 2:
+            raise ValueError(
+                f"CytosolOnlySegmentationCellpose requires 1 or 2 selected channels, got {len(self.segmentation_channels)}."
+            )
+
+        # remap absolute channel IDs to indices after the pre-selection step
+        channel_remap = {ch: ix for ix, ch in enumerate(self.segmentation_channels)}
+        self._cytosol_channel_ix = [channel_remap[ch] for ch in self.cytosol_segmentation_channel]
+        self._nucleus_channel_ix = [channel_remap[ch] for ch in self.nucleus_segmentation_channel]
+
+    def _resolve_cellpose_channels(self, input_image: np.ndarray) -> list[int]:
+        """Map selected channel count to Cellpose channel semantics."""
+        n_input_channels = int(input_image.shape[0])
+        if n_input_channels == 1:
+            # grayscale cytosol-only input
+            return [1, 0] #note this is 1-indexed to match Cellpose's expected input
+        if n_input_channels == 2:
+            # cytosol channel + optional nucleus cue
+            return [2, 1] #note this is 1-indexed to match Cellpose's expected input
+        raise ValueError(f"Unsupported number of channels for Cellpose: {n_input_channels}. Expected 1 or 2.")
+
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=self.MASK_NAMES)
 
@@ -625,6 +705,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         #####
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
+        channels = self._resolve_cellpose_channels(input_image)
 
         if self.normalize is False:
             input_image = (input_image - np.min(input_image)) / (
@@ -638,7 +719,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             diameter=self.diameter,
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
-            channels=[2, 1],
+            channels=channels,
         )[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 
