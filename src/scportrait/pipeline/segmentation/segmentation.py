@@ -1019,13 +1019,12 @@ class ShardedSegmentation(Segmentation):
                 initializer=self._initializer_function,
                 initargs=[self.gpu_id_list, self.n_processes],
             ) as pool:
-                list(
-                    tqdm(
-                        pool.imap(self.method._call_as_shard, shard_list),
-                        total=len(shard_list),
-                        desc="Segmenting Image Tiles",
-                    )
-                )
+                for _ in tqdm(
+                    pool.imap_unordered(self.method._call_as_shard, shard_list),
+                    total=len(shard_list),
+                    desc="Segmenting Image Tiles",
+                ):
+                    pass
                 pool.close()
                 pool.join()
             self.log("Finished parallel segmentation")
