@@ -673,7 +673,8 @@ class ShardedSegmentation(Segmentation):
         """Calculate the sharding plan for the given input image size."""
 
         _sharding_plan = []
-        side_size = np.floor(np.sqrt(int(self.config["shard_size"])))
+        image_size = np.array(image_size, dtype=int)
+        side_size = max(int(np.floor(np.sqrt(int(self.config["shard_size"])))), 1)
         shards_side = np.ceil(image_size / side_size).astype(int)
         shards_side = np.maximum(shards_side, 1)
         shard_size = image_size // shards_side
@@ -861,12 +862,9 @@ class ShardedSegmentation(Segmentation):
                 raise FileNotFoundError(f"No window file found in shard directory: {local_shard_directory}")
 
             if window_local != window:
-                Warning("Sharding plans do not match.")
-                self.log("Sharding plans do not match.")
-                self.log(f"Sharding plan found locally: {window_local}")
-                self.log(f"Sharding plan found in sharding plan: {window}")
-                self.log("Reading sharding window from local file and proceeding with that.")
-                window = window_local
+                raise ValueError(
+                    f"Sharding plan mismatch for shard {i}: expected window {window}, found {window_local}."
+                )
 
             local_hf = h5py.File(local_output, "r")
             local_hdf_labels = local_hf.get(self.DEFAULT_MASK_NAME)[:]
