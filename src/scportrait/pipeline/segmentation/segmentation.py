@@ -528,7 +528,8 @@ class ShardedSegmentation(Segmentation):
 
         _sharding_plan = []
         side_size = np.floor(np.sqrt(int(self.config["shard_size"])))
-        shards_side = np.round(image_size / side_size).astype(int)
+        shards_side = np.ceil(image_size / side_size).astype(int)
+        shards_side = np.maximum(shards_side, 1)
         shard_size = image_size // shards_side
 
         self.log(f"input image {image_size[0]} px by {image_size[1]} px")
