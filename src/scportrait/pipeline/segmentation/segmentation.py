@@ -500,7 +500,7 @@ class ShardedSegmentation(Segmentation):
         # initialize a dummy instance of the segmentation method to determine which channels need to be loaded for segmentation
         test_method = self.method(
             self.config,
-            directory=None,
+            directory=self.directory,
             _tmp_image_path=None,
             nuc_seg_name=self.nuc_seg_name,
             cyto_seg_name=self.cyto_seg_name,
