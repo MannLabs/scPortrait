@@ -79,8 +79,26 @@ class Segmentation(ProcessingStep):
         project,
         filehandler,
         from_project: bool = False,
+        dummy: bool = False,
         **kwargs,
     ):
+        """Initialize a segmentation step.
+
+        Args:
+            config: Step configuration.
+            directory: Working directory for this segmentation step.
+            nuc_seg_name: Name of the nucleus segmentation output.
+            cyto_seg_name: Name of the cytosol segmentation output.
+            _tmp_image_path: Path to the temporary input image memmap.
+            project_location: Project root path.
+            debug: Enable verbose logging.
+            overwrite: Whether existing outputs may be overwritten.
+            project: Active project instance when project-managed.
+            filehandler: Shared SpatialData file handler.
+            from_project: Whether this step is invoked from a project-managed context.
+            dummy: If ``True``, initialize without cleaning the existing log file. This is used for
+                side-effect-free helper instances that only inspect configuration-derived state.
+        """
         super().__init__(
             config,
             directory,
@@ -92,9 +110,11 @@ class Segmentation(ProcessingStep):
             from_project=from_project,
         )
 
+        self.dummy = dummy
+
         if self.directory is not None:
             # only clean directory if a proper directoy is passed
-            if self.CLEAN_LOG:
+            if self.CLEAN_LOG and not self.dummy:
                 self._clean_log_file()
 
         self._check_config()
@@ -610,7 +630,11 @@ class Segmentation(ProcessingStep):
 
 
 class ShardedSegmentation(Segmentation):
-    """To perform a sharded segmentation where the input image is split into individual tiles (with overlap) that are processed idnividually before the results are joined back together."""
+    """Perform segmentation on overlapping image tiles and stitch the results back together.
+
+    A lightweight dummy workflow instance is created during initialization to determine which
+    input channels need to be loaded without mutating the main step log.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -630,6 +654,7 @@ class ShardedSegmentation(Segmentation):
             project_location=None,
             debug=self.debug,
             overwrite=self.overwrite,
+            dummy=True,
         )
         self.segmentation_channels = test_method.segmentation_channels
 
