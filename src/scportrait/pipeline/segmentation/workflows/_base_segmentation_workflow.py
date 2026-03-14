@@ -89,8 +89,8 @@ class _BaseSegmentation(Segmentation):
 
             self.segmentation_channels.extend(self.cytosol_segmentation_channel)
 
-        # remove any duplicate entries and sort according to order
-        self.segmentation_channels = list(set(self.segmentation_channels))
+        # remove duplicate entries while preserving the configured channel order
+        self.segmentation_channels = list(dict.fromkeys(self.segmentation_channels))
 
         # check validity of resulting list of segmentation channels
         assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
