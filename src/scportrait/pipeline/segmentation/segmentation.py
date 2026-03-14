@@ -1,3 +1,4 @@
+import json
 import multiprocessing as mp
 import os
 import shutil
@@ -7,7 +8,7 @@ import timeit
 import traceback
 import warnings
 from multiprocessing import current_process
-from typing import Optional
+from typing import Optional, TypeAlias
 
 import h5py
 import matplotlib.pyplot as plt
@@ -24,6 +25,9 @@ from scportrait.io.daskmmap import dask_array_from_path
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.constants import DEFAULT_CHANNELS_NAME, DEFAULT_FILTER_ADDTIONAL_FILE, DEFAULT_MASK_NAME
 from scportrait.pipeline._utils.segmentation import _return_edge_labels, sc_any, shift_labels
+
+Window2D: TypeAlias = tuple[slice, slice]
+ShardingPlan: TypeAlias = list[tuple[int, Window2D]]
 
 
 class Segmentation(ProcessingStep):
@@ -355,6 +359,111 @@ class Segmentation(ProcessingStep):
     def get_output(self):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
+    @staticmethod
+    def _slice_to_dict(s: slice) -> dict[str, int | None]:
+        """Convert a Python ``slice`` object into a JSON-serializable dictionary.
+
+        Args:
+            s: Slice object to serialize.
+
+        Returns:
+            Dictionary with ``start``, ``stop``, and ``step`` keys.
+        """
+        return {"start": s.start, "stop": s.stop, "step": s.step}
+
+    @staticmethod
+    def _dict_to_slice(data: dict) -> slice:
+        """Convert a serialized slice dictionary back to a Python ``slice``.
+
+        Args:
+            data: Dictionary containing ``start``, ``stop``, and optionally ``step``.
+
+        Returns:
+            Reconstructed slice object.
+        """
+        return slice(data.get("start"), data.get("stop"), data.get("step"))
+
+    def _write_window_file(self, window_path: str, window: tuple[slice, slice]) -> None:
+        """Write a shard window definition to disk as JSON.
+
+        Args:
+            window_path: Path where the window JSON should be written.
+            window: Two-dimensional window represented as ``(y_slice, x_slice)``.
+        """
+        payload = {
+            "version": 1,
+            "y": self._slice_to_dict(window[0]),
+            "x": self._slice_to_dict(window[1]),
+        }
+        with open(window_path, "w") as f:
+            json.dump(payload, f)
+
+    def _read_window_file(self, window_path: str) -> Window2D:
+        """Read a shard window definition from a JSON file.
+
+        Args:
+            window_path: Path to the JSON window file.
+
+        Returns:
+            Window tuple represented as ``(y_slice, x_slice)``.
+        """
+        with open(window_path) as f:
+            data = json.load(f)
+        return (self._dict_to_slice(data["y"]), self._dict_to_slice(data["x"]))
+
+    def _deserialize_sharding_plan(self, sharding_plan_path: str) -> ShardingPlan:
+        """Load a serialized sharding plan from JSON.
+
+        Args:
+            sharding_plan_path: Path to a JSON sharding plan file.
+
+        Returns:
+            List of tuples containing ``(shard_id, (y_slice, x_slice))``.
+        """
+        with open(sharding_plan_path) as f:
+            data = json.load(f)
+        return [
+            (
+                int(item["id"]),
+                (
+                    self._dict_to_slice(item["window"]["y"]),
+                    self._dict_to_slice(item["window"]["x"]),
+                ),
+            )
+            for item in data
+        ]
+
+    def _serialize_sharding_plan(self, sharding_plan: ShardingPlan) -> list[dict]:
+        """Convert an in-memory sharding plan into JSON-serializable objects.
+
+        Args:
+            sharding_plan: List of tuples containing ``(shard_id, (y_slice, x_slice))``.
+
+        Returns:
+            List of dictionaries ready to be written as JSON.
+        """
+        return [
+            {
+                "id": shard_id,
+                "window": {
+                    "y": self._slice_to_dict(window[0]),
+                    "x": self._slice_to_dict(window[1]),
+                },
+            }
+            for shard_id, window in sharding_plan
+        ]
+
+    def _write_sharding_plan(self, sharding_plan_path: str, sharding_plan: ShardingPlan) -> None:
+        """Write a sharding plan to disk as JSON.
+
+        Args:
+            sharding_plan_path: Path where the sharding plan JSON should be written.
+            sharding_plan: List of tuples containing ``(shard_id, (y_slice, x_slice))``.
+        """
+        serialized_plan = self._serialize_sharding_plan(sharding_plan)
+        with open(sharding_plan_path, "w") as f:
+            json.dump(serialized_plan, f)
+
     def _initialize_as_shard(self, identifier: int | None, window, input_path, zarr_status=True):
         """Initialize Segmentation Step with further parameters needed for federated segmentation.
 
@@ -422,9 +531,8 @@ class Segmentation(ProcessingStep):
 
         # write out window location
         if self.deep_debug:
-            self.log(f"Writing out window location to file at {self.directory}/window.csv")
-        with open(f"{self.directory}/window.csv", "w") as f:
-            f.write(f"{self.window}\n")
+            self.log(f"Writing out window location to file at {self.directory}/window.json")
+        self._write_window_file(f"{self.directory}/window.json", self.window)
 
         self.log(f"Segmentation of Shard with the slicing {self.window} finished")
 
@@ -523,7 +631,7 @@ class ShardedSegmentation(Segmentation):
         assert "overlap_px" in self.config.keys(), "No overlap specified in config."
         assert "threads" in self.config.keys(), "No threads specified in config."
 
-    def _calculate_sharding_plan(self, image_size) -> list:
+    def _calculate_sharding_plan(self, image_size) -> list[Window2D]:
         """Calculate the sharding plan for the given input image size."""
 
         _sharding_plan = []
@@ -572,9 +680,9 @@ class ShardedSegmentation(Segmentation):
 
         return _sharding_plan
 
-    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> list:
+    def _get_sharding_plan(self, overwrite, force_read: bool = False) -> ShardingPlan:
         # check if a sharding plan already exists
-        sharding_plan_path = f"{self.directory}/sharding_plan.csv"
+        sharding_plan_path = f"{self.directory}/sharding_plan.json"
 
         if os.path.isfile(sharding_plan_path):
             self.log(f"sharding plan already found in directory {sharding_plan_path}.")
@@ -583,9 +691,7 @@ class ShardedSegmentation(Segmentation):
                 os.remove(sharding_plan_path)
             else:
                 self.log("Reading existing sharding plan from file.")
-                with open(sharding_plan_path) as f:
-                    sharding_plan = [eval(line) for line in f.readlines()]
-                    return sharding_plan
+                return self._deserialize_sharding_plan(sharding_plan_path)
 
         if force_read:
             raise FileNotFoundError(
@@ -598,21 +704,19 @@ class ShardedSegmentation(Segmentation):
                 f"target size {target_size} is equal or larger to input image {np.prod(self.image_size)}. Sharding will not be used."
             )
 
-            sharding_plan = [(slice(0, self.image_size[0]), slice(0, self.image_size[1]))]
+            window_plan: list[Window2D] = [(slice(0, self.image_size[0]), slice(0, self.image_size[1]))]
         else:
             target_size = self.config["shard_size"]
             self.log(
                 f"target size {target_size} is smaller than input image {np.prod(self.image_size)}. Sharding will be used."
             )
-            sharding_plan = self._calculate_sharding_plan(self.image_size)
+            window_plan = self._calculate_sharding_plan(self.image_size)
 
         # save sharding plan to file to be able to reload later
-        self.log(f"Saving Sharding plan to file: {self.directory}/sharding_plan.csv")
+        self.log(f"Saving sharding plan to file: {sharding_plan_path}")
 
-        sharding_plan = list(enumerate(sharding_plan))
-        with open(f"{self.directory}/sharding_plan.csv", "w") as f:
-            for shard in sharding_plan:
-                f.write(f"{shard}\n")
+        sharding_plan: ShardingPlan = list(enumerate(window_plan))
+        self._write_sharding_plan(sharding_plan_path, sharding_plan)
 
         return sharding_plan
 
@@ -712,8 +816,11 @@ class ShardedSegmentation(Segmentation):
                 )
 
             # check to make sure windows match
-            with open(f"{local_shard_directory}/window.csv") as f:
-                window_local = eval(f.read())
+            window_json = f"{local_shard_directory}/window.json"
+            if os.path.isfile(window_json):
+                window_local = self._read_window_file(window_json)
+            else:
+                raise FileNotFoundError(f"No window file found in shard directory: {local_shard_directory}")
 
             if window_local != window:
                 Warning("Sharding plans do not match.")
