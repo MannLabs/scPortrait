@@ -104,13 +104,29 @@ class _BaseSegmentation(Segmentation):
             )
 
     def _remap_maximum_intensity_projection_channels(self):
-        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
+        """Remap channel selectors to the coordinates of the subsetted segmentation input."""
+        if "nucleus" in self.MASK_NAMES:
+            self.original_nucleus_segmentation_channel = list(self.nucleus_segmentation_channel)
+            self.nucleus_segmentation_channel = [
+                self.segmentation_channels.index(x) for x in self.original_nucleus_segmentation_channel
+            ]
+
+        if "cytosol" in self.MASK_NAMES:
+            self.original_cytosol_segmentation_channel = list(self.cytosol_segmentation_channel)
+            self.cytosol_segmentation_channel = [
+                self.segmentation_channels.index(x) for x in self.original_cytosol_segmentation_channel
+            ]
+
         if self.maximum_project_nucleus:
-            self.original_combine_nucleus_channels = self.combine_nucleus_channels
-            self.combine_nucleus_channels = [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
+            self.original_combine_nucleus_channels = list(self.combine_nucleus_channels)
+            self.combine_nucleus_channels = [
+                self.segmentation_channels.index(x) for x in self.original_combine_nucleus_channels
+            ]
         if self.maximum_project_cytosol:
-            self.original_combine_cytosol_channels = self.combine_cytosol_channels
-            self.combine_cytosol_channels = [self.segmentation_channels.index(x) for x in self.combine_cytosol_channels]
+            self.original_combine_cytosol_channels = list(self.combine_cytosol_channels)
+            self.combine_cytosol_channels = [
+                self.segmentation_channels.index(x) for x in self.original_combine_cytosol_channels
+            ]
 
     def _transform_input_image(self, input_image):
         start_transform = timeit.default_timer()
