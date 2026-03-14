@@ -295,7 +295,7 @@ class Segmentation(ProcessingStep):
 
     def _save_segmentation_sdata_from_memmap(self, temp_file_path, masks=None):
         if masks is None:
-            masks = ["nuclei", "cytosol"]
+            masks = ["nucleus", "cytosol"]
 
         # connect to the temp file as a dask array
         labels = dask_array_from_path(temp_file_path)
