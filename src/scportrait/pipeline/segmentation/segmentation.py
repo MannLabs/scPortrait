@@ -360,6 +360,15 @@ class Segmentation(ProcessingStep):
         return os.path.join(self.directory, self.DEFAULT_SEGMENTATION_FILE)
 
     @staticmethod
+    def _to_json_int_or_none(value):
+        """Convert numpy integer scalars to plain Python ints for JSON serialization."""
+        if value is None:
+            return None
+        if isinstance(value, np.integer):
+            return int(value)
+        return value
+
+    @staticmethod
     def _slice_to_dict(s: slice) -> dict[str, int | None]:
         """Convert a Python ``slice`` object into a JSON-serializable dictionary.
 
@@ -369,7 +378,11 @@ class Segmentation(ProcessingStep):
         Returns:
             Dictionary with ``start``, ``stop``, and ``step`` keys.
         """
-        return {"start": s.start, "stop": s.stop, "step": s.step}
+        return {
+            "start": Segmentation._to_json_int_or_none(s.start),
+            "stop": Segmentation._to_json_int_or_none(s.stop),
+            "step": Segmentation._to_json_int_or_none(s.step),
+        }
 
     @staticmethod
     def _dict_to_slice(data: dict) -> slice:
