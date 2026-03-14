@@ -64,10 +64,10 @@ class _BaseSegmentation(Segmentation):
         self.segmentation_channels = []
 
         if "nucleus" in self.MASK_NAMES:
-            if "segmentation_channel_nuclei" in self.config.keys():
-                self.nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
-            elif "combine_nucleus_channels" in self.config.keys():
+            if "combine_nucleus_channels" in self.config.keys():
                 self.nucleus_segmentation_channel = self.combine_nucleus_channels
+            elif "segmentation_channel_nuclei" in self.config.keys():
+                self.nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
             else:
                 self.nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
 
@@ -77,10 +77,10 @@ class _BaseSegmentation(Segmentation):
             self.segmentation_channels.extend(self.nucleus_segmentation_channel)
 
         if "cytosol" in self.MASK_NAMES:
-            if "segmentation_channel_cytosol" in self.config.keys():
-                self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
-            elif "combine_cytosol_channels" in self.config.keys():
+            if "combine_cytosol_channels" in self.config.keys():
                 self.cytosol_segmentation_channel = self.combine_cytosol_channels
+            elif "segmentation_channel_cytosol" in self.config.keys():
+                self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
             else:
                 self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
 
