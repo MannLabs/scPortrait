@@ -136,10 +136,7 @@ class HDF5CellExtraction(ProcessingStep):
             self.normalization_range = ("None", "None")
 
         ## parameters for HDF5 file creates
-        if "compression" in self.config:
-            self.compression = self.config["compression"]
-        else:
-            self.compression = True
+        self.compression = self.config.get("compression", True)
 
         ## Deprecated parameters since we no longer directly read from HDF5
         ## Preservering here in case we see better performance by adjusting this behaviour in how we read data from memmapped arrays
@@ -204,21 +201,13 @@ class HDF5CellExtraction(ProcessingStep):
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
             self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
+        elif self.overwrite_run_path:
+            self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
+            shutil.rmtree(self.extraction_data_directory)
+            os.makedirs(self.extraction_data_directory)
+            self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
         else:
-            if self.overwrite_run_path:
-                self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
-                shutil.rmtree(self.extraction_data_directory)
-                os.makedirs(self.extraction_data_directory)
-                self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
-
-            elif self.overwrite_run_path:
-                self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
-                shutil.rmtree(self.extraction_data_directory)
-                os.makedirs(self.extraction_data_directory)
-                self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
-
-            else:
-                raise ValueError("Output folder already exists. Set overwrite_run_path to True to overwrite.")
+            raise ValueError("Output folder already exists. Set overwrite_run_path to True to overwrite.")
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
@@ -712,9 +701,7 @@ class HDF5CellExtraction(ProcessingStep):
             with h5py.File(self.output_path, "a") as hf:
                 single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
                 single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
-
-                for res in results:
-                    save_index, stack, cell_id = res
+                for save_index, stack, cell_id in results:
                     single_cell_data_container[save_index] = stack
                     single_cell_index_container[save_index] = cell_id
 
