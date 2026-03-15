@@ -1,7 +1,6 @@
 import gc
 import multiprocessing as mp
 import os
-import pickle
 import platform
 import shutil
 import sys
@@ -9,6 +8,7 @@ import time
 import timeit
 from functools import partial as func_partial
 from pathlib import PosixPath
+from typing import TypeAlias
 
 import h5py
 import matplotlib.pyplot as plt
@@ -27,6 +27,9 @@ from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.helper import flatten
 from scportrait.processing.images._image_processing import percentile_normalization
 from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
+
+ExtractionArg: TypeAlias = tuple[int, int, int, tuple[float, float]]
+BatchedExtractionArgs: TypeAlias = list[list[ExtractionArg]]
 
 
 class HDF5CellExtraction(ProcessingStep):
@@ -901,11 +904,8 @@ class HDF5CellExtraction(ProcessingStep):
     def _estimate_returned_result_bytes(self, results: list[tuple[int, np.ndarray, int]]) -> int:
         """Estimate memory footprint of a returned multiprocessing batch payload."""
         array_bytes = sum(int(stack.nbytes) for _, stack, _ in results)
-        try:
-            serialized_bytes = len(pickle.dumps(results, protocol=pickle.HIGHEST_PROTOCOL))
-        except (pickle.PicklingError, TypeError, AttributeError):
-            serialized_bytes = 0
-        return max(array_bytes, serialized_bytes)
+        container_bytes = sys.getsizeof(results) + sum(sys.getsizeof(result) for result in results)
+        return array_bytes + container_bytes
 
     def _get_target_job_ram_bytes(self) -> int:
         """Return the configured total RAM budget for this extraction job."""
@@ -999,7 +999,7 @@ class HDF5CellExtraction(ProcessingStep):
     def _iter_completed_batch_results(
         self,
         pool: mp.pool.Pool,
-        args: list[list[tuple[np.ndarray, int, int, np.ndarray, int]]],
+        args: BatchedExtractionArgs,
         max_inflight_result_batches: int,
         pending_results: list | None = None,
         next_submit_ix: int = 0,
@@ -1068,7 +1068,7 @@ class HDF5CellExtraction(ProcessingStep):
     def _calibrate_max_inflight_result_batches(
         self,
         pool: mp.pool.Pool,
-        args: list[list[tuple[np.ndarray, int, int, np.ndarray, int]]],
+        args: BatchedExtractionArgs,
     ) -> tuple[int, float, list[tuple[int, np.ndarray, int]], list, int]:
         """Calibrate max in-flight batches from the first submitted worker wave.
 
@@ -1198,30 +1198,33 @@ class HDF5CellExtraction(ProcessingStep):
 
         The following optional parameters can also be configured:
 
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | Parameter                            | Default          | Description                                                  |
-        +======================================+==================+==============================================================+
-        | ``normalize_output``                 | ``True``         | Enable percentile normalization of extracted image channels. |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``normalization_range``              | ``(0.001, 0.999)`` | Lower and upper percentiles used for normalization.        |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``compression``                      | ``True``         | Compression mode for the output HDF5 dataset. ``True`` maps |
-        |                                      |                  | to ``lzf``. ``gzip`` and ``False`` are also supported.      |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``target_ram_utilization``           | ``0.85``         | Fraction of total system RAM the extraction job should aim  |
-        |                                      |                  | to stay within when calibrating buffered result batches.    |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``max_inflight_result_batches``      | auto-calibrated  | Explicit override for the number of buffered multiprocessing |
-        |                                      |                  | result batches. If omitted, scPortrait calibrates this from |
-        |                                      |                  | the first worker wave.                                      |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``flush_every``                      | derived from     | Flush cadence for HDF5 output and garbage collection during |
-        |                                      | effective in-    | extraction. If omitted, it is derived from the effective    |
-        |                                      | flight batch     | in-flight batch limit.                                      |
-        |                                      | limit            |                                                              |
-        +--------------------------------------+------------------+--------------------------------------------------------------+
-        | ``max_batch_size``                   | ``1000``         | Upper bound used when building multiprocessing mini-batches.|
-        +--------------------------------------+------------------+--------------------------------------------------------------+
+        .. list-table::
+            :header-rows: 1
+
+            * - Parameter
+              - Default
+              - Description
+            * - ``normalize_output``
+              - ``True``
+              - Enable percentile normalization of extracted image channels.
+            * - ``normalization_range``
+              - ``(0.001, 0.999)``
+              - Lower and upper percentiles used for normalization.
+            * - ``compression``
+              - ``True``
+              - Compression mode for the output HDF5 dataset. ``True`` maps to ``lzf``. ``gzip`` and ``False`` are also supported.
+            * - ``target_ram_utilization``
+              - ``0.85``
+              - Fraction of total system RAM the extraction job should aim to stay within when calibrating buffered result batches.
+            * - ``max_inflight_result_batches``
+              - auto-calibrated
+              - Explicit override for the number of buffered multiprocessing result batches. If omitted, scPortrait calibrates this from the first worker wave.
+            * - ``flush_every``
+              - derived from effective in-flight batch limit
+              - Flush cadence for HDF5 output and garbage collection during extraction. If omitted, it is derived from the effective in-flight batch limit.
+            * - ``max_batch_size``
+              - ``1000``
+              - Upper bound used when building multiprocessing mini-batches.
 
         Normalization settings deserve special attention because they directly
         affect the dynamic range of the extracted single-cell images that are
