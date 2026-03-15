@@ -1012,15 +1012,30 @@ class HDF5CellExtraction(ProcessingStep):
             with mp.Manager() as manager:
                 lock = manager.Lock()  # Create lock via Manager to enable sharing
 
+                self.log("Initializing multiprocessing pool for extraction.")
                 with mp.get_context("fork").Pool(
                     processes=self.threads
                 ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
-                    for result in tqdm(
-                        pool.imap_unordered(self._extract_classes_multi, args),
-                        total=len(args),
-                        desc="Extracting cell batches",
-                    ):
-                        self._write_to_hdf5(result, lock)
+                    iterator = pool.imap_unordered(self._extract_classes_multi, args)
+                    if len(args) > 0:
+                        self.log("Workers initialized. Waiting for first completed extraction batch...")
+                        wait_start = timeit.default_timer()
+                        first_result = next(iterator)
+                        first_wait_s = timeit.default_timer() - wait_start
+                        self.log(f"First batch received after {first_wait_s:.2f} seconds.")
+
+                        write_start = timeit.default_timer()
+                        self._write_to_hdf5(first_result, lock)
+                        first_write_s = timeit.default_timer() - write_start
+                        self.log(f"First batch written to HDF5 in {first_write_s:.2f} seconds.")
+
+                        with tqdm(total=len(args), initial=1, desc="Extracting cell batches") as pbar:
+                            for _ in range(len(args) - 1):
+                                result = next(iterator)
+
+                                self._write_to_hdf5(result, lock)
+
+                                pbar.update(1)
                     pool.close()
                     pool.join()
 
