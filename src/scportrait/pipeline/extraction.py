@@ -1195,6 +1195,57 @@ class HDF5CellExtraction(ProcessingStep):
 
                 # directory where intermediate results should be saved
                 cache: "/mnt/temp/cache"
+
+        The following optional parameters can also be configured:
+
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | Parameter                            | Default          | Description                                                  |
+        +======================================+==================+==============================================================+
+        | ``normalize_output``                 | ``True``         | Enable percentile normalization of extracted image channels. |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``normalization_range``              | ``(0.001, 0.999)`` | Lower and upper percentiles used for normalization.        |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``compression``                      | ``True``         | Compression mode for the output HDF5 dataset. ``True`` maps |
+        |                                      |                  | to ``lzf``. ``gzip`` and ``False`` are also supported.      |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``target_ram_utilization``           | ``0.85``         | Fraction of total system RAM the extraction job should aim  |
+        |                                      |                  | to stay within when calibrating buffered result batches.    |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``max_inflight_result_batches``      | auto-calibrated  | Explicit override for the number of buffered multiprocessing |
+        |                                      |                  | result batches. If omitted, scPortrait calibrates this from |
+        |                                      |                  | the first worker wave.                                      |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``flush_every``                      | derived from     | Flush cadence for HDF5 output and garbage collection during |
+        |                                      | effective in-    | extraction. If omitted, it is derived from the effective    |
+        |                                      | flight batch     | in-flight batch limit.                                      |
+        |                                      | limit            |                                                              |
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+        | ``max_batch_size``                   | ``1000``         | Upper bound used when building multiprocessing mini-batches.|
+        +--------------------------------------+------------------+--------------------------------------------------------------+
+
+        Normalization settings deserve special attention because they directly
+        affect the dynamic range of the extracted single-cell images that are
+        stored for downstream analysis. If you are unsure how to choose
+        ``normalize_output`` or ``normalization_range``, refer to the
+        :ref:`single-cell extraction tutorial <single_cell_extraction_tutorial>`
+        for a more detailed walkthrough.
+
+        During extraction, scPortrait can use multiple worker processes to
+        prepare single-cell image batches while the main process writes results
+        to the output HDF5 file. On large datasets with multiple threads, preparing
+        batches can be faster than writing them to disk, which would otherwise
+        allow completed batch results to accumulate in memory. To keep this manageable,
+        the extraction workflow can automatically limit how many completed batch
+        results are allowed to be buffered in memory at the same time.
+
+        In multiprocessing mode, ``max_inflight_result_batches`` is calibrated
+        automatically when it is not provided explicitly. The calibration uses
+        the first wave of worker batches to estimate worker memory overhead and
+        returned batch payload size, then chooses an in-flight batch limit that
+        aims to respect ``target_ram_utilization``. If the calculated value
+        would fall below the active worker count, the worker count is used as a
+        minimum and a warning is written to the log.
+
         """
         total_time_start = timeit.default_timer()
 
