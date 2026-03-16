@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 import pytest
+from pandas.errors import EmptyDataError
 
 import scportrait
 from scportrait.pipeline.extraction import HDF5CellExtraction
@@ -7,6 +9,21 @@ from scportrait.pipeline.featurization import CellFeaturizer
 from scportrait.pipeline.project import Project
 from scportrait.pipeline.segmentation.workflows import CytosolSegmentationCellpose
 from scportrait.pipeline.selection import LMDSelection
+
+
+def _read_id_csv(path):
+    if not path.exists() or path.stat().st_size == 0:
+        return set()
+
+    try:
+        df = pd.read_csv(path, header=None)
+    except EmptyDataError:
+        return set()
+
+    if df.empty or df.shape[1] == 0:
+        return set()
+
+    return set(pd.to_numeric(df.iloc[:, 0], errors="coerce").dropna().astype(int))
 
 
 @pytest.mark.slow
@@ -36,6 +53,13 @@ def test_full_pipeline_e2e(tmp_path):
 
     project.segment()
     project.extract()
+
+    removed_ids = _read_id_csv(project_path / "extraction" / "data" / "removed_classes.csv")
+    seg_ids = set(project.sdata["centers_seg_all_cytosol"].index.compute().astype(int).tolist())
+    extracted_ids = set(project.h5sc.obs["scportrait_cell_id"].astype(int).tolist())
+
+    assert extracted_ids == seg_ids - removed_ids
+
     project.featurize(overwrite=True)
 
     feat = project.sdata["CellFeaturizer_cytosol"]
