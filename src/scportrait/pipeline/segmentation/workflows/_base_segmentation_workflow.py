@@ -112,6 +112,15 @@ class _BaseSegmentation(Segmentation):
         # remove duplicates while preserving config order
         self.segmentation_channels = list(dict.fromkeys(self.segmentation_channels))
 
+        # remap channel ids to local indices of the preselected input subset.
+        # `Segmentation._select_relevant_channels` subsets input by `self.segmentation_channels`
+        # before this workflow receives it in `_transform_input_image`.
+        channel_remap = {ch: ix for ix, ch in enumerate(self.segmentation_channels)}
+        if "nucleus" in self.MASK_NAMES and hasattr(self, "nucleus_segmentation_channel"):
+            self.nucleus_segmentation_channel = [channel_remap[ch] for ch in self.nucleus_segmentation_channel]
+        if "cytosol" in self.MASK_NAMES and hasattr(self, "cytosol_segmentation_channel"):
+            self.cytosol_segmentation_channel = [channel_remap[ch] for ch in self.cytosol_segmentation_channel]
+
         # check validity of resulting list of segmentation channels
         if len(self.segmentation_channels) == 0:
             raise ValueError("No segmentation channels specified in config file.")
