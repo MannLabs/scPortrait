@@ -960,6 +960,24 @@ class Project(Logable):
                 channel = [1]
                 if self.segmentation_f is not None and hasattr(self.segmentation_f, "cytosol_segmentation_channel"):
                     channel = self.segmentation_f.cytosol_segmentation_channel
+                    # Prefer explicitly configured cytosol channel for plotting.
+                    if hasattr(self.segmentation_f, "config") and "segmentation_channel_cytosol" in self.segmentation_f.config:
+                        channel = self.segmentation_f.config["segmentation_channel_cytosol"]
+
+                    if not isinstance(channel, list):
+                        channel = [channel]
+
+                    # If a nucleus cue channel is configured, avoid plotting that in the cytosol panel.
+                    nucleus_ch = None
+                    if hasattr(self.segmentation_f, "config"):
+                        nucleus_ch = self.segmentation_f.config.get("segmentation_channel_nuclei")
+                    if nucleus_ch is not None:
+                        nucleus_ch = nucleus_ch if isinstance(nucleus_ch, list) else [nucleus_ch]
+                        channel = [c for c in channel if c not in nucleus_ch]
+
+                    # Display one representative cytosol channel in this panel.
+                    if len(channel) > 1:
+                        channel = [channel[0]]
                 name = "Cytosol Mask"
             else:
                 channel = list(range(len(channel_names)))
