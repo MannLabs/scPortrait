@@ -115,7 +115,7 @@ class _BaseSegmentation(Segmentation):
         # check validity of resulting list of segmentation channels
         if len(self.segmentation_channels) == 0:
             raise ValueError("No segmentation channels specified in config file.")
-        
+
         if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
             raise ValueError(
                 f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."

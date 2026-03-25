@@ -961,7 +961,10 @@ class Project(Logable):
                 if self.segmentation_f is not None and hasattr(self.segmentation_f, "cytosol_segmentation_channel"):
                     channel = self.segmentation_f.cytosol_segmentation_channel
                     # Prefer explicitly configured cytosol channel for plotting.
-                    if hasattr(self.segmentation_f, "config") and "segmentation_channel_cytosol" in self.segmentation_f.config:
+                    if (
+                        hasattr(self.segmentation_f, "config")
+                        and "segmentation_channel_cytosol" in self.segmentation_f.config
+                    ):
                         channel = self.segmentation_f.config["segmentation_channel_cytosol"]
 
                     if not isinstance(channel, list):

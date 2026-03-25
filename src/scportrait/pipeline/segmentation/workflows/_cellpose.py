@@ -629,9 +629,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
 
         n_input = len(selected_channels["cytosol"])
         if n_input not in (1, 2):
-            raise ValueError(
-                f"CytosolOnlySegmentationCellpose requires 1 or 2 selected channels, got {n_input}."
-            )
+            raise ValueError(f"CytosolOnlySegmentationCellpose requires 1 or 2 selected channels, got {n_input}.")
         self.N_INPUT_CHANNELS = n_input
         return selected_channels
 
@@ -640,10 +638,10 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         n_input_channels = int(input_image.shape[0])
         if n_input_channels == 1:
             # grayscale cytosol-only input
-            return [1, 0] #note this is 1-indexed to match Cellpose's expected input
+            return [1, 0]  # note this is 1-indexed to match Cellpose's expected input
         if n_input_channels == 2:
             # cytosol channel + optional nucleus cue
-            return [2, 1] #note this is 1-indexed to match Cellpose's expected input
+            return [2, 1]  # note this is 1-indexed to match Cellpose's expected input
         raise ValueError(f"Unsupported number of channels for Cellpose: {n_input_channels}. Expected 1 or 2.")
 
     def _setup_filtering(self):
