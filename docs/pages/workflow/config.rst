@@ -60,8 +60,8 @@ completed batch results are buffered in memory at the same time.
 
 When ``max_inflight_result_batches`` is not provided explicitly, scPortrait
 calibrates it automatically from the first wave of worker batches together with the
-configured ``target_ram_utilization``. This calibration estimates worker memory
-overhead and returned batch payload size, then chooses an in-flight batch limit
+configured ``target_ram_utilization``. This calibration estimates returned batch
+payload size together with the parent-process RSS, then chooses an in-flight batch limit
 that aims to stay within the requested RAM budget for the job.
 
 If the RAM budget would imply a value smaller than the active worker count,

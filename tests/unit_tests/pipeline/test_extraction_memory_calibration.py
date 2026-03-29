@@ -50,14 +50,7 @@ def test_calibrate_max_inflight_result_batches_enforces_worker_floor_and_logs_wa
     pool = FakePool()
     args = [[(0, 0, 101, (10.0, 10.0))] for _ in range(6)]
 
-    rss_values = iter(
-        [
-            4 * 1024**3,  # baseline_tree_rss
-            20 * 1024**3,  # busy_tree_rss
-            20 * 1024**3,  # current_tree_rss
-        ]
-    )
-    monkeypatch.setattr(extraction, "_get_process_tree_rss_bytes", lambda: next(rss_values))
+    monkeypatch.setattr(extraction, "_get_current_process_rss_bytes", lambda: int(20 * 1024**3))
     monkeypatch.setattr(extraction, "_get_target_job_ram_bytes", lambda: int(12.8 * 1024**3))
 
     log_messages: list[str] = []
@@ -76,3 +69,4 @@ def test_calibrate_max_inflight_result_batches_enforces_worker_floor_and_logs_wa
     assert next_submit_ix == 4
     assert any("Warning: target RAM budget would limit max_inflight_result_batches" in msg for msg in log_messages)
     assert any("worker_floor_n=4" in msg for msg in log_messages)
+    assert any("parent_rss_gb=" in msg for msg in log_messages)

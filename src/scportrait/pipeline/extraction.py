@@ -889,17 +889,10 @@ class HDF5CellExtraction(ProcessingStep):
             benchmarking.to_csv(benchmarking_path, index=False)
         self.log("Benchmarking times saved to file.")
 
-    def _get_process_tree_rss_bytes(self) -> int:
-        """Return RSS for the current process and all live child processes."""
-        total_rss = 0
+    def _get_current_process_rss_bytes(self) -> int:
+        """Return RSS for the current process only."""
         process = psutil.Process(os.getpid())
-        processes = [process] + process.children(recursive=True)
-        for proc in processes:
-            try:
-                total_rss += int(proc.memory_info().rss)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        return total_rss
+        return int(process.memory_info().rss)
 
     def _estimate_returned_result_bytes(self, results: list[tuple[int, np.ndarray, int]]) -> int:
         """Estimate memory footprint of a returned multiprocessing batch payload."""
@@ -1072,11 +1065,12 @@ class HDF5CellExtraction(ProcessingStep):
     ) -> tuple[int, float, list[tuple[int, np.ndarray, int]], list, int]:
         """Calibrate max in-flight batches from the first submitted worker wave.
 
-        The calibration submits one initial wave of work, observes process-tree
-        RSS while workers are active, and measures the size of the first batch
-        payload returned to the parent process. These measurements are then used
-        to estimate how many outstanding batch results can be buffered while
-        staying within the configured RAM budget for the job.
+        The calibration submits one initial wave of work and measures the size
+        of the first batch payload returned to the parent process. Together
+        with the parent-process RSS observed at that point, these measurements
+        are used to estimate how many outstanding batch results can be buffered
+        in the writer process while staying within the configured RAM budget
+        for the job.
 
         Args:
             pool: Active multiprocessing pool used for extraction.
@@ -1091,7 +1085,6 @@ class HDF5CellExtraction(ProcessingStep):
         self.log("Calibrating max_inflight_result_batches using the first batch of workers...")
         n_total_batches = len(args)
         warmup_submit = min(max(1, int(self.threads)), n_total_batches)
-        baseline_tree_rss = self._get_process_tree_rss_bytes()
 
         pending_results: list = []
         next_submit_ix = 0
@@ -1111,20 +1104,15 @@ class HDF5CellExtraction(ProcessingStep):
                 time.sleep(0.01)
                 continue
 
-            busy_tree_rss = self._get_process_tree_rss_bytes()
             async_result = pending_results.pop(ready_ix)
             first_result = async_result.get()
             first_wait_s = timeit.default_timer() - startup_wait_start
             break
 
         result_batch_bytes = self._estimate_returned_result_bytes(first_result)
-        observed_worker_bytes_total = max(0, busy_tree_rss - baseline_tree_rss - result_batch_bytes)
-        per_worker_bytes = observed_worker_bytes_total / max(1, warmup_submit)
-
         target_job_ram_bytes = self._get_target_job_ram_bytes()
-        current_tree_rss = self._get_process_tree_rss_bytes()
-        reserved_worker_bytes = int(per_worker_bytes * max(1, int(self.threads)))
-        queue_budget_bytes = max(0, target_job_ram_bytes - current_tree_rss - reserved_worker_bytes)
+        current_process_rss = self._get_current_process_rss_bytes()
+        queue_budget_bytes = max(0, target_job_ram_bytes - current_process_rss)
         min_inflight_result_batches = max(1, warmup_submit)
 
         if result_batch_bytes <= 0:
@@ -1147,10 +1135,7 @@ class HDF5CellExtraction(ProcessingStep):
             f"{calibrated_max} (budget_based_n={calibrated_from_budget}, "
             f"worker_floor_n={min_inflight_result_batches}, "
             f"target_job_ram_gb={target_job_ram_bytes / bytes_to_gb:.3f}, "
-            f"total_used_gb={current_tree_rss / bytes_to_gb:.3f}, "
-            f"baseline_tree_rss_gb={baseline_tree_rss / bytes_to_gb:.3f}, "
-            f"busy_tree_rss_gb={busy_tree_rss / bytes_to_gb:.3f}, "
-            f"per_worker_gb={per_worker_bytes / bytes_to_gb:.3f}, "
+            f"parent_rss_gb={current_process_rss / bytes_to_gb:.3f}, "
             f"result_batch_gb={result_batch_bytes / bytes_to_gb:.3f}, "
             f"queue_budget_gb={queue_budget_bytes / bytes_to_gb:.3f})."
         )
@@ -1243,11 +1228,11 @@ class HDF5CellExtraction(ProcessingStep):
 
         In multiprocessing mode, ``max_inflight_result_batches`` is calibrated
         automatically when it is not provided explicitly. The calibration uses
-        the first wave of worker batches to estimate worker memory overhead and
-        returned batch payload size, then chooses an in-flight batch limit that
-        aims to respect ``target_ram_utilization``. If the calculated value
-        would fall below the active worker count, the worker count is used as a
-        minimum and a warning is written to the log.
+        the first wave of worker batches to estimate returned batch payload
+        size together with the parent-process RSS, then chooses an in-flight
+        batch limit that aims to respect ``target_ram_utilization``. If the
+        calculated value would fall below the active worker count, the worker
+        count is used as a minimum and a warning is written to the log.
 
         """
         total_time_start = timeit.default_timer()
