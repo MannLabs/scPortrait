@@ -748,7 +748,7 @@ class PhenixParser:
         self._define_outdir(name="sorted_wells")
 
         # get all new file names
-        if "metdata" in self.__dict__:
+        if "metadata" in self.__dict__:
             metadata = self.metadata
         else:
             metadata = self.generate_metadata()
@@ -803,7 +803,7 @@ class PhenixParser:
         self._define_outdir(name="sorted_timepoints")
 
         # get all new file names
-        if "metdata" in self.__dict__:
+        if "metadata" in self.__dict__:
             metadata = self.metadata
         else:
             metadata = self.generate_metadata()
