@@ -684,8 +684,12 @@ class PhenixParser:
         metadata.to_csv(f"{self.experiment_dir}/metadata_image_parsing.csv")
         print(f"Metadata used to parse images saved to file {self.experiment_dir}/metadata_image_parsing.csv")
 
-    def parse(self) -> None:
-        """Complete parsing of phenix experiment including checking for and replacing missing images."""
+    def parse(self, check_missing_tiles: bool = True) -> None:
+        """Complete parsing of the Phenix experiment.
+
+        Args:
+            check_missing_tiles: Whether to check for and generate missing tiles.
+        """
         # create output directory
         self._define_outdir(name="parsed_images")
 
@@ -699,8 +703,9 @@ class PhenixParser:
         self._copy_files(metadata=metadata)
 
         # check for missing images and replace them
-        self.check_for_missing_files(metadata=metadata)
-        self.replace_missing_images()
+        if check_missing_tiles:
+            self.check_for_missing_files(metadata=metadata)
+            self.replace_missing_images()
         self._save_metadata(metadata)
 
     def sort_wells(self, sort_tiles: bool = False) -> None:
