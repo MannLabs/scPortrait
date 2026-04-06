@@ -6,6 +6,12 @@ Config Files
 The configuration file is a ``.yml`` file which specifies all of the parameters for each of the
 methods chosen in a specific scPortrait Project run.
 
+Each run method has its own section in the configuration file, and the parameters specified in each section are method-specific.
+
+Below you can find an example configuration file for a run using the Cellpose segmentation workflow.
+
+For more information on the parameters for each of these methods, please refer to the relevant methods documentation pages.
+
 .. code:: yaml
     :caption: Example Configuration File
 

@@ -110,14 +110,14 @@ Here is a strongly simplified config for a generic scPortrait Segmentation Workf
     :caption: Simplified configuration for a generic scPortrait Segmentation Workflow
 
     {SegmentationWorkflow}:
-        cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results
+        cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results"
         nucleus_segmentation:
             # parameters specific to nucleus segmentation method go here
             key: value
             # if `filter_masks_size` is set to True then the min and max size in px for each nucleus mask can be configured through these parameters
             min_size: 200
             max_size: 30000
-        cytosol_segmentation
+        cytosol_segmentation:
             # parameters specific to cytosol segmentation method go here
             key: value
             # if `filter_masks_size` is set to True then the min and max size in px for each cytosol mask can be configured through these parameters
@@ -151,6 +151,22 @@ As for all scPortrait configs, they can contain a mix of mandatory as well as op
      - Contains all parameters specific to the cytosolic segmentation step.
      -
      -
+   * - ``segmentation_channel_nuclei``
+     - Channel index (or list of indices) to use for nucleus segmentation. If omitted, the workflow default nucleus channel is used. Ignored when ``combine_nucleus_channels`` is set.
+     - True
+     - Workflow-specific default (usually ``[0]``)
+   * - ``segmentation_channel_cytosol``
+     - Channel index (or list of indices) to use for cytosol segmentation. If omitted, the workflow default cytosol channel is used. Ignored when ``combine_cytosol_channels`` is set.
+     - True
+     - Workflow-specific default (usually ``[1]``)
+   * - ``combine_nucleus_channels``
+     - List of nucleus-relevant channels to combine by maximum-intensity projection before segmentation. Takes precedence over ``segmentation_channel_nuclei``.
+     - True
+     - ``None``
+   * - ``combine_cytosol_channels``
+     - List of cytosol-relevant channels to combine by maximum-intensity projection before segmentation. Takes precedence over ``segmentation_channel_cytosol``.
+     - True
+     - ``None``
    * - ``filter_masks_size``
      - Determines if the resulting masks should be filtered according to size, with min/max cutoffs specified per segmentation step.
      - True
@@ -222,11 +238,11 @@ By adding a key with either `combine_nucleus_channels` or `combine_cytosol_chann
 ..  code-block:: yaml
     :caption: Maximum-Intensity project channels before using as a reference for nucleus/cytosol segmentation
 
-    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results
+    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results"
     nucleus_segmentation:
         # parameters specific to nucleus segmentation method go here
         key: value
-    cytosol_segmentation
+    cytosol_segmentation:
         # parameters specific to cytosol segmentation method go here
         key: value
     combine_nucleus_channels: [0, 2]
@@ -240,11 +256,11 @@ You can override the default behaviour by manually suppling specific channel ind
 ..  code-block:: yaml
     :caption: override channel-ids for nuclear and or cytoplasmic stain location
 
-    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results
+    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results"
     nucleus_segmentation:
         # parameters specific to nucleus segmentation method go here
         key: value
-    cytosol_segmentation
+    cytosol_segmentation:
         # parameters specific to cytosol segmentation method go here
         key: value
     segmentation_channel_nuclei: [2]
@@ -258,11 +274,11 @@ Both use cases can of course also be combined. In case you pass both `combine_{m
 ..  code-block:: yaml
     :caption: maximum-intensity projection of cytosol and custom nucleus channel id
 
-    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results
+    cache: "/path/to/directory/to/use/for/memorymapping/intermediate/results"
     nucleus_segmentation:
         # parameters specific to nucleus segmentation method go here
         key: value
-    cytosol_segmentation
+    cytosol_segmentation:
         # parameters specific to cytosol segmentation method go here
         key: value
     segmentation_channel_nuclei: [2]
@@ -342,7 +358,7 @@ WGA segmentation
 
 This segmentation workflow aims to segment mononucleated cells, i.e. cells that contain exactly one nucleus. Based on a nuclear stain and a cellmembrane stain, it first uses a thresholding approach to identify nuclei which are assumed to be the center of each cell. Then in a second step, the center of the identified nuclei are used as a starting point to generate a potential map using the cytosolic stain. This potential map is then used to segment the cytosol using a watershed approach. At the end of the workflow the user obtains both a nuclear and a cytosolic segmentation mask where each cytosol is matched to exactly one nucleus as kann be identified by the matching ``cell id``.
 
-This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores using either the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class or the :func:`MultithreadedSegmentation <scportrait.pipeline.segmentation.MultithreadedSegmentation>` class respectively. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.
+This segmentation workflow is implemented to only run on the CPU. As such it can easily be scaled up to run on large datasets using parallel processing over multiple cores via the :func:`ShardedSegmentation <scportrait.pipeline.segmentation.ShardedSegmentation>` class. However, it has a lot of parameters that need to be adjusted for different datasets to obtain an optimal segmentation.
 
 ..  code-block:: yaml
     :caption: Example configuration for  WGASegmentation
@@ -406,7 +422,6 @@ This segmentation workflow aims to only segment nuclei. Based on a nuclear stain
     :caption: Example configuration for  WGASegmentation
 
     DAPISegmentation:
-        input_channels: 3
         chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
         lower_quantile_normalization:   0.001
         upper_quantile_normalization:   0.999
@@ -424,7 +439,6 @@ This segmentation workflow aims to only segment nuclei. Based on a nuclear stain
             min_size: 200 # minimum nucleus area in pixel
             max_size: 5000 # maximum nucleus area in pixel
             contact_filter: 0.5 # minimum nucleus contact with background
-        chunk_size: 50
 
 Nucleus Segmentation Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -478,18 +492,11 @@ If you utilize this segmentation workflow please also consider citing the `cellp
     :caption: Example configuration for  DAPI Cellpose segmentation
 
     ShardedDAPISegmentationCellpose:
-        #segmentation class specific
-        input_channels: 2
-        output_masks: 2
         shard_size: 120000000 # maxmimum number of pixel per tile
         overlap_px: 100
-        chunk_size: 50 # chunk size for chunked HDF5 storage. is needed for correct caching and high performance reading. should be left at 50.
-        cache: "/fs/pool/pool-mann-maedler-shared/temp"
-        # segmentation workflow specific
+        threads: 2 # number of shards / tiles segmented at the same size
         nGPUs: 2
-        lower_quantile_normalization:   0.001
-        upper_quantile_normalization:   0.999
-        median_filter_size: 6 # Size in pixels
+        cache: "."
         nucleus_segmentation:
             model: "nuclei"
 
@@ -498,7 +505,7 @@ If you utilize this segmentation workflow please also consider citing the `cellp
 Cytosol Only Cellpose segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation. Unlike the :ref:`DAPI segmentation cellpose <DAPI_segmentation_cellpose>` workflow it uses two input channels to generate a single output mask. The generated single cell datasets using this segmentation method will contain all signal from within the cytosolic region.
+This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation. It supports one or two input channels to generate a single output mask. The generated single cell datasets using this segmentation method will contain all signal from within the cytosolic region.
 
 As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
@@ -513,6 +520,8 @@ If you utilize this segmentation workflow please also consider citing the `cellp
         nGPUs: 1
         threads: 2 # number of shards / tiles segmented at the same size. should be adapted to the maximum amount allowed by memory.
         cache: "."
+        segmentation_channel_cytosol: [0] # required
+        segmentation_channel_nuclei: null # optional; set channel index to include an additional nucleus cue
         cytosol_segmentation:
             model: "cyto2"
         match_masks: True
