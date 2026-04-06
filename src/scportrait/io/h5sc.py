@@ -12,7 +12,6 @@ from anndata._io.h5ad import _clean_uns, _read_raw, read_dataframe, read_elem
 
 from scportrait.pipeline._utils.constants import (
     DEFAULT_CELL_ID_NAME,
-    DEFAULT_IDENTIFIER_FILENAME,
     DEFAULT_NAME_SINGLE_CELL_IMAGES,
     DEFAULT_SEGMENTATION_DTYPE,
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
@@ -337,7 +336,6 @@ def write_h5sc(
 
     adata_to_write = adata.copy()
     del adata_to_write.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
-    adata_to_write.uns[DEFAULT_IDENTIFIER_FILENAME] = str(output_path)
 
     adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
     adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = n_channels
