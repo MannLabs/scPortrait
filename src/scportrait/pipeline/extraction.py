@@ -710,13 +710,13 @@ class HDF5CellExtraction(ProcessingStep):
         """
         with hdf5_lock:
             with h5py.File(self.output_path, "a") as hf:
-                self._single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
-                self._single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
+                single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
+                single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
 
                 for res in results:
                     save_index, stack, cell_id = res
-                    self._single_cell_data_container[save_index] = stack
-                    self._single_cell_index_container[save_index] = cell_id
+                    single_cell_data_container[save_index] = stack
+                    single_cell_index_container[save_index] = cell_id
 
     def _initialize_empty_anndata(self) -> None:
         """Initialize an AnnData object to store the extracted single-cell images."""
@@ -1015,12 +1015,10 @@ class HDF5CellExtraction(ProcessingStep):
                 with mp.get_context("fork").Pool(
                     processes=self.threads
                 ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
-                    for result in list(
-                        tqdm(
-                            pool.imap(self._extract_classes_multi, args),
-                            total=len(args),
-                            desc="Extracting cell batches",
-                        )
+                    for result in tqdm(
+                        pool.imap_unordered(self._extract_classes_multi, args),
+                        total=len(args),
+                        desc="Extracting cell batches",
                     ):
                         self._write_to_hdf5(result, lock)
                     pool.close()

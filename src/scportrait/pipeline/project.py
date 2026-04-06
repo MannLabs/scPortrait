@@ -953,13 +953,45 @@ class Project(Logable):
             idx = masks.index(mask)
             if "nucleus" in mask:
                 channel = [0]
+                if self.segmentation_f is not None and hasattr(self.segmentation_f, "nucleus_segmentation_channel"):
+                    channel = self.segmentation_f.nucleus_segmentation_channel
                 name = "Nucleus Mask"
             elif "cytosol" in mask:
                 channel = [1]
+                if self.segmentation_f is not None and hasattr(self.segmentation_f, "cytosol_segmentation_channel"):
+                    channel = self.segmentation_f.cytosol_segmentation_channel
+                    # Prefer explicitly configured cytosol channel for plotting.
+                    if (
+                        hasattr(self.segmentation_f, "config")
+                        and "segmentation_channel_cytosol" in self.segmentation_f.config
+                    ):
+                        channel = self.segmentation_f.config["segmentation_channel_cytosol"]
+
+                    if not isinstance(channel, list):
+                        channel = [channel]
+
+                    # If a nucleus cue channel is configured, avoid plotting that in the cytosol panel.
+                    nucleus_ch = None
+                    if hasattr(self.segmentation_f, "config"):
+                        nucleus_ch = self.segmentation_f.config.get("segmentation_channel_nuclei")
+                    if nucleus_ch is not None:
+                        nucleus_ch = nucleus_ch if isinstance(nucleus_ch, list) else [nucleus_ch]
+                        channel = [c for c in channel if c not in nucleus_ch]
+
+                    # Display one representative cytosol channel in this panel.
+                    if len(channel) > 1:
+                        channel = [channel[0]]
                 name = "Cytosol Mask"
             else:
                 channel = list(range(len(channel_names)))
                 name = mask
+
+            if not isinstance(channel, list):
+                channel = [channel]
+            channel = [int(c) for c in channel if isinstance(c, (int, np.integer))]
+            channel = [c for c in channel if 0 <= c < len(channel_names)]
+            if len(channel) == 0:
+                channel = [0] if len(channel_names) > 0 else []
 
             plot_segmentation_mask(
                 _sdata,

@@ -60,51 +60,97 @@ class _BaseSegmentation(Segmentation):
             self.combine_nucleus_channels = None
             self.maximum_project_nucleus = False
 
+    def _to_channel_list(self, channels, name: str):
+        if channels is None:
+            raise ValueError(f"{name} channels cannot be None.")
+        if isinstance(channels, int):
+            return [channels]
+        if isinstance(channels, list):
+            return channels
+        raise TypeError(f"{name} channels must be an int or list of ints, got {type(channels)}.")
+
+    def _postprocess_selected_channels(self, selected_channels: dict[str, list[int]]) -> dict[str, list[int]]:
+        """Hook for workflow-specific channel policy."""
+        return selected_channels
+
     def _define_channels_to_extract_for_segmentation(self):
-        self.segmentation_channels = []
+        selected_channels: dict[str, list[int]] = {}
 
         if "nucleus" in self.MASK_NAMES:
-            if "segmentation_channel_nuclei" in self.config.keys():
-                self.nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
-            elif "combine_nucleus_channels" in self.config.keys():
-                self.nucleus_segmentation_channel = self.combine_nucleus_channels
+            if "combine_nucleus_channels" in self.config.keys():
+                nucleus_segmentation_channel = self.combine_nucleus_channels
+            elif "segmentation_channel_nuclei" in self.config.keys():
+                nucleus_segmentation_channel = self.config["segmentation_channel_nuclei"]
             else:
-                self.nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
+                nucleus_segmentation_channel = self.DEFAULT_NUCLEI_CHANNEL_IDS
 
-            self.segmentation_channels.extend(self.nucleus_segmentation_channel)
+            selected_channels["nucleus"] = self._to_channel_list(nucleus_segmentation_channel, "nucleus")
 
         if "cytosol" in self.MASK_NAMES:
-            if "segmentation_channel_cytosol" in self.config.keys():
-                self.cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
-            elif "combine_cytosol_channels" in self.config.keys():
-                self.cytosol_segmentation_channel = self.combine_cytosol_channels
+            if "combine_cytosol_channels" in self.config.keys():
+                cytosol_segmentation_channel = self.combine_cytosol_channels
+            elif "segmentation_channel_cytosol" in self.config.keys():
+                cytosol_segmentation_channel = self.config["segmentation_channel_cytosol"]
             else:
-                self.cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
+                cytosol_segmentation_channel = self.DEFAULT_CYTOSOL_CHANNEL_IDS
 
+            selected_channels["cytosol"] = self._to_channel_list(cytosol_segmentation_channel, "cytosol")
+
+        selected_channels = self._postprocess_selected_channels(selected_channels)
+
+        if "nucleus" in selected_channels:
+            self.nucleus_segmentation_channel = self._to_channel_list(selected_channels["nucleus"], "nucleus")
+        if "cytosol" in selected_channels:
+            self.cytosol_segmentation_channel = self._to_channel_list(selected_channels["cytosol"], "cytosol")
+
+        self.segmentation_channels = []
+        if "nucleus" in self.MASK_NAMES and hasattr(self, "nucleus_segmentation_channel"):
+            self.segmentation_channels.extend(self.nucleus_segmentation_channel)
+        if "cytosol" in self.MASK_NAMES and hasattr(self, "cytosol_segmentation_channel"):
             self.segmentation_channels.extend(self.cytosol_segmentation_channel)
 
-        # remove any duplicate entries and sort according to order
-        self.segmentation_channels = list(set(self.segmentation_channels))
+        # remove duplicate entries while preserving the configured channel order
+        self.segmentation_channels = list(dict.fromkeys(self.segmentation_channels))
 
         # check validity of resulting list of segmentation channels
-        assert len(self.segmentation_channels) > 0, "No segmentation channels specified in config file."
-        assert len(self.segmentation_channels) >= self.N_INPUT_CHANNELS, (
-            f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
-        )
+        if len(self.segmentation_channels) == 0:
+            raise ValueError("No segmentation channels specified in config file.")
 
-        if len(self.segmentation_channels) > self.N_INPUT_CHANNELS:
-            assert self.maximum_project_nucleus or self.maximum_project_cytosol, (
-                "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+        if len(self.segmentation_channels) < self.N_INPUT_CHANNELS:
+            raise ValueError(
+                f"Fewer segmentation channels {self.segmentation_channels} provided than expected by segmentation method {self.N_INPUT_CHANNELS}."
             )
 
+        if len(self.segmentation_channels) > self.N_INPUT_CHANNELS:
+            if not (self.maximum_project_nucleus or self.maximum_project_cytosol):
+                raise ValueError(
+                    "More input channels provided than accepted by the segmentation method and no maximum intensity projection performed on any of the input values."
+                )
+
     def _remap_maximum_intensity_projection_channels(self):
-        """After selecting channels that are passed to the segmentation update indexes of the channels for maximum intensity projection so that they reflect the provided image subset"""
+        """Remap channel selectors to the coordinates of the subsetted segmentation input."""
+        if "nucleus" in self.MASK_NAMES:
+            self.original_nucleus_segmentation_channel = list(self.nucleus_segmentation_channel)
+            self.nucleus_segmentation_channel = [
+                self.segmentation_channels.index(x) for x in self.original_nucleus_segmentation_channel
+            ]
+
+        if "cytosol" in self.MASK_NAMES:
+            self.original_cytosol_segmentation_channel = list(self.cytosol_segmentation_channel)
+            self.cytosol_segmentation_channel = [
+                self.segmentation_channels.index(x) for x in self.original_cytosol_segmentation_channel
+            ]
+
         if self.maximum_project_nucleus:
-            self.original_combine_nucleus_channels = self.combine_nucleus_channels
-            self.combine_nucleus_channels = [self.segmentation_channels.index(x) for x in self.combine_nucleus_channels]
+            self.original_combine_nucleus_channels = list(self.combine_nucleus_channels)
+            self.combine_nucleus_channels = [
+                self.segmentation_channels.index(x) for x in self.original_combine_nucleus_channels
+            ]
         if self.maximum_project_cytosol:
-            self.original_combine_cytosol_channels = self.combine_cytosol_channels
-            self.combine_cytosol_channels = [self.segmentation_channels.index(x) for x in self.combine_cytosol_channels]
+            self.original_combine_cytosol_channels = list(self.combine_cytosol_channels)
+            self.combine_cytosol_channels = [
+                self.segmentation_channels.index(x) for x in self.original_combine_cytosol_channels
+            ]
 
     def _transform_input_image(self, input_image):
         start_transform = timeit.default_timer()
@@ -125,7 +171,7 @@ class _BaseSegmentation(Segmentation):
                 if len(nucleus_channel.shape) == 4:
                     nucleus_channel = nucleus_channel.squeeze()
             else:
-                nucleus_channel = input_image[self.DEFAULT_NUCLEI_CHANNEL_IDS]
+                nucleus_channel = input_image[self.nucleus_segmentation_channel]
                 if len(nucleus_channel.shape) == 2:
                     nucleus_channel = nucleus_channel[np.newaxis, ...]
                 if len(nucleus_channel.shape) == 4:
@@ -143,7 +189,7 @@ class _BaseSegmentation(Segmentation):
                 if len(cytosol_channel.shape) == 2:
                     cytosol_channel = cytosol_channel[np.newaxis, ...]
             else:
-                cytosol_channel = input_image[self.DEFAULT_CYTOSOL_CHANNEL_IDS]
+                cytosol_channel = input_image[self.cytosol_segmentation_channel]
                 if len(cytosol_channel.shape) == 4:
                     cytosol_channel = cytosol_channel.squeeze()
                 if len(cytosol_channel.shape) == 2:
