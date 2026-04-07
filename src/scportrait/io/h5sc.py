@@ -17,6 +17,7 @@ from scportrait.pipeline._utils.constants import (
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
     IMAGE_DATACONTAINER_NAME,
 )
+from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
 
 
 def read_h5sc(filename: str | Path) -> AnnData:
@@ -367,6 +368,10 @@ def write_h5sc(
 
     adata_to_write = adata.copy()
     del adata_to_write.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
+    if "channels" in adata_to_write.var.columns:
+        adata_to_write.var["channels"] = np.asarray(channel_names, dtype=object)
+    adata_to_write.var["channel_mapping"] = np.asarray(channel_mapping, dtype=object)
+    _normalize_anndata_strings(adata_to_write)
 
     adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
     adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = n_channels
