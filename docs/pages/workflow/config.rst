@@ -35,6 +35,7 @@ For more information on the parameters for each of these methods, please refer t
         normalize_output: True
         normalization_range: [0.01, 0.99]
         cache: "."
+        target_ram_utilization: 0.85 # fraction of total system RAM the extraction job should target
     CellFeaturizer:
         batch_size: 900
         dataloader_worker_number: 10 #needs to be 0 if using cpu
@@ -55,3 +56,31 @@ For more information on the parameters for each of these methods, please refer t
         path_optimization: "hilbert"
         greedy_k: 15
         hilbert_p: 7
+
+For ``HDF5CellExtraction``, scPortrait can run multiple worker processes to prepare
+single-cell image batches while the main process writes results to the output HDF5
+file. On large datasets, preparing batches can be faster than writing them to
+disk, which would otherwise allow completed batch results to accumulate in
+memory. To keep this manageable, the extraction workflow can limit how many
+completed batch results are buffered in memory at the same time.
+
+When ``max_inflight_result_batches`` is not provided explicitly, scPortrait
+calibrates it automatically from the first wave of worker batches together with the
+configured ``target_ram_utilization``. This calibration estimates returned batch
+payload size together with the parent-process RSS, then chooses an in-flight batch limit
+that aims to stay within the requested RAM budget for the job.
+
+If the RAM budget would imply a value smaller than the active worker count,
+scPortrait keeps the in-flight batch limit at least as large as the number of
+workers and emits a warning in the log. In that case, the correct way to reduce
+memory further is to lower ``threads``.
+
+``flush_every`` controls how often the output HDF5 file is flushed and garbage
+collection is run during extraction. If it is not configured explicitly,
+scPortrait derives it automatically from the effective in-flight batch limit.
+
+Normalization settings are also important because they directly affect the
+extracted single-cell image values used downstream. If you need guidance on
+choosing ``normalize_output`` or ``normalization_range``, refer to the tutorial
+notebook "Fine-tuning the single-cell image extraction" in the tutorials
+section.

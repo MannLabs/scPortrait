@@ -22,6 +22,8 @@ This notebook walks you through the currently implemented segmentation workflows
 
    notebooks/_notebook_segmentation_workflows.nblink
 
+.. _single_cell_extraction_tutorial:
+
 Fine-tuning the single-cell image extraction
 --------------------------------------------
 

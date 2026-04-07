@@ -600,7 +600,8 @@ class Project(Logable):
 
     def view_sdata(self):
         """Start an interactive napari viewer to look at the sdata object associated with the project.
-        Note:
+
+        .. note::
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari

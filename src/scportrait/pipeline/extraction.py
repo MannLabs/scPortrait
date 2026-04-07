@@ -1,16 +1,20 @@
+import gc
 import multiprocessing as mp
 import os
 import platform
 import shutil
 import sys
+import time
 import timeit
 from functools import partial as func_partial
 from pathlib import PosixPath
+from typing import TypeAlias
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import psutil
 import xarray
 from alphabase.io.tempmmap import create_empty_mmap, mmap_array_from_path
 from anndata import AnnData
@@ -23,6 +27,9 @@ from scportrait.pipeline._base import ProcessingStep
 from scportrait.pipeline._utils.helper import flatten
 from scportrait.processing.images._image_processing import percentile_normalization
 from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
+
+ExtractionArg: TypeAlias = tuple[int, int, int, tuple[float, float]]
+BatchedExtractionArgs: TypeAlias = list[list[ExtractionArg]]
 
 
 class HDF5CellExtraction(ProcessingStep):
@@ -87,59 +94,12 @@ class HDF5CellExtraction(ProcessingStep):
         # optional parameters with default values that can be overridden by the values in the config file
 
         ## parameters for image extraction
-        if "normalize_output" in self.config:
-            normalize = self.config["normalize_output"]
-
-            # check that is a valid value
-            assert normalize in [
-                True,
-                False,
-                None,
-                "None",
-            ], "Normalization must be one of the following values [True, False, None, 'None']"
-
-            # convert to boolean
-            if normalize == "None":
-                normalize = False
-            if normalize is None:
-                normalize = False
-
-            self.normalization = normalize
-
-        else:
-            self.normalization = True  # default value
-
-        if "normalization_range" in self.config:
-            normalization_range = self.config["normalization_range"]
-
-            if normalization_range == "None":
-                normalization_range = None
-
-            if normalization_range is not None:
-                assert len(normalization_range) == 2, "Normalization range must be a tuple or list of length 2."
-                assert all(isinstance(x, float | int) and (0 <= x <= 1) for x in normalization_range), (
-                    "Normalization range must be defined as a float between 0 and 1."
-                )
-
-                # conver to tuple to ensure consistency
-                if isinstance(normalization_range, list):
-                    normalization_range = tuple(normalization_range)
-            else:
-                normalization_range = (0.001, 0.999)
-
-            self.normalization_range = normalization_range
-
-        else:
-            self.normalization_range = [0.001, 0.999]
-
-        if not self.normalization:
-            self.normalization_range = ("None", "None")
+        self.normalization = self._get_normalize_output_config()
+        self.normalization_range = self._get_normalization_range_config()
 
         ## parameters for HDF5 file creates
-        if "compression" in self.config:
-            self.compression = self.config["compression"]
-        else:
-            self.compression = True
+        self.compression = self.config.get("compression", True)
+        self.flush_every = self._get_optional_positive_int_config("flush_every")
 
         ## Deprecated parameters since we no longer directly read from HDF5
         ## Preservering here in case we see better performance by adjusting this behaviour in how we read data from memmapped arrays
@@ -158,6 +118,51 @@ class HDF5CellExtraction(ProcessingStep):
         #     self.hdf5_rdcc_nslots = self.config["hdf5_rdcc_nslots"]
         # else:
         #     self.hdf5_rdcc_nslots = 50000
+
+    def _get_optional_positive_int_config(self, key: str) -> int | None:
+        """Return an optional positive integer config value.
+
+        Args:
+            key: Config entry to validate and read.
+
+        Returns:
+            The configured integer value or ``None`` if the key is absent.
+        """
+        value = self.config.get(key)
+        if value is None:
+            return None
+
+        assert isinstance(value, int) and value >= 1, f"{key} must be an integer >= 1."
+        return value
+
+    def _get_normalize_output_config(self) -> bool:
+        """Resolve normalization enablement from config."""
+        normalize = self.config.get("normalize_output", True)
+        assert normalize in [True, False, None, "None"], (
+            "Normalization must be one of the following values [True, False, None, 'None']"
+        )
+        if normalize in [None, "None"]:
+            return False
+        return bool(normalize)
+
+    def _get_normalization_range_config(self) -> tuple[float, float] | tuple[str, str]:
+        """Resolve normalization percentile range from config."""
+        if not self.normalization:
+            return ("None", "None")
+
+        normalization_range = self.config.get("normalization_range", (0.001, 0.999))
+        if normalization_range == "None" or normalization_range is None:
+            return (0.001, 0.999)
+
+        assert len(normalization_range) == 2, "Normalization range must be a tuple or list of length 2."
+        assert all(isinstance(x, float | int) and (0 <= x <= 1) for x in normalization_range), (
+            "Normalization range must be defined as a float between 0 and 1."
+        )
+
+        if isinstance(normalization_range, list):
+            normalization_range = tuple(normalization_range)
+
+        return normalization_range
 
     def _setup_normalization(self) -> None:
         """Configure normalization of single-cell images based on config.
@@ -204,21 +209,13 @@ class HDF5CellExtraction(ProcessingStep):
         if not os.path.isdir(self.extraction_data_directory):
             os.makedirs(self.extraction_data_directory)
             self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
+        elif self.overwrite_run_path:
+            self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
+            shutil.rmtree(self.extraction_data_directory)
+            os.makedirs(self.extraction_data_directory)
+            self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
         else:
-            if self.overwrite_run_path:
-                self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
-                shutil.rmtree(self.extraction_data_directory)
-                os.makedirs(self.extraction_data_directory)
-                self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
-
-            elif self.overwrite_run_path:
-                self.log(f"Output folder at {self.extraction_data_directory} already exists. Overwriting...")
-                shutil.rmtree(self.extraction_data_directory)
-                os.makedirs(self.extraction_data_directory)
-                self.log(f"Created new directory for extraction results: {self.extraction_data_directory}")
-
-            else:
-                raise ValueError("Output folder already exists. Set overwrite_run_path to True to overwrite.")
+            raise ValueError("Output folder already exists. Set overwrite_run_path to True to overwrite.")
 
         self.log(f"Setup output folder at {self.extraction_data_directory}")
 
@@ -521,6 +518,7 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             max_batch_size = max_batch_size
 
+        original_threads = self.threads
         theoretical_max = np.ceil(len(args) / self.threads)
         batch_size = np.int64(min(max_batch_size, theoretical_max))
 
@@ -530,7 +528,7 @@ class HDF5CellExtraction(ProcessingStep):
         # dynamically adjust the number of threads to ensure that we dont initiate more threads than we have arguments
         self.threads = np.int64(min(self.threads, np.ceil(len(args) / self.batch_size)))
 
-        if self.threads != self.threads:
+        if self.threads != original_threads:
             self.log(f"Reducing number of threads to {self.threads} to match number of cell batches to process.")
 
         return [args[i : i + self.batch_size] for i in range(0, len(args), self.batch_size)]
@@ -712,9 +710,7 @@ class HDF5CellExtraction(ProcessingStep):
             with h5py.File(self.output_path, "a") as hf:
                 single_cell_data_container: h5py.Dataset = hf[self.IMAGE_DATACONTAINER_NAME]
                 single_cell_index_container: h5py.Dataset = hf[self.INDEX_DATACONTAINER_NAME]
-
-                for res in results:
-                    save_index, stack, cell_id = res
+                for save_index, stack, cell_id in results:
                     single_cell_data_container[save_index] = stack
                     single_cell_index_container[save_index] = cell_id
 
@@ -893,6 +889,258 @@ class HDF5CellExtraction(ProcessingStep):
             benchmarking.to_csv(benchmarking_path, index=False)
         self.log("Benchmarking times saved to file.")
 
+    def _get_current_process_rss_bytes(self) -> int:
+        """Return RSS for the current process only."""
+        process = psutil.Process(os.getpid())
+        return int(process.memory_info().rss)
+
+    def _estimate_returned_result_bytes(self, results: list[tuple[int, np.ndarray, int]]) -> int:
+        """Estimate memory footprint of a returned multiprocessing batch payload."""
+        array_bytes = sum(int(stack.nbytes) for _, stack, _ in results)
+        container_bytes = sys.getsizeof(results) + sum(sys.getsizeof(result) for result in results)
+        return array_bytes + container_bytes
+
+    def _get_target_job_ram_bytes(self) -> int:
+        """Return the configured total RAM budget for this extraction job."""
+        target_utilization = float(self.config.get("target_ram_utilization", 0.85))
+        target_utilization = min(max(target_utilization, 0.1), 0.95)
+        return int(psutil.virtual_memory().total * target_utilization)
+
+    def _get_configured_max_inflight_result_batches(self, n_total_batches: int) -> int | None:
+        """Return explicit in-flight override if present."""
+        if "max_inflight_result_batches" not in self.config:
+            return None
+
+        configured = int(self.config["max_inflight_result_batches"])
+        configured = max(1, min(configured, n_total_batches))
+        self.log(f"Using configured max_inflight_result_batches={configured}.")
+        return configured
+
+    def _resolve_flush_every(self, default_flush_every: int) -> int:
+        """Resolve flush cadence using config override or a supplied default.
+
+        Args:
+            default_flush_every: Fallback flush interval to use when the config
+                does not explicitly set ``flush_every``.
+
+        Returns:
+            Flush interval in processed units.
+        """
+        if self.flush_every is not None:
+            resolved = self.flush_every
+            self.log(f"Using flush_every={resolved}.")
+            return resolved
+
+        resolved = max(1, int(default_flush_every))
+        self.log(f"Using derived flush_every={resolved}.")
+        return resolved
+
+    def _periodic_flush_and_collect(self, counter: int, hf: h5py.File | None, flush_every: int) -> None:
+        """Flush HDF5 output and run garbage collection at a configured interval.
+
+        Args:
+            counter: Number of processed units so far.
+            hf: Open HDF5 file handle to flush if available.
+            flush_every: Number of processed units between flush operations.
+        """
+        if counter % flush_every != 0:
+            return
+
+        if hf is not None:
+            hf.flush()
+        gc.collect()
+
+    def _prepare_extraction_args(self) -> tuple[list, float]:
+        """Generate extraction args and return generation time."""
+        start_arg_generation = timeit.default_timer()
+        self._generate_save_index_lookup(self.classes)
+        args = self._get_arg(self.classes, self.px_centers)
+        time_arg_generation = timeit.default_timer() - start_arg_generation
+        return args, time_arg_generation
+
+    def _load_inputs_to_memmap(self) -> float:
+        """Load segmentation masks and input images into temporary memmaps."""
+        self.log("Loading input images to memory mapped arrays...")
+        start_data_transfer = timeit.default_timer()
+
+        self.path_seg_masks = self.filehandler._load_seg_to_memmap(
+            seg_name=self.masks, tmp_dir_abs_path=self._tmp_dir_path
+        )
+        self.path_image_data = self.filehandler._load_input_image_to_memmap(tmp_dir_abs_path=self._tmp_dir_path)
+
+        time_data_transfer = timeit.default_timer() - start_data_transfer
+        if self.debug:
+            self.log(
+                f"Finished transferring data to memory mapped arrays. Time taken: {time_data_transfer:.2f} seconds."
+            )
+        return time_data_transfer
+
+    def _finish_processed_batch(
+        self,
+        processed_count: int,
+        flush_every: int,
+        pbar: tqdm | None = None,
+        hf: h5py.File | None = None,
+    ) -> int:
+        """Apply common bookkeeping after a cell or batch has been written."""
+        processed_count += 1
+        self._periodic_flush_and_collect(counter=processed_count, hf=hf, flush_every=flush_every)
+        if pbar is not None:
+            pbar.update(1)
+        return processed_count
+
+    def _iter_completed_batch_results(
+        self,
+        pool: mp.pool.Pool,
+        args: BatchedExtractionArgs,
+        max_inflight_result_batches: int,
+        pending_results: list | None = None,
+        next_submit_ix: int = 0,
+    ):
+        """Yield completed multiprocessing batch results while bounding in-flight tasks.
+
+        This helper exists to keep the extraction pipeline from submitting an
+        unbounded number of batch jobs whose results then accumulate in memory
+        faster than the main process can write them to disk. Each completed
+        worker task returns a batch of extracted single-cell image stacks,
+        which can be large. If too many completed batches are allowed to remain
+        outstanding at once, resident memory can grow steadily until the job
+        runs out of memory.
+
+        To avoid that, this helper keeps at most
+        ``max_inflight_result_batches`` tasks submitted but not yet consumed.
+        As soon as one completed batch is yielded back to the caller, the
+        helper submits the next pending batch task, maintaining a bounded
+        producer/consumer pipeline. This preserves multiprocessing throughput
+        while placing an upper bound on the amount of result data that can be
+        buffered in flight at one time.
+
+        Args:
+            pool: Active multiprocessing pool used for extraction.
+            args: Batched extraction arguments to submit.
+            max_inflight_result_batches: Maximum number of submitted but not yet
+                consumed batch tasks.
+
+        Yields:
+            Completed batch extraction results as returned by
+            ``_extract_classes_multi``.
+        """
+        pending_results = [] if pending_results is None else pending_results
+        n_total_batches = len(args)
+
+        while (
+            len(pending_results) < min(max_inflight_result_batches, n_total_batches)
+            and next_submit_ix < n_total_batches
+        ):
+            pending_results.append(pool.apply_async(self._extract_classes_multi, (args[next_submit_ix],)))
+            next_submit_ix += 1
+
+        while pending_results:
+            ready_ix = None
+            for i, async_result in enumerate(pending_results):
+                if async_result.ready():
+                    ready_ix = i
+                    break
+
+            if ready_ix is None:
+                time.sleep(0.01)
+                continue
+
+            async_result = pending_results.pop(ready_ix)
+            result = async_result.get()
+
+            while (
+                len(pending_results) < min(max_inflight_result_batches, n_total_batches)
+                and next_submit_ix < n_total_batches
+            ):
+                pending_results.append(pool.apply_async(self._extract_classes_multi, (args[next_submit_ix],)))
+                next_submit_ix += 1
+
+            yield result
+
+    def _calibrate_max_inflight_result_batches(
+        self,
+        pool: mp.pool.Pool,
+        args: BatchedExtractionArgs,
+    ) -> tuple[int, float, list[tuple[int, np.ndarray, int]], list, int]:
+        """Calibrate max in-flight batches from the first submitted worker wave.
+
+        The calibration submits one initial wave of work and measures the size
+        of the first batch payload returned to the parent process. Together
+        with the parent-process RSS observed at that point, these measurements
+        are used to estimate how many outstanding batch results can be buffered
+        in the writer process while staying within the configured RAM budget
+        for the job.
+
+        Args:
+            pool: Active multiprocessing pool used for extraction.
+            args: Batched extraction arguments to submit.
+
+        Returns:
+            Tuple containing the calibrated max in-flight batch count, the time
+            until the first batch completed, the first completed result itself,
+            the remaining pending async results, and the next argument index to
+            submit.
+        """
+        self.log("Calibrating max_inflight_result_batches using the first batch of workers...")
+        n_total_batches = len(args)
+        warmup_submit = min(max(1, int(self.threads)), n_total_batches)
+
+        pending_results: list = []
+        next_submit_ix = 0
+        while len(pending_results) < warmup_submit and next_submit_ix < n_total_batches:
+            pending_results.append(pool.apply_async(self._extract_classes_multi, (args[next_submit_ix],)))
+            next_submit_ix += 1
+
+        startup_wait_start = timeit.default_timer()
+        while True:
+            ready_ix = None
+            for i, async_result in enumerate(pending_results):
+                if async_result.ready():
+                    ready_ix = i
+                    break
+
+            if ready_ix is None:
+                time.sleep(0.01)
+                continue
+
+            async_result = pending_results.pop(ready_ix)
+            first_result = async_result.get()
+            first_wait_s = timeit.default_timer() - startup_wait_start
+            break
+
+        result_batch_bytes = self._estimate_returned_result_bytes(first_result)
+        target_job_ram_bytes = self._get_target_job_ram_bytes()
+        current_process_rss = self._get_current_process_rss_bytes()
+        queue_budget_bytes = max(0, target_job_ram_bytes - current_process_rss)
+        min_inflight_result_batches = max(1, warmup_submit)
+
+        if result_batch_bytes <= 0:
+            calibrated_from_budget = min_inflight_result_batches
+        else:
+            calibrated_from_budget = max(1, min(int(queue_budget_bytes // result_batch_bytes), n_total_batches))
+
+        if calibrated_from_budget < min_inflight_result_batches:
+            self.log(
+                "Warning: target RAM budget would limit max_inflight_result_batches to "
+                f"{calibrated_from_budget}, below the active worker floor of {min_inflight_result_batches}. "
+                "Using the worker-count floor instead. If stricter memory limiting is required, reduce `threads`."
+            )
+
+        calibrated_max = max(min_inflight_result_batches, calibrated_from_budget)
+
+        bytes_to_gb = 1024**3
+        self.log(
+            "Calibrated max_inflight_result_batches="
+            f"{calibrated_max} (budget_based_n={calibrated_from_budget}, "
+            f"worker_floor_n={min_inflight_result_batches}, "
+            f"target_job_ram_gb={target_job_ram_bytes / bytes_to_gb:.3f}, "
+            f"parent_rss_gb={current_process_rss / bytes_to_gb:.3f}, "
+            f"result_batch_gb={result_batch_bytes / bytes_to_gb:.3f}, "
+            f"queue_budget_gb={queue_budget_bytes / bytes_to_gb:.3f})."
+        )
+        return calibrated_max, first_wait_s, first_result, pending_results, next_submit_ix
+
     def process(
         self, partial: bool = False, n_cells: int = None, seed: int = 42, output_folder_name: str | None = None
     ) -> None:
@@ -932,6 +1180,60 @@ class HDF5CellExtraction(ProcessingStep):
 
                 # directory where intermediate results should be saved
                 cache: "/mnt/temp/cache"
+
+        The following optional parameters can also be configured:
+
+        .. list-table::
+            :header-rows: 1
+
+            * - Parameter
+              - Default
+              - Description
+            * - ``normalize_output``
+              - ``True``
+              - Enable percentile normalization of extracted image channels.
+            * - ``normalization_range``
+              - ``(0.001, 0.999)``
+              - Lower and upper percentiles used for normalization.
+            * - ``compression``
+              - ``True``
+              - Compression mode for the output HDF5 dataset. ``True`` maps to ``lzf``. ``gzip`` and ``False`` are also supported.
+            * - ``target_ram_utilization``
+              - ``0.85``
+              - Fraction of total system RAM the extraction job should aim to stay within when calibrating buffered result batches.
+            * - ``max_inflight_result_batches``
+              - auto-calibrated
+              - Explicit override for the number of buffered multiprocessing result batches. If omitted, scPortrait calibrates this from the first worker wave.
+            * - ``flush_every``
+              - derived from effective in-flight batch limit
+              - Flush cadence for HDF5 output and garbage collection during extraction. If omitted, it is derived from the effective in-flight batch limit.
+            * - ``max_batch_size``
+              - ``1000``
+              - Upper bound used when building multiprocessing mini-batches.
+
+        Normalization settings deserve special attention because they directly
+        affect the dynamic range of the extracted single-cell images that are
+        stored for downstream analysis. If you are unsure how to choose
+        ``normalize_output`` or ``normalization_range``, refer to the
+        :ref:`single-cell extraction tutorial <single_cell_extraction_tutorial>`
+        for a more detailed walkthrough.
+
+        During extraction, scPortrait can use multiple worker processes to
+        prepare single-cell image batches while the main process writes results
+        to the output HDF5 file. On large datasets with multiple threads, preparing
+        batches can be faster than writing them to disk, which would otherwise
+        allow completed batch results to accumulate in memory. To keep this manageable,
+        the extraction workflow can automatically limit how many completed batch
+        results are allowed to be buffered in memory at the same time.
+
+        In multiprocessing mode, ``max_inflight_result_batches`` is calibrated
+        automatically when it is not provided explicitly. The calibration uses
+        the first wave of worker batches to estimate returned batch payload
+        size together with the parent-process RSS, then chooses an in-flight
+        batch limit that aims to respect ``target_ram_utilization``. If the
+        calculated value would fall below the active worker count, the worker
+        count is used as a minimum and a warning is written to the log.
+
         """
         total_time_start = timeit.default_timer()
 
@@ -958,37 +1260,16 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             self.log(f"Starting single-cell image extraction of {self.num_classes} cells...")
 
-        # generate cell pairings to extract
-        start_arg_generation = timeit.default_timer()
-
-        self._generate_save_index_lookup(self.classes)
-        args = self._get_arg(self.classes, self.px_centers)
-        stop_arg_generation = timeit.default_timer()
-        time_arg_generation = stop_arg_generation - start_arg_generation
-
-        # convert input images to memory mapped temp arrays for faster reading
-        self.log("Loading input images to memory mapped arrays...")
-        start_data_transfer = timeit.default_timer()
-
-        self.path_seg_masks = self.filehandler._load_seg_to_memmap(
-            seg_name=self.masks, tmp_dir_abs_path=self._tmp_dir_path
-        )
-        self.path_image_data = self.filehandler._load_input_image_to_memmap(tmp_dir_abs_path=self._tmp_dir_path)
-
-        stop_data_transfer = timeit.default_timer()
-        time_data_transfer = stop_data_transfer - start_data_transfer
-
-        if self.debug:
-            self.log(
-                f"Finished transferring data to memory mapped arrays. Time taken: {time_data_transfer:.2f} seconds."
-            )
+        args, time_arg_generation = self._prepare_extraction_args()
+        time_data_transfer = self._load_inputs_to_memmap()
 
         # actually perform single-cell image extraction
         start_extraction = timeit.default_timer()
-
         if self.threads <= 1:
             # set up for single-threaded processing
             self._setup_normalization()
+            single_thread_flush_default = max(1, int(self.config.get("max_batch_size", 1000)))
+            flush_every = self._resolve_flush_every(single_thread_flush_default)
 
             self.seg_masks = mmap_array_from_path(self.path_seg_masks)
             self.image_data = mmap_array_from_path(self.path_image_data)
@@ -1002,25 +1283,76 @@ class HDF5CellExtraction(ProcessingStep):
                 self._single_cell_index_container = hf[self.INDEX_DATACONTAINER_NAME]
 
                 self.log("Running in single threaded mode.")
+                processed_cells = 0
                 for arg in tqdm(args, total=len(args), desc="Extracting cell batches"):
                     self._extract_classes(arg)
+                    processed_cells = self._finish_processed_batch(
+                        processed_count=processed_cells,
+                        flush_every=flush_every,
+                        hf=hf,
+                    )
         else:
             args = self._generate_batched_args(args)
+            n_total_batches = len(args)
 
             self.log(f"Running in multiprocessing mode with {self.threads} threads.")
 
             with mp.Manager() as manager:
                 lock = manager.Lock()  # Create lock via Manager to enable sharing
 
+                self.log("Initializing multiprocessing pool for extraction.")
                 with mp.get_context("fork").Pool(
                     processes=self.threads
                 ) as pool:  # both spawn and fork work but fork is faster so forcing fork here
-                    for result in tqdm(
-                        pool.imap_unordered(self._extract_classes_multi, args),
-                        total=len(args),
-                        desc="Extracting cell batches",
-                    ):
-                        self._write_to_hdf5(result, lock)
+                    if n_total_batches > 0:
+                        self.log("Workers initialized. Waiting for first completed extraction batch...")
+                        configured_max_inflight = self._get_configured_max_inflight_result_batches(n_total_batches)
+                        if configured_max_inflight is not None:
+                            startup_wait_start = timeit.default_timer()
+                            result_iterator = self._iter_completed_batch_results(
+                                pool=pool,
+                                args=args,
+                                max_inflight_result_batches=configured_max_inflight,
+                            )
+                            first_result = next(result_iterator)
+                            first_wait_s = timeit.default_timer() - startup_wait_start
+                            max_inflight_result_batches = configured_max_inflight
+                        else:
+                            (
+                                max_inflight_result_batches,
+                                first_wait_s,
+                                first_result,
+                                pending_results,
+                                next_submit_ix,
+                            ) = self._calibrate_max_inflight_result_batches(pool=pool, args=args)
+                            result_iterator = self._iter_completed_batch_results(
+                                pool=pool,
+                                args=args,
+                                max_inflight_result_batches=max_inflight_result_batches,
+                                pending_results=pending_results,
+                                next_submit_ix=next_submit_ix,
+                            )
+
+                        flush_every = self._resolve_flush_every(max_inflight_result_batches)
+                        self.log(f"Limiting in-flight result batches to {max_inflight_result_batches}.")
+                        self.log(f"First batch received after {first_wait_s:.2f} seconds.")
+                        processed_batches = 0
+
+                        with tqdm(total=n_total_batches, desc="Extracting cell batches") as pbar:
+                            self._write_to_hdf5(first_result, lock)
+                            processed_batches = self._finish_processed_batch(
+                                processed_count=processed_batches,
+                                flush_every=flush_every,
+                                pbar=pbar,
+                            )
+
+                            for result in result_iterator:
+                                self._write_to_hdf5(result, lock)
+                                processed_batches = self._finish_processed_batch(
+                                    processed_count=processed_batches,
+                                    flush_every=flush_every,
+                                    pbar=pbar,
+                                )
                     pool.close()
                     pool.join()
 
