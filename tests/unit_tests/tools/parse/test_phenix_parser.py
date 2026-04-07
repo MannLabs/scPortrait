@@ -1,6 +1,6 @@
 import pandas as pd
 
-from scportrait.tools.parse._parse_phenix import PhenixParser
+from scportrait.tools.parse._parse_phenix import CombinedPhenixParser, PhenixParser
 
 
 def _make_parser() -> PhenixParser:
@@ -61,3 +61,45 @@ def test_generate_new_filenames_preserves_clean_tile_spacing():
 
     assert list(result["X_pos"]) == ["000", "001", "002"]
     assert list(result["Y_pos"]) == ["000", "001", "002"]
+
+
+def test_combined_metadata_deduplicates_on_tile_positions():
+    parser = CombinedPhenixParser.__new__(CombinedPhenixParser)
+    parser.flatfield_status = True
+    parser.phenix_dirs = ["exp_a", "exp_b"]
+
+    metadata_by_path = {
+        "exp_a/Images/Index.ref.xml": pd.DataFrame(
+            {
+                "Row": ["A", "A"],
+                "Well": ["01", "01"],
+                "Zstack": [0, 0],
+                "Timepoint": [0, 0],
+                "X": [0.0, 1.0],
+                "Y": [0.0, 0.0],
+                "Channel": ["ch1", "ch1"],
+                "filename": ["tile_a0.tif", "tile_a1.tif"],
+            }
+        ),
+        "exp_b/Images/Index.ref.xml": pd.DataFrame(
+            {
+                "Row": ["A", "A"],
+                "Well": ["01", "01"],
+                "Zstack": [0, 0],
+                "Timepoint": [0, 0],
+                "X": [0.001, 2.0],
+                "Y": [0.0, 0.0],
+                "Channel": ["ch1", "ch1"],
+                "filename": ["tile_b0_duplicate.tif", "tile_b2.tif"],
+            }
+        ),
+    }
+
+    parser._read_phenix_xml = lambda path: metadata_by_path[path].copy()
+
+    result = parser._get_phenix_metadata()
+
+    assert len(result) == 3
+    assert sorted(result["X_pos"].tolist()) == [0, 1, 2]
+    assert "tile_b0_duplicate.tif" not in set(result["filename"])
+    assert set(result["filename"]) == {"tile_a0.tif", "tile_a1.tif", "tile_b2.tif"}
