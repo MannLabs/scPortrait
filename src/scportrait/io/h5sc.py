@@ -305,6 +305,11 @@ def write_h5sc(
             the image tensor shape, if ``var['channel_mapping']`` is missing or contains
             missing/invalid values, if no mask channel is defined, or if an unsupported
             compression type is requested.
+
+    Warning:
+        ``write_h5sc`` currently only supports in-memory image tensors in
+        ``obsm['single_cell_images']``. Backed or lazily loaded image containers may
+        incur unexpected copying or fail during write.
     """
     if DEFAULT_NAME_SINGLE_CELL_IMAGES not in adata.obsm:
         raise ValueError(
