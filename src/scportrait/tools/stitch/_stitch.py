@@ -1,8 +1,8 @@
 import os
 import shutil
 import sys
+import warnings
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import numpy as np
 from alphabase.io.tempmmap import (
@@ -32,8 +32,8 @@ class Stitcher:
         filter_sigma: Sigma value for Gaussian filter applied during alignment
         do_intensity_rescale: Flag to rescale image intensities or "full_image" to rescale entire image
         rescale_range: Percentiles for intensity rescaling as tuple or dict with channel names as keys. If passed as a dictionary, channels not listed will not be rescaled.
-        channel_order: Order of channels in output mosaic
-        reader_type: Type of reader for image tiles
+        channel_order: Optional order of channels in output mosaic (channel names).
+        reader_type: Reader class or reader class-name string ("FilePatternReaderRescale" or "BioformatsReaderRescale")
         image_dtype: dtype of the images that are to be stitched, mainly relevant when stitching with the BioformatsReaderRescale
         orientation: Dict specifying dimensions to flip {'flip_x', 'flip_y'}
         plot_QC: Generate quality control figures
@@ -92,9 +92,17 @@ class Stitcher:
         self.reader_type = reader_type
         self.image_dtype = image_dtype
 
-        # workaround for lazy imports of module
-        if self.reader_type == "FilePatternReaderRescale":
-            self.reader_type = self.FilePatternReaderRescale
+        # allow reader type selection by class or known class-name strings
+        if isinstance(self.reader_type, str):
+            if self.reader_type == "FilePatternReaderRescale":
+                self.reader_type = self.FilePatternReaderRescale
+            elif self.reader_type == "BioformatsReaderRescale":
+                self.reader_type = self.BioformatsReaderRescale
+            else:
+                raise ValueError(
+                    f"Unknown reader_type '{self.reader_type}'. Supported values are "
+                    "'FilePatternReaderRescale', 'BioformatsReaderRescale', or the corresponding class."
+                )
 
         # workflow setup
         self.plot_QC = plot_QC
@@ -154,8 +162,12 @@ class Stitcher:
         self.ParallelEdgeAligner = ParallelEdgeAligner
         self.ParallelMosaic = ParallelMosaic
 
-    def __exit__(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._clear_cache()
+        return False
 
     def __del__(self):
         self._clear_cache()
@@ -237,12 +249,12 @@ class Stitcher:
             missing_channels = set.difference(set(self.channel_names), set(rescale_channels))
 
             if len(missing_channels) > 0:
-                Warning(
+                warnings.warn(
                     "The rescale_range dictionary does not contain all channels in the experiment."
-                    "This may lead to unexpected results. For the missing channels rescaling will be turned off."
+                    "This may lead to unexpected results. For the missing channels rescaling will be turned off.",
+                    stacklevel=2,
                 )
 
-                missing_channels = set.difference(self.channel_names, rescale_channels)
                 for missing_channel in missing_channels:
                     self.rescale_range[missing_channel] = (0, 1)
 
@@ -268,7 +280,7 @@ class Stitcher:
     def _reorder_channels(self):
         """Reorder the channels in the mosaic based on the specified channel_order."""
         if self.channel_order is None:
-            self.channels = self.channels
+            return
         else:
             print("current channel order: ", self.channels)
 
@@ -278,6 +290,10 @@ class Stitcher:
             print("new channel order", channels)
 
             self.channels = channels
+
+    def _current_channel_names(self) -> list[str]:
+        """Return channel names in the current output channel order."""
+        return [self.channel_lookup[channel] for channel in self.channels]
 
     def _initialize_reader(self):
         """Initialize the reader for reading image tiles."""
@@ -361,7 +377,7 @@ class Stitcher:
 
     def _perform_alignment(self):
         """Perform alignment of the image tiles."""
-        # intitialize reader for getting individual image tiles
+        # initialize reader for getting individual image tiles
         self._initialize_reader()
 
         print(f"performing stitching on channel {self.stitching_channel} with id number {self.stitching_channel_id}")
@@ -399,7 +415,7 @@ class Stitcher:
         shape = (self.n_channels, x, y)
         print(f"assembling mosaic with shape {shape}")
 
-        # initialize tempmmap array to save assemled mosaic to
+        # initialize tempmmap array to save assembled mosaic to
         # if no cache is specified the tempmmap will be created in the outdir
 
         self._create_cache()
@@ -420,10 +436,10 @@ class Stitcher:
                 # warning this has not been tested for memory efficiency
                 print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
                 self.assembled_mosaic[i, :, :] = rescale_image(
-                    self.assembled_mosaic[i, :, :], self.rescale_range[channel]
+                    self.assembled_mosaic[i, :, :], self.reader.rescale_range[channel]
                 )
 
-        # convery to dask array
+        # convert to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
     def _generate_mosaic(self):
@@ -449,19 +465,20 @@ class Stitcher:
                 This XML file is compatible with loading the generated TIFF files into BIAS.
 
         Returns:
-            The assembled mosaic are written to file as TIFF files in the specified output directory.
+            The assembled mosaic is written to TIFF files in the specified output directory.
         """
 
         from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
 
+        channel_names = self._current_channel_names()
         filenames = []
-        for i, channel in enumerate(self.channel_names):
+        for i, channel in enumerate(channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
             filenames.append(filename)
             write_tif(filename, self.assembled_mosaic[i, :, :])
 
         if export_xml:
-            write_xml(filenames, self.channel_names, self.slidename)
+            write_xml(filenames, channel_names, self.slidename)
 
     def write_ome_zarr(
         self,
@@ -483,7 +500,7 @@ class Stitcher:
         write_ome_zarr(
             filepath,
             self.assembled_mosaic,
-            self.channel_names,
+            self._current_channel_names(),
             self.slidename,
             overwrite=self.overwrite,
             downscaling_size=downscaling_size,
@@ -524,7 +541,7 @@ class Stitcher:
         write_spatialdata(
             filepath,
             image=self.assembled_mosaic,
-            channel_names=self.channels,
+            channel_names=self._current_channel_names(),
             scale_factors=scale_factors,
             overwrite=self.overwrite,
         )
@@ -545,8 +562,8 @@ class ParallelStitcher(Stitcher):
         filter_sigma: Sigma value for Gaussian filter applied during alignment (default is 0).
         do_intensity_rescale: Flag to indicate whether to rescale image intensities (default is True). Alternatively, set to "full_image" to rescale the entire image.
         rescale_range: If all channels should be rescaled to the same range pass a tuple with the percentiles for rescaling (default is (1, 99)). Alternatively, a dictionary can be passed with the channel names as keys and the percentiles as values if each channel should be rescaled to a different range. Channels not present in the dictionary won't be rescaled.
-        channel_order: Order of channels in the generated output mosaic. If none (default value) the order of the channels is left unchanged.
-        reader_type: Type of reader to use for reading image tiles (default is "FilePatternReaderRescale").
+        channel_order: Order of channels in the generated output mosaic. If None (default), the original order is used.
+        reader_type: Reader class or reader class-name string (default is "FilePatternReaderRescale").
         orientation: Dictionary specifying which dimensions of the slide to flip (default is {'flip_x': False, 'flip_y': True}).
         plot_QC: Flag to indicate whether to plot quality control (QC) figures (default is True).
         overwrite: Flag to indicate whether to overwrite the output directory if it already exists (default is False).
@@ -597,14 +614,15 @@ class ParallelStitcher(Stitcher):
             cache=cache,
         )
 
-        # dirty fix to avoide multithreading error with BioformatsReader until this can be fixed
+        # workaround to avoid multithreading errors with BioformatsReader until this can be fixed
         if self.reader_type == self.BioformatsReaderRescale:
             threads = 1
             print(
                 "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
             )
-            Warning(
-                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread."
+            warnings.warn(
+                "BioformatsReaderRescale does not support multithreading for calculating the error threshold currently. Proceeding with 1 thread.",
+                stacklevel=2,
             )
 
         self.threads = threads
@@ -633,7 +651,6 @@ class ParallelStitcher(Stitcher):
         return mosaic
 
     def _assemble_channel(self, args):
-        hdf5_path = self.hdf5_path
         channel, i, hdf5_path = args
         out = mmap_array_from_path(hdf5_path)
         self.mosaic.assemble_channel_parallel(channel=channel, ch_index=i, hdf5_path=hdf5_path)
@@ -641,7 +658,7 @@ class ParallelStitcher(Stitcher):
         if self.rescale_full_image:
             # warning this has not been tested for memory efficiency
             print("Rescaling entire input image to 0-1 range using percentiles specified in rescale_range.")
-            out[i, :, :] = rescale_image(out[i, :, :], self.rescale_range[channel])
+            out[i, :, :] = rescale_image(out[i, :, :], self.reader.rescale_range[channel])
 
     def _assemble_mosaic(self):
         # get dimensions of assembled final mosaic
@@ -670,7 +687,7 @@ class ParallelStitcher(Stitcher):
         with ThreadPoolExecutor(max_workers=workers) as executor:
             list(executor.map(self._assemble_channel, args))
 
-        # conver to dask array
+        # convert to dask array
         self.assembled_mosaic = dask_array_from_path(hdf5_path)
 
     def write_tif_parallel(self, export_xml: bool = True):
@@ -678,14 +695,15 @@ class ParallelStitcher(Stitcher):
 
         Args:
             export_xml: Whether to export an XML file for the TIFF files.
-                This XML file is compatible with loading the generarted TIFF files into BIAS.
+                This XML file is compatible with loading the generated TIFF files into BIAS.
 
         """
         from scportrait.tools.stitch._utils.filewriters import write_tif, write_xml
 
         filenames = []
         args = []
-        for i, channel in enumerate(self.channel_names):
+        channel_names = self._current_channel_names()
+        for i, channel in enumerate(channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
             filenames.append(filename)
             args.append((filename, i))
@@ -709,4 +727,4 @@ class ParallelStitcher(Stitcher):
         # write_tif(filename, self.assembled_mosaic[i, :, :])
 
         if export_xml:
-            write_xml(filenames, self.channel_names, self.slidename)
+            write_xml(filenames, channel_names, self.slidename)
