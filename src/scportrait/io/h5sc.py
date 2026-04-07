@@ -95,11 +95,23 @@ def _extract_image_channel_names_from_legacy(handle: h5py.File) -> np.ndarray | 
 def _resolve_channel_metadata(
     handle: h5py.File,
     n_channels: int,
+    image_channel_order: Sequence[str] | None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Resolve channel names for the legacy format with two leading mask channels."""
-    image_channel_names = _extract_image_channel_names_from_legacy(handle)
-    if image_channel_names is None:
+    channel_information = _extract_image_channel_names_from_legacy(handle)
+    if channel_information is None:
         raise ValueError("Legacy file is missing image-channel names in 'channel_information'.")
+
+    if image_channel_order is None:
+        raise ValueError(
+            "image_channel_order is required because legacy 'channel_information' names are alphabetized and "
+            "do not define image order. Pass the real image channel order using these channel names: "
+            f"{channel_information.tolist()}."
+        )
+
+    image_channel_names = np.asarray(image_channel_order, dtype=str)
+    if sorted(image_channel_names.tolist()) != sorted(channel_information.tolist()):
+        raise ValueError("image_channel_order must contain exactly the same channel names as 'channel_information'.")
 
     num_mask_channels = n_channels - len(image_channel_names)
     if num_mask_channels != 2:
@@ -471,6 +483,7 @@ def write_h5sc(
 def legacy_h5_to_h5sc(
     input_path: str | Path,
     output_path: str | Path,
+    image_channel_order: Sequence[str] | None = None,
     *,
     compression_type: Literal["gzip", "lzf"] | None = None,
     image_dtype: npt.DTypeLike | None = None,
@@ -485,9 +498,11 @@ def legacy_h5_to_h5sc(
     - ``channel_information`` with image-channel names only
 
     The first two channels are assumed to be the mask channels and are always named
-    ``seg_all_nucleus`` and ``seg_all_cytosol``. The remaining channel names are read
-    from ``channel_information``. If ``single_cell_index_labelled`` exists it is ignored
-    and a warning is emitted.
+    ``seg_all_nucleus`` and ``seg_all_cytosol``. The remaining channel names are taken
+    from ``image_channel_order``, which must contain exactly the same names as
+    ``channel_information``. If ``image_channel_order`` is omitted, the function raises
+    an error and reports the alphabetized channel names found in the file. If
+    ``single_cell_index_labelled`` exists it is ignored and a warning is emitted.
     """
     with h5py.File(input_path, "r") as legacy_hf:
         if "single_cell_data" not in legacy_hf:
@@ -517,7 +532,11 @@ def legacy_h5_to_h5sc(
                 stacklevel=2,
             )
 
-        resolved_channel_names, resolved_channel_mapping = _resolve_channel_metadata(legacy_hf, n_channels)
+        resolved_channel_names, resolved_channel_mapping = _resolve_channel_metadata(
+            legacy_hf,
+            n_channels,
+            image_channel_order,
+        )
         obs = pd.DataFrame({DEFAULT_CELL_ID_NAME: cell_ids}, index=np.arange(n_cells).astype(str))
 
         var = pd.DataFrame(
