@@ -17,6 +17,7 @@ from scportrait.pipeline._utils.constants import (
     DEFAULT_SINGLE_CELL_IMAGE_DTYPE,
     IMAGE_DATACONTAINER_NAME,
 )
+from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
 
 
 def read_h5sc(filename: str | Path) -> AnnData:
@@ -273,3 +274,146 @@ def numpy_to_h5sc(
 
         for save_index, img in enumerate(all_imgs):
             single_cell_data_container[save_index] = img
+
+
+def write_h5sc(
+    adata: AnnData,
+    output_path: str | Path,
+    compression_type: Literal["gzip", "lzf"] | None = None,
+) -> None:
+    """Write an AnnData object with ``obsm['single_cell_images']`` to scPortrait's `.h5sc` format.
+
+    Args:
+        adata: AnnData object to write. It must contain:
+
+            - ``obsm['single_cell_images']`` with shape ``(N, C, H, W)``
+            - ``var['channels']`` or a ``var`` index whose length equals ``C``
+            - ``var['channel_mapping']`` with exactly one entry per channel
+
+            The ``channel_mapping`` column must only contain ``"mask"`` and
+            ``"image_channel"`` values, and at least one channel must be mapped as
+            ``"mask"``. The mapping is used to populate the H5SC metadata written into
+            ``uns`` and the HDF5 image container.
+        output_path: Path to the output `.h5sc` file.
+        compression_type: Optional compression override for the image dataset. If omitted,
+            reuse the source dataset compression when available, otherwise fall back to
+            metadata in ``uns`` and finally ``"gzip"``.
+
+    Raises:
+        ValueError: If ``adata.obsm['single_cell_images']`` is missing or does not have
+            shape ``(N, C, H, W)``, if channel metadata in ``adata.var`` does not match
+            the image tensor shape, if ``var['channel_mapping']`` is missing or contains
+            missing/invalid values, if no mask channel is defined, or if an unsupported
+            compression type is requested.
+
+    Warning:
+        ``write_h5sc`` currently only supports in-memory image tensors in
+        ``obsm['single_cell_images']``. Backed or lazily loaded image containers may
+        incur unexpected copying or fail during write.
+    """
+    if DEFAULT_NAME_SINGLE_CELL_IMAGES not in adata.obsm:
+        raise ValueError(
+            f"AnnData object must contain obsm['{DEFAULT_NAME_SINGLE_CELL_IMAGES}'] to be written as .h5sc."
+        )
+
+    images = adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
+    if len(images.shape) != 4:
+        raise ValueError(
+            f"Expected obsm['{DEFAULT_NAME_SINGLE_CELL_IMAGES}'] to have shape (N, C, H, W), got {images.shape}."
+        )
+
+    n_cells, n_channels, image_size_x, image_size_y = images.shape
+
+    if compression_type is None:
+        compression_type = getattr(images, "compression", None)
+    if compression_type is None:
+        compression_type = adata.uns.get(f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression", "gzip")
+    if compression_type not in ["gzip", "lzf"]:
+        raise ValueError("Compression needs to be lzf or gzip.")
+
+    var = adata.var.copy()
+    if "channels" in var.columns:
+        channel_names = var["channels"].astype(str).to_numpy()
+    else:
+        channel_names = var.index.astype(str).to_numpy()
+
+    if len(channel_names) != n_channels:
+        raise ValueError(
+            f"Number of var entries ({len(channel_names)}) does not match image channel count ({n_channels})."
+        )
+
+    if "channel_mapping" not in var.columns:
+        raise ValueError("AnnData.var must contain a 'channel_mapping' column to write .h5sc files.")
+
+    if var["channel_mapping"].isna().any():
+        missing_channels = channel_names[var["channel_mapping"].isna()]
+        raise ValueError(
+            f"AnnData.var['channel_mapping'] contains missing values for channel(s): {', '.join(missing_channels)}."
+        )
+
+    channel_mapping = var["channel_mapping"].astype(str).to_numpy()
+
+    if len(channel_mapping) != n_channels:
+        raise ValueError(
+            f"Number of channel_mapping entries ({len(channel_mapping)}) does not match image channel count ({n_channels})."
+        )
+
+    valid_channel_mappings = {"mask", "image_channel"}
+    invalid_channel_mappings = sorted(set(channel_mapping) - valid_channel_mappings)
+    if invalid_channel_mappings:
+        raise ValueError(
+            "AnnData.var['channel_mapping'] may only contain "
+            f"{sorted(valid_channel_mappings)}, got invalid value(s): {invalid_channel_mappings}."
+        )
+
+    n_masks = int(np.sum(channel_mapping == "mask"))
+    n_image_channels = int(np.sum(channel_mapping == "image_channel"))
+    if n_masks == 0:
+        raise ValueError("AnnData.var['channel_mapping'] must contain at least one 'mask' channel.")
+
+    adata_to_write = adata.copy()
+    del adata_to_write.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
+    if "channels" in adata_to_write.var.columns:
+        adata_to_write.var["channels"] = np.asarray(channel_names, dtype=object)
+    adata_to_write.var["channel_mapping"] = np.asarray(channel_mapping, dtype=object)
+    _normalize_anndata_strings(adata_to_write)
+
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = n_channels
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = n_masks
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = n_image_channels
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = image_size_x
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_y"] = image_size_y
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channel_names
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = channel_mapping.astype("<U15")
+    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = compression_type
+
+    adata_to_write.write(output_path)
+
+    chunks = getattr(images, "chunks", None)
+    dtype = images.dtype
+
+    with h5py.File(output_path, "a") as hf:
+        hf.create_dataset(
+            IMAGE_DATACONTAINER_NAME,
+            shape=images.shape,
+            chunks=chunks if chunks is not None else (1, 1, image_size_x, image_size_y),
+            compression=compression_type,
+            dtype=dtype,
+        )
+
+        hf[IMAGE_DATACONTAINER_NAME].attrs["encoding-type"] = "array"
+        hf[IMAGE_DATACONTAINER_NAME].attrs["encoding-version"] = "0.2.0"
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_cells"] = n_cells
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_channels"] = n_channels
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_masks"] = n_masks
+        hf[IMAGE_DATACONTAINER_NAME].attrs["n_image_channels"] = n_image_channels
+        hf[IMAGE_DATACONTAINER_NAME].attrs["image_size_x"] = image_size_x
+        hf[IMAGE_DATACONTAINER_NAME].attrs["image_size_y"] = image_size_y
+        hf[IMAGE_DATACONTAINER_NAME].attrs["channel_names"] = np.array([x.encode("utf-8") for x in channel_names])
+        hf[IMAGE_DATACONTAINER_NAME].attrs["channel_mapping"] = np.array([x.encode("utf-8") for x in channel_mapping])
+        hf[IMAGE_DATACONTAINER_NAME].attrs["compression"] = compression_type
+
+        single_cell_data_container: h5py.Dataset = hf[IMAGE_DATACONTAINER_NAME]
+        for save_index in range(n_cells):
+            single_cell_data_container[save_index] = images[save_index]
