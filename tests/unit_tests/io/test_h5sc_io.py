@@ -1,9 +1,10 @@
+import h5py
 import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
 
-from scportrait.io.h5sc import write_h5sc
+from scportrait.io.h5sc import legacy_h5_to_h5sc, read_h5sc, write_h5sc
 
 
 def _make_adata(channel_mapping: list[str] | None = None, *, include_mapping: bool = True) -> AnnData:
@@ -55,3 +56,75 @@ def test_write_h5sc_accepts_valid_channel_mapping(tmp_path):
     adata = _make_adata(["mask", "image_channel", "image_channel"])
 
     write_h5sc(adata, tmp_path / "valid.h5sc")
+
+
+def test_legacy_h5_to_h5sc_converts_channel_information_and_obs_metadata(tmp_path):
+    legacy_path = tmp_path / "legacy.h5"
+    output_path = tmp_path / "converted.h5sc"
+
+    images = np.arange(2 * 3 * 4 * 4, dtype=np.float32).reshape(2, 3, 4, 4)
+    labelled_index = np.array(
+        [
+            ["0", "101", "WT", "1.5"],
+            ["1", "102", "KO", "2.5"],
+        ],
+        dtype=object,
+    )
+
+    with h5py.File(legacy_path, "w") as handle:
+        handle.create_dataset("single_cell_data", data=images, compression="lzf")
+        handle.create_dataset("single_cell_index", data=np.array([[0, 101], [1, 102]], dtype=np.int64))
+        handle.create_dataset(
+            "single_cell_index_labelled",
+            data=labelled_index.astype("S"),
+        )
+        handle.create_dataset("label_names", data=np.array(["condition", "score"], dtype="S"))
+        handle.create_dataset(
+            "channel_information",
+            data=np.array(["dna"], dtype="S"),
+        )
+
+    legacy_h5_to_h5sc(legacy_path, output_path)
+
+    adata = read_h5sc(output_path)
+    np.testing.assert_array_equal(np.asarray(adata.obsm["single_cell_images"]), images)
+    assert adata.obs["scportrait_cell_id"].tolist() == [101, 102]
+    assert adata.obs["condition"].tolist() == ["WT", "KO"]
+    assert adata.obs["score"].tolist() == [1.5, 2.5]
+    assert adata.var["channels"].tolist() == ["seg_all_nucleus", "seg_all_cytosol", "dna"]
+    assert adata.var["channel_mapping"].tolist() == ["mask", "mask", "image_channel"]
+
+
+def test_legacy_h5_to_h5sc_inferrs_leading_masks_from_image_only_channel_information(tmp_path):
+    legacy_path = tmp_path / "legacy_image_only_channels.h5"
+    output_path = tmp_path / "converted_image_only_channels.h5sc"
+
+    images = np.ones((1, 6, 2, 2), dtype=np.float16)
+
+    with h5py.File(legacy_path, "w") as handle:
+        handle.create_dataset("single_cell_data", data=images)
+        handle.create_dataset("single_cell_index", data=np.array([[0, 7]], dtype=np.int64))
+        handle.create_dataset(
+            "channel_information",
+            data=np.array(["Alexa488", "Alexa647", "HOECHST33342", "mCherry"], dtype="S"),
+        )
+
+    legacy_h5_to_h5sc(legacy_path, output_path)
+
+    adata = read_h5sc(output_path)
+    assert adata.var["channels"].tolist() == [
+        "seg_all_nucleus",
+        "seg_all_cytosol",
+        "Alexa488",
+        "Alexa647",
+        "HOECHST33342",
+        "mCherry",
+    ]
+    assert adata.var["channel_mapping"].tolist() == [
+        "mask",
+        "mask",
+        "image_channel",
+        "image_channel",
+        "image_channel",
+        "image_channel",
+    ]
