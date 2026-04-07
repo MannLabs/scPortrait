@@ -283,12 +283,27 @@ def write_h5sc(
     """Write an AnnData object with ``obsm['single_cell_images']`` to scPortrait's `.h5sc` format.
 
     Args:
-        adata: AnnData object to write. Must contain ``obsm['single_cell_images']`` with
-            shape ``(N, C, H, W)``.
+        adata: AnnData object to write. It must contain:
+
+            - ``obsm['single_cell_images']`` with shape ``(N, C, H, W)``
+            - ``var['channels']`` or a ``var`` index whose length equals ``C``
+            - ``var['channel_mapping']`` with exactly one entry per channel
+
+            The ``channel_mapping`` column must only contain ``"mask"`` and
+            ``"image_channel"`` values, and at least one channel must be mapped as
+            ``"mask"``. The mapping is used to populate the H5SC metadata written into
+            ``uns`` and the HDF5 image container.
         output_path: Path to the output `.h5sc` file.
         compression_type: Optional compression override for the image dataset. If omitted,
             reuse the source dataset compression when available, otherwise fall back to
             metadata in ``uns`` and finally ``"gzip"``.
+
+    Raises:
+        ValueError: If ``adata.obsm['single_cell_images']`` is missing or does not have
+            shape ``(N, C, H, W)``, if channel metadata in ``adata.var`` does not match
+            the image tensor shape, if ``var['channel_mapping']`` is missing or contains
+            missing/invalid values, if no mask channel is defined, or if an unsupported
+            compression type is requested.
     """
     if DEFAULT_NAME_SINGLE_CELL_IMAGES not in adata.obsm:
         raise ValueError(
@@ -321,18 +336,34 @@ def write_h5sc(
             f"Number of var entries ({len(channel_names)}) does not match image channel count ({n_channels})."
         )
 
-    if "channel_mapping" in var.columns:
-        channel_mapping = var["channel_mapping"].astype(str).to_numpy()
-    else:
-        channel_mapping = np.array(["image_channel"] * n_channels, dtype="<U15")
+    if "channel_mapping" not in var.columns:
+        raise ValueError("AnnData.var must contain a 'channel_mapping' column to write .h5sc files.")
+
+    if var["channel_mapping"].isna().any():
+        missing_channels = channel_names[var["channel_mapping"].isna()]
+        raise ValueError(
+            f"AnnData.var['channel_mapping'] contains missing values for channel(s): {', '.join(missing_channels)}."
+        )
+
+    channel_mapping = var["channel_mapping"].astype(str).to_numpy()
 
     if len(channel_mapping) != n_channels:
         raise ValueError(
             f"Number of channel_mapping entries ({len(channel_mapping)}) does not match image channel count ({n_channels})."
         )
 
+    valid_channel_mappings = {"mask", "image_channel"}
+    invalid_channel_mappings = sorted(set(channel_mapping) - valid_channel_mappings)
+    if invalid_channel_mappings:
+        raise ValueError(
+            "AnnData.var['channel_mapping'] may only contain "
+            f"{sorted(valid_channel_mappings)}, got invalid value(s): {invalid_channel_mappings}."
+        )
+
     n_masks = int(np.sum(channel_mapping == "mask"))
     n_image_channels = int(np.sum(channel_mapping == "image_channel"))
+    if n_masks == 0:
+        raise ValueError("AnnData.var['channel_mapping'] must contain at least one 'mask' channel.")
 
     adata_to_write = adata.copy()
     del adata_to_write.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES]
