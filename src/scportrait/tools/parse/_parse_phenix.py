@@ -1000,11 +1000,18 @@ class CombinedPhenixParser(PhenixParser):
 
         self.phenix_dirs = [f"{input_path}/{phenix_dir}" for phenix_dir in sorted_phenix_dirs]
 
-    def _get_phenix_metadata(self) -> None:
-        """Read combined metadata from all phenix experiments."""
+    def _get_phenix_metadata(self) -> pd.DataFrame:
+        """Read combined metadata from all Phenix experiments.
+
+        If multiple exports contain the same logical tile within a well, the
+        earliest export is preserved after stage positions are clustered into
+        shared tile coordinates.
+        """
         ###
         # read metadata from all experiments and merge into one file
-        # note: if more than one image exists at a specific position then the first image aquired will be preserved based on the timestamps in the exported phenix measurement names
+        # note: if more than one image exists at the same logical tile position
+        # then the first image acquired will be preserved based on the timestamps
+        # in the exported phenix measurement names
         ####
 
         # define under what path the actual exported images will be found
