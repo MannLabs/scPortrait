@@ -359,14 +359,35 @@ class PhenixParser:
 
         def _cluster_axis_positions(values: np.ndarray) -> list[tuple[np.ndarray, int]]:
             """Group nearly-identical stage positions into one tile coordinate."""
+
+            def _estimate_tolerance(sorted_values: np.ndarray) -> float:
+                """Estimate a clustering tolerance that separates jitter from tile spacing."""
+                diffs = np.diff(sorted_values)
+                positive_diffs = diffs[diffs > 0]
+                if len(positive_diffs) == 0:
+                    return 0.0
+
+                step_size = float(np.quantile(positive_diffs, 0.9))
+                if step_size <= 0:
+                    return 0.0
+
+                jitter_limit = step_size * 0.2
+                jitter_diffs = positive_diffs[positive_diffs <= jitter_limit]
+                tolerance_floor = step_size * 0.01
+
+                if len(jitter_diffs) == 0:
+                    return max(step_size * 0.05, tolerance_floor)
+
+                jitter_scale = float(np.quantile(jitter_diffs, 0.95))
+                return max(jitter_scale * 2, tolerance_floor)
+
             unique_values = np.sort(np.unique(values))
             if len(unique_values) == 0:
                 return []
             if len(unique_values) == 1:
                 return [(np.array([unique_values[0]]), 0)]
 
-            diffs = np.diff(unique_values)
-            tolerance = np.median(diffs) / 10
+            tolerance = _estimate_tolerance(unique_values)
 
             clusters = [[unique_values[0]]]
             for value in unique_values[1:]:
