@@ -394,8 +394,8 @@ class PhenixParser:
         metadata = metadata.copy()
 
         # convert position values to numeric to ensure proper sorting
-        metadata["X"] = [float(x) for x in metadata.X]
-        metadata["Y"] = [float(x) for x in metadata.Y]
+        metadata["X"] = pd.to_numeric(metadata["X"], errors="raise")
+        metadata["Y"] = pd.to_numeric(metadata["Y"], errors="raise")
 
         # convert stage positions into tile coordinates relative to each well
         metadata["X_pos"] = None
@@ -475,14 +475,12 @@ class PhenixParser:
         metadata.Zstack = [str(x).zfill(2) for x in metadata.Zstack]
 
         # generate new file names
-        for i in range(metadata.shape[0]):
-            _row = metadata.loc[i, :]
+        for _row in metadata.itertuples():
             name = (
                 f"Timepoint{_row.Timepoint}_Row{_row.Row}_Well{_row.Well}_{_row.Channel}"
                 f"_zstack{_row.Zstack}_r{_row.Y_pos}_c{_row.X_pos}.tif"
             )
-            name = name
-            metadata.loc[i, "new_file_name"] = name
+            metadata.at[_row.Index, "new_file_name"] = name
 
         return metadata
 
