@@ -101,7 +101,7 @@ class _HDF5SingleCellDataset(Dataset):
             if file is not None:
                 try:
                     file.close()
-                except Exception:
+                except (OSError, RuntimeError, ValueError):
                     continue
         self._open_hdf.clear()
 
@@ -114,7 +114,7 @@ class _HDF5SingleCellDataset(Dataset):
     def __del__(self) -> None:
         try:
             self.close()
-        except Exception:
+        except (AttributeError, OSError, RuntimeError, ValueError):
             pass
 
     def _add_hdf_to_index(
@@ -632,7 +632,7 @@ class _H5ScSingleCellDataset(Dataset):
         for file in self._open_hdf:
             try:
                 file.close()
-            except Exception:
+            except (OSError, RuntimeError, ValueError):
                 continue
         self._open_hdf.clear()
         self.handle_list.clear()
@@ -646,7 +646,7 @@ class _H5ScSingleCellDataset(Dataset):
     def __del__(self) -> None:
         try:
             self.close()
-        except Exception:
+        except (AttributeError, OSError, RuntimeError, ValueError):
             pass
 
     def _add_hdf_to_index(
