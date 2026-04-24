@@ -95,6 +95,28 @@ class _HDF5SingleCellDataset(Dataset):
 
         return file
 
+    def close(self) -> None:
+        """Close all opened HDF5 file handles."""
+        for file in self._open_hdf.values():
+            if file is not None:
+                try:
+                    file.close()
+                except Exception:
+                    continue
+        self._open_hdf.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def _add_hdf_to_index(
         self,
         path: str,
@@ -113,6 +135,7 @@ class _HDF5SingleCellDataset(Dataset):
         if not os.path.exists(path):
             raise FileNotFoundError(f"File {path} not found. Please ensure that the file exists.")
 
+        input_hdf = None
         try:
             # connect to h5py file
             input_hdf = h5py.File(path, "r")
@@ -180,11 +203,12 @@ class _HDF5SingleCellDataset(Dataset):
                 for row in index_handle:
                     self.data_locator.append([label, handle_id] + list(row))
 
-            input_hdf.close()
-
         except (FileNotFoundError, KeyError, OSError) as e:
             print(f"Error: {e}")
             return
+        finally:
+            if input_hdf is not None:
+                input_hdf.close()
 
     def _add_dataset(
         self,
@@ -597,10 +621,33 @@ class _H5ScSingleCellDataset(Dataset):
 
         # initialize placeholders to store dataset information
         self.handle_list: list[Any] = []
+        self._open_hdf: list[h5py.File] = []
         self.data_locator: list[list[int]] = []
 
         self.bulk_labels: list[int] | None = None
         self.label_column: str | None = None
+
+    def close(self) -> None:
+        """Close all opened HDF5 file handles."""
+        for file in self._open_hdf:
+            try:
+                file.close()
+            except Exception:
+                continue
+        self._open_hdf.clear()
+        self.handle_list.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _add_hdf_to_index(
         self,
@@ -619,6 +666,8 @@ class _H5ScSingleCellDataset(Dataset):
         if not os.path.exists(path):
             raise FileNotFoundError(f"File {path} not found. Please ensure that the file exists.")
 
+        input_hdf = None
+        keep_file_open = False
         try:
             # connect to h5py file
             input_hdf = h5py.File(path, "r")
@@ -655,11 +704,9 @@ class _H5ScSingleCellDataset(Dataset):
                     f"Selected channels are out of bounds. Maximum available channelid is {max_channels}."
                 )
 
-            # add connection to singe cell datasets
+            # prepare entries for new dataset
             handle_id = len(self.handle_list)
-            self.handle_list.append(
-                input_hdf.get(self.IMAGE_DATACONTAINTER_NAME)
-            )  # add new dataset to list of datasets
+            new_locator_entries: list[list[Any]] = []
 
             # add single-cell labelling
             if read_label:
@@ -679,18 +726,28 @@ class _H5ScSingleCellDataset(Dataset):
                 # iterate over rows in index handle, i.e. over all cells
                 for current_target, index, cell_id in zip(label_col, index_handle, cell_id_handle, strict=True):
                     # append target, handle id, and row to data locator
-                    self.data_locator.append([current_target, handle_id, index, cell_id])
+                    new_locator_entries.append([current_target, handle_id, index, cell_id])
 
             else:
                 assert label is not None, "Label must be provided if read_label is set to False."
 
                 # generate identifiers for all single-cells
                 for index, cell_id in zip(index_handle, cell_id_handle, strict=True):
-                    self.data_locator.append([label, handle_id, index, cell_id])
+                    new_locator_entries.append([label, handle_id, index, cell_id])
+
+            self._open_hdf.append(input_hdf)
+            keep_file_open = True
+            self.handle_list.append(
+                input_hdf.get(self.IMAGE_DATACONTAINTER_NAME)
+            )  # add new dataset to list of datasets
+            self.data_locator.extend(new_locator_entries)
 
         except (FileNotFoundError, KeyError, OSError) as e:
             print(f"Error: {e}")
             return
+        finally:
+            if input_hdf is not None and not keep_file_open:
+                input_hdf.close()
 
     def _add_dataset(
         self,
