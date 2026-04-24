@@ -1,4 +1,4 @@
-from pathlib import PosixPath
+import os
 from typing import TypeVar
 
 import yaml
@@ -6,7 +6,7 @@ import yaml
 T = TypeVar("T")
 
 
-def read_config(config_path: str | PosixPath) -> dict:
+def read_config(config_path: str | os.PathLike[str]) -> dict:
     with open(config_path) as stream:
         try:
             config = yaml.safe_load(stream)
@@ -23,7 +23,7 @@ class QuotedStringDumper(yaml.SafeDumper):
 QuotedStringDumper.add_representer(str, QuotedStringDumper.represent_str)
 
 
-def write_config(config: dict, config_path: str | PosixPath) -> None:
+def write_config(config: dict, config_path: str | os.PathLike[str]) -> None:
     with open(config_path, "w") as stream:
         try:
             yaml.dump(config, stream, sort_keys=False, Dumper=QuotedStringDumper)
