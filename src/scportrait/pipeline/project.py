@@ -149,8 +149,8 @@ class Project(Logable):
 
     def __init__(
         self,
-        project_location: str,
-        config_path: str = None,
+        project_location: str | os.PathLike[str],
+        config_path: str | os.PathLike[str] | None = None,
         segmentation_f=None,
         extraction_f=None,
         featurization_f=None,
@@ -160,8 +160,8 @@ class Project(Logable):
     ):
         """
         Args:
-            project_location (str): Path to the project directory.
-            config_path (str): Path to the config file.
+            project_location (str | os.PathLike[str]): Path to the project directory.
+            config_path (str | os.PathLike[str]): Path to the config file.
             segmentation_f (optional): Segmentation method to be used for the project.
             extraction_f (optional): Extraction method to be used for the project.
             featurization_f (optional): Featurization method to be used for the project.
@@ -253,12 +253,12 @@ class Project(Logable):
 
     ##### Setup Functions #####
 
-    def _load_config_from_file(self, file_path):
+    def _load_config_from_file(self, file_path: str | os.PathLike[str]) -> None:
         """
         Loads config from file and writes it to self.config
 
         Args:
-            file_path (str): Path to the config.yml file that should be loaded.
+            file_path (str | os.PathLike[str]): Path to the config.yml file that should be loaded.
         """
         self.log(f"Loading config from {file_path}")
 
@@ -271,11 +271,11 @@ class Project(Logable):
         self.config = config_dict
         write_config(self.config, os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME))
 
-    def _get_config_file(self, config_path: str | None = None) -> None:
+    def _get_config_file(self, config_path: str | os.PathLike[str] | None = None) -> None:
         """Load the config file for the project. If no config file is passed the default config file in the project directory is loaded.
 
         Args:
-            config_path (str, optional): Path to the config file. Default is ``None``.
+            config_path (str | os.PathLike[str], optional): Path to the config file. Default is ``None``.
 
         Returns:
             None: the config dictionary project.config is updated.
