@@ -7,7 +7,6 @@ import shutil
 import warnings
 from contextlib import redirect_stdout
 from functools import partial as func_partial
-from pathlib import PosixPath
 from typing import TYPE_CHECKING
 
 import h5py
@@ -157,7 +156,7 @@ class _FeaturizationBase(ProcessingStep):
         """Extract relevant metadata from single-cell image file(s).
         Will ensure that metadata that must be consistent across files is consistent.
         """
-        if isinstance(self.extraction_file, str | PosixPath):
+        if isinstance(self.extraction_file, (str, os.PathLike)):
             with h5py.File(self.extraction_file, "r") as f:
                 metadata: h5py.Dataset = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
                 self.n_masks = metadata["n_masks"][()]
@@ -786,7 +785,7 @@ class _FeaturizationBase(ProcessingStep):
         else:
             return None
 
-    def _write_results_csv(self, results: pd.DataFrame, path: str | PosixPath) -> None:
+    def _write_results_csv(self, results: pd.DataFrame, path: str | os.PathLike[str]) -> None:
         """Write results to a CSV file."""
         results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")

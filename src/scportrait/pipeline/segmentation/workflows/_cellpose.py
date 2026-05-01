@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import timeit
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -92,7 +92,7 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model_path"]
-            if isinstance(model_name, PosixPath):
+            if isinstance(model_name, os.PathLike):
                 model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
 

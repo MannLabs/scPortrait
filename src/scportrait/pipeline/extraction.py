@@ -7,7 +7,6 @@ import sys
 import time
 import timeit
 from functools import partial as func_partial
-from pathlib import PosixPath
 from typing import TypeAlias
 
 import h5py
@@ -192,7 +191,7 @@ class HDF5CellExtraction(ProcessingStep):
 
             self.norm_function = min_max
 
-    def _get_output_path(self) -> str | PosixPath:
+    def _get_output_path(self) -> str | os.PathLike[str]:
         """Get the output path for the extraction results."""
         return self.extraction_data_directory
 

@@ -13,12 +13,17 @@ import sys
 import warnings
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from pathlib import PosixPath
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from tifffile import imread, imwrite
 from tqdm.auto import tqdm
+
+from scportrait._utils.paths import normalize_path
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _get_child_name(elem):
@@ -32,7 +37,7 @@ class PhenixParser:
 
     def __init__(
         self,
-        experiment_dir: str | PosixPath,
+        experiment_dir: str | os.PathLike[str],
         flatfield_exported: bool = True,
         use_symlinks: bool = True,
         compress_rows: bool = False,
@@ -48,7 +53,7 @@ class PhenixParser:
             compress_cols: Whether to merge all wells into a single parsed column.
             overwrite: Whether to overwrite existing files during the parsing process.
         """
-        self.experiment_dir = experiment_dir
+        self.experiment_dir = normalize_path(experiment_dir)
         self.export_symlinks = use_symlinks
         self.flatfield_status = flatfield_exported
         self.compress_rows = compress_rows
@@ -69,9 +74,9 @@ class PhenixParser:
         self.channel_lookup = self._get_channel_metadata(self.xml_path)
         self.metadata: None | pd.DataFrame = None
         self.missing_images_copy: list[str] = []
-        self.outdirs: dict[str, str] = {}
+        self.outdirs: dict[str, Path] = {}
 
-    def _get_xml_path(self) -> str | PosixPath:
+    def _get_xml_path(self) -> str | os.PathLike[str]:
         """Automatically gets the path to the XML file containing metadata."""
 
         # directory depends on if flatfield images were exported or not
@@ -80,33 +85,33 @@ class PhenixParser:
         if self.flatfield_status:
             index_file_names = ["Index.xml", "Index.ref.xml"]
             for index_file_name in index_file_names:
-                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
-                if os.path.isfile(index_file):
+                index_file = self.experiment_dir / "Images" / index_file_name
+                if index_file.is_file():
                     break
         else:
             index_file_names = ["Index.xml", "Index.idx.xml"]
             for index_file_name in index_file_names:
-                index_file = os.path.join(self.experiment_dir, "Images", index_file_name)
-                if os.path.isfile(index_file):
+                index_file = self.experiment_dir / "Images" / index_file_name
+                if index_file.is_file():
                     break
 
         # perform sanity check if file exists else exit
-        if not os.path.isfile(index_file):
+        if not index_file.is_file():
             sys.exit(f"Can not find index file at path: {index_file}")
 
         return index_file
 
-    def _get_input_dir(self) -> str | PosixPath:
+    def _get_input_dir(self) -> str | os.PathLike[str]:
         """Automatically get the subfolder where the exported image files are located."""
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
         if self.flatfield_status:
-            input_dir = os.path.join(self.experiment_dir, "Images", "flex")
+            input_dir = self.experiment_dir / "Images" / "flex"
         else:
-            input_dir = os.path.join(self.experiment_dir, "Images")
+            input_dir = self.experiment_dir / "Images"
 
         # perform sanity check if file exists else exit
-        if not os.path.isdir(input_dir):
+        if not input_dir.is_dir():
             sys.exit(f"Can not find directory containing images to parse: {input_dir}")
 
         return input_dir
@@ -118,13 +123,13 @@ class PhenixParser:
             name: Name of the output directory.
         """
 
-        self.outdirs[name] = f"{self.experiment_dir}/{name}"
+        self.outdirs[name] = self.experiment_dir / name
 
         # if output directory did not exist create it
-        if not os.path.isdir(self.outdirs[name]):
-            os.makedirs(self.outdirs[name])
+        if not self.outdirs[name].is_dir():
+            self.outdirs[name].mkdir(parents=True, exist_ok=True)
 
-    def _get_channel_metadata(self, xml_path: str | PosixPath) -> pd.DataFrame:
+    def _get_channel_metadata(self, xml_path: str | os.PathLike[str]) -> pd.DataFrame:
         """Parse channel metadata from the exported Phenix index XML.
 
         Args:
@@ -133,7 +138,7 @@ class PhenixParser:
         Returns:
             A lookup table for channel names and IDs.
         """
-        index_file = xml_path
+        index_file = normalize_path(xml_path)
 
         # Read and parse the XML file
         with open(index_file) as f:
@@ -162,15 +167,16 @@ class PhenixParser:
         print(lookup, "\n")
 
         # Save lookup file to csv
-        lookup.to_csv(f"{self.experiment_dir}/channel_lookuptable.csv")
-        print(f"Channel Lookup table saved to file at {self.experiment_dir}/channel_lookuptable.csv\n")
+        lookup_path = self.experiment_dir / "channel_lookuptable.csv"
+        lookup.to_csv(lookup_path)
+        print(f"Channel Lookup table saved to file at {lookup_path}\n")
 
         # Set channel names
         self.channel_names = channel_names
 
         return lookup
 
-    def _read_phenix_xml(self, xml_path: str | PosixPath) -> pd.DataFrame:
+    def _read_phenix_xml(self, xml_path: str | os.PathLike[str]) -> pd.DataFrame:
         """Read and parse the XML file containing metadata from a Phenix experiment.
 
         Args:
@@ -195,7 +201,7 @@ class PhenixParser:
         url = []
 
         # extract information from XML file
-        tree = ET.parse(xml_path)
+        tree = ET.parse(normalize_path(xml_path))
         root = tree.getroot()
 
         # get Harmony Version number
@@ -311,8 +317,9 @@ class PhenixParser:
             _image_names = [f"flex_{x}" for x in image_names]
             status = False
             for img in _image_names:
-                path = os.path.join(self.image_dir, img)
-                if os.path.exists(path):
+                image_dir: Path = normalize_path(self.image_dir)
+                path = image_dir / img
+                if path.exists():
                     status = True
                     break
             if status:
@@ -625,8 +632,8 @@ class PhenixParser:
             # get size of missing images that need to be replaced
             image = None
             for source, file in zip(metadata["source"], metadata["filename"], strict=True):
-                path = os.path.join(source, file)
-                if os.path.exists(path):
+                path = normalize_path(source) / file
+                if path.exists():
                     image = imread(path)
                     break
             if image is None:
@@ -657,7 +664,7 @@ class PhenixParser:
         if len(self.missing_images) > 0:
             for missing_image in self.missing_images:
                 print(f"Creating black image with name: {missing_image}")
-                imwrite(os.path.join(self.outdirs["parsed_images"], missing_image), self.black_image)
+                imwrite(self.outdirs["parsed_images"] / missing_image, self.black_image)
 
             print(
                 f"All missing images successfully replaced with black images of the dimension {self.black_image.shape}"
@@ -669,13 +676,15 @@ class PhenixParser:
 
             def copyfunction(input, output):
                 try:
+                    input = normalize_path(input)
+                    output = normalize_path(output)
                     if platform.system() == "Windows":
                         warnings.warn(
                             "\n\nWindows detected as platform. Symlinks cannot be used on Windows. Using hard links instead.\n\n",
                             stacklevel=2,
                         )
                         # On Windows, use hard links when symlinks are requested
-                        if not os.path.exists(output):
+                        if not output.exists():
                             os.link(input, output)
                     else:
                         # Unix symlink behavior
@@ -687,8 +696,10 @@ class PhenixParser:
 
             def copyfunction(input, output):
                 try:
+                    input = normalize_path(input)
+                    output = normalize_path(output)
                     # Create destination directory if it doesn't exist
-                    os.makedirs(os.path.dirname(output), exist_ok=True)
+                    output.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(input, output)
                 except OSError as e:
                     print("Error: ", e)
@@ -719,13 +730,13 @@ class PhenixParser:
             desc="Copying files",
         ):
             # define old and new paths for copy process
-            old_path = os.path.join(source, old)
-            new_path = os.path.join(dest, new)
+            old_path = normalize_path(source) / old
+            new_path = normalize_path(dest) / new
             # check if old path exists
-            if os.path.exists(old_path):
-                if os.path.exists(new_path):
+            if old_path.exists():
+                if new_path.exists():
                     if self.overwrite:
-                        os.remove(new_path)
+                        new_path.unlink()
                         self.copyfunction(old_path, new_path)
                     else:
                         self.copyfunction(old_path, new_path)
@@ -741,8 +752,9 @@ class PhenixParser:
 
     def _save_metadata(self, metadata: pd.DataFrame) -> None:
         """Save metadata used to parse images to a csv file."""
-        metadata.to_csv(f"{self.experiment_dir}/metadata_image_parsing.csv")
-        print(f"Metadata used to parse images saved to file {self.experiment_dir}/metadata_image_parsing.csv")
+        metadata_path = self.experiment_dir / "metadata_image_parsing.csv"
+        metadata.to_csv(metadata_path)
+        print(f"Metadata used to parse images saved to file {metadata_path}")
 
     def parse(self, check_missing_tiles: bool = True) -> None:
         """Complete parsing of the Phenix experiment.
@@ -804,12 +816,12 @@ class PhenixParser:
             print("\t Tiles: ", tiles)  # only print if these folders should be created
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(self.outdirs["sorted_wells"], f"row{row}_well{well}", tile)
+                str(self.outdirs["sorted_wells"] / f"row{row}_well{well}" / tile)
                 for row, well, tile in zip(metadata.Row, metadata.Well, metadata.tiles, strict=False)
             ]
         else:
             metadata["dest"] = [
-                os.path.join(self.outdirs["sorted_wells"], f"row{row}_well{well}")
+                str(self.outdirs["sorted_wells"] / f"row{row}_well{well}")
                 for row, well in zip(metadata.Row, metadata.Well, strict=False)
             ]
 
@@ -817,8 +829,7 @@ class PhenixParser:
         unique_dirs = list(set(metadata.dest.to_list()))
 
         for _dir in unique_dirs:
-            if not os.path.exists(_dir):
-                os.makedirs(_dir)
+            normalize_path(_dir).mkdir(parents=True, exist_ok=True)
 
         # copy/link the images to their new names
         self._copy_files(metadata=metadata)
@@ -860,20 +871,17 @@ class PhenixParser:
         if sort_wells:
             # update metadata to include destination for each tile
             metadata["dest"] = [
-                os.path.join(self.outdirs["sorted_timepoints"], timepoint, f"{row}_{well}")
+                str(self.outdirs["sorted_timepoints"] / timepoint / f"{row}_{well}")
                 for row, well, timepoint in zip(metadata.Row, metadata.Well, metadata.Timepoint, strict=False)
             ]
         else:
-            metadata["dest"] = [
-                os.path.join(self.outdirs["sorted_timepoints"], timepoint) for timepoint in metadata.Timepoint
-            ]
+            metadata["dest"] = [str(self.outdirs["sorted_timepoints"] / timepoint) for timepoint in metadata.Timepoint]
 
         # unique directories for each tile
         unique_dirs = list(set(metadata.dest.to_list()))
 
         for _dir in unique_dirs:
-            if not os.path.exists(_dir):
-                os.makedirs(_dir)
+            normalize_path(_dir).mkdir(parents=True, exist_ok=True)
 
         # copy/link the images to their new names
         self._copy_files(metadata=metadata)
@@ -912,7 +920,7 @@ class CombinedPhenixParser(PhenixParser):
 
     def __init__(
         self,
-        experiment_dir: str,
+        experiment_dir: str | os.PathLike[str],
         flatfield_exported: bool = True,
         use_symlinks: bool = True,
         compress_rows: bool = False,
@@ -928,7 +936,7 @@ class CombinedPhenixParser(PhenixParser):
             compress_cols: Whether to merge all wells into a single parsed column.
             overwrite: Whether to overwrite existing files during the parsing process.
         """
-        self.experiment_dir = experiment_dir
+        self.experiment_dir = normalize_path(experiment_dir)
         self.get_datasets_to_combine()
         super().__init__(
             experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
@@ -942,18 +950,18 @@ class CombinedPhenixParser(PhenixParser):
         if self.flatfield_status:
             index_file_names = ["Index.xml", "Index.ref.xml"]
             for index_file_name in index_file_names:
-                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
-                if os.path.isfile(index_file):
+                index_file = self.phenix_dirs[0] / "Images" / index_file_name
+                if index_file.is_file():
                     break
         else:
             index_file_names = ["Index.xml", "Index.idx.xml"]
             for index_file_name in index_file_names:
-                index_file = os.path.join(self.phenix_dirs[0], "Images", index_file_name)
-                if os.path.isfile(index_file):
+                index_file = self.phenix_dirs[0] / "Images" / index_file_name
+                if index_file.is_file():
                     break
 
         # perform sanity check if file exists else exit
-        if not os.path.isfile(index_file):
+        if not index_file.is_file():
             sys.exit(f"Can not find index file at path: {index_file}")
 
         return index_file
@@ -965,22 +973,22 @@ class CombinedPhenixParser(PhenixParser):
         # these generated folder structures are hard coded during phenix export, do not change
         # for the combined exported the first experiment is always used (they should have the same exported XML file anyways for reading)
         if self.flatfield_status:
-            input_dir = f"{self.phenix_dirs[0]}/Images/flex"
+            input_dir = self.phenix_dirs[0] / "Images" / "flex"
         else:
-            input_dir = f"{self.phenix_dirs[0]}/Images"
+            input_dir = self.phenix_dirs[0] / "Images"
 
         # perform sanity check if file exists else exit
-        if not os.path.isdir(input_dir):
+        if not input_dir.is_dir():
             sys.exit(f"Can not find directory containing images to parse: {input_dir}")
 
         return input_dir
 
     def get_datasets_to_combine(self) -> None:
         """Get all Phenix experiments from subdirectories that should be combined."""
-        input_path = f"{self.experiment_dir}/{self.directory_combined_measurements}"
+        input_path = self.experiment_dir / self.directory_combined_measurements
 
         # get phenix directories that need to be combined together
-        phenix_dirs = os.listdir(input_path)
+        phenix_dirs = [entry.name for entry in input_path.iterdir() if entry.is_dir()]
 
         # only get the phenix dirs that match the pattern of a phenix experiment (ie they contain a time stamp)
         pattern = r"\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}"
@@ -996,7 +1004,7 @@ class CombinedPhenixParser(PhenixParser):
         # Sort the file names based on the extracted date and time information
         sorted_phenix_dirs = [file_name for _, file_name in sorted(zip(dates_times, phenix_dirs, strict=False))]
 
-        self.phenix_dirs = [f"{input_path}/{phenix_dir}" for phenix_dir in sorted_phenix_dirs]
+        self.phenix_dirs = [input_path / phenix_dir for phenix_dir in sorted_phenix_dirs]
 
     def _get_phenix_metadata(self) -> pd.DataFrame:
         """Read combined metadata from all Phenix experiments.
@@ -1024,8 +1032,8 @@ class CombinedPhenixParser(PhenixParser):
         # read all metadata
         metadata = {}
         for phenix_dir in self.phenix_dirs:
-            df = self._read_phenix_xml(f"{phenix_dir}/{xml_path}")
-            df.loc[:, "source"] = f"{phenix_dir}/{append_string}"  # update source with the correct strings
+            df = self._read_phenix_xml(phenix_dir / xml_path)
+            df.loc[:, "source"] = str(phenix_dir / append_string)  # update source with the correct strings
             metadata[phenix_dir] = df
 
         metadata_combined = pd.concat(metadata.values(), ignore_index=True)

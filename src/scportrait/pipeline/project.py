@@ -16,7 +16,6 @@ import re
 import shutil
 import tempfile
 import warnings
-from pathlib import PosixPath
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -172,10 +171,10 @@ class Project(Logable):
         """
         super().__init__(directory=project_location, debug=debug)
 
-        self.project_location = project_location
+        self.project_location = self.directory
         self.overwrite = overwrite
         self.config: None | dict = None
-        if config_path is None or isinstance(config_path, str | PosixPath):
+        if config_path is None or isinstance(config_path, (str, os.PathLike)):
             self._get_config_file(config_path)
         elif isinstance(config_path, dict):
             self._load_config_from_dict(config_path)
