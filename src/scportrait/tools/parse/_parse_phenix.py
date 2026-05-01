@@ -1030,9 +1030,10 @@ class CombinedPhenixParser(PhenixParser):
         # read all metadata
         metadata = {}
         for phenix_dir in self.phenix_dirs:
-            df = self._read_phenix_xml(phenix_dir / xml_path)
-            df.loc[:, "source"] = str(phenix_dir / append_string)  # update source with the correct strings
-            metadata[phenix_dir] = df
+            normalized_phenix_dir = normalize_path(phenix_dir)
+            df = self._read_phenix_xml(normalized_phenix_dir / xml_path)
+            df.loc[:, "source"] = str(normalized_phenix_dir / append_string)  # update source with the correct strings
+            metadata[str(normalized_phenix_dir)] = df
 
         metadata_combined = pd.concat(metadata.values(), ignore_index=True)
         metadata_combined = self._assign_tile_positions(metadata_combined)
