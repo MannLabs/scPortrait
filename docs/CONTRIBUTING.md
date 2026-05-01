@@ -190,6 +190,37 @@ to integrate the changes into yours.
 
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
+### Path handling
+
+For filesystem APIs, prefer accepting `str | os.PathLike[str]`.
+
+- Use `os.PathLike[str]` in type hints, but use unparameterized `os.PathLike` in `isinstance(...)` checks at runtime.
+- If a function only passes the path through to `open`, `os.path`, `h5py`, or similar libraries, keep the input typed as `str | os.PathLike[str]`.
+- If a function needs path methods such as `.parent`, `.suffix`, or `.name`, normalize first with `Path(...)` inside the function.
+- Reuse the shared helpers in `scportrait._utils.paths` instead of re-implementing local path helpers.
+- Use `normalize_path(...)` when you need a concrete `Path` for internal path operations.
+- Use `path_suffix(...)` when you need a normalized suffix without the leading dot.
+- additional helpers can be added to `scportrait._utils.paths` as needed, but try to avoid adding new dependencies (e.g., `pathlib2`) for simple path operations.
+
+Example:
+
+```python
+from os import PathLike
+
+from scportrait._utils.paths import normalize_path, path_suffix
+
+def read_config(path: str | PathLike[str]) -> dict:
+    with open(path) as stream:
+        ...
+
+def get_output_dir(path: str | PathLike[str]):
+    normalized = normalize_path(path)
+    return normalized.parent
+
+def is_hdf5(path: str | PathLike[str]) -> bool:
+    return path_suffix(path) in {"h5", "hdf5"}
+```
+
 ## Writing documentation
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
