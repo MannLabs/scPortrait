@@ -16,7 +16,6 @@ import re
 import shutil
 import tempfile
 import warnings
-from pathlib import PosixPath
 from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
@@ -83,11 +82,11 @@ class Project(Logable):
     Extraction Methods should be based on :func:`HDF5CellExtraction <scportrait.pipeline.extraction.HDF5CellExtraction>`.
 
     Attributes:
-        config (dict): Dictionary containing the config file.
-        nuc_seg_name (str): Name of the nucleus segmentation object.
-        cyto_seg_name (str): Name of the cytosol segmentation object.
-        sdata_path (str): Path to the spatialdata object.
-        filehander (sdata_filehandler): Filehandler for the spatialdata object which manages all calls or updates to the spatialdata object.
+        config: Dictionary containing the config file.
+        nuc_seg_name: Name of the nucleus segmentation object.
+        cyto_seg_name: Name of the cytosol segmentation object.
+        sdata_path: Path to the spatialdata object.
+        filehander: Filehandler for the spatialdata object which manages all calls or updates to the spatialdata object.
     """
 
     # define cleanup behaviour
@@ -150,8 +149,8 @@ class Project(Logable):
 
     def __init__(
         self,
-        project_location: str,
-        config_path: str = None,
+        project_location: str | os.PathLike[str],
+        config_path: str | os.PathLike[str] | None = None,
         segmentation_f=None,
         extraction_f=None,
         featurization_f=None,
@@ -161,21 +160,21 @@ class Project(Logable):
     ):
         """
         Args:
-            project_location (str): Path to the project directory.
-            config_path (str): Path to the config file.
-            segmentation_f (optional): Segmentation method to be used for the project.
-            extraction_f (optional): Extraction method to be used for the project.
-            featurization_f (optional): Featurization method to be used for the project.
-            selection_f (optional): Selection method to be used for the project.
-            overwrite (optional): If set to ``True``, will overwrite existing files in the project directory. Default is ``False``.
-            debug (optional): If set to ``True``, will print additional debug messages/plots. Default is ``False``.
+            project_location: Path to the project directory.
+            config_path: Path to the config file.
+            segmentation_f: Segmentation method to be used for the project.
+            extraction_f: Extraction method to be used for the project.
+            featurization_f: Featurization method to be used for the project.
+            selection_f: Selection method to be used for the project.
+            overwrite: If set to ``True``, will overwrite existing files in the project directory. Default is ``False``.
+            debug: If set to ``True``, will print additional debug messages/plots. Default is ``False``.
         """
         super().__init__(directory=project_location, debug=debug)
 
-        self.project_location = project_location
+        self.project_location = self.directory
         self.overwrite = overwrite
         self.config: None | dict = None
-        if config_path is None or isinstance(config_path, str | PosixPath):
+        if config_path is None or isinstance(config_path, (str, os.PathLike)):
             self._get_config_file(config_path)
         elif isinstance(config_path, dict):
             self._load_config_from_dict(config_path)
@@ -254,12 +253,12 @@ class Project(Logable):
 
     ##### Setup Functions #####
 
-    def _load_config_from_file(self, file_path):
+    def _load_config_from_file(self, file_path: str | os.PathLike[str]) -> None:
         """
         Loads config from file and writes it to self.config
 
         Args:
-            file_path (str): Path to the config.yml file that should be loaded.
+            file_path: Path to the config.yml file that should be loaded.
         """
         self.log(f"Loading config from {file_path}")
 
@@ -272,14 +271,14 @@ class Project(Logable):
         self.config = config_dict
         write_config(self.config, os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME))
 
-    def _get_config_file(self, config_path: str | None = None) -> None:
+    def _get_config_file(self, config_path: str | os.PathLike[str] | None = None) -> None:
         """Load the config file for the project. If no config file is passed the default config file in the project directory is loaded.
 
         Args:
-            config_path (str, optional): Path to the config file. Default is ``None``.
+            config_path: Path to the config file. Default is ``None``.
 
         Returns:
-            None: the config dictionary project.config is updated.
+            The config dictionary ``project.config`` is updated.
         """
         # load config file
         self.config_path = os.path.join(self.project_location, self.DEFAULT_CONFIG_NAME)
@@ -314,10 +313,10 @@ class Project(Logable):
         """Configure the segmentation method for the project.
 
         Args:
-            segmentation_f (Callable): Segmentation method to be used for the project.
+            segmentation_f: Segmentation method to be used for the project.
 
         Returns:
-            None: the segmentation method is updated in the project object.
+            The segmentation method is updated in the project object.
         """
         if segmentation_f is not None:
             if segmentation_f.__name__ not in self.config:
@@ -348,10 +347,10 @@ class Project(Logable):
         """Configure the extraction method for the project.
 
         Args:
-            extraction_f (Callable): Extraction method to be used for the project.
+            extraction_f: Extraction method to be used for the project.
 
         Returns:
-            None: the extraction method is updated in the project object.
+            The extraction method is updated in the project object.
         """
 
         if extraction_f is not None:
@@ -380,10 +379,10 @@ class Project(Logable):
         """Configure the featurization method for the project.
 
         Args:
-            featurization_f (Callable): Featurization method to be used for the project.
+            featurization_f: Featurization method to be used for the project.
 
         Returns:
-            None: the featurization method is updated in the project object.
+            The featurization method is updated in the project object.
         """
         if featurization_f is not None:
             if featurization_f.__name__ not in self.config:
@@ -411,7 +410,7 @@ class Project(Logable):
             featurization_f : The featurization method that should be used for the project.
 
         Returns:
-            None : the featurization method is updated in the project object.
+            The featurization method is updated in the project object.
 
         Examples:
             Update the featurization method for a project::
@@ -427,10 +426,10 @@ class Project(Logable):
         """Configure the selection method for the project.
 
         Args:
-            selection_f (Callable): Selection method to be used for the project.
+            selection_f: Selection method to be used for the project.
 
         Returns:
-            None: the selection method is updated in the project object.
+            The selection method is updated in the project object.
         """
         if self.selection_f is not None:
             if selection_f.__name__ not in self.config:
@@ -490,10 +489,10 @@ class Project(Logable):
         """Check if the image dtype is the default image dtype.
 
         Args:
-            image (np.ndarray): Image to be checked.
+            image: Image to be checked.
 
         Returns:
-            None: If the image dtype is the default image dtype, no action is taken.
+            If the image dtype is the default image dtype, no action is taken.
 
         Raises:
             Warning: If the image dtype is not the default image dtype.
@@ -513,10 +512,10 @@ class Project(Logable):
         Create a temporary directory in the specified directory with the name of the class.
 
         Args:
-            path (str): Path to the directory where the temporary directory should be created.
+            path: Path to the directory where the temporary directory should be created.
 
         Returns:
-            None: The temporary directory is created in the specified directory. The path to the temporary directory is stored in the project object as self._tmp_dir_path.
+            The temporary directory is created in the specified directory. The path to the temporary directory is stored in the project object as ``self._tmp_dir_path``.
 
         """
 
@@ -1063,14 +1062,14 @@ class Project(Logable):
         In the array the channels should be specified in the following order: nucleus, cytosol other channels.
 
         Args:
-            array (np.ndarray): Input image as a numpy array.
+            array: Input image as a numpy array.
             channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
-            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
                 This transform is also applied to the channel names.
         Returns:
-            None: Image is written to the project associated sdata object.
+            Image is written to the project associated sdata object.
 
             The input image can be accessed using the project object::
 
@@ -1139,17 +1138,17 @@ class Project(Logable):
             file_paths: List containing paths to each channel tiff file, like
                 ``["path1/img.tiff", "path2/img.tiff", "path3/img.tiff"]``
             channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
-            crop (None, List[Tuple], optional): When set, it can be used to crop the input image.
+            crop: When set, it can be used to crop the input image.
                 The first element refers to the first dimension of the image and so on.
                 For example use ``[(0,1000),(0,2000)]`` to crop the image to 1000 px height and 2000 px width from the top left corner.
-            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
                 This transform is also applied to the channel names.
             cache: path to a directory where the temporary files should be stored. Default is ``None`` then the current working directory will be used.
 
         Returns:
-            None: Image is written to the project associated sdata object.
+            Image is written to the project associated sdata object.
 
             The input image can be accessed using the project object::
 
@@ -1297,13 +1296,13 @@ class Project(Logable):
 
         Args:
             ome_zarr_path: Path to the ome-zarr file.
-            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             remap: List of integers that can be used to shuffle the order of the channels. For example ``[1, 0, 2]`` to invert the first two channels. Default is ``None`` in which case no reordering is performed.
                 This transform is also applied to the channel names.
 
         Returns:
-            None: Image is written to the project associated sdata object.
+            Image is written to the project associated sdata object.
 
             The input image can be accessed using the project object::
 
@@ -1368,11 +1367,11 @@ class Project(Logable):
         Args:
             dask_array: Dask array containing the input image.
             channel_names: List of channel names. Default is ``["channel_0", "channel_1", ...]``.
-            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
 
         Returns:
-            None: Image is written to the project associated sdata object.
+            Image is written to the project associated sdata object.
 
             The input image can be accessed using the project object::
 
@@ -1433,13 +1432,13 @@ class Project(Logable):
             nucleus_segmentation_name: Name of the element in the spatial data object containing the nucleus segmentation mask. Default is ``None``.
             cytosol_segmentation_name: Name of the element in the spatial data object containing the cytosol segmentation mask. Default is ``None``.
             cell_id_identifier: column of annotating tables that contain the values that match a segmentation mask. If not provided it will assume this column carries the same name as the segmentation mask before parsing.
-            overwrite (bool, None, optional): If set to ``None``, will read the overwrite value from the associated project.
+            overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading.
             keep_all: If set to ``True``, will keep all existing elements in the sdata object in addition to renaming the desired ones. Default is ``True``.
             remove_duplicates: If keep_all and remove_duplicates is True then only one copy of the spatialdata elements selected for use with scportrait processing steps will be kept. Otherwise, the element will be saved both under the original as well as the new name.
 
         Returns:
-            None: Image is written to the project associated sdata object and self.sdata is updated.
+            Image is written to the project associated sdata object and ``self.sdata`` is updated.
         """
 
         # setup overwrite
@@ -1651,7 +1650,7 @@ class Project(Logable):
             output_folder_name: can be set to override the default output folder location.
 
         Returns:
-            None: Single-cell images are written to HDF5 files in the project associated extraction directory. File path can be accessed via ``project.extraction_f.output_path``.
+            Single-cell images are written to HDF5 files in the project associated extraction directory. The file path can be accessed via ``project.extraction_f.output_path``.
         """
         if self.extraction_f is None:
             raise ValueError("No extraction method defined")

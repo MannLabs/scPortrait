@@ -7,7 +7,6 @@ import shutil
 import warnings
 from contextlib import redirect_stdout
 from functools import partial as func_partial
-from pathlib import PosixPath
 from typing import TYPE_CHECKING
 
 import h5py
@@ -25,7 +24,7 @@ from scportrait.tools.ml.datasets import H5ScSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from dask.dataframe.core import DataFrame as da_DataFrame
 
@@ -157,7 +156,7 @@ class _FeaturizationBase(ProcessingStep):
         """Extract relevant metadata from single-cell image file(s).
         Will ensure that metadata that must be consistent across files is consistent.
         """
-        if isinstance(self.extraction_file, str | PosixPath):
+        if isinstance(self.extraction_file, (str, os.PathLike)):
             with h5py.File(self.extraction_file, "r") as f:
                 metadata: h5py.Dataset = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
                 self.n_masks = metadata["n_masks"][()]
@@ -314,7 +313,11 @@ class _FeaturizationBase(ProcessingStep):
             self.inference_device = self._detect_automatic_inference_device()
             self.log(f"Automatically configured inference device to {self.inference_device}")
 
-    def _general_setup(self, dataset_paths: str | list[str], return_results: bool = False) -> None:
+    def _general_setup(
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        return_results: bool = False,
+    ) -> None:
         """Helper function to execute all setup functions that are common to all featurization steps.
 
         Args:
@@ -545,7 +548,7 @@ class _FeaturizationBase(ProcessingStep):
 
     def generate_dataloader(
         self,
-        dataset_paths: str | list[str],
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
         dataset_labels: int | list[int] = 0,
         selected_transforms: transforms.Compose = transforms.Compose([]),
         size: int = 0,
@@ -576,18 +579,17 @@ class _FeaturizationBase(ProcessingStep):
             self.log(f"Expected image size is set to {self.expected_imagesize}. Resizing images to this size.")
             t = transforms.Compose([t, transforms.Resize(self.expected_imagesize)])
 
-        if isinstance(dataset_paths, list):
-            assert isinstance(dataset_labels, list), (
-                "If multiple directories are provided, multiple labels must be provided."
-            )
-            paths = dataset_paths
-            dataset_labels = dataset_labels
-        elif isinstance(dataset_paths, str):
+        if isinstance(dataset_paths, (str, os.PathLike)):
             assert isinstance(dataset_labels, int), (
                 "If only one directory is provided, only one label must be provided."
             )
             paths = [dataset_paths]
             dataset_labels = [dataset_labels]
+        else:
+            assert isinstance(dataset_labels, list), (
+                "If multiple directories are provided, multiple labels must be provided."
+            )
+            paths = list(dataset_paths)
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -786,7 +788,7 @@ class _FeaturizationBase(ProcessingStep):
         else:
             return None
 
-    def _write_results_csv(self, results: pd.DataFrame, path: str | PosixPath) -> None:
+    def _write_results_csv(self, results: pd.DataFrame, path: str | os.PathLike[str]) -> None:
         """Write results to a CSV file."""
         results.to_csv(path, index=False)
         self.log(f"Results saved to file: {path}")
@@ -1007,7 +1009,11 @@ class MLClusterClassifier(_FeaturizationBase):
         else:
             self.transforms = transforms.Compose([])  # default is no transforms
 
-    def _setup(self, dataset_paths: str | list[str], return_results: bool) -> None:
+    def _setup(
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        return_results: bool,
+    ) -> None:
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._get_model_specs()
         self._get_network_dir()
@@ -1029,7 +1035,7 @@ class MLClusterClassifier(_FeaturizationBase):
 
     def process(
         self,
-        dataset_paths: str | list[str],
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
         dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
@@ -1180,7 +1186,7 @@ class EnsembleClassifier(_FeaturizationBase):
         memory_usage = self._get_gpu_memory_usage()
         self.log(f"GPU memory usage after loading models: {memory_usage}")
 
-    def _setup(self, dataset_paths: str, return_results: bool):
+    def _setup(self, dataset_paths: str | os.PathLike[str], return_results: bool):
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._get_model_specs()
         self._setup_transforms()
@@ -1195,7 +1201,11 @@ class EnsembleClassifier(_FeaturizationBase):
         self.create_temp_dir()
 
     def process(
-        self, dataset_paths: str, dataset_labels: int | list[int] = 0, size: int = 0, return_results: bool = False
+        self,
+        dataset_paths: str | os.PathLike[str],
+        dataset_labels: int | list[int] = 0,
+        size: int = 0,
+        return_results: bool = False,
     ) -> None | dict:
         """
         Args:
@@ -1393,7 +1403,11 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         column_names = [f"convnext_feature_{i}" for i in range(N_CONVNEXT_FEATURES)]
         return column_names
 
-    def _setup(self, dataset_paths: str | list[str], return_results: bool) -> None:
+    def _setup(
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        return_results: bool,
+    ) -> None:
         self._silence_warnings()
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._load_model()
@@ -1403,7 +1417,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
 
     def process(
         self,
-        dataset_paths: str | list[str],
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
         dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
@@ -1643,7 +1657,11 @@ class CellFeaturizer(_cellFeaturizerBase):
 
         self.channel_selection = None  # ensure that all images are passed to the function
 
-    def _setup(self, dataset_paths: str | list[str], return_results: bool):
+    def _setup(
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        return_results: bool,
+    ):
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._setup_transforms()
         self._get_single_cell_datafile_specs()
@@ -1651,7 +1669,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
     def process(
         self,
-        dataset_paths: str | list[str],
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
         dataset_labels: int | list[int] = 0,
         size: int = 0,
         return_results: bool = False,
@@ -1768,7 +1786,11 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
             self.channel_selection = [0, self.channel_selection]
         return
 
-    def _setup(self, dataset_paths: str | list[str], return_results: bool):
+    def _setup(
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        return_results: bool,
+    ):
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._setup_channel_selection()
         self._setup_transforms()
@@ -1776,7 +1798,11 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         self.create_temp_dir()
 
     def process(
-        self, dataset_paths: str | list[str], dataset_labels: int | list[int] = 0, size=0, return_results: bool = False
+        self,
+        dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
+        dataset_labels: int | list[int] = 0,
+        size=0,
+        return_results: bool = False,
     ) -> None | pd.DataFrame:
         """
         Args:
