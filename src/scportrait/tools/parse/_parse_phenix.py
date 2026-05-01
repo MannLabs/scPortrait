@@ -13,6 +13,7 @@ import sys
 import warnings
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,9 +22,6 @@ from tifffile import imread, imwrite
 from tqdm.auto import tqdm
 
 from scportrait._utils.paths import normalize_path
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _get_child_name(elem):
@@ -76,7 +74,7 @@ class PhenixParser:
         self.missing_images_copy: list[str] = []
         self.outdirs: dict[str, Path] = {}
 
-    def _get_xml_path(self) -> str | os.PathLike[str]:
+    def _get_xml_path(self) -> Path:
         """Automatically gets the path to the XML file containing metadata."""
 
         # directory depends on if flatfield images were exported or not
@@ -101,7 +99,7 @@ class PhenixParser:
 
         return index_file
 
-    def _get_input_dir(self) -> str | os.PathLike[str]:
+    def _get_input_dir(self) -> Path:
         """Automatically get the subfolder where the exported image files are located."""
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
@@ -942,7 +940,7 @@ class CombinedPhenixParser(PhenixParser):
             experiment_dir, flatfield_exported, use_symlinks, compress_rows, compress_cols, overwrite=overwrite
         )
 
-    def _get_xml_path(self):
+    def _get_xml_path(self) -> Path:
         """Automatically get the XML files from all phenix experiments that should be combined."""
         # directory depends on if flatfield images were exported or not
         # these generated folder structures are hard coded during phenix export, do not change
@@ -966,7 +964,7 @@ class CombinedPhenixParser(PhenixParser):
 
         return index_file
 
-    def _get_input_dir(self) -> str:
+    def _get_input_dir(self) -> Path:
         """Automatically get the subfolder where the exported image files are located."""
 
         # directory depends on if flatfield images were exported or not
