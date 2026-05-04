@@ -34,6 +34,7 @@ class _HDF5SingleCellDataset(Dataset):
     """
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
+    _CLOSED_MESSAGE = "Dataset has been closed and cannot be reused."
 
     def __init__(
         self,
@@ -79,14 +80,20 @@ class _HDF5SingleCellDataset(Dataset):
         self.paths: list[str] = []
         self._open_hdf: dict[str, h5py.File | None] = {}
         self.data_locator: list[list[int]] = []
+        self._closed = False
 
         self.bulk_labels: list[int] | None = None
         self.label_column: int | None = None
+
+    def _ensure_open(self) -> None:
+        if self._closed:
+            raise RuntimeError(self._CLOSED_MESSAGE)
 
     def get_hdf(self, path: str) -> h5py.File:
         """
         Retrieve (or lazily create) a *process-local* file handle.
         """
+        self._ensure_open()
         file = self._open_hdf.get(path)
 
         if file is None:  # first call in this process
@@ -97,6 +104,9 @@ class _HDF5SingleCellDataset(Dataset):
 
     def close(self) -> None:
         """Close all opened HDF5 file handles."""
+        if self._closed:
+            return
+
         for file in self._open_hdf.values():
             if file is not None:
                 try:
@@ -104,6 +114,7 @@ class _HDF5SingleCellDataset(Dataset):
                 except (OSError, RuntimeError, ValueError):
                     continue
         self._open_hdf.clear()
+        self._closed = True
 
     def __enter__(self):
         return self
@@ -367,6 +378,7 @@ class _HDF5SingleCellDataset(Dataset):
         self, idx: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor]:
         """get item from dataset with the specified index `idx`"""
+        self._ensure_open()
 
         if torch.is_tensor(idx):
             idx = idx.tolist()  # convert tensor to list
@@ -579,6 +591,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     IMAGE_DATACONTAINTER_NAME = IMAGE_DATACONTAINER_NAME
     INDEX_DATACONTAINER_NAME = INDEX_DATACONTAINER_NAME
+    _CLOSED_MESSAGE = "Dataset has been closed and cannot be reused."
 
     def __init__(
         self,
@@ -623,12 +636,20 @@ class _H5ScSingleCellDataset(Dataset):
         self.handle_list: list[Any] = []
         self._open_hdf: list[h5py.File] = []
         self.data_locator: list[list[int]] = []
+        self._closed = False
 
         self.bulk_labels: list[int] | None = None
         self.label_column: str | None = None
 
+    def _ensure_open(self) -> None:
+        if self._closed:
+            raise RuntimeError(self._CLOSED_MESSAGE)
+
     def close(self) -> None:
         """Close all opened HDF5 file handles."""
+        if self._closed:
+            return
+
         for file in self._open_hdf:
             try:
                 file.close()
@@ -636,6 +657,7 @@ class _H5ScSingleCellDataset(Dataset):
                 continue
         self._open_hdf.clear()
         self.handle_list.clear()
+        self._closed = True
 
     def __enter__(self):
         return self
@@ -904,6 +926,7 @@ class _H5ScSingleCellDataset(Dataset):
         self, idx: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor]:
         """get item from dataset with the specified index `idx`"""
+        self._ensure_open()
 
         if torch.is_tensor(idx):
             idx = idx.tolist()  # convert tensor to list
