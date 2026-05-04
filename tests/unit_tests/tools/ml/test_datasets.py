@@ -13,11 +13,13 @@ import pytest
 import torch
 
 from scportrait.tools.ml.datasets import (
+    H5ScSingleCellDataset,
     HDF5SingleCellDataset,
+    LabelledH5ScSingleCellDataset,
     LabelledHDF5SingleCellDataset,
     _check_type_input_list,
     _HDF5SingleCellDataset,
-)  # Adjust import path as needed
+)
 
 
 def _create_hdf5_test_file(path: str) -> None:
@@ -193,6 +195,7 @@ def test_labelled_index_list_subset(temp_hdf5_file):
 
 
 def test_hdf5_close_is_idempotent(temp_hdf5_file):
+    """Test that closing an HDF5 dataset is idempotent and terminal."""
     dataset = HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=True)
     _ = dataset[0]
     dataset.close()
@@ -204,6 +207,7 @@ def test_hdf5_close_is_idempotent(temp_hdf5_file):
 
 
 def test_hdf5_context_manager_releases_file():
+    """Test that the HDF5 dataset context manager closes the dataset on exit."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".hdf5")
     temp_file.close()
     _create_hdf5_test_file(temp_file.name)
@@ -220,9 +224,6 @@ def test_hdf5_context_manager_releases_file():
             os.remove(temp_file.name)
 
 
-# ### test h5sc
-
-
 @pytest.fixture
 def temp_h5sc_file():
     """Create a temporary H5SC (AnnData-like) HDF5 file for testing."""
@@ -234,19 +235,15 @@ def temp_h5sc_file():
         os.remove(temp_file.name)
 
 
-from scportrait.tools.ml.datasets import (
-    H5ScSingleCellDataset,
-    LabelledH5ScSingleCellDataset,
-)
-
-
 def test_h5sc_dataset_initialization(temp_h5sc_file):
+    """Test H5SC dataset initialization."""
     with H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1]) as dataset:
         assert isinstance(dataset, H5ScSingleCellDataset)
         assert len(dataset) == 100
 
 
 def test_labelled_h5sc_dataset_initialization(temp_h5sc_file):
+    """Test labelled H5SC dataset initialization."""
     with LabelledH5ScSingleCellDataset(
         dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
     ) as dataset:
@@ -255,6 +252,7 @@ def test_labelled_h5sc_dataset_initialization(temp_h5sc_file):
 
 
 def test_h5sc_get_item(temp_h5sc_file):
+    """Test retrieving an item from an H5SC dataset."""
     with H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1]) as dataset:
         item = dataset[0]
         assert len(item) == 3
@@ -264,6 +262,7 @@ def test_h5sc_get_item(temp_h5sc_file):
 
 
 def test_labelled_h5sc_get_item(temp_h5sc_file):
+    """Test retrieving an item from a labelled H5SC dataset."""
     with LabelledH5ScSingleCellDataset(
         dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
     ) as dataset:
@@ -277,6 +276,7 @@ def test_labelled_h5sc_get_item(temp_h5sc_file):
 
 
 def test_h5sc_index_list_subset(temp_h5sc_file):
+    """Test that only specified indices are loaded for H5SC datasets."""
     with H5ScSingleCellDataset(
         dir_list=[temp_h5sc_file],
         dir_labels=[0],
@@ -294,6 +294,7 @@ def test_h5sc_index_list_subset(temp_h5sc_file):
 
 
 def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
+    """Test that only specified indices are loaded for labelled H5SC datasets."""
     with LabelledH5ScSingleCellDataset(
         dir_list=[temp_h5sc_file],
         label_colum="pseudo_label",
@@ -311,6 +312,7 @@ def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
 
 
 def test_h5sc_close_is_idempotent(temp_h5sc_file):
+    """Test that closing an H5SC dataset is idempotent and terminal."""
     dataset = H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1])
     _ = dataset[0]
     dataset.close()
@@ -323,6 +325,7 @@ def test_h5sc_close_is_idempotent(temp_h5sc_file):
 
 
 def test_h5sc_context_manager_releases_file():
+    """Test that the H5SC dataset context manager closes the dataset on exit."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5sc")
     temp_file.close()
     _create_h5sc_test_file(temp_file.name)
