@@ -1,5 +1,6 @@
 import os
 from collections.abc import Callable, Iterable
+from pathlib import PosixPath
 from typing import Any
 
 import h5py
@@ -16,22 +17,8 @@ def _check_type_input_list(var):
     )
 
 
-from pathlib import PosixPath
-
-
 class _HDF5SingleCellDataset(Dataset):
-    """Base class with shared methods for loading scPortrait single cell datasets stored in HDF5 files.
-
-    Args:
-        dir_list: List of path(s) where the hdf5 files are stored. Supports specifying a path to a specific hdf5 file or directory containing hdf5 files.
-        index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
-        select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
-        transform: An optional user-defined function to apply transformations to the data. Default is None.
-        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
-            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
-            otherwise you can no longer identify the source cell returning a specific result.
-        max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
-    """
+    """Base class for loading scPortrait single-cell datasets stored in HDF5 files."""
 
     HDF_FILETYPES = ["hdf", "hf", "h5", "hdf5"]  # supported hdf5 filetypes
     _CLOSED_MESSAGE = "Dataset has been closed and cannot be reused."
@@ -45,7 +32,16 @@ class _HDF5SingleCellDataset(Dataset):
         return_id: bool = True,
         max_level: int = 5,
     ):
-        """ """
+        """Initialize the dataset index and runtime state.
+
+        Args:
+            dir_list: Paths to HDF5 files or directories containing HDF5 files.
+            index_list: Per-input lists of cell indices to include. If `None`, all cells are used.
+            select_channel: Channel index or indices to load from each cell image. If `None`, all channels are used.
+            transform: Optional transform applied to each returned tensor.
+            return_id: Whether to return the unique cell id together with the cell data.
+            max_level: Maximum directory depth to scan when an entry in `dir_list` is a directory.
+        """
         self.dir_list = dir_list
 
         if isinstance(self.dir_list[0], PosixPath):
@@ -86,6 +82,7 @@ class _HDF5SingleCellDataset(Dataset):
         self.label_column: int | None = None
 
     def _ensure_open(self) -> None:
+        """Raise if the dataset has been explicitly closed."""
         if self._closed:
             raise RuntimeError(self._CLOSED_MESSAGE)
 
@@ -103,7 +100,7 @@ class _HDF5SingleCellDataset(Dataset):
         return file
 
     def close(self) -> None:
-        """Close all opened HDF5 file handles."""
+        """Close open HDF5 handles and permanently disable further data access."""
         if self._closed:
             return
 
@@ -574,18 +571,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 
 
 class _H5ScSingleCellDataset(Dataset):
-    """Base class with shared methods for loading scPortrait single cell datasets stored in scPortraits AnnData files.
-
-    Args:
-        dir_list: List of path(s) to the single-cell datasets. Supports specifying a path to a specific hd5c file or directory containing hd5c files.
-        index_list: List of cell indices to select from the dataset. If set to None all cells are taken. Default is None.
-        select_channel: Specify a specific channel or selection of channels to select from the data. Default is None, which returns all channels. Using this operation is more efficient than if this selection occurs via a passed transform.
-        transform: An optional user-defined function to apply transformations to the data. Default is None.
-        return_id: Whether to return the unique cell-id of the cell along with the data. Default is `True`.
-            For training purposes this can be set to `False`, but for dataset inference it is generally recommended to set this to `True`,
-            otherwise you can no longer identify the source cell returning a specific result.
-        max_level: Maximum levels of directory to search for hdf5 files in the passed paths. Default is 5.
-    """
+    """Base class for loading scPortrait single-cell datasets stored in AnnData-backed HDF5 files."""
 
     HDF_FILETYPES = ["h5sc", "h5ad"]  # supported filetypes
 
@@ -602,6 +588,16 @@ class _H5ScSingleCellDataset(Dataset):
         return_id: bool = True,
         max_level: int = 5,
     ):
+        """Initialize the dataset index and runtime state.
+
+        Args:
+            dir_list: Paths to H5SC/H5AD files or directories containing those files.
+            index_list: Per-input lists of cell indices to include. If `None`, all cells are used.
+            select_channel: Channel index or indices to load from each cell image. If `None`, all channels are used.
+            transform: Optional transform applied to each returned tensor.
+            return_id: Whether to return the unique cell id together with the cell data.
+            max_level: Maximum directory depth to scan when an entry in `dir_list` is a directory.
+        """
         self.dir_list = dir_list
 
         if isinstance(self.dir_list[0], PosixPath):
@@ -642,11 +638,12 @@ class _H5ScSingleCellDataset(Dataset):
         self.label_column: str | None = None
 
     def _ensure_open(self) -> None:
+        """Raise if the dataset has been explicitly closed."""
         if self._closed:
             raise RuntimeError(self._CLOSED_MESSAGE)
 
     def close(self) -> None:
-        """Close all opened HDF5 file handles."""
+        """Close open HDF5 handles and permanently disable further data access."""
         if self._closed:
             return
 
