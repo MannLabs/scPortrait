@@ -197,7 +197,10 @@ def test_hdf5_close_is_idempotent(temp_hdf5_file):
     _ = dataset[0]
     dataset.close()
     dataset.close()
+    assert dataset._closed is True
     assert dataset._open_hdf == {}
+    with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
+        dataset[0]
 
 
 def test_hdf5_context_manager_releases_file():
@@ -208,8 +211,10 @@ def test_hdf5_context_manager_releases_file():
     try:
         with HDF5SingleCellDataset(dir_list=[temp_file.name], dir_labels=[0], return_id=True) as dataset:
             _ = dataset[0]
-        os.remove(temp_file.name)
-        assert not os.path.exists(temp_file.name)
+        assert dataset._closed is True
+        assert dataset._open_hdf == {}
+        with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
+            dataset[0]
     finally:
         if os.path.exists(temp_file.name):
             os.remove(temp_file.name)
@@ -310,8 +315,11 @@ def test_h5sc_close_is_idempotent(temp_h5sc_file):
     _ = dataset[0]
     dataset.close()
     dataset.close()
+    assert dataset._closed is True
     assert dataset.handle_list == []
     assert dataset._open_hdf == []
+    with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
+        dataset[0]
 
 
 def test_h5sc_context_manager_releases_file():
@@ -322,8 +330,11 @@ def test_h5sc_context_manager_releases_file():
     try:
         with H5ScSingleCellDataset(dir_list=[temp_file.name], dir_labels=[1]) as dataset:
             _ = dataset[0]
-        os.remove(temp_file.name)
-        assert not os.path.exists(temp_file.name)
+        assert dataset._closed is True
+        assert dataset.handle_list == []
+        assert dataset._open_hdf == []
+        with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
+            dataset[0]
     finally:
         if os.path.exists(temp_file.name):
             os.remove(temp_file.name)
