@@ -42,6 +42,18 @@ def _create_h5sc_test_file(path: str) -> None:
 
 
 @pytest.fixture
+def temp_hdf5_dir():
+    """Create a temporary directory containing multiple HDF5 files for testing."""
+    temp_dir = tempfile.TemporaryDirectory()
+    _create_hdf5_test_file(os.path.join(temp_dir.name, "part_a.hdf5"))
+    _create_hdf5_test_file(os.path.join(temp_dir.name, "part_b.hdf5"))
+    try:
+        yield temp_dir.name
+    finally:
+        temp_dir.cleanup()
+
+
+@pytest.fixture
 def temp_hdf5_file():
     """Create a temporary HDF5 file for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".hdf5")
@@ -194,6 +206,19 @@ def test_labelled_index_list_subset(temp_hdf5_file):
             assert item[2].ndim == 0  # scalar
 
 
+def test_hdf5_directory_scan_uses_full_paths_and_directory_label(temp_hdf5_dir):
+    """Test that directory inputs load all HDF5 files with the correct shared label."""
+    with HDF5SingleCellDataset(dir_list=[temp_hdf5_dir], dir_labels=[7], return_id=True) as dataset:
+        assert len(dataset) == 200
+        assert all(os.path.dirname(path) == temp_hdf5_dir for path in dataset.paths)
+        assert len(dataset.paths) == 2
+
+        first_item = dataset[0]
+        last_item = dataset[len(dataset) - 1]
+        assert float(first_item[1]) == 7.0
+        assert float(last_item[1]) == 7.0
+
+
 def test_hdf5_close_is_idempotent(temp_hdf5_file):
     """Test that closing an HDF5 dataset is idempotent and terminal."""
     dataset = HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=True)
@@ -233,6 +258,18 @@ def temp_h5sc_file():
     yield temp_file.name
     if os.path.exists(temp_file.name):
         os.remove(temp_file.name)
+
+
+@pytest.fixture
+def temp_h5sc_dir():
+    """Create a temporary directory containing multiple H5SC files for testing."""
+    temp_dir = tempfile.TemporaryDirectory()
+    _create_h5sc_test_file(os.path.join(temp_dir.name, "part_a.h5sc"))
+    _create_h5sc_test_file(os.path.join(temp_dir.name, "part_b.h5sc"))
+    try:
+        yield temp_dir.name
+    finally:
+        temp_dir.cleanup()
 
 
 def test_h5sc_dataset_initialization(temp_h5sc_file):
@@ -309,6 +346,18 @@ def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
             assert isinstance(img, torch.Tensor)
             assert label.ndim == 0  # scalar
             assert idx.ndim == 0  # scalar
+
+
+def test_h5sc_directory_scan_uses_full_paths_and_directory_label(temp_h5sc_dir):
+    """Test that directory inputs load all H5SC files with the correct shared label."""
+    with H5ScSingleCellDataset(dir_list=[temp_h5sc_dir], dir_labels=[3], return_id=True) as dataset:
+        assert len(dataset) == 200
+        assert len(dataset.handle_list) == 2
+
+        first_item = dataset[0]
+        last_item = dataset[len(dataset) - 1]
+        assert float(first_item[1]) == 3.0
+        assert float(last_item[1]) == 3.0
 
 
 def test_h5sc_close_is_idempotent(temp_h5sc_file):
