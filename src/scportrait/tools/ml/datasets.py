@@ -181,7 +181,11 @@ class _HDF5SingleCellDataset(Dataset):
                 assert label_column is not None, "Label column must be provided if read_label is set to True."
 
                 # get the column containing the labelling
-                label_col = input_hdf.get("single_cell_index_labelled").asstr()[:, label_column]
+                labelled_index = input_hdf.get("single_cell_index_labelled").asstr()
+                if index_list != [None]:
+                    label_col = labelled_index[index_list, label_column]
+                else:
+                    label_col = labelled_index[:, label_column]
 
                 # Older datasets may store missing labels as empty strings.
                 if len(label_col[label_col == ""]) > 0:
@@ -414,9 +418,6 @@ class _HDF5SingleCellDataset(Dataset):
         if self.transform:
             t = self.transform(t)  # apply transformation
 
-        if self.label_column_transform is not None:
-            label = self.label_column_transform(label)
-
         label = float(label)  # ensure its a numeric dtype
 
         if self.return_id:
@@ -541,7 +542,10 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
         self.label_column_transform = label_column_transform
         self.read_labels_from_dataset = True
 
-        self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
+        self._add_all_datasets(
+            read_label_from_dataset=self.read_labels_from_dataset,
+            label_column_transform=self.label_column_transform,
+        )
         self.stats()
 
 
@@ -933,8 +937,6 @@ class _H5ScSingleCellDataset(Dataset):
         if self.transform:
             t = self.transform(t)  # apply transformation
 
-        if self.label_column_transform is not None:
-            label = self.label_column_transform(label)
         label = float(label)  # ensure its a numeric dtype
 
         if self.return_id:
@@ -1051,5 +1053,8 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
         self.label_column_transform = label_column_transform
         self.read_labels_from_dataset = True
 
-        self._add_all_datasets(read_label_from_dataset=self.read_labels_from_dataset)
+        self._add_all_datasets(
+            read_label_from_dataset=self.read_labels_from_dataset,
+            label_column_transform=self.label_column_transform,
+        )
         self.stats()

@@ -206,6 +206,33 @@ def test_labelled_index_list_subset(temp_hdf5_file):
             assert item[2].ndim == 0  # scalar
 
 
+def test_labelled_hdf5_subset_uses_selected_row_labels(temp_hdf5_file):
+    """Test that labelled HDF5 subsets read labels from the selected rows."""
+    with LabelledHDF5SingleCellDataset(
+        dir_list=[temp_hdf5_file],
+        label_colum=0,
+        label_dtype=int,
+        index_list=[[5, 6, 7]],
+        return_id=True,
+    ) as dataset:
+        labels = [int(dataset[i][1]) for i in range(len(dataset))]
+        assert labels == [5, 6, 7]
+
+
+def test_labelled_hdf5_label_transform_applied_once(temp_hdf5_file):
+    """Test that HDF5 label transforms are applied exactly once."""
+    with LabelledHDF5SingleCellDataset(
+        dir_list=[temp_hdf5_file],
+        label_colum=0,
+        label_dtype=float,
+        label_column_transform=lambda x: x / 10,
+        index_list=[[10]],
+        return_id=True,
+    ) as dataset:
+        item = dataset[0]
+        assert float(item[1]) == 1.0
+
+
 def test_hdf5_directory_scan_uses_full_paths_and_directory_label(temp_hdf5_dir):
     """Test that directory inputs load all HDF5 files with the correct shared label."""
     with HDF5SingleCellDataset(dir_list=[temp_hdf5_dir], dir_labels=[7], return_id=True) as dataset:
@@ -346,6 +373,19 @@ def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
             assert isinstance(img, torch.Tensor)
             assert label.ndim == 0  # scalar
             assert idx.ndim == 0  # scalar
+
+
+def test_labelled_h5sc_label_transform_applied_once(temp_h5sc_file):
+    """Test that H5SC label transforms are applied exactly once."""
+    with LabelledH5ScSingleCellDataset(
+        dir_list=[temp_h5sc_file],
+        label_colum="pseudo_label",
+        label_column_transform=lambda x: x / 10,
+        index_list=[[10]],
+        return_id=True,
+    ) as dataset:
+        item = dataset[0]
+        assert float(item[1]) == 1.0
 
 
 def test_h5sc_directory_scan_uses_full_paths_and_directory_label(temp_h5sc_dir):
