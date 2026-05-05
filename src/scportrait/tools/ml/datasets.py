@@ -221,7 +221,7 @@ class _HDF5SingleCellDataset(Dataset):
         self,
         path: str,
         current_index_list: list[int],
-        id: int,
+        dataset_label_index: int,
         read_label_from_dataset: bool,
     ):
         """Adds a dataset to the index."""
@@ -246,7 +246,7 @@ class _HDF5SingleCellDataset(Dataset):
             self._add_hdf_to_index(
                 path=path,
                 index_list=current_index_list,
-                label=self.bulk_labels[id],
+                label=self.bulk_labels[dataset_label_index],
                 label_column=None,
                 dtype_label_column=None,
                 label_column_transform=None,
@@ -257,6 +257,7 @@ class _HDF5SingleCellDataset(Dataset):
         self,
         path: str,
         levels_left: int,
+        dataset_label_index: int,
         current_index_list: list[int] | None = None,
         read_label_from_dataset: bool = False,
     ) -> None:
@@ -282,14 +283,14 @@ class _HDF5SingleCellDataset(Dataset):
 
             current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
 
-            for i, file in enumerate(current_level_files):
+            for _i, file in enumerate(current_level_files):
                 filetype = file.split(".")[-1]
 
                 if filetype in self.HDF_FILETYPES:
                     self._add_dataset(
-                        path=file,
+                        path=os.path.join(path, file),
                         current_index_list=current_index_list,
-                        id=i,
+                        dataset_label_index=dataset_label_index,
                         read_label_from_dataset=read_label_from_dataset,
                     )
 
@@ -298,6 +299,7 @@ class _HDF5SingleCellDataset(Dataset):
                 self._scan_directory(
                     subdirectory,
                     levels_left - 1,
+                    dataset_label_index,
                     current_index_list,
                     read_label_from_dataset,
                 )
@@ -337,7 +339,7 @@ class _HDF5SingleCellDataset(Dataset):
                 self._add_dataset(
                     path=directory,
                     current_index_list=current_index_list,
-                    id=i,
+                    dataset_label_index=i,
                     read_label_from_dataset=read_label_from_dataset,
                 )
 
@@ -346,6 +348,7 @@ class _HDF5SingleCellDataset(Dataset):
                 self._scan_directory(
                     path,
                     self.max_level,
+                    i,
                     current_index_list=current_index_list,
                 )
 
@@ -742,7 +745,7 @@ class _H5ScSingleCellDataset(Dataset):
         self,
         path: str,
         current_index_list: list[int],
-        id: int,
+        dataset_label_index: int,
         read_label_from_dataset: bool,
     ):
         """Adds a dataset to the index."""
@@ -766,7 +769,7 @@ class _H5ScSingleCellDataset(Dataset):
             self._add_hdf_to_index(
                 path=path,
                 index_list=current_index_list,
-                label=self.bulk_labels[id],
+                label=self.bulk_labels[dataset_label_index],
                 label_column=None,
                 label_column_transform=None,
                 read_label=False,
@@ -776,6 +779,7 @@ class _H5ScSingleCellDataset(Dataset):
         self,
         path: str,
         levels_left: int,
+        dataset_label_index: int,
         current_index_list: list[int] | None = None,
         read_label_from_dataset: bool = False,
     ) -> None:
@@ -801,14 +805,14 @@ class _H5ScSingleCellDataset(Dataset):
 
             current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
 
-            for i, file in enumerate(current_level_files):
+            for _i, file in enumerate(current_level_files):
                 filetype = file.split(".")[-1]
 
                 if filetype in self.HDF_FILETYPES:
                     self._add_dataset(
-                        path=file,
+                        path=os.path.join(path, file),
                         current_index_list=current_index_list,
-                        id=i,
+                        dataset_label_index=dataset_label_index,
                         read_label_from_dataset=read_label_from_dataset,
                     )
 
@@ -817,6 +821,7 @@ class _H5ScSingleCellDataset(Dataset):
                 self._scan_directory(
                     subdirectory,
                     levels_left - 1,
+                    dataset_label_index,
                     current_index_list,
                     read_label_from_dataset,
                 )
@@ -856,7 +861,7 @@ class _H5ScSingleCellDataset(Dataset):
                 self._add_dataset(
                     path=directory,
                     current_index_list=current_index_list,
-                    id=i,
+                    dataset_label_index=i,
                     read_label_from_dataset=read_label_from_dataset,
                 )
 
@@ -865,6 +870,7 @@ class _H5ScSingleCellDataset(Dataset):
                 self._scan_directory(
                     path,
                     self.max_level,
+                    i,
                     current_index_list=current_index_list,
                 )
 
