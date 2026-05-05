@@ -7,7 +7,6 @@ import shutil
 import tempfile
 import warnings
 from datetime import datetime
-from pathlib import PosixPath
 from typing import TYPE_CHECKING, Any
 
 import torch
@@ -234,9 +233,9 @@ class ProcessingStep(Logable):
 
     def __init__(
         self,
-        config: str | PosixPath | dict[str, Any],
-        directory: str | PosixPath = None,
-        project_location: str | PosixPath = None,
+        config: str | os.PathLike[str] | dict[str, Any],
+        directory: str | os.PathLike[str] = None,
+        project_location: str | os.PathLike[str] = None,
         debug: bool = False,
         overwrite: bool = False,
         project: Project | None = None,
@@ -275,7 +274,7 @@ class ProcessingStep(Logable):
             self.filehandler = None
 
         raw_config: dict[str, Any]
-        if isinstance(config, str | PosixPath):
+        if isinstance(config, (str, os.PathLike)):
             raw_config = read_config(config)
         else:
             raw_config = config

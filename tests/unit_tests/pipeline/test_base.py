@@ -8,6 +8,14 @@ import yaml
 from scportrait.pipeline._base import Logable, ProcessingStep
 
 
+class _PathLikeConfig:
+    def __init__(self, path: Path):
+        self.path = path
+
+    def __fspath__(self) -> str:
+        return str(self.path)
+
+
 def _read_log_content(logable: Logable, tmp_path) -> str:
     log_path = tmp_path / logable.DEFAULT_LOG_NAME
     return log_path.read_text()
@@ -44,14 +52,15 @@ def test_logable_log_writes_expected_message_shapes(tmp_path, message, expected_
         assert expected in log_content
 
 
-@pytest.mark.parametrize("config_source", ["dict", "path"])
+@pytest.mark.parametrize("config_source", ["dict", "path", "pathlike"])
 def test_processing_step_init_normalizes_config_from_supported_sources(tmp_path, config_source):
     """ProcessingStep should accept both dict configs and config file paths."""
     config_dict = {"cache": str(tmp_path / "cache"), "setting1": "value1"}
-    if config_source == "path":
+    if config_source in {"path", "pathlike"}:
         config_path = tmp_path / "config.yml"
         config_path.write_text(yaml.safe_dump(config_dict))
-        processing_step = ProcessingStep(config_path, tmp_path / "test_step", tmp_path, debug=True)
+        config_input = config_path if config_source == "path" else _PathLikeConfig(config_path)
+        processing_step = ProcessingStep(config_input, tmp_path / "test_step", tmp_path, debug=True)
     else:
         processing_step = ProcessingStep(config_dict, tmp_path / "test_step", tmp_path, debug=True)
 

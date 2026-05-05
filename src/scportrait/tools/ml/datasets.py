@@ -1,14 +1,17 @@
 import os
-from collections.abc import Callable, Iterable
-from pathlib import PosixPath
-from typing import Any
+from collections.abc import Callable, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import h5py
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from scportrait._utils.paths import normalize_path, path_suffix
 from scportrait.pipeline._utils.constants import IMAGE_DATACONTAINER_NAME, INDEX_DATACONTAINER_NAME
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _check_type_input_list(var):
@@ -26,27 +29,15 @@ class _HDF5SingleCellDataset(Dataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         index_list: list[list[int]] | None = None,
         select_channel: list[int] | int | None = None,
         transform=None,
         return_id: bool = True,
         max_level: int = 5,
     ):
-        """Initialize the dataset index and runtime state.
-
-        Args:
-            dir_list: Paths to HDF5 files or directories containing HDF5 files.
-            index_list: Per-input lists of cell indices to include. If `None`, all cells are used.
-            select_channel: Channel index or indices to load from each cell image. If `None`, all channels are used.
-            transform: Optional transform applied to each returned tensor.
-            return_id: Whether to return the unique cell id together with the cell data.
-            max_level: Maximum directory depth to scan when an entry in `dir_list` is a directory.
-        """
-        self.dir_list = dir_list
-
-        if isinstance(self.dir_list[0], PosixPath):
-            self.dir_list = [str(x) for x in self.dir_list]
+        """ """
+        self.dir_list = [normalize_path(path) for path in dir_list]
 
         # ensure select_channel is always a list
         if isinstance(select_channel, int):
@@ -92,11 +83,12 @@ class _HDF5SingleCellDataset(Dataset):
         Retrieve (or lazily create) a *process-local* file handle.
         """
         self._ensure_open()
-        file = self._open_hdf.get(path)
+        normalized_path = os.fspath(path)
+        file = self._open_hdf.get(normalized_path)
 
         if file is None:  # first call in this process
-            file = h5py.File(path, mode="r")
-            self._open_hdf[path] = file
+            file = h5py.File(normalized_path, mode="r")
+            self._open_hdf[normalized_path] = file
 
         return file
 
@@ -128,7 +120,7 @@ class _HDF5SingleCellDataset(Dataset):
 
     def _add_hdf_to_index(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         index_list: list[int] | None = None,
         label: int | None = None,
         label_column: int | None = None,
@@ -137,15 +129,16 @@ class _HDF5SingleCellDataset(Dataset):
         read_label: bool = False,
     ):
         """Add single-cell data from `path` to the dataset index."""
+        normalized_path: Path = normalize_path(path)
 
         # check to ensure that HDF5 file exists
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"File {path} not found. Please ensure that the file exists.")
+        if not normalized_path.exists():
+            raise FileNotFoundError(f"File {normalized_path} not found. Please ensure that the file exists.")
 
         input_hdf = None
         try:
             # connect to h5py file
-            input_hdf = h5py.File(path, "r")
+            input_hdf = h5py.File(normalized_path, "r")
 
             # get single cell index handle
             if index_list != [None]:
@@ -156,7 +149,7 @@ class _HDF5SingleCellDataset(Dataset):
                 max_index = max(index_list)
 
                 assert max_index < max_elements, (
-                    f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                    f"Index {max_index} is out of bounds for file {normalized_path}. Only {max_elements} single cell records available in dataset."
                 )
 
                 for i, ix in enumerate(index_list):
@@ -174,7 +167,7 @@ class _HDF5SingleCellDataset(Dataset):
 
             # Add the path for later lazy file access in `__getitem__`.
             handle_id = len(self.paths)
-            self.paths.append(path)  # add path to new dataset to list of paths
+            self.paths.append(os.fspath(normalized_path))  # add path to new dataset to list of paths
 
             # add single-cell labelling
             if read_label:
@@ -223,7 +216,7 @@ class _HDF5SingleCellDataset(Dataset):
 
     def _add_dataset(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         current_index_list: list[int],
         dataset_label_index: int,
         read_label_from_dataset: bool,
@@ -259,7 +252,7 @@ class _HDF5SingleCellDataset(Dataset):
 
     def _scan_directory(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         levels_left: int,
         dataset_label_index: int,
         current_index_list: list[int] | None = None,
@@ -278,21 +271,20 @@ class _HDF5SingleCellDataset(Dataset):
         # hdf5 files are added to the index
         # subfolders are recursively scanned
 
+        normalized_path: Path = normalize_path(path)
+
         if levels_left > 0:
             # get files and directories at current level
 
-            current_level_directories = [
-                os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))
-            ]
+            current_level_directories = [entry for entry in normalized_path.iterdir() if entry.is_dir()]
+            current_level_files = [entry for entry in normalized_path.iterdir() if entry.is_file()]
 
-            current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
-
-            for _i, file in enumerate(current_level_files):
-                filetype = file.split(".")[-1]
+            for _i, file_path in enumerate(current_level_files):
+                filetype = path_suffix(file_path)
 
                 if filetype in self.HDF_FILETYPES:
                     self._add_dataset(
-                        path=os.path.join(path, file),
+                        path=file_path,
                         current_index_list=current_index_list,
                         dataset_label_index=dataset_label_index,
                         read_label_from_dataset=read_label_from_dataset,
@@ -330,18 +322,18 @@ class _HDF5SingleCellDataset(Dataset):
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
-            path = os.path.abspath(directory)
+            path = directory.resolve()
             current_index_list = self.index_list[i]
 
             # get current label
             # self._get_dataset_label(i) has not been implemented yet
 
             # check if "directory" is a path to specific hdf5
-            filetype = directory.split(".")[-1]
+            filetype = path_suffix(path)
 
             if filetype in self.HDF_FILETYPES:
                 self._add_dataset(
-                    path=directory,
+                    path=path,
                     current_index_list=current_index_list,
                     dataset_label_index=i,
                     read_label_from_dataset=read_label_from_dataset,
@@ -450,7 +442,7 @@ class HDF5SingleCellDataset(_HDF5SingleCellDataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         dir_labels: list[int],
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform=None,
@@ -505,7 +497,7 @@ class LabelledHDF5SingleCellDataset(_HDF5SingleCellDataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         label_colum: int,
         label_dtype: type,
         label_column_transform: Callable | None = None,
@@ -560,7 +552,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         index_list: list[list[int]] | None = None,
         select_channel: list[int] | int | None = None,
         transform=None,
@@ -577,10 +569,7 @@ class _H5ScSingleCellDataset(Dataset):
             return_id: Whether to return the unique cell id together with the cell data.
             max_level: Maximum directory depth to scan when an entry in `dir_list` is a directory.
         """
-        self.dir_list = dir_list
-
-        if isinstance(self.dir_list[0], PosixPath):
-            self.dir_list = [str(x) for x in self.dir_list]
+        self.dir_list = [normalize_path(path) for path in dir_list]
 
         # ensure select_channel is always a list
         if isinstance(select_channel, int):
@@ -649,7 +638,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     def _add_hdf_to_index(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         index_list: list[int] | None = None,
         label: int | None = None,
         label_column: str | None = None,
@@ -657,19 +646,20 @@ class _H5ScSingleCellDataset(Dataset):
         read_label: bool = False,
     ):
         """Add single-cell data from `path` to the dataset index."""
+        normalized_path: Path = normalize_path(path)
 
         # check to ensure that HDF5 file exists
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"File {path} not found. Please ensure that the file exists.")
+        if not normalized_path.exists():
+            raise FileNotFoundError(f"File {normalized_path} not found. Please ensure that the file exists.")
 
         input_hdf = None
         keep_file_open = False
         try:
             # connect to h5py file
-            input_hdf = h5py.File(path, "r")
+            input_hdf = h5py.File(normalized_path, "r")
 
             # ensure that the file is encoded with anndata
-            assert input_hdf.attrs["encoding-type"] == "anndata", f"File {path} is not an anndata file. "
+            assert input_hdf.attrs["encoding-type"] == "anndata", f"File {normalized_path} is not an anndata file. "
 
             # get single cell index handle
             if index_list != [None]:
@@ -681,7 +671,7 @@ class _H5ScSingleCellDataset(Dataset):
                 max_index = max(index_list)
 
                 assert max_index < max_elements, (
-                    f"Index {max_index} is out of bounds for file {path}. Only {max_elements} single cell records available in dataset."
+                    f"Index {max_index} is out of bounds for file {normalized_path}. Only {max_elements} single cell records available in dataset."
                 )
 
                 for i, ix in enumerate(index_list):
@@ -747,7 +737,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     def _add_dataset(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         current_index_list: list[int],
         dataset_label_index: int,
         read_label_from_dataset: bool,
@@ -781,7 +771,7 @@ class _H5ScSingleCellDataset(Dataset):
 
     def _scan_directory(
         self,
-        path: str,
+        path: str | os.PathLike[str],
         levels_left: int,
         dataset_label_index: int,
         current_index_list: list[int] | None = None,
@@ -800,21 +790,20 @@ class _H5ScSingleCellDataset(Dataset):
         # hdf5 files are added to the index
         # subfolders are recursively scanned
 
+        normalized_path: Path = normalize_path(path)
+
         if levels_left > 0:
             # get files and directories at current level
 
-            current_level_directories = [
-                os.path.join(path, name) for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))
-            ]
+            current_level_directories = [entry for entry in normalized_path.iterdir() if entry.is_dir()]
+            current_level_files = [entry for entry in normalized_path.iterdir() if entry.is_file()]
 
-            current_level_files = [name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
-
-            for _i, file in enumerate(current_level_files):
-                filetype = file.split(".")[-1]
+            for _i, file_path in enumerate(current_level_files):
+                filetype = path_suffix(file_path)
 
                 if filetype in self.HDF_FILETYPES:
                     self._add_dataset(
-                        path=os.path.join(path, file),
+                        path=file_path,
                         current_index_list=current_index_list,
                         dataset_label_index=dataset_label_index,
                         read_label_from_dataset=read_label_from_dataset,
@@ -852,18 +841,18 @@ class _H5ScSingleCellDataset(Dataset):
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
-            path = os.path.abspath(directory)
+            path = directory.resolve()
             current_index_list = self.index_list[i]
 
             # get current label
             # self._get_dataset_label(i) has not been implemented yet
 
             # check if "directory" is a path to specific hdf5
-            filetype = directory.split(".")[-1]
+            filetype = path_suffix(path)
 
             if filetype in self.HDF_FILETYPES:
                 self._add_dataset(
-                    path=directory,
+                    path=path,
                     current_index_list=current_index_list,
                     dataset_label_index=i,
                     read_label_from_dataset=read_label_from_dataset,
@@ -969,7 +958,7 @@ class H5ScSingleCellDataset(_H5ScSingleCellDataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         dir_labels: list[int],
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
         transform=None,
@@ -1019,7 +1008,7 @@ class LabelledH5ScSingleCellDataset(_H5ScSingleCellDataset):
 
     def __init__(
         self,
-        dir_list: list[str],
+        dir_list: Sequence[str | os.PathLike[str]],
         label_colum: str,
         label_column_transform: Callable | None = None,
         index_list: list[list[int]] | None = None,  # list of indices to select from the index
