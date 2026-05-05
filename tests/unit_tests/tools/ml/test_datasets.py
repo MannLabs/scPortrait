@@ -5,6 +5,7 @@
 
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import h5py
@@ -128,6 +129,13 @@ def test_get_item_without_id(temp_hdf5_file):
         assert len(item) == 2  # (data, label)
         assert isinstance(item[0], torch.Tensor)
         assert item[1].ndim == 0  # scalar
+
+
+def test_hdf5_dataset_accepts_pathlike_inputs(temp_hdf5_file):
+    """Test that HDF5 datasets accept pathlib.Path inputs."""
+    with HDF5SingleCellDataset(dir_list=[Path(temp_hdf5_file)], dir_labels=[0], return_id=True) as dataset:
+        item = dataset[0]
+        assert len(item) == 3
 
 
 def test_labelled_dataset_initialization(labelled_hdf5_dataset):
@@ -323,6 +331,13 @@ def test_h5sc_get_item(temp_h5sc_file):
 
         img, label, idx = item
         assert isinstance(img, torch.Tensor)
+
+
+def test_h5sc_dataset_accepts_pathlike_inputs(temp_h5sc_file):
+    """Test that H5SC datasets accept pathlib.Path inputs."""
+    with H5ScSingleCellDataset(dir_list=[Path(temp_h5sc_file)], dir_labels=[1]) as dataset:
+        item = dataset[0]
+        assert len(item) == 3
 
 
 def test_labelled_h5sc_get_item(temp_h5sc_file):

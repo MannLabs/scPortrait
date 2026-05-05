@@ -36,7 +36,16 @@ class _HDF5SingleCellDataset(Dataset):
         return_id: bool = True,
         max_level: int = 5,
     ):
-        """ """
+        """Initialize the dataset index and runtime state.
+
+        Args:
+            dir_list: Paths to HDF5 files or directories containing HDF5 files.
+            index_list: Per-input lists of cell indices to include. If `None`, all cells are used.
+            select_channel: Channel index or indices to load from each cell image. If `None`, all channels are used.
+            transform: Optional transform applied to each returned tensor.
+            return_id: Whether to return the unique cell id together with the cell data.
+            max_level: Maximum directory depth to scan when an entry in `dir_list` is a directory.
+        """
         self.dir_list = [normalize_path(path) for path in dir_list]
 
         # ensure select_channel is always a list
@@ -65,8 +74,8 @@ class _HDF5SingleCellDataset(Dataset):
         # check reading of an image element and ensure that the selected channels are valid
 
         # initialize placeholders to store dataset information
-        self.paths: list[str] = []
-        self._open_hdf: dict[str, h5py.File | None] = {}
+        self.paths: list[Path] = []
+        self._open_hdf: dict[Path, h5py.File | None] = {}
         self.data_locator: list[list[int]] = []
         self._closed = False
 
@@ -78,12 +87,13 @@ class _HDF5SingleCellDataset(Dataset):
         if self._closed:
             raise RuntimeError(self._CLOSED_MESSAGE)
 
-    def get_hdf(self, path: str) -> h5py.File:
+    def get_hdf(self, path: str | os.PathLike[str]) -> h5py.File:
         """
         Retrieve (or lazily create) a *process-local* file handle.
         """
         self._ensure_open()
-        normalized_path = os.fspath(path)
+
+        normalized_path = normalize_path(path)
         file = self._open_hdf.get(normalized_path)
 
         if file is None:  # first call in this process
@@ -167,7 +177,7 @@ class _HDF5SingleCellDataset(Dataset):
 
             # Add the path for later lazy file access in `__getitem__`.
             handle_id = len(self.paths)
-            self.paths.append(os.fspath(normalized_path))  # add path to new dataset to list of paths
+            self.paths.append(normalized_path)  # add path to new dataset to list of paths
 
             # add single-cell labelling
             if read_label:
@@ -322,7 +332,7 @@ class _HDF5SingleCellDataset(Dataset):
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
-            path = directory.resolve()
+            path = directory
             current_index_list = self.index_list[i]
 
             # get current label
@@ -841,7 +851,7 @@ class _H5ScSingleCellDataset(Dataset):
 
         # scan all directories provided
         for i, directory in enumerate(self.dir_list):
-            path = directory.resolve()
+            path = directory
             current_index_list = self.index_list[i]
 
             # get current label
