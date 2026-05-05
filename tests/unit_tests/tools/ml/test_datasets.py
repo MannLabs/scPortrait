@@ -65,97 +65,95 @@ def temp_hdf5_file():
         os.remove(temp_file.name)  # Cleanup after the test
 
 
-@pytest.fixture
-def hdf5_dataset(temp_hdf5_file):
-    """Fixture for an HDF5SingleCellDataset instance."""
-    dataset = HDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        dir_labels=[0],
-        transform=None,
-        return_id=True,
-    )
-    try:
-        yield dataset
-    finally:
-        dataset.close()
+_BASIC_CASES = [
+    pytest.param("temp_hdf5_file", HDF5SingleCellDataset, {"dir_labels": [0]}, id="hdf5"),
+    pytest.param("temp_h5sc_file", H5ScSingleCellDataset, {"dir_labels": [1]}, id="h5sc"),
+]
+
+_LABELLED_CASES = [
+    pytest.param(
+        "temp_hdf5_file",
+        LabelledHDF5SingleCellDataset,
+        {"label_colum": 0, "label_dtype": int},
+        id="labelled-hdf5",
+    ),
+    pytest.param(
+        "temp_h5sc_file",
+        LabelledH5ScSingleCellDataset,
+        {"label_colum": "pseudo_label"},
+        id="labelled-h5sc",
+    ),
+]
+
+_DIRECTORY_CASES = [
+    pytest.param("temp_hdf5_dir", HDF5SingleCellDataset, {"dir_labels": [7]}, 7.0, 200, id="hdf5"),
+    pytest.param("temp_h5sc_dir", H5ScSingleCellDataset, {"dir_labels": [3]}, 3.0, 200, id="h5sc"),
+]
 
 
-@pytest.fixture
-def labelled_hdf5_dataset(temp_hdf5_file):
-    """Fixture for a LabelledHDF5SingleCellDataset instance."""
-    dataset = LabelledHDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        label_colum=0,
-        label_dtype=int,
-        label_column_transform=None,
-        return_id=True,
-    )
-    try:
-        yield dataset
-    finally:
-        dataset.close()
-
-
-def test_dataset_initialization(hdf5_dataset):
-    """Test dataset initializes correctly."""
-    assert isinstance(hdf5_dataset, HDF5SingleCellDataset)
-    assert len(hdf5_dataset.dir_list) == 1
-
-
-def test_dataset_length(hdf5_dataset):
-    """Test dataset length matches expected value."""
-    assert len(hdf5_dataset) == 100
-
-
-def test_get_item(hdf5_dataset):
-    """Test retrieving an item from the dataset."""
-    item = hdf5_dataset[0]
-    assert len(item) == 3  # (data, label, id)
+def _assert_item_shapes(item: tuple[torch.Tensor, ...], expected_len: int) -> None:
+    assert len(item) == expected_len
     assert isinstance(item[0], torch.Tensor)
-    assert item[1].ndim == 0  # scalar
-    assert item[2].ndim == 0  # scalar
+
+    for value in item[1:]:
+        assert value.ndim == 0
 
 
-def test_get_item_out_of_bounds(hdf5_dataset):
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_dataset_initialization(request, fixture_name, dataset_cls, init_kwargs):
+    """Test basic datasets initialize correctly."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs) as dataset:
+        assert isinstance(dataset, dataset_cls)
+        assert len(dataset.dir_list) == 1
+        assert len(dataset) == 100
+
+
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_get_item(request, fixture_name, dataset_cls, init_kwargs):
+    """Test retrieving an item from a basic dataset."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs) as dataset:
+        _assert_item_shapes(dataset[0], 3)
+
+
+def test_get_item_out_of_bounds(temp_hdf5_file):
     """Test index out of range error handling."""
-    with pytest.raises(IndexError):
-        _ = hdf5_dataset[200]
+    with HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=True) as dataset:
+        with pytest.raises(IndexError):
+            _ = dataset[200]
+
+
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_dataset_accepts_pathlike_inputs(request, fixture_name, dataset_cls, init_kwargs):
+    """Test that datasets accept pathlib.Path inputs."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[Path(dataset_path)], return_id=True, **init_kwargs) as dataset:
+        _assert_item_shapes(dataset[0], 3)
 
 
 def test_get_item_without_id(temp_hdf5_file):
     """Test retrieving an item when `return_id=False`."""
-    with HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=False) as dataset_no_id:
-        item = dataset_no_id[0]
-        assert len(item) == 2  # (data, label)
-        assert isinstance(item[0], torch.Tensor)
-        assert item[1].ndim == 0  # scalar
+    with HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=False) as dataset:
+        _assert_item_shapes(dataset[0], 2)
 
 
-def test_hdf5_dataset_accepts_pathlike_inputs(temp_hdf5_file):
-    """Test that HDF5 datasets accept pathlib.Path inputs."""
-    with HDF5SingleCellDataset(dir_list=[Path(temp_hdf5_file)], dir_labels=[0], return_id=True) as dataset:
-        item = dataset[0]
-        assert len(item) == 3
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _LABELLED_CASES)
+def test_labelled_dataset_initialization(request, fixture_name, dataset_cls, init_kwargs):
+    """Test labelled datasets initialize correctly."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs) as dataset:
+        assert isinstance(dataset, dataset_cls)
+        assert len(dataset.dir_list) == 1
+        assert len(dataset) == 100
 
 
-def test_labelled_dataset_initialization(labelled_hdf5_dataset):
-    """Test labelled dataset initializes correctly."""
-    assert isinstance(labelled_hdf5_dataset, LabelledHDF5SingleCellDataset)
-    assert len(labelled_hdf5_dataset.dir_list) == 1
-
-
-def test_labelled_dataset_length(labelled_hdf5_dataset):
-    """Test labelled dataset length matches expected value."""
-    assert len(labelled_hdf5_dataset) == 100
-
-
-def test_labelled_get_item(labelled_hdf5_dataset):
-    """Test retrieving an item from the labelled dataset."""
-    item = labelled_hdf5_dataset[0]
-    assert len(item) == 3  # (data, label, id)
-    assert isinstance(item[0], torch.Tensor)
-    assert item[1].ndim == 0  # scalar
-    assert item[2].ndim == 0  # scalar
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _LABELLED_CASES)
+def test_labelled_get_item(request, fixture_name, dataset_cls, init_kwargs):
+    """Test retrieving an item from a labelled dataset."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs) as dataset:
+        _assert_item_shapes(dataset[0], 3)
 
 
 @pytest.mark.parametrize(
@@ -178,110 +176,125 @@ def test_add_hdf_to_index_file_not_found(mock_exists):
         dataset._add_hdf_to_index("nonexistent.hdf5")
 
 
-def test_index_list_subset(temp_hdf5_file):
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_index_list_subset(request, fixture_name, dataset_cls, init_kwargs):
     """Test that only specified indices are loaded via index_list."""
-    # Only use first 10 entries
-    index_list = [list(range(10))]
-    with HDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        dir_labels=[1],
-        index_list=index_list,
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(
+        dir_list=[dataset_path],
+        index_list=[[0, 1, 2, 3, 4]],
         return_id=True,
+        **init_kwargs,
     ) as dataset:
-        assert len(dataset) == 10
+        assert len(dataset) == 5
         for i in range(len(dataset)):
-            item = dataset[i]
-            assert isinstance(item[0], torch.Tensor)
-            assert item[1].ndim == 0  # scalar
-            assert item[2].ndim == 0  # scalar
+            _assert_item_shapes(dataset[i], 3)
 
 
-def test_labelled_index_list_subset(temp_hdf5_file):
-    """Test that only specified indices are loaded for labelled dataset via index_list."""
-    index_list = [list(range(5, 15))]  # 10 elements
-    with LabelledHDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        label_colum=0,
-        label_dtype=int,
-        index_list=index_list,
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _LABELLED_CASES)
+def test_labelled_index_list_subset(request, fixture_name, dataset_cls, init_kwargs):
+    """Test that only specified indices are loaded for labelled datasets via index_list."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(
+        dir_list=[dataset_path],
+        index_list=[[10, 11, 12]],
         return_id=True,
+        **init_kwargs,
     ) as dataset:
-        assert len(dataset) == 10
-        for i in range(len(dataset)):
-            item = dataset[i]
-            assert isinstance(item[0], torch.Tensor)
-            assert item[1].ndim == 0  # scalar
-            assert item[2].ndim == 0  # scalar
-
-
-def test_labelled_hdf5_subset_uses_selected_row_labels(temp_hdf5_file):
-    """Test that labelled HDF5 subsets read labels from the selected rows."""
-    with LabelledHDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        label_colum=0,
-        label_dtype=int,
-        index_list=[[5, 6, 7]],
-        return_id=True,
-    ) as dataset:
+        assert len(dataset) == 3
         labels = [int(dataset[i][1]) for i in range(len(dataset))]
-        assert labels == [5, 6, 7]
+        assert labels == [10, 11, 12]
+        for i in range(len(dataset)):
+            _assert_item_shapes(dataset[i], 3)
 
 
-def test_labelled_hdf5_label_transform_applied_once(temp_hdf5_file):
-    """Test that HDF5 label transforms are applied exactly once."""
-    with LabelledHDF5SingleCellDataset(
-        dir_list=[temp_hdf5_file],
-        label_colum=0,
-        label_dtype=float,
-        label_column_transform=lambda x: x / 10,
+@pytest.mark.parametrize(
+    ("fixture_name", "dataset_cls", "init_kwargs"),
+    [
+        pytest.param(
+            "temp_hdf5_file",
+            LabelledHDF5SingleCellDataset,
+            {"label_colum": 0, "label_dtype": float, "label_column_transform": lambda x: x / 10},
+            id="hdf5",
+        ),
+        pytest.param(
+            "temp_h5sc_file",
+            LabelledH5ScSingleCellDataset,
+            {"label_colum": "pseudo_label", "label_column_transform": lambda x: x / 10},
+            id="h5sc",
+        ),
+    ],
+)
+def test_label_transform_applied_once(request, fixture_name, dataset_cls, init_kwargs):
+    """Test that label transforms are applied exactly once."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(
+        dir_list=[dataset_path],
         index_list=[[10]],
         return_id=True,
+        **init_kwargs,
     ) as dataset:
-        item = dataset[0]
-        assert float(item[1]) == 1.0
+        assert float(dataset[0][1]) == 1.0
 
 
-def test_hdf5_directory_scan_uses_full_paths_and_directory_label(temp_hdf5_dir):
-    """Test that directory inputs load all HDF5 files with the correct shared label."""
-    with HDF5SingleCellDataset(dir_list=[temp_hdf5_dir], dir_labels=[7], return_id=True) as dataset:
-        assert len(dataset) == 200
-        assert all(os.path.dirname(path) == temp_hdf5_dir for path in dataset.paths)
-        assert len(dataset.paths) == 2
+@pytest.mark.parametrize(
+    ("fixture_name", "dataset_cls", "init_kwargs", "expected_label", "expected_len"),
+    _DIRECTORY_CASES,
+)
+def test_directory_scan_uses_full_paths_and_directory_label(
+    request, fixture_name, dataset_cls, init_kwargs, expected_label, expected_len
+):
+    """Test that directory inputs load all files with the correct shared label."""
+    dataset_dir = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_dir], return_id=True, **init_kwargs) as dataset:
+        assert len(dataset) == expected_len
 
-        first_item = dataset[0]
-        last_item = dataset[len(dataset) - 1]
-        assert float(first_item[1]) == 7.0
-        assert float(last_item[1]) == 7.0
+        if hasattr(dataset, "paths"):
+            assert all(os.path.dirname(path) == dataset_dir for path in dataset.paths)
+            assert len(dataset.paths) == 2
+        else:
+            assert len(dataset.handle_list) == 2
+
+        assert float(dataset[0][1]) == expected_label
+        assert float(dataset[len(dataset) - 1][1]) == expected_label
 
 
-def test_hdf5_close_is_idempotent(temp_hdf5_file):
-    """Test that closing an HDF5 dataset is idempotent and terminal."""
-    dataset = HDF5SingleCellDataset(dir_list=[temp_hdf5_file], dir_labels=[0], return_id=True)
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_close_is_idempotent(request, fixture_name, dataset_cls, init_kwargs):
+    """Test that closing a dataset is idempotent and terminal."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    dataset = dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs)
     _ = dataset[0]
     dataset.close()
     dataset.close()
+
     assert dataset._closed is True
-    assert dataset._open_hdf == {}
+    if hasattr(dataset, "paths"):
+        assert dataset._open_hdf == {}
+    else:
+        assert dataset.handle_list == []
+        assert dataset._open_hdf == []
+
     with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
         dataset[0]
 
 
-def test_hdf5_context_manager_releases_file():
-    """Test that the HDF5 dataset context manager closes the dataset on exit."""
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".hdf5")
-    temp_file.close()
-    _create_hdf5_test_file(temp_file.name)
+@pytest.mark.parametrize(("fixture_name", "dataset_cls", "init_kwargs"), _BASIC_CASES)
+def test_context_manager_releases_file(request, fixture_name, dataset_cls, init_kwargs):
+    """Test that dataset context managers close the dataset on exit."""
+    dataset_path = request.getfixturevalue(fixture_name)
+    with dataset_cls(dir_list=[dataset_path], return_id=True, **init_kwargs) as dataset:
+        _ = dataset[0]
 
-    try:
-        with HDF5SingleCellDataset(dir_list=[temp_file.name], dir_labels=[0], return_id=True) as dataset:
-            _ = dataset[0]
-        assert dataset._closed is True
+    assert dataset._closed is True
+    if hasattr(dataset, "paths"):
         assert dataset._open_hdf == {}
-        with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
-            dataset[0]
-    finally:
-        if os.path.exists(temp_file.name):
-            os.remove(temp_file.name)
+    else:
+        assert dataset.handle_list == []
+        assert dataset._open_hdf == []
+
+    with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
+        dataset[0]
 
 
 @pytest.fixture
@@ -305,143 +318,3 @@ def temp_h5sc_dir():
         yield temp_dir.name
     finally:
         temp_dir.cleanup()
-
-
-def test_h5sc_dataset_initialization(temp_h5sc_file):
-    """Test H5SC dataset initialization."""
-    with H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1]) as dataset:
-        assert isinstance(dataset, H5ScSingleCellDataset)
-        assert len(dataset) == 100
-
-
-def test_labelled_h5sc_dataset_initialization(temp_h5sc_file):
-    """Test labelled H5SC dataset initialization."""
-    with LabelledH5ScSingleCellDataset(
-        dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
-    ) as dataset:
-        assert isinstance(dataset, LabelledH5ScSingleCellDataset)
-        assert len(dataset) == 100
-
-
-def test_h5sc_get_item(temp_h5sc_file):
-    """Test retrieving an item from an H5SC dataset."""
-    with H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1]) as dataset:
-        item = dataset[0]
-        assert len(item) == 3
-
-        img, label, idx = item
-        assert isinstance(img, torch.Tensor)
-
-
-def test_h5sc_dataset_accepts_pathlike_inputs(temp_h5sc_file):
-    """Test that H5SC datasets accept pathlib.Path inputs."""
-    with H5ScSingleCellDataset(dir_list=[Path(temp_h5sc_file)], dir_labels=[1]) as dataset:
-        item = dataset[0]
-        assert len(item) == 3
-
-
-def test_labelled_h5sc_get_item(temp_h5sc_file):
-    """Test retrieving an item from a labelled H5SC dataset."""
-    with LabelledH5ScSingleCellDataset(
-        dir_list=[temp_h5sc_file], label_colum="pseudo_label", label_column_transform=None
-    ) as dataset:
-        item = dataset[0]
-        assert len(item) == 3
-
-        img, label, idx = item
-        assert isinstance(img, torch.Tensor)
-        assert label.ndim == 0  # scalar
-        assert idx.ndim == 0  # scalar
-
-
-def test_h5sc_index_list_subset(temp_h5sc_file):
-    """Test that only specified indices are loaded for H5SC datasets."""
-    with H5ScSingleCellDataset(
-        dir_list=[temp_h5sc_file],
-        dir_labels=[0],
-        index_list=[[0, 1, 2, 3, 4]],
-    ) as dataset:
-        assert len(dataset) == 5
-        for i in range(len(dataset)):
-            item = dataset[i]
-            assert len(item) == 3
-
-            img, label, idx = item
-            assert isinstance(img, torch.Tensor)
-            assert label.ndim == 0  # scalar
-            assert idx.ndim == 0  # scalar
-
-
-def test_labelled_h5sc_index_list_subset(temp_h5sc_file):
-    """Test that only specified indices are loaded for labelled H5SC datasets."""
-    with LabelledH5ScSingleCellDataset(
-        dir_list=[temp_h5sc_file],
-        label_colum="pseudo_label",
-        index_list=[[10, 11, 12]],
-        label_column_transform=None,
-    ) as dataset:
-        assert len(dataset) == 3
-        for i in range(len(dataset)):
-            item = dataset[i]
-            assert len(item) == 3
-            img, label, idx = item
-            assert isinstance(img, torch.Tensor)
-            assert label.ndim == 0  # scalar
-            assert idx.ndim == 0  # scalar
-
-
-def test_labelled_h5sc_label_transform_applied_once(temp_h5sc_file):
-    """Test that H5SC label transforms are applied exactly once."""
-    with LabelledH5ScSingleCellDataset(
-        dir_list=[temp_h5sc_file],
-        label_colum="pseudo_label",
-        label_column_transform=lambda x: x / 10,
-        index_list=[[10]],
-        return_id=True,
-    ) as dataset:
-        item = dataset[0]
-        assert float(item[1]) == 1.0
-
-
-def test_h5sc_directory_scan_uses_full_paths_and_directory_label(temp_h5sc_dir):
-    """Test that directory inputs load all H5SC files with the correct shared label."""
-    with H5ScSingleCellDataset(dir_list=[temp_h5sc_dir], dir_labels=[3], return_id=True) as dataset:
-        assert len(dataset) == 200
-        assert len(dataset.handle_list) == 2
-
-        first_item = dataset[0]
-        last_item = dataset[len(dataset) - 1]
-        assert float(first_item[1]) == 3.0
-        assert float(last_item[1]) == 3.0
-
-
-def test_h5sc_close_is_idempotent(temp_h5sc_file):
-    """Test that closing an H5SC dataset is idempotent and terminal."""
-    dataset = H5ScSingleCellDataset(dir_list=[temp_h5sc_file], dir_labels=[1])
-    _ = dataset[0]
-    dataset.close()
-    dataset.close()
-    assert dataset._closed is True
-    assert dataset.handle_list == []
-    assert dataset._open_hdf == []
-    with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
-        dataset[0]
-
-
-def test_h5sc_context_manager_releases_file():
-    """Test that the H5SC dataset context manager closes the dataset on exit."""
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5sc")
-    temp_file.close()
-    _create_h5sc_test_file(temp_file.name)
-
-    try:
-        with H5ScSingleCellDataset(dir_list=[temp_file.name], dir_labels=[1]) as dataset:
-            _ = dataset[0]
-        assert dataset._closed is True
-        assert dataset.handle_list == []
-        assert dataset._open_hdf == []
-        with pytest.raises(RuntimeError, match="Dataset has been closed and cannot be reused."):
-            dataset[0]
-    finally:
-        if os.path.exists(temp_file.name):
-            os.remove(temp_file.name)
