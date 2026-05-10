@@ -1,1 +1,5 @@
+# Test suite dependencies layered on top of the package runtime requirements.
 pytest
+requests
+PyYAML
+filelock
