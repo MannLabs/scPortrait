@@ -28,6 +28,7 @@ from alphabase.io import tempmmap
 from spatialdata import SpatialData
 from tifffile import imread
 
+from scportrait._utils.paths import normalize_path
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config, write_config
@@ -1287,7 +1288,7 @@ class Project(Logable):
 
     def load_input_from_omezarr(
         self,
-        ome_zarr_path: str,
+        ome_zarr_path: str | os.PathLike[str],
         overwrite: None | bool = None,
         channel_names: None | list[str] = None,
         remap: list[int] = None,
@@ -1325,12 +1326,17 @@ class Project(Logable):
         # check if an input image was already loaded if so throw error if overwrite = False
         self._cleanup_sdata_object()
 
+        normalized_ome_zarr_path = normalize_path(ome_zarr_path)
+
         # read the image data
-        self.log(f"trying to read file from {ome_zarr_path}")
-        image = da.from_zarr(str(ome_zarr_path), component=0)
+        self.log(f"trying to read file from {normalized_ome_zarr_path}")
+        # OME-Zarr resolution levels are stored under string keys like "0".
+        # Passing an integer breaks on newer zarr versions, which treat the
+        # component as a path and reject non-string keys.
+        image = da.from_zarr(normalized_ome_zarr_path, component="0")
 
         # Access the metadata to get channel names
-        zarr_store = zarr.open(ome_zarr_path, mode="r")  # Adjust the path
+        zarr_store = zarr.open(normalized_ome_zarr_path, mode="r")
         metadata = zarr_store.attrs.asdict()
 
         if "omero" in metadata and "channels" in metadata["omero"]:
