@@ -14,6 +14,7 @@ py-lmd>=1.3.1
 requests
 filelock
 PyYAML
+deprecation
 
 spatialdata-plot>=0.2.14
 matplotlib
@@ -26,9 +27,7 @@ ome-zarr
 scipy
 scikit-image>=0.22.0
 scikit-learn
-mahotas
 
-scikit-fmm #WGA segmentation
 cellpose>=3.1.1,<4 #cellpose segmentation
 
 torch

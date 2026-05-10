@@ -5,7 +5,6 @@ import warnings
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
-import skfmm
 from numba import njit, objmode, prange
 from numpy.typing import NDArray
 from scipy import ndimage
@@ -16,6 +15,7 @@ from skimage.morphology import dilation as sk_dilation
 from skimage.segmentation import watershed
 from skimage.transform import resize
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.pipeline._utils.constants import DEFAULT_SEGMENTATION_DTYPE
 from scportrait.plotting._vis import plot_image_array
 
@@ -95,6 +95,12 @@ def _generate_labels_from_mask(
     Returns:
         Label array where each segment has unique label
     """
+    skfmm = import_optional_dependency(
+        "skfmm",
+        package_name="scikit-fmm",
+        feature="the fast-marching segmentation utilities and workflows",
+        install_hint="pip install 'scportrait[segmentation]'",
+    )
     distance = ndimage.distance_transform_edt(image_mask)
     peak_idx = peak_local_max(distance, min_distance=min_distance, footprint=disk(peak_footprint))
     local_maxi = np.zeros_like(image_mask, dtype=bool)

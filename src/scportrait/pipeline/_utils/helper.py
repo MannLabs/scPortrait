@@ -3,6 +3,8 @@ from typing import TypeVar
 
 import yaml
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
+
 T = TypeVar("T")
 
 
@@ -50,10 +52,9 @@ def flatten(nested_list: list[list[T]]) -> list[T | tuple[T]]:
 
 def _check_for_spatialdata_plot() -> None:
     """Helper function to check if required package is installed"""
-    # check for spatialdata_plot
-    try:
-        import spatialdata_plot
-    except ImportError:
-        raise ImportError(
-            "Extended plotting capabilities required. Please install with `pip install 'scportrait[plotting]'`."
-        ) from None
+    import_optional_dependency(
+        "spatialdata_plot",
+        feature="extended plotting capabilities",
+        install_hint="pip install 'scportrait[plotting]'",
+        error_message="Extended plotting capabilities required. Please install with `pip install 'scportrait[plotting]'`.",
+    )

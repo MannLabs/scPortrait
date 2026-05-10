@@ -42,3 +42,10 @@ To install the latest release of scPortrait:
 .. code::
 
    pip install scportrait
+
+Optional feature extras are available for dependencies that are only needed by specific workflows:
+
+.. code::
+
+   pip install "scportrait[segmentation]"  # scikit-fmm-backed segmentation helpers and workflows
+   pip install "scportrait[zstack]"        # extended depth-of-field z-stack compression

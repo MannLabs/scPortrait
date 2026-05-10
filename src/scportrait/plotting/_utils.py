@@ -1,12 +1,15 @@
 from matplotlib.axes import Axes
 from matplotlib.colors import BoundaryNorm, ListedColormap
 
-try:
-    from matplotlib_scalebar.scalebar import ScaleBar
-except ImportError:
-    raise ImportError(
-        "matplotlib_scalebar must be installed to use the plotting capabilities. please install with `pip install 'scportrait[plotting]'`."
-    ) from None
+from scportrait._utils.optional_dependencies import import_optional_dependency
+
+ScaleBar = import_optional_dependency(
+    "matplotlib_scalebar.scalebar",
+    attribute="ScaleBar",
+    package_name="matplotlib_scalebar",
+    feature="the plotting capabilities",
+    install_hint="pip install 'scportrait[plotting]'",
+)
 
 
 def _custom_cmap():

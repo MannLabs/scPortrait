@@ -28,6 +28,7 @@ from alphabase.io import tempmmap
 from spatialdata import SpatialData
 from tifffile import imread
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.io import daskmmap
 from scportrait.pipeline._base import Logable
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot, read_config, write_config
@@ -604,12 +605,13 @@ class Project(Logable):
             This only works in sessions with a visual interface.
         """
         # open interactive viewer in napari
-        try:
-            from napari_spatialdata import Interactive
-        except ImportError:
-            raise ImportError(
-                "napari-spatialdata must be installed to use the interactive viewer. Please install with `pip install scportrait[plotting]`."
-            ) from None
+        Interactive = import_optional_dependency(
+            "napari_spatialdata",
+            attribute="Interactive",
+            package_name="napari-spatialdata",
+            feature="the interactive viewer",
+            install_hint="pip install 'scportrait[plotting]'",
+        )
         self.interactive_sdata = self.filehandler.get_sdata()
         self.interactive = Interactive(self.interactive_sdata)
         self.interactive.run()
