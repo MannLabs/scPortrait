@@ -9,6 +9,14 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
+def _is_missing_target_module(err: ModuleNotFoundError, module_name: str) -> bool:
+    """Return whether the missing module error refers to the requested dependency itself."""
+    missing_name = getattr(err, "name", None)
+    if missing_name is None:
+        return False
+    return missing_name == module_name or module_name.startswith(f"{missing_name}.")
+
+
 def import_optional_dependency(
     module_name: str,
     *,
@@ -22,7 +30,10 @@ def import_optional_dependency(
     """Import an optional dependency and raise a guided error when unavailable."""
     try:
         module = importlib.import_module(module_name)
-    except (ImportError, ModuleNotFoundError):
+    except ModuleNotFoundError as err:
+        if not _is_missing_target_module(err, module_name):
+            raise
+
         if not raise_on_missing:
             return None
 
@@ -35,7 +46,9 @@ def import_optional_dependency(
             if install_hint is not None:
                 error_message += f" Please install with `{install_hint}`."
 
-        raise ImportError(error_message) from None
+        raise ImportError(error_message) from err
+    except ImportError:
+        raise
 
     if attribute is None:
         return module

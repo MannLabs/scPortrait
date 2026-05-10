@@ -27,6 +27,50 @@ def test_import_optional_dependency_missing_raises_guided_error():
         )
 
 
+def test_import_optional_dependency_reraises_transitive_module_not_found(monkeypatch):
+    original = ModuleNotFoundError("No module named 'transitive_dependency'")
+    original.name = "transitive_dependency"
+
+    def _raise_transitive_failure(_module_name):
+        raise original
+
+    monkeypatch.setattr(importlib, "import_module", _raise_transitive_failure)
+
+    with pytest.raises(ModuleNotFoundError, match="transitive_dependency") as exc_info:
+        import_optional_dependency("optional_package")
+
+    assert exc_info.value is original
+
+
+def test_import_optional_dependency_non_raising_still_reraises_transitive_module_not_found(monkeypatch):
+    original = ModuleNotFoundError("No module named 'transitive_dependency'")
+    original.name = "transitive_dependency"
+
+    def _raise_transitive_failure(_module_name):
+        raise original
+
+    monkeypatch.setattr(importlib, "import_module", _raise_transitive_failure)
+
+    with pytest.raises(ModuleNotFoundError, match="transitive_dependency") as exc_info:
+        import_optional_dependency("optional_package", raise_on_missing=False)
+
+    assert exc_info.value is original
+
+
+def test_import_optional_dependency_reraises_plain_import_error(monkeypatch):
+    original = ImportError("cannot import name 'foo' from 'bar'")
+
+    def _raise_import_error(_module_name):
+        raise original
+
+    monkeypatch.setattr(importlib, "import_module", _raise_import_error)
+
+    with pytest.raises(ImportError, match="cannot import name") as exc_info:
+        import_optional_dependency("optional_package")
+
+    assert exc_info.value is original
+
+
 def test_deprecation_helper_exports_decorator():
     from scportrait._utils.deprecation import deprecated
 
@@ -42,13 +86,31 @@ def test_check_for_spatialdata_plot_missing(monkeypatch):
         _check_for_spatialdata_plot()
 
 
-def test_plotting_utils_missing_matplotlib_scalebar_raises_guided_error(monkeypatch):
+def test_plotting_utils_import_without_matplotlib_scalebar_keeps_custom_cmap_available(monkeypatch):
     monkeypatch.setitem(sys.modules, "matplotlib_scalebar", None)
     monkeypatch.setitem(sys.modules, "matplotlib_scalebar.scalebar", None)
     sys.modules.pop("scportrait.plotting._utils", None)
 
+    plotting_utils = importlib.import_module("scportrait.plotting._utils")
+
+    cmap, norm = plotting_utils._custom_cmap()
+
+    assert cmap.N == 3
+    assert norm is not None
+
+
+def test_add_scalebar_missing_matplotlib_scalebar_raises_guided_error(monkeypatch):
+    from scportrait.plotting._utils import add_scalebar
+
+    monkeypatch.setitem(sys.modules, "matplotlib_scalebar", None)
+    monkeypatch.setitem(sys.modules, "matplotlib_scalebar.scalebar", None)
+
+    class _DummyAxes:
+        def add_artist(self, _artist):
+            raise AssertionError("add_artist should not be called when matplotlib_scalebar is missing")
+
     with pytest.raises(ImportError, match=r"scportrait\[plotting\]"):
-        importlib.import_module("scportrait.plotting._utils")
+        add_scalebar(_DummyAxes(), resolution=1.0)
 
 
 def test_project_view_sdata_missing_napari_spatialdata_raises_guided_error(monkeypatch):
