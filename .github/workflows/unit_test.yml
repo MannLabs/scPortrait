@@ -23,6 +23,24 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-py3.13-uv-${{ hashFiles('pyproject.toml', 'requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py3.13-uv-
+            ${{ runner.os }}-uv-
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-py3.13-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-py3.13-pre-commit-
+            ${{ runner.os }}-pre-commit-
+
       - name: Install package
         run: |
           pip install uv
@@ -30,7 +48,6 @@ jobs:
 
       - name: Run pre-commit checks
         run: |
-          pre-commit install
           pre-commit run --all-files
 
       - name: Test with pytest
