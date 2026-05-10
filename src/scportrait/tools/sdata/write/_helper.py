@@ -150,6 +150,21 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
     sdata.write_element(element_name)
 
 
+def _rewrite_metadata_path_reference(metadata_path: os.PathLike[str], old_path: str, new_path: str) -> None:
+    """Rewrite element path references inside a metadata file if it exists."""
+    if not os.path.exists(metadata_path):
+        return
+
+    with open(metadata_path, encoding="utf-8") as file:
+        content = file.read()
+
+    if old_path not in content:
+        return
+
+    with open(metadata_path, "w", encoding="utf-8") as file:
+        file.write(content.replace(old_path, new_path))
+
+
 def rename_image_element(sdata: SpatialData, image_element: str, new_element_name: str) -> SpatialData:
     """Rename an image element in the sdata object.
 
@@ -178,17 +193,19 @@ def rename_image_element(sdata: SpatialData, image_element: str, new_element_nam
         f"Element {image_element} needs to be on disk to rename it."
     )
 
-    # rename metadata
-    zattrs_path = sdata.path / "images" / image_element / ".zattrs"
-    with open(zattrs_path) as file:
-        content = file.read()
-        content = content.replace(f"/{short_path_elem}", f"/{short_path_new_elem}")
-
-    with open(zattrs_path, "w") as file:
-        file.write(content)
+    # Update the element metadata before renaming the directory.
+    metadata_paths = (
+        path_elem / ".zattrs",
+        path_elem / "zarr.json",
+    )
+    for metadata_path in metadata_paths:
+        _rewrite_metadata_path_reference(metadata_path, short_path_elem, short_path_new_elem)
 
     # rename image files
     os.rename(path_elem, new_path_elem)
+
+    if sdata.has_consolidated_metadata():
+        sdata.write_consolidated_metadata()
 
     # read and return update spatialdata object
     return read_zarr(path_sdata)

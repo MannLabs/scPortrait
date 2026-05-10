@@ -5,8 +5,8 @@ numpy
 pandas
 h5py
 alphabase
-anndata<0.12
-spatialdata>=0.3.0,<0.6
+anndata
+spatialdata>=0.3.0
 dask
 xarray
 pyarrow<22.0.0
