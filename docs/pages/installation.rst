@@ -4,7 +4,7 @@
 Installation
 ************
 
-We recommended installing the library within a separate conda environment running Python 3.11, 3.12, 3.13 or 3.14.
+We recommend installing the library within a separate conda environment running Python 3.11, 3.12, 3.13 or 3.14.
 
 .. code::
 
