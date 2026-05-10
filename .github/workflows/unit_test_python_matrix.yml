@@ -1,0 +1,43 @@
+name: Perform Unit Tests Python Matrix
+
+on:
+  workflow_run:
+    workflows: ["Perform Unit Test"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    name: Python ${{ matrix.python-version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          pip install uv
+          uv pip install --system ".[tests]"
+
+      - name: Test with pytest
+        run: |
+          pytest tests/unit_tests --disable-warnings
