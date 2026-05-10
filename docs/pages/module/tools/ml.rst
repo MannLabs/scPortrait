@@ -39,6 +39,7 @@ plmodels
 .. autoclass:: scportrait.tools.ml.plmodels.MultilabelSupervisedModel
     :members:
     :show-inheritance: False
+    :no-index:
 
 pretrained_models
 #################

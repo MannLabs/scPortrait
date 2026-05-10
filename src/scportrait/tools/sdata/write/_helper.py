@@ -2,6 +2,9 @@ import os
 from typing import Any, Literal, TypeAlias
 
 import numpy as np
+import pandas as pd
+from anndata import AnnData
+from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData, read_zarr
 from spatialdata.models import get_model
 from xarray import DataArray, DataTree
@@ -68,6 +71,32 @@ def _make_key_lookup(sdata: SpatialData) -> dict:
     return dict_lookup
 
 
+def _normalize_dataframe_strings(df: pd.DataFrame) -> None:
+    """Normalize string dtypes to object to avoid nullable string serialization issues."""
+    if is_string_dtype(df.index.dtype):
+        df.index = df.index.astype(object)
+        if df.index.isna().any():
+            df.index = df.index.where(~df.index.isna(), None)
+
+    string_cols = df.select_dtypes(include=["string"]).columns
+    if len(string_cols) > 0:
+        df[string_cols] = df[string_cols].astype(object)
+        for col in string_cols:
+            if df[col].isna().any():
+                df[col] = df[col].where(df[col].notna(), None)
+
+    cat_cols = df.select_dtypes(include=["category"]).columns
+    for col in cat_cols:
+        if is_string_dtype(df[col].cat.categories.dtype):
+            df[col] = df[col].cat.set_categories(df[col].cat.categories.astype(object))
+
+
+def _normalize_anndata_strings(adata: AnnData) -> None:
+    """Normalize obs/var string dtypes to python-backed storage."""
+    _normalize_dataframe_strings(adata.obs)
+    _normalize_dataframe_strings(adata.var)
+
+
 def _force_delete_object(sdata: SpatialData, name: str) -> None:
     """Force delete an object from the SpatialData object and directory.
 
@@ -109,6 +138,9 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
             )
 
         _force_delete_object(sdata, element_name)
+
+    if isinstance(element, AnnData):
+        _normalize_anndata_strings(element)
 
     # the element needs to validate with exactly one of the models
     get_model(element)

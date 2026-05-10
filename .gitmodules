@@ -1,3 +1,4 @@
 [submodule "examples/notebooks"]
 	path = examples/notebooks
 	url = https://github.com/MannLabs/scPortrait-notebooks.git
+	branch = main

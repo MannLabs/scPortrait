@@ -1,7 +1,34 @@
-import copy
-import warnings
-
 import spatialdata
+
+
+def _infer_spatial_extent_xy(sdata: spatialdata) -> tuple[int, int] | None:
+    """Infer approximate x/y extent from the first available element."""
+    for element in sdata.images.values():
+        if hasattr(element, "scale0"):
+            shape = element.scale0.image.shape
+        elif hasattr(element, "data"):
+            shape = element.data.shape
+        else:
+            continue
+        if len(shape) >= 2:
+            return int(shape[-1]), int(shape[-2])
+
+    for element in sdata.labels.values():
+        if hasattr(element, "scale0"):
+            shape = element.scale0.image.shape
+        elif hasattr(element, "data"):
+            shape = element.data.shape
+        else:
+            continue
+        if len(shape) >= 2:
+            return int(shape[-1]), int(shape[-2])
+
+    for element in sdata.shapes.values():
+        if hasattr(element, "total_bounds"):
+            min_x, min_y, max_x, max_y = element.total_bounds
+            return max(1, int(round(max_x - min_x))), max(1, int(round(max_y - min_y)))
+
+    return None
 
 
 def get_bounding_box_sdata(
@@ -19,22 +46,12 @@ def get_bounding_box_sdata(
         spatialdata: spatialdata object with bounding box applied
     """
     _sdata = sdata
-    # remove points object to improve subsetting
-    if drop_points:
-        points_keys = list(_sdata.points.keys())
-        if len(points_keys) > 0:
-            # add check to make sure we aren't deleting a points object that is only in memory
-            in_memory_only, _ = _sdata._symmetric_difference_with_zarr_store()
-            in_memory_only = [x.split("/")[-1] for x in in_memory_only]
-
-            for x in points_keys:
-                if x not in in_memory_only:
-                    del _sdata.points[x]
-                else:
-                    warnings.warn(
-                        f"Points object {x} is in memory only and will not be deleted despite the drop_points flag being set to True.",
-                        stacklevel=2,
-                    )
+    points_keys = list(_sdata.points.keys()) if drop_points else []
+    points_backup: dict[str, object] = {}
+    if drop_points and points_keys:
+        for key in points_keys:
+            points_backup[key] = _sdata.points[key]
+            del _sdata.points[key]
 
     width = max_width // 2
 
@@ -44,19 +61,26 @@ def get_bounding_box_sdata(
     if center_y - width < 0:
         center_y = width
 
-    # subset spatialdata object if its too large
-    _sdata = _sdata.query.bounding_box(
-        axes=["x", "y"],
-        min_coordinate=[center_x - width, center_y - width],
-        max_coordinate=[center_x + width, center_y + width],
-        target_coordinate_system="global",
-    )
+    extent_xy = _infer_spatial_extent_xy(_sdata)
+    if extent_xy is not None:
+        extent_x, extent_y = extent_xy
+        max_center_x = max(width, extent_x - width)
+        max_center_y = max(width, extent_y - width)
+        center_x = min(max(center_x, width), max_center_x)
+        center_y = min(max(center_y, width), max_center_y)
 
-    if drop_points:
-        # re-add points object
-        __sdata = spatialdata.SpatialData.read(sdata.path, selection=["points"])
-        for x in points_keys:
-            sdata[x] = __sdata[x]
-        del __sdata
+    try:
+        # subset spatialdata object if its too large
+        _sdata = _sdata.query.bounding_box(
+            axes=["x", "y"],
+            min_coordinate=[center_x - width, center_y - width],
+            max_coordinate=[center_x + width, center_y + width],
+            target_coordinate_system="global",
+        )
+    finally:
+        # Re-attach points in the original object to avoid side effects.
+        if drop_points and points_backup:
+            for key, element in points_backup.items():
+                sdata[key] = element
 
     return _sdata

@@ -12,12 +12,9 @@ def _make_zenodo_download_link(record_id: str, filename: str) -> str:
     """
     Construct a direct download URL for a file stored in a Zenodo record.
 
-    Parameters
-    ----------
-    record_id : str
-        The Zenodo record identifier (e.g., "1234567").
-    filename : str
-        The exact filename stored in the Zenodo record (case sensitive).
+    Args:
+        record_id : The Zenodo record identifier (e.g., "1234567").
+        filename : The exact filename stored in the Zenodo record (case sensitive).
 
     Returns
     -------
@@ -28,7 +25,11 @@ def _make_zenodo_download_link(record_id: str, filename: str) -> str:
 
 
 def _scportrait_cache_model_path(basename: str) -> None:
-    """Download a model from a public Nextcloud share into Cellpose's model cache if missing."""
+    """Download a model from a public Zenodo share into Cellpose's model cache if missing.
+
+    Args:
+
+    """
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
     url = _make_zenodo_download_link(

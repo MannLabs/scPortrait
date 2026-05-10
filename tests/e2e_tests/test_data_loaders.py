@@ -8,11 +8,13 @@ from spatialdata.datasets import blobs
 
 from scportrait.data._datasets import dataset_1_omezarr
 from scportrait.pipeline.project import Project
+from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
 
 
 @pytest.fixture()
 def sdata_path(tmp_path):
     sdata = blobs()
+    _normalize_anndata_strings(sdata["table"])
     # Write to temporary location
     sdata_path = tmp_path / "sdata.zarr"
     sdata.write(sdata_path)
@@ -80,6 +82,7 @@ def test_project_load_input_from_sdata_multiscale_image(
     )
 
 
+@pytest.mark.requires_dataset("dataset_1_omezarr")
 def test_project_load_from_omezarr(config_path, tmp_path):
     project_path = str(tmp_path / "scportrait/project/")
     omezarr_path = dataset_1_omezarr()

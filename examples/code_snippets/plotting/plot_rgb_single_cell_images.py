@@ -4,7 +4,7 @@ Generate RGB composite single-cell images
 """
 
 import matplotlib.pyplot as plt
-from scportrait.pl.vis import generate_composite
+from scportrait.pl import generate_composite
 
 from scportrait.data._single_cell_images import dataset2_h5sc
 

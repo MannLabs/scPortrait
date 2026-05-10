@@ -190,6 +190,37 @@ to integrate the changes into yours.
 
 While the [pre-commit.ci][] is useful, we strongly encourage installing and running pre-commit locally first to understand its usage.
 
+### Path handling
+
+For filesystem APIs, prefer accepting `str | os.PathLike[str]`.
+
+- Use `os.PathLike[str]` in type hints, but use unparameterized `os.PathLike` in `isinstance(...)` checks at runtime.
+- If a function only passes the path through to `open`, `os.path`, `h5py`, or similar libraries, keep the input typed as `str | os.PathLike[str]`.
+- If a function needs path methods such as `.parent`, `.suffix`, or `.name`, normalize first with `Path(...)` inside the function.
+- Reuse the shared helpers in `scportrait._utils.paths` instead of re-implementing local path helpers.
+- Use `normalize_path(...)` when you need a concrete `Path` for internal path operations.
+- Use `path_suffix(...)` when you need a normalized suffix without the leading dot.
+- additional helpers can be added to `scportrait._utils.paths` as needed, but try to avoid adding new dependencies (e.g., `pathlib2`) for simple path operations.
+
+Example:
+
+```python
+from os import PathLike
+
+from scportrait._utils.paths import normalize_path, path_suffix
+
+def read_config(path: str | PathLike[str]) -> dict:
+    with open(path) as stream:
+        ...
+
+def get_output_dir(path: str | PathLike[str]):
+    normalized = normalize_path(path)
+    return normalized.parent
+
+def is_hdf5(path: str | PathLike[str]) -> bool:
+    return path_suffix(path) in {"h5", "hdf5"}
+```
+
 ## Writing documentation
 
 Please write documentation for new or changed features and use-cases. This project uses [sphinx][] with the following features:
@@ -214,7 +245,7 @@ The docs for scPortrait are updated and built automatically whenever code is mer
 make clean
 make html
 ```
-4. open the file `scportriat/docs/_build/html/index.html` in your favorite browser
+4. open the file `scportrait/docs/_build/html/index.html` in your favorite browser
 
 ## Writing Tests
 
@@ -246,9 +277,38 @@ pytest tests/unit_tests --disable-warnings
 E2E tests run larger workflow scenarios to ensure that multiple components of the pipeline work correctly together (e.g., segmentation → extraction → featurization → selection).
 These tests are **much slower** and may require larger example data.
 
+If an E2E test depends on remotely downloaded data/config files, it must be annotated with `@pytest.mark.requires_dataset(...)`.
+This is required because scPortrait runs a preflight data check before executing E2E test bodies and exits early if required data cannot be downloaded, avoiding misleading downstream failures.
+See [Test Markers](#test-markers) for details and examples.
+
 Run only E2E tests:
 ```console
 pytest tests/e2e_tests --disable-warnings
+```
+
+### Test Markers
+
+scPortrait uses pytest markers to describe test metadata and e2e data requirements.
+
+- `@pytest.mark.slow`: marks slow-running tests (used to identify expensive tests such as full-pipeline e2e runs).
+- `@pytest.mark.requires_dataset(...)`: declares which remote datasets/configs an e2e test needs.
+
+The e2e preflight fixture in `tests/e2e_tests/conftest.py` reads `requires_dataset(...)` markers from the selected tests and preloads only those datasets before test bodies execute. If preloading fails, pytest exits early and the remaining e2e tests are not executed.
+
+Example:
+
+```python
+@pytest.mark.slow
+@pytest.mark.requires_dataset("dataset_1_config", "test_dataset")
+def test_full_pipeline_e2e(tmp_path):
+    ...
+```
+
+Run marker-filtered tests:
+
+```console
+pytest -m slow
+pytest -m "not slow"
 ```
 
 ### Running All Tests
