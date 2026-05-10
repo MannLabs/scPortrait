@@ -35,14 +35,33 @@ def global_otsu(image: NDArray) -> float:
         >>> threshold = global_otsu(image)
         >>> print(threshold)
     """
-    counts, bin_edges = np.histogram(np.ravel(image), bins=512)
+    flat_image = np.ravel(np.asarray(image))
+    if flat_image.size == 0:
+        raise ValueError("image must not be empty")
+
+    image_min = float(flat_image.min())
+    image_max = float(flat_image.max())
+    if image_min == image_max:
+        return image_min
+
+    # Using explicit bin edges keeps the NumPy implementation while avoiding
+    # the buggy equal-width `bins=int` fast path seen on some newer stacks.
+    bin_edges = np.linspace(image_min, image_max, num=513, dtype=np.float64)
+    counts, bin_edges = np.histogram(flat_image, bins=bin_edges)
+    counts = counts.astype(np.float64, copy=False)
     bin_centers = bin_edges[:-1] + np.diff(bin_edges) / 2
 
     weight1 = np.cumsum(counts)
     weight2 = np.cumsum(counts[::-1])[::-1]
 
-    mean1 = np.cumsum(counts * bin_centers) / weight1
-    mean2 = (np.cumsum((counts * bin_centers)[::-1]) / weight2[::-1])[::-1]
+    weighted_counts = counts * bin_centers
+    mean1 = np.divide(np.cumsum(weighted_counts), weight1, out=np.zeros_like(weight1), where=weight1 > 0)
+    mean2 = np.divide(
+        np.cumsum(weighted_counts[::-1]),
+        weight2[::-1],
+        out=np.zeros_like(weight2),
+        where=weight2[::-1] > 0,
+    )[::-1]
 
     variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
 

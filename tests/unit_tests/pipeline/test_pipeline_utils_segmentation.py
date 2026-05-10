@@ -22,6 +22,34 @@ def test_global_otsu():
     assert isinstance(threshold, float), "The result is not a float"
 
 
+def test_global_otsu_integer_images_use_explicit_bin_edges(monkeypatch):
+    image = data.coins()
+    original_histogram = np.histogram
+    captured = {}
+
+    def _capture_histogram(a, bins=10, **kwargs):
+        captured["bins"] = bins
+        captured["kwargs"] = kwargs
+        return original_histogram(a, bins=bins, **kwargs)
+
+    monkeypatch.setattr("scportrait.pipeline._utils.segmentation.np.histogram", _capture_histogram)
+
+    threshold = global_otsu(image)
+
+    assert isinstance(threshold, float), "The result is not a float"
+    assert isinstance(captured["bins"], np.ndarray)
+    assert captured["bins"].shape == (513,)
+    assert captured["kwargs"] == {}
+
+
+def test_global_otsu_constant_image_returns_constant_value():
+    image = np.full((8, 8), 7, dtype=np.uint8)
+
+    threshold = global_otsu(image)
+
+    assert threshold == 7.0
+
+
 def test_segment_threshold():
     image = data.coins()
     threshold = 100
