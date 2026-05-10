@@ -4,7 +4,7 @@
 Installation
 ************
 
-We recommended installing the library within a separate conda environment running Python 3.10, 3.11 or 3.12.
+We recommend installing the library within a separate conda environment running Python 3.11, 3.12, 3.13 or 3.14.
 
 .. code::
 
@@ -42,3 +42,10 @@ To install the latest release of scPortrait:
 .. code::
 
    pip install scportrait
+
+Optional feature extras are available for dependencies that are only needed by specific workflows:
+
+.. code::
+
+   pip install "scportrait[segmentation]"  # scikit-fmm-backed segmentation helpers and workflows
+   pip install "scportrait[zstack]"        # extended depth-of-field z-stack compression

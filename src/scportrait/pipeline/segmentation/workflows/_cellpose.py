@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 import torch
 from cellpose import models
-from skfmm import travel_time as skfmm_travel_time
 from skimage.morphology import dilation, disk
 from skimage.segmentation import watershed
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.pipeline._utils.segmentation import (
     numba_mask_centroid,
     remove_edge_labels,
@@ -321,6 +321,14 @@ class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
         -------
         expanded nucleus mask
         """
+        skfmm_travel_time = import_optional_dependency(
+            "skfmm",
+            attribute="travel_time",
+            package_name="scikit-fmm",
+            feature="the fast-marching segmentation utilities and workflows",
+            install_hint="pip install 'scportrait[segmentation]'",
+        )
+
         # get centers of segmented nuclei
         nucleus_centers, _, _ids = numba_mask_centroid(nucleus_mask)
         px_centers = np.round(nucleus_centers).astype(np.uint64)

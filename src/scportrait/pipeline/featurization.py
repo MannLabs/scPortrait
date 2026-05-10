@@ -19,6 +19,7 @@ from anndata import AnnData
 from spatialdata.models import TableModel
 from torchvision import transforms
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.pipeline._base import ProcessingStep
 from scportrait.tools.ml.datasets import H5ScSingleCellDataset
 from scportrait.tools.ml.plmodels import MultilabelSupervisedModel
@@ -30,6 +31,15 @@ if TYPE_CHECKING:
 
 
 from dataclasses import dataclass
+
+
+def _import_transformers():
+    """Return the optional ``transformers`` module for ConvNeXt featurization."""
+    return import_optional_dependency(
+        "transformers",
+        feature="ConvNeXt featurization",
+        install_hint="pip install 'scportrait[convnext]'",
+    )
 
 
 @dataclass
@@ -1323,10 +1333,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
             self._clean_log_file()
 
         # assert that the correct transformers version is installed
-        try:
-            import transformers
-        except ImportError:
-            raise ImportError("transformers is not installed. Please install it via pip install transformers") from None
+        _import_transformers()
 
         assert len(self.channel_selection) in [1, 3], "channel_selection should be either 1 or 3 channels"
 
@@ -1334,8 +1341,8 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
         self.label = f"{self.LABEL}_{'_'.join(f'Ch{n}' for n in self.channel_selection)}"
 
     def _load_model(self):
-        # lazy imports
-        from transformers import ConvNextModel
+        transformers = _import_transformers()
+        ConvNextModel = transformers.ConvNextModel
 
         # silence warnings from transformers that are not relevant here
         # we do actually just want to load some of the weights to access the convnext features
@@ -1349,7 +1356,7 @@ class ConvNeXtFeaturizer(_FeaturizationBase):
     def _silence_warnings(self):
         import logging
 
-        from transformers import logging as hf_logging
+        hf_logging = _import_transformers().logging
 
         # Create a custom filter class to suppress specific warnings from huggingfaces transformers
         class SpecificMessageFilter(logging.Filter):

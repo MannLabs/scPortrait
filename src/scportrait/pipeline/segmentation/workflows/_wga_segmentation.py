@@ -3,11 +3,11 @@ import timeit
 
 import matplotlib.pyplot as plt
 import numpy as np
-from skfmm import travel_time as skfmm_travel_time
 from skimage.color import label2rgb
 from skimage.morphology import binary_erosion, dilation, disk
 from skimage.segmentation import watershed
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.pipeline._utils.segmentation import (
     contact_filter,
     global_otsu,
@@ -267,6 +267,14 @@ class _ClassicalSegmentation(_BaseSegmentation):
                 self.log(f"Filtered out {n_classes - n_classes_post} nuclei due to contact filtering.")
 
     def _cytosol_segmentation(self, input_image, debug: bool = False):
+        skfmm_travel_time = import_optional_dependency(
+            "skfmm",
+            attribute="travel_time",
+            package_name="scikit-fmm",
+            feature="the fast-marching segmentation utilities and workflows",
+            install_hint="pip install 'scportrait[segmentation]'",
+        )
+
         if not self.segment_nuclei:
             raise ValueError("Nucleus segmentation must be performed to be able to perform a cytosol segmentation.")
 

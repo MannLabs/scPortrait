@@ -1,5 +1,6 @@
 import numpy as np
-from mahotas import sobel
+
+from scportrait._utils.optional_dependencies import import_optional_dependency
 
 
 def EDF(image: np.ndarray) -> np.ndarray:
@@ -12,6 +13,13 @@ def EDF(image: np.ndarray) -> np.ndarray:
     Returns:
         np.array: EDF selected image
     """
+    sobel = import_optional_dependency(
+        "mahotas",
+        attribute="sobel",
+        package_name="mahotas",
+        feature="extended depth-of-field z-stack compression",
+        install_hint="pip install 'scportrait[zstack]'",
+    )
 
     # get image stack sizes
     stack, h, w = image.shape

@@ -7,7 +7,7 @@ name = "scportrait"
 version = "1.7.1-dev0"
 description = "Computational framework to generate single cell datasets from raw microscopy images."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 keywords = ["single-cell", "image analysis", "spatial omics", "deep learning", "image representation"]
 dynamic = ["dependencies", "optional-dependencies"]
@@ -36,9 +36,19 @@ classifiers = [
 dependencies = {file = ["requirements/requirements.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
+segmentation = {file = ["requirements/requirements_segmentation.txt"]}
+zstack = {file = ["requirements/requirements_zstack.txt"]}
 dev = {file = ["requirements/requirements_dev.txt"]}
-tests = {file = ["requirements/requirements_test.txt"]}
-docs = {file = ["requirements/requirements_docs.txt"]}
+tests = {file = [
+    "requirements/requirements_test.txt",
+    "requirements/requirements_segmentation.txt",
+    "requirements/requirements_zstack.txt",
+]}
+docs = {file = [
+    "requirements/requirements_docs.txt",
+    "requirements/requirements_segmentation.txt",
+    "requirements/requirements_zstack.txt",
+]}
 plotting = {file = ["requirements/requirements_plotting.txt"]}
 stitching = {file = ["requirements/requirements_stitching.txt"]}
 convnext = {file = ["requirements/requirements_convnext.txt"]}
@@ -48,7 +58,9 @@ all = {file = [
     "requirements/requirements_test.txt",
     "requirements/requirements_docs.txt",
     "requirements/requirements_plotting.txt",
+    "requirements/requirements_segmentation.txt",
     "requirements/requirements_stitching.txt",
+    "requirements/requirements_zstack.txt",
 ]}
 
 [project.urls]

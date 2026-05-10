@@ -1,5 +1,5 @@
 [![GitHub Release](https://img.shields.io/github/v/release/mannlabs/scPortrait?logoColor=green&color=brightgreen)](https://github.com/MannLabs/scPortrait/releases)
-![Versions](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12-brightgreen)
+![Versions](https://img.shields.io/badge/python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-brightgreen)
 [![License](https://img.shields.io/badge/license-Apache-brightgreen)](https://github.com/MannLabs/scPortrait/blob/main/LICENSE)
 [![Docs](https://img.shields.io/website?url=https%3A%2F%2Fmannlabs.github.io/scPortrait/index.html)](https://mannlabs.github.io/scPortrait/index.html)
 [![Unit Tests](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml/badge.svg)](https://github.com/MannLabs/scPortrait/actions/workflows/unit_test.yml)
@@ -21,7 +21,7 @@ Please refer to our [documentation](https://mannlabs.github.io/scPortrait/), in 
 
 ## Installation from Github
 
-Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.10, 3.11 and 3.12.
+Check out the docs for [complete installation instructions](https://mannlabs.github.io/scPortrait/pages/installation.html). scPortrait currently supports Python 3.11, 3.12, 3.13 and 3.14.
 
 To get started you can install scPortrait via pip:
 

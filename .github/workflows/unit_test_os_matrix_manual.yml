@@ -1,0 +1,35 @@
+name: Perform Unit Tests OS Matrix Manual
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    name: ${{ matrix.os }} / Python 3.14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install package
+        run: |
+          pip install uv
+          uv pip install --system ".[tests]"
+
+      - name: Test with pytest
+        run: |
+          pytest tests/unit_tests --disable-warnings

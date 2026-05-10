@@ -2,14 +2,12 @@
 # Unit tests for ../pipeline/_utils/helper.py
 #######################################################
 
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from scportrait.pipeline._utils.helper import (
-    _check_for_spatialdata_plot,
     flatten,
     read_config,
     write_config,
@@ -55,10 +53,3 @@ def test_write_quotes_strings():
 )
 def test_flatten_list(input_list, expected_output):
     assert flatten(input_list) == expected_output
-
-
-def test_check_for_spatialdata_plot_missing(monkeypatch):
-    monkeypatch.setitem(sys.modules, "spatialdata_plot", None)
-    with pytest.raises(ImportError, match="Extended plotting capabilities"):
-        monkeypatch.delenv("spatialdata_plot", raising=False)
-        _check_for_spatialdata_plot()
