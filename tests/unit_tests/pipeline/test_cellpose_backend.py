@@ -12,22 +12,22 @@ from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
 )
 
 
-def test_load_model_pretrained_delegates_download_and_cellpose_constructor():
+def test_load_model_pretrained_delegates_download_and_cellpose_model_constructor():
     download_calls: list[str] = []
     constructor_calls: list[dict[str, Any]] = []
     fake_model = object()
 
-    def _fake_download(name: str) -> None:
+    def _fake_download(name: str) -> str:
         download_calls.append(name)
+        return f"/cache/{name}"
 
-    def _fake_cellpose(*args, **kwargs):
+    def _fake_cellpose_model(*args, **kwargs):
         constructor_calls.append({"args": args, "kwargs": kwargs})
         return fake_model
 
     backend = CellposeBackend(
         download_model=_fake_download,
-        cellpose_ctor=_fake_cellpose,
-        cellpose_model_ctor=lambda *args, **kwargs: None,
+        cellpose_model_ctor=_fake_cellpose_model,
     )
     spec = CellposeModelSpec(model_type="pretrained", name="nuclei", gpu=False, device="cpu")
 
@@ -35,14 +35,15 @@ def test_load_model_pretrained_delegates_download_and_cellpose_constructor():
 
     assert loaded is fake_model
     assert download_calls == ["nuclei"]
-    assert constructor_calls == [{"args": (), "kwargs": {"model_type": "nuclei", "gpu": False, "device": "cpu"}}]
+    assert constructor_calls == [
+        {"args": (), "kwargs": {"pretrained_model": "/cache/nuclei", "gpu": False, "device": "cpu"}}
+    ]
 
 
 def test_load_model_custom_missing_path_raises_helpful_error(tmp_path):
     missing_path = tmp_path / "missing_custom_model.cpkt"
     backend = CellposeBackend(
-        download_model=lambda *args, **kwargs: None,
-        cellpose_ctor=lambda *args, **kwargs: None,
+        download_model=lambda *args, **kwargs: "",
         cellpose_model_ctor=lambda *args, **kwargs: None,
     )
     spec = CellposeModelSpec(model_type="custom", name=str(missing_path), gpu=False, device="cpu")
@@ -63,8 +64,7 @@ def test_load_model_custom_instantiates_cellpose_model_for_existing_path(tmp_pat
         return fake_model
 
     backend = CellposeBackend(
-        download_model=lambda *args, **kwargs: None,
-        cellpose_ctor=lambda *args, **kwargs: None,
+        download_model=lambda *args, **kwargs: "",
         cellpose_model_ctor=_fake_cellpose_model,
     )
     spec = CellposeModelSpec(model_type="custom", name=str(model_path), gpu=True, device="cuda:0")
@@ -84,25 +84,26 @@ def test_load_model_custom_instantiates_cellpose_model_for_existing_path(tmp_pat
     ]
 
 
-def test_eval_returns_first_mask_and_forwards_expected_kwargs():
+def test_eval_returns_masks_and_forwards_expected_kwargs():
     input_image = np.arange(2 * 4 * 5, dtype=np.uint16).reshape(2, 4, 5)
-    expected_mask = np.arange(4 * 5, dtype=np.uint32).reshape(1, 4, 5)
-    extra_mask = np.zeros((1, 4, 5), dtype=np.uint32)
+    expected_mask = np.arange(4 * 5, dtype=np.uint32).reshape(4, 5)
+    flows = np.zeros((4, 5), dtype=np.float32)
+    styles = np.zeros((256,), dtype=np.float32)
 
     recorded_calls: list[dict[str, Any]] = []
 
     class _FakeModel:
         def eval(self, *args, **kwargs):
             recorded_calls.append({"args": args, "kwargs": kwargs})
-            return [expected_mask, extra_mask]
+            return expected_mask, flows, styles
 
     backend = CellposeBackend(
-        download_model=lambda *args, **kwargs: None,
-        cellpose_ctor=lambda *args, **kwargs: None,
+        download_model=lambda *args, **kwargs: "",
         cellpose_model_ctor=lambda *args, **kwargs: None,
     )
     params = CellposeEvalParameters(
         rescale=1.5,
+        resample=False,
         normalize=True,
         diameter=30,
         flow_threshold=0.6,
@@ -118,6 +119,7 @@ def test_eval_returns_first_mask_and_forwards_expected_kwargs():
     assert recorded_calls[0]["args"][0][0] is input_image
     assert recorded_calls[0]["kwargs"] == {
         "rescale": params.rescale,
+        "resample": params.resample,
         "normalize": params.normalize,
         "diameter": params.diameter,
         "flow_threshold": params.flow_threshold,
@@ -125,5 +127,34 @@ def test_eval_returns_first_mask_and_forwards_expected_kwargs():
         "channels": params.channels,
     }
     assert isinstance(result, np.ndarray)
-    assert np.array_equal(result, expected_mask)
-    assert not np.array_equal(result, extra_mask)
+    assert result.shape == (1, 4, 5)
+    assert np.array_equal(result[0], expected_mask)
+
+
+def test_eval_omits_unsupported_legacy_kwargs():
+    recorded_calls: list[dict[str, Any]] = []
+
+    class _FakeModel:
+        def eval(self, images, normalize, diameter):
+            recorded_calls.append({"images": images, "normalize": normalize, "diameter": diameter})
+            return np.ones((6, 7), dtype=np.uint32), None, None
+
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "", cellpose_model_ctor=lambda *args, **kwargs: None
+    )
+    params = CellposeEvalParameters(
+        rescale=1.0,
+        resample=True,
+        normalize=False,
+        diameter=27,
+        flow_threshold=0.4,
+        cellprob_threshold=0.0,
+        channels=[1, 0],
+    )
+
+    result = backend.eval(_FakeModel(), np.zeros((1, 6, 7), dtype=np.uint16), params)
+
+    assert len(recorded_calls) == 1
+    assert recorded_calls[0]["normalize"] is False
+    assert recorded_calls[0]["diameter"] == 27
+    assert result.shape == (1, 6, 7)

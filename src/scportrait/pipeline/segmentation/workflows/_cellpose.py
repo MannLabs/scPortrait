@@ -15,7 +15,6 @@ from scportrait.pipeline._utils.segmentation import (
 from scportrait.pipeline.segmentation.segmentation import (
     ShardedSegmentation,
 )
-from scportrait.pipeline.segmentation.workflows import _cellpose_backend as _cellpose_backend_module
 from scportrait.pipeline.segmentation.workflows._base_segmentation_workflow import _BaseSegmentation
 from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
     CellposeBackend,
@@ -24,19 +23,12 @@ from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
 )
 from scportrait.pipeline.segmentation.workflows._model_caches import _download_model
 
-# Backward-compatible alias used by existing tests to patch Cellpose constructors.
-models = _cellpose_backend_module.models
-
 
 class _CellposeSegmentation(_BaseSegmentation):
     def _get_cellpose_backend(self) -> CellposeBackend:
         backend = getattr(self, "_cellpose_backend", None)
         if backend is None:
-            backend = CellposeBackend(
-                download_model=_download_model,
-                cellpose_ctor=models.Cellpose,
-                cellpose_model_ctor=models.CellposeModel,
-            )
+            backend = CellposeBackend(download_model=_download_model)
             self._cellpose_backend = backend
         return backend
 
@@ -78,6 +70,7 @@ class _CellposeSegmentation(_BaseSegmentation):
     def _eval_cellpose_model(self, model: object, input_image: np.ndarray, channels: list[int]) -> np.ndarray:
         params = CellposeEvalParameters(
             rescale=self.rescale,
+            resample=self.resample,
             normalize=self.normalize,
             diameter=self.diameter,
             flow_threshold=self.flow_threshold,

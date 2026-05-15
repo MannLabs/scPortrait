@@ -21,6 +21,7 @@ from cellpose_test_helpers import make_cellpose_workflow, make_input_image
 
 EXPECTED_EVAL_KWARGS = {
     "rescale",
+    "resample",
     "normalize",
     "diameter",
     "flow_threshold",
@@ -45,6 +46,7 @@ class RecordingFakeModel:
 
 def _configure_eval_parameters(workflow) -> None:
     workflow.rescale = 1.25
+    workflow.resample = False
     workflow.normalize = True
     workflow.diameter = 31
     workflow.flow_threshold = 0.65
@@ -68,6 +70,7 @@ def _interior_mask(height: int, width: int, label: int) -> np.ndarray:
 def _assert_eval_call_kwargs(call_kwargs: dict[str, Any], expected_channels: list[int], workflow) -> None:
     assert set(call_kwargs.keys()) == EXPECTED_EVAL_KWARGS
     assert call_kwargs["rescale"] == workflow.rescale
+    assert call_kwargs["resample"] == workflow.resample
     assert call_kwargs["normalize"] == workflow.normalize
     assert call_kwargs["diameter"] == workflow.diameter
     assert call_kwargs["flow_threshold"] == workflow.flow_threshold
