@@ -1,7 +1,6 @@
 import multiprocessing
 import os
 import timeit
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -18,10 +17,23 @@ from scportrait.pipeline.segmentation.segmentation import (
     ShardedSegmentation,
 )
 from scportrait.pipeline.segmentation.workflows._base_segmentation_workflow import _BaseSegmentation
+from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
+    CellposeBackend,
+    CellposeEvalParameters,
+    CellposeModelSpec,
+)
 from scportrait.pipeline.segmentation.workflows._model_caches import _download_model
 
 
 class _CellposeSegmentation(_BaseSegmentation):
+    def _get_cellpose_backend(self) -> CellposeBackend:
+        # Bind callables from this module so existing tests can monkeypatch them in one place.
+        return CellposeBackend(
+            download_model=_download_model,
+            cellpose_ctor=models.Cellpose,
+            cellpose_model_ctor=models.CellposeModel,
+        )
+
     def _write_cellpose_seg_params_to_file(self, model_type: str, model_name: str) -> None:
         """
         Writes the cellpose segmentation parameters to a file for debugging/logging purposes
@@ -53,25 +65,20 @@ class _CellposeSegmentation(_BaseSegmentation):
         cellpose model
 
         """
-        if modeltype == "pretrained":
-            try:
-                _download_model(name)
+        backend = self._get_cellpose_backend()
+        spec = CellposeModelSpec(model_type=modeltype, name=name, gpu=gpu, device=device)
+        return backend.load_model(spec)
 
-            except FileNotFoundError as e:
-                raise FileNotFoundError(
-                    f"Could not download the requested Cellpose model '{name}'. "
-                    "Please check the model name or ensure that the Cellpose model server is available."
-                ) from e
-            model = models.Cellpose(model_type=name, gpu=gpu, device=device)
-        elif modeltype == "custom":
-            if not Path(name).exists():
-                raise FileNotFoundError(
-                    f"The file containing the custom trained model {name} does not exist. Please provide a valid path."
-                )
-            model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
-        else:
-            raise ValueError(f"Unsupported Cellpose model type '{modeltype}'. Expected one of: 'pretrained', 'custom'.")
-        return model
+    def _eval_cellpose_model(self, model: object, input_image: np.ndarray, channels: list[int]) -> np.ndarray:
+        params = CellposeEvalParameters(
+            rescale=self.rescale,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=channels,
+        )
+        return self._get_cellpose_backend().eval(model, input_image, params)
 
     def _load_model(self, model_type: str, gpu: str, device) -> models.Cellpose:
         """
@@ -243,16 +250,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[1, 0],
-        )[0]
-        masks = np.array(masks)
+        masks = self._eval_cellpose_model(model=model, input_image=input_image, channels=[1, 0])
 
         # ensure all edge classes are removed
         masks = remove_edge_labels(masks)
@@ -436,16 +434,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_nucleus = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[1, 0],
-        )[0]
-        masks_nucleus = np.array(masks_nucleus)  # convert to array
+        masks_nucleus = self._eval_cellpose_model(model=model, input_image=input_image, channels=[1, 0])
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
@@ -459,16 +448,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
 
-        masks_cytosol = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[2, 1],
-        )[0]
-        masks_cytosol = np.array(masks_cytosol)  # convert to array
+        masks_cytosol = self._eval_cellpose_model(model=model, input_image=input_image, channels=[2, 1])
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
@@ -687,16 +667,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_cytosol = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=channels,
-        )[0]
-        masks_cytosol = np.array(masks_cytosol)  # convert to array
+        masks_cytosol = self._eval_cellpose_model(model=model, input_image=input_image, channels=channels)
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
