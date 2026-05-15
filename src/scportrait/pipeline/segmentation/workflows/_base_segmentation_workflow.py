@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import timeit
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -212,15 +213,18 @@ class _BaseSegmentation(Segmentation):
         self._save_segmentation_sdata(np.zeros((self.N_MASKS, x, y)), [])
 
     def _check_seg_dtype(self, mask: np.ndarray, mask_name: str) -> np.ndarray:
-        if not isinstance(mask, self.DEFAULT_SEGMENTATION_DTYPE):
-            Warning(
-                f"{mask_name} segmentation map is not of the correct dtype. \n Forcefully converting {mask.dtype} to {self.DEFAULT_SEGMENTATION_DTYPE}. \n This could lead to unexpected behaviour."
-            )
-
-            return mask.astype(self.DEFAULT_SEGMENTATION_DTYPE)
-
-        else:
+        expected_dtype = np.dtype(self.DEFAULT_SEGMENTATION_DTYPE)
+        if mask.dtype == expected_dtype:
             return mask
+
+        warnings.warn(
+            (
+                f"{mask_name} segmentation map has dtype {mask.dtype}, expected {expected_dtype}. "
+                f"Converting to {expected_dtype}."
+            ),
+            stacklevel=2,
+        )
+        return mask.astype(self.DEFAULT_SEGMENTATION_DTYPE)
 
     #### Downsampling ####
     def _get_downsampling_parameters(self) -> None:

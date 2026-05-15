@@ -144,13 +144,12 @@ class _CellposeSegmentation(_BaseSegmentation):
         return model
 
     def _check_input_image_dtype(self, input_image: np.ndarray):
-        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
-            if isinstance(input_image.dtype, int):
-                ValueError(
-                    "Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers."
-                )
-            else:
-                ValueError("Image is not of type uint16, cellpose segmentation expects int input images.")
+        expected_dtype = np.dtype(self.DEFAULT_IMAGE_DTYPE)
+        actual_dtype = input_image.dtype
+        if actual_dtype != expected_dtype:
+            raise ValueError(
+                f"Cellpose segmentation expects input images with dtype {expected_dtype}, got {actual_dtype}."
+            )
 
     def _check_gpu_status(self):
         """
