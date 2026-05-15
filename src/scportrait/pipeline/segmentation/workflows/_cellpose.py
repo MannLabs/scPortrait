@@ -69,6 +69,8 @@ class _CellposeSegmentation(_BaseSegmentation):
                     f"The file containing the custom trained model {name} does not exist. Please provide a valid path."
                 )
             model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
+        else:
+            raise ValueError(f"Unsupported Cellpose model type '{modeltype}'. Expected one of: 'pretrained', 'custom'.")
         return model
 
     def _load_model(self, model_type: str, gpu: str, device) -> models.Cellpose:
@@ -85,45 +87,53 @@ class _CellposeSegmentation(_BaseSegmentation):
         tuple of expected diameter and the cellpose model
         """
 
-        # load correct segmentation model for cytosol
-        if "model" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model"]
+        model_config = self.config[f"{model_type}_segmentation"]
+
+        # load correct segmentation model for the requested model_type
+        if "model" in model_config.keys():
+            model_name = model_config["model"]
             model = self._read_cellpose_model("pretrained", model_name, gpu=gpu, device=device)
 
-        elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model_path"]
+        elif "model_path" in model_config.keys():
+            model_name = model_config["model_path"]
             if isinstance(model_name, os.PathLike):
                 model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
+        else:
+            raise ValueError(
+                f"No Cellpose model configured for '{model_type}' segmentation. "
+                f"Please set either '{model_type}_segmentation.model' (pretrained) "
+                f"or '{model_type}_segmentation.model_path' (custom)."
+            )
 
         # get model parameters from config if not defined use default values
-        if "diameter" in self.config[f"{model_type}_segmentation"].keys():
-            self.diameter = self.config[f"{model_type}_segmentation"]["diameter"]
+        if "diameter" in model_config.keys():
+            self.diameter = model_config["diameter"]
         else:
             self.diameter = None
 
-        if "resample" in self.config[f"{model_type}_segmentation"].keys():
-            self.resample = self.config[f"{model_type}_segmentation"]["resample"]
+        if "resample" in model_config.keys():
+            self.resample = model_config["resample"]
         else:
             self.resample = True
 
-        if "flow_threshold" in self.config[f"{model_type}_segmentation"].keys():
-            self.flow_threshold = self.config[f"{model_type}_segmentation"]["flow_threshold"]
+        if "flow_threshold" in model_config.keys():
+            self.flow_threshold = model_config["flow_threshold"]
         else:
             self.flow_threshold = 0.4
 
-        if "cellprob_threshold" in self.config[f"{model_type}_segmentation"].keys():
-            self.cellprob_threshold = self.config[f"{model_type}_segmentation"]["cellprob_threshold"]
+        if "cellprob_threshold" in model_config.keys():
+            self.cellprob_threshold = model_config["cellprob_threshold"]
         else:
             self.cellprob_threshold = 0.0
 
-        if "normalize" in self.config[f"{model_type}_segmentation"].keys():
-            self.normalize = self.config[f"{model_type}_segmentation"]["normalize"]
+        if "normalize" in model_config.keys():
+            self.normalize = model_config["normalize"]
         else:
             self.normalize = True
 
-        if "rescale" in self.config[f"{model_type}_segmentation"].keys():
-            self.rescale = self.config[f"{model_type}_segmentation"]["rescale"]
+        if "rescale" in model_config.keys():
+            self.rescale = model_config["rescale"]
         else:
             self.rescale = None
 
