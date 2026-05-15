@@ -4,7 +4,6 @@ import timeit
 
 import numpy as np
 import torch
-from cellpose import models
 from skimage.morphology import dilation, disk
 from skimage.segmentation import watershed
 
@@ -16,6 +15,7 @@ from scportrait.pipeline._utils.segmentation import (
 from scportrait.pipeline.segmentation.segmentation import (
     ShardedSegmentation,
 )
+from scportrait.pipeline.segmentation.workflows import _cellpose_backend as _cellpose_backend_module
 from scportrait.pipeline.segmentation.workflows._base_segmentation_workflow import _BaseSegmentation
 from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
     CellposeBackend,
@@ -24,15 +24,21 @@ from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
 )
 from scportrait.pipeline.segmentation.workflows._model_caches import _download_model
 
+# Backward-compatible alias used by existing tests to patch Cellpose constructors.
+models = _cellpose_backend_module.models
+
 
 class _CellposeSegmentation(_BaseSegmentation):
     def _get_cellpose_backend(self) -> CellposeBackend:
-        # Bind callables from this module so existing tests can monkeypatch them in one place.
-        return CellposeBackend(
-            download_model=_download_model,
-            cellpose_ctor=models.Cellpose,
-            cellpose_model_ctor=models.CellposeModel,
-        )
+        backend = getattr(self, "_cellpose_backend", None)
+        if backend is None:
+            backend = CellposeBackend(
+                download_model=_download_model,
+                cellpose_ctor=models.Cellpose,
+                cellpose_model_ctor=models.CellposeModel,
+            )
+            self._cellpose_backend = backend
+        return backend
 
     def _write_cellpose_seg_params_to_file(self, model_type: str, model_name: str) -> None:
         """
@@ -49,7 +55,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             f.write(f"Normalize: {self.normalize}\n")
             f.write(f"Rescale: {self.rescale}\n")
 
-    def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
+    def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> object:
         """
         Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
 
@@ -80,7 +86,7 @@ class _CellposeSegmentation(_BaseSegmentation):
         )
         return self._get_cellpose_backend().eval(model, input_image, params)
 
-    def _load_model(self, model_type: str, gpu: str, device) -> models.Cellpose:
+    def _load_model(self, model_type: str, gpu: str, device) -> object:
         """
         Loads cellpose model
 
