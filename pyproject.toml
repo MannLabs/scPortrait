@@ -147,5 +147,7 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 markers = [
     "slow: marks slow-running tests",
+    "integration: marks optional integration tests that may require installed optional dependencies or external model availability",
+    "cellpose: marks tests that exercise the real Cellpose package",
     "requires_dataset(*names): e2e datasets/configs that must be preloaded before test execution",
 ]
