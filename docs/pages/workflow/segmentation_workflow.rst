@@ -288,14 +288,18 @@ Both use cases can of course also be combined. In case you pass both `combine_{m
 Customize Cellpose Model Behaviour
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can customize the specific behaviour of all cellpose models via the method specific config file.
+scPortrait currently supports **Cellpose 4.x** (``cellpose>=4.1,<5``).
+After migrating from Cellpose 3 to Cellpose 4, segmentation outputs can change because upstream models and APIs changed.
+Do not expect bitwise-identical masks across major versions.
+
+You can customize Cellpose behaviour in the method-specific config:
 
 ..  code-block:: yaml
     :caption: Example configuration for  WGASegmentation
 
     {mask_name}_segmentation:
-            model: "cyto2"
-            model_path: "path/to/a/custom/cellpose/model"
+            model: "cyto2"  # use a pretrained model name
+            # model_path: "/abs/path/to/custom_model"  # use this instead of model
             normalize: True
             diameter: None
             resample: True
@@ -303,47 +307,52 @@ You can customize the specific behaviour of all cellpose models via the method s
             flow_threshold: 0.4
             cellprob_threshold: 0.0
 
-The indicated keys are wrappers for the parameters of `cellpose.models.CellposeModel.eval <https://cellpose.readthedocs.io/en/latest/api.html#id0>`_ and have the same function.
+Model-loading behaviour:
+
+* ``model`` loads a pretrained Cellpose model by name.
+* ``model_path`` loads a custom local model file and requires the path to exist.
+* If both are set, ``model`` takes precedence.
+* Legacy names such as ``cyto``, ``cyto2``, ``cyto3``, and ``nuclei`` are resolved as channel-aware models for scPortrait workflows.
+* Other names (for example ``cpsam``) are passed to Cellpose model resolution.
+
+Parameter behaviour in Cellpose 4:
+
+* scPortrait does not rename these keys; use them as listed below.
+* Parameters are forwarded to Cellpose ``CellposeModel.eval`` in Cellpose 4.
+* If the selected model/runtime does not support a forwarded argument, Cellpose may ignore it.
+* For Cellpose-SAM, channel IDs are model-invariant in upstream Cellpose 4; scPortrait still applies its own input channel selection before calling Cellpose.
+* Cellpose 3 ``models.Cellpose`` is removed upstream; use Cellpose 4 ``models.CellposeModel``.
 
 .. list-table::
-   :widths: 20 40 20 20
+   :widths: 20 50 30
    :header-rows: 1
 
    * - Parameter
-     - Description
-     - Optional
-     - Default Value
+     - Behaviour in scPortrait
+     - Default
    * - ``model``
-     - Name of a built-in Cellpose model.
-     - Only if ``model_path`` is provided instead.
+     - Pretrained model name. Use this **or** ``model_path``.
      - ``None``
    * - ``model_path``
-     - Path to a custom trained Cellpose model.
-     - True
+     - Path to a custom Cellpose model file. Use this **or** ``model``.
      - ``None``
    * - ``normalize``
-     - Wrapper for Cellpose ``normalize`` parameter.
-     - True
+     - Forwarded to Cellpose ``normalize``.
      - ``True``
    * - ``resample``
-     - Wrapper for Cellpose ``resample`` parameter.
-     - True
+     - Forwarded to Cellpose ``resample`` (model-dependent effect in Cellpose 4).
      - ``True``
    * - ``rescale``
-     - Wrapper for Cellpose ``rescale`` parameter.
-     - True
+     - Forwarded to Cellpose ``rescale`` (model-dependent effect in Cellpose 4).
      - ``None``
    * - ``diameter``
-     - Wrapper for Cellpose ``diameter`` parameter.
-     - True
+     - Forwarded to Cellpose ``diameter``.
      - ``None``
    * - ``flow_threshold``
-     - Wrapper for Cellpose ``flow_threshold`` parameter.
-     - True
+     - Forwarded to Cellpose ``flow_threshold``.
      - ``0.4``
    * - ``cellprob_threshold``
-     - Wrapper for Cellpose ``cellprob_threshold`` parameter.
-     - True
+     - Forwarded to Cellpose ``cellprob_threshold``.
      - ``0.0``
 
 
@@ -457,6 +466,13 @@ This segmentation workflow is built around the cellular segmentation algorithm `
 
 The scPortrait implementation of the cellpose segmenation algorithm allows you to perform both a nuclear and cytosolic segmentation and align the ``cellids`` between the two resulting masks. This means that the nucleus and the cytosol belonging to the same cell have the same ``cellids``. Furthermore, it performs some filtering steps to remove the masks from multi-nucleated cells or those with only a nuclear or cytosolic mask. This ensures that only cells which show a normal physiology are retained for further analysis.
 
+Channel behaviour:
+
+* Default nucleus + cytosol input is two channels: ``segmentation_channel_nuclei: [0]`` and ``segmentation_channel_cytosol: [1]``.
+* You can override either channel selection with ``segmentation_channel_nuclei`` and ``segmentation_channel_cytosol``.
+* For multi-stain references, use ``combine_nucleus_channels`` and/or ``combine_cytosol_channels`` to project several channels into one input per mask type.
+* scPortrait deduplicates overlapping channel indices while preserving configured order before building the Cellpose input.
+
 While this segmentation workflow is also capable of running on a CPU it is highly recommended to utilize a GPU for better performance. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
 If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
@@ -484,6 +500,13 @@ DAPI Cellpose segmentation
 
 This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a nuclear segmentation. This algorithm only takes a single input channel to generate a single output mask. The generated single cell datasets using this segmentation method only focus on signals contained within the nuclear region.
 
+Channel behaviour:
+
+* Default: ``segmentation_channel_nuclei: [0]`` (first image channel).
+* You can set a different single nucleus channel via ``segmentation_channel_nuclei``.
+* For multi-stain nuclear cues, use ``combine_nucleus_channels`` to build one projected nucleus input.
+* More than one nucleus channel without ``combine_nucleus_channels`` is not supported for this workflow.
+
 As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
 If you utilize this segmentation workflow please also consider citing the `cellpose paper <https://www.nature.com/articles/s41592-022-01663-4#Sec8>`_.
@@ -506,6 +529,14 @@ Cytosol Only Cellpose segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This segmentation workflow is also built around the cellular segmentation algorithm `cellpose <https://cellpose.readthedocs.io/en/latest/>`_  but only performs a cytosol segmentation. It supports one or two input channels to generate a single output mask. The generated single cell datasets using this segmentation method will contain all signal from within the cytosolic region.
+
+Channel behaviour:
+
+* Default: two-channel input with ``segmentation_channel_cytosol: [0, 1]``.
+* Cytosol-only one-channel mode is supported by setting ``segmentation_channel_cytosol`` to a single index.
+* Optional nucleus cue channel is supported via ``segmentation_channel_nuclei``.
+* If you set ``segmentation_channel_nuclei``, you must also set ``segmentation_channel_cytosol`` explicitly.
+* Cytosol-only Cellpose accepts exactly 1 or 2 selected channels after this configuration.
 
 As for the :ref:`cytosol segmentation cellpose <Cytosol_segmentation_cellpose>` workflow it is highly recommended to utilize a GPU. If your system has more than one GPU available, in a ShardedSegmentation context, you can specify the number of GPUs to be used via the configuration file (``nGPUs``).
 
