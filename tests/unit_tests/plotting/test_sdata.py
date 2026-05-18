@@ -152,6 +152,36 @@ def test_plot_labels_with_ax_returns_fig(sdata_with_labels):
     plt.close(fig)
 
 
+def test_call_plot_renderer_omits_unsupported_method():
+    recorded = {}
+
+    def renderer(*args, **kwargs):
+        recorded["args"] = args
+        recorded["kwargs"] = kwargs
+        return kwargs
+
+    plotting._call_plot_renderer(renderer, "layer", color="red", method="matplotlib")
+
+    assert recorded["args"] == ("layer",)
+    assert recorded["kwargs"] == {"color": "red"}
+
+
+def test_call_plot_renderer_passes_supported_method():
+    recorded = {}
+
+    def renderer(*args, method=None, **kwargs):
+        recorded["args"] = args
+        recorded["kwargs"] = kwargs
+        recorded["method"] = method
+        return kwargs
+
+    plotting._call_plot_renderer(renderer, "layer", color="red", method="matplotlib")
+
+    assert recorded["args"] == ("layer",)
+    assert recorded["kwargs"] == {"color": "red"}
+    assert recorded["method"] == "matplotlib"
+
+
 def test_plot_labels_groups_normalized(sdata_with_labels):
     first_group = sdata_with_labels["table"].obs["labelling_categorical"].iloc[0]
     fig = plotting.plot_labels(

@@ -1,3 +1,4 @@
+import inspect
 import warnings
 from collections.abc import Iterable
 from math import ceil
@@ -35,6 +36,13 @@ PALETTE = [
 ]
 
 from scportrait.pipeline._utils.helper import _check_for_spatialdata_plot
+
+
+def _call_plot_renderer(renderer, *args, method: str | None = None, **kwargs):
+    """Call a spatialdata_plot renderer, passing ``method`` only when supported."""
+    if method is not None and "method" in inspect.signature(renderer).parameters:
+        kwargs["method"] = method
+    return renderer(*args, **kwargs)
 
 
 def _is_valid_matplotlib_color(color: str | None) -> bool:
@@ -88,7 +96,8 @@ def _render_labels_as_fixed_color_shapes(
     vectorized_layer = f"{label_layer}_vectorized"
     if vectorized_layer not in sdata:
         sdata[vectorized_layer] = spatialdata.to_polygons(sdata[label_layer])
-    sdata.pl.render_shapes(
+    _call_plot_renderer(
+        sdata.pl.render_shapes,
         vectorized_layer,
         color=color,
         fill_alpha=fill_alpha,
@@ -494,7 +503,8 @@ def plot_shapes(
         prev_annotation = sdata["_annotation"] if had_annotation else None
         sdata["_annotation"] = annotating_table
         try:
-            sdata.pl.render_shapes(
+            _call_plot_renderer(
+                sdata.pl.render_shapes,
                 f"{shapes_layer}",
                 fill_alpha=fill_alpha,
                 color=fill_color,
@@ -512,7 +522,8 @@ def plot_shapes(
             else:
                 del sdata["_annotation"]
     else:
-        sdata.pl.render_shapes(
+        _call_plot_renderer(
+            sdata.pl.render_shapes,
             f"{shapes_layer}",
             fill_alpha=fill_alpha,
             color=fill_color,
@@ -663,7 +674,8 @@ def plot_labels(
                 prev_annotation = sdata["_annotation"] if had_annotation else None
                 sdata["_annotation"] = annotating_table
                 try:
-                    sdata.pl.render_shapes(
+                    _call_plot_renderer(
+                        sdata.pl.render_shapes,
                         f"{label_layer}_vectorized",
                         color=color,
                         fill_alpha=fill_alpha,
@@ -681,7 +693,8 @@ def plot_labels(
                         del sdata["_annotation"]  # delete element again after plotting
             else:
                 try:
-                    sdata.pl.render_labels(
+                    _call_plot_renderer(
+                        sdata.pl.render_labels,
                         f"{label_layer}",
                         color=color,
                         fill_alpha=fill_alpha,
@@ -707,7 +720,8 @@ def plot_labels(
             )
         else:
             try:
-                sdata.pl.render_labels(
+                _call_plot_renderer(
+                    sdata.pl.render_labels,
                     f"{label_layer}",
                     color=color,
                     fill_alpha=fill_alpha,
