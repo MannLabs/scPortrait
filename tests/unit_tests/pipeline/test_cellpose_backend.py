@@ -190,6 +190,103 @@ def test_eval_returns_masks_and_forwards_expected_kwargs():
     assert np.array_equal(result[0], expected_mask)
 
 
+def test_extract_masks_from_eval_result_accepts_2d_mask():
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+    expected_mask = np.arange(12, dtype=np.uint32).reshape(3, 4)
+
+    result = backend._extract_masks_from_eval_result((expected_mask, None, None))
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == expected_mask.shape
+    assert np.array_equal(result, expected_mask)
+
+
+def test_extract_masks_from_eval_result_accepts_3d_mask():
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+    expected_mask = np.arange(2 * 3 * 4, dtype=np.uint32).reshape(2, 3, 4)
+
+    result = backend._extract_masks_from_eval_result((expected_mask, None, None))
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == expected_mask.shape
+    assert np.array_equal(result, expected_mask)
+
+
+@pytest.mark.parametrize("empty_result", [(), []])
+def test_extract_masks_from_eval_result_rejects_empty_sequence(empty_result):
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+
+    with pytest.raises(ValueError, match="non-empty tuple/list"):
+        backend._extract_masks_from_eval_result(empty_result)
+
+
+@pytest.mark.parametrize("invalid_first_element", [None, "mask", object(), 7])
+def test_extract_masks_from_eval_result_rejects_non_array_first_element(invalid_first_element):
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+
+    with pytest.raises(ValueError, match=r"expected 2D or 3D masks"):
+        backend._extract_masks_from_eval_result((invalid_first_element, None, None))
+
+
+@pytest.mark.parametrize(
+    "invalid_mask",
+    [np.array([1, 2, 3], dtype=np.uint32), np.zeros((1, 2, 3, 4), dtype=np.uint32)],
+)
+def test_extract_masks_from_eval_result_rejects_invalid_mask_dimensionality(invalid_mask):
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+
+    with pytest.raises(ValueError, match=r"shape") as excinfo:
+        backend._extract_masks_from_eval_result((invalid_mask, None, None))
+    assert str(invalid_mask.shape) in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    ("eval_result", "expected_error"),
+    [
+        ((), "non-empty tuple/list"),
+        ([], "non-empty tuple/list"),
+        ((None, None, None), "expected 2D or 3D masks"),
+        ((np.array([1, 2, 3], dtype=np.uint32), None, None), "expected 2D or 3D masks"),
+    ],
+)
+def test_eval_rejects_malformed_cellpose_results(eval_result, expected_error):
+    class _FakeModel:
+        def eval(self, *args, **kwargs):
+            return eval_result
+
+    backend = CellposeBackend(
+        download_model=lambda *args, **kwargs: "",
+        cellpose_model_ctor=lambda *args, **kwargs: None,
+    )
+    params = CellposeEvalParameters(
+        rescale=1.0,
+        resample=True,
+        normalize=True,
+        diameter=None,
+        flow_threshold=0.4,
+        cellprob_threshold=0.0,
+        channels=[1, 0],
+    )
+
+    with pytest.raises(ValueError, match=expected_error):
+        backend.eval(_FakeModel(), np.zeros((1, 6, 7), dtype=np.uint16), params)
+
+
 def test_eval_omits_unsupported_legacy_kwargs():
     recorded_calls: list[dict[str, Any]] = []
 

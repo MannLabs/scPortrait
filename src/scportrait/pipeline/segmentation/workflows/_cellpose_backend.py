@@ -90,10 +90,36 @@ class CellposeBackend:
         return {name: value for name, value in eval_kwargs.items() if name in supported}
 
     def _extract_masks(self, eval_result: Any) -> np.ndarray:
-        masks = eval_result[0] if isinstance(eval_result, (tuple, list)) else eval_result
-        masks_array = np.asarray(masks)
+        masks_array = self._extract_masks_from_eval_result(eval_result)
         if masks_array.ndim == 2:
             return masks_array[np.newaxis, ...]
+        return masks_array
+
+    def _extract_masks_from_eval_result(self, eval_result: Any) -> np.ndarray:
+        if isinstance(eval_result, (tuple, list)):
+            if len(eval_result) == 0:
+                raise ValueError(
+                    "Invalid Cellpose eval result: expected a non-empty tuple/list with masks at index 0, "
+                    f"got {type(eval_result).__name__} with length 0."
+                )
+            masks = eval_result[0]
+        else:
+            masks = eval_result
+
+        try:
+            masks_array = np.asarray(masks)
+        except Exception as exc:
+            raise ValueError(
+                "Invalid Cellpose eval masks output: expected array-like masks with shape (H, W) or (N, H, W), "
+                f"got value of type {type(masks).__name__}."
+            ) from exc
+
+        if masks_array.ndim not in (2, 3):
+            raise ValueError(
+                "Invalid Cellpose eval masks output: expected 2D or 3D masks with shape (H, W) or (N, H, W), "
+                f"got type {type(masks).__name__}, shape {masks_array.shape}, ndim {masks_array.ndim}."
+            )
+
         return masks_array
 
     def eval(self, model: Any, input_image: np.ndarray, params: CellposeEvalParameters) -> np.ndarray:
