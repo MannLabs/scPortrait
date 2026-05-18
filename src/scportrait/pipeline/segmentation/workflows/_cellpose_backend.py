@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from inspect import Parameter, signature
 from pathlib import Path
@@ -46,7 +47,7 @@ class CellposeBackend:
     def load_model(self, spec: CellposeModelSpec) -> object:
         if spec.model_type == "pretrained":
             try:
-                model_ref = self._download_model(spec.name)
+                model_ref = os.fspath(self._download_model(spec.name))
             except FileNotFoundError as e:
                 raise FileNotFoundError(
                     f"Could not download the requested Cellpose model '{spec.name}'. "
@@ -60,7 +61,7 @@ class CellposeBackend:
                     f"The file containing the custom trained model {spec.name} does not exist. "
                     "Please provide a valid path."
                 )
-            return self._cellpose_model_ctor(pretrained_model=spec.name, gpu=spec.gpu, device=spec.device)
+            return self._cellpose_model_ctor(pretrained_model=os.fspath(spec.name), gpu=spec.gpu, device=spec.device)
 
         raise ValueError(
             f"Unsupported Cellpose model type '{spec.model_type}'. Expected one of: 'pretrained', 'custom'."

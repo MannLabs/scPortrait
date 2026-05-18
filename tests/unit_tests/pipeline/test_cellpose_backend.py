@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
@@ -10,6 +10,9 @@ from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
     CellposeEvalParameters,
     CellposeModelSpec,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_load_model_pretrained_delegates_download_and_cellpose_model_constructor():
@@ -37,6 +40,62 @@ def test_load_model_pretrained_delegates_download_and_cellpose_model_constructor
     assert download_calls == ["nuclei"]
     assert constructor_calls == [
         {"args": (), "kwargs": {"pretrained_model": "/cache/nuclei", "gpu": False, "device": "cpu"}}
+    ]
+
+
+def test_load_model_pretrained_converts_pathlike_download_result_to_string(tmp_path):
+    constructor_calls: list[dict[str, Any]] = []
+    fake_model = object()
+    resolved_path = tmp_path / "cached_nuclei_model"
+
+    def _fake_download(name: str) -> Path:
+        assert name == "nuclei"
+        return resolved_path
+
+    def _fake_cellpose_model(*args, **kwargs):
+        constructor_calls.append({"args": args, "kwargs": kwargs})
+        return fake_model
+
+    backend = CellposeBackend(
+        download_model=_fake_download,
+        cellpose_model_ctor=_fake_cellpose_model,
+    )
+    spec = CellposeModelSpec(model_type="pretrained", name="nuclei", gpu=False, device="cpu")
+
+    loaded = backend.load_model(spec)
+
+    assert loaded is fake_model
+    assert constructor_calls == [
+        {"args": (), "kwargs": {"pretrained_model": str(resolved_path), "gpu": False, "device": "cpu"}}
+    ]
+    assert isinstance(constructor_calls[0]["kwargs"]["pretrained_model"], str)
+
+
+def test_load_model_pretrained_cpsam_uses_downloaded_reference_for_cellposemodel():
+    download_calls: list[str] = []
+    constructor_calls: list[dict[str, Any]] = []
+    fake_model = object()
+
+    def _fake_download(name: str) -> str:
+        download_calls.append(name)
+        return "/cache/cpsam"
+
+    def _fake_cellpose_model(*args, **kwargs):
+        constructor_calls.append({"args": args, "kwargs": kwargs})
+        return fake_model
+
+    backend = CellposeBackend(
+        download_model=_fake_download,
+        cellpose_model_ctor=_fake_cellpose_model,
+    )
+    spec = CellposeModelSpec(model_type="pretrained", name="cpsam", gpu=False, device="cpu")
+
+    loaded = backend.load_model(spec)
+
+    assert loaded is fake_model
+    assert download_calls == ["cpsam"]
+    assert constructor_calls == [
+        {"args": (), "kwargs": {"pretrained_model": "/cache/cpsam", "gpu": False, "device": "cpu"}}
     ]
 
 

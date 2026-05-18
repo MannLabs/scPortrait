@@ -83,9 +83,14 @@ def _download_model(name: str) -> str:
     model_path_fn = getattr(models, "model_path", None)
 
     if name in _LEGACY_CHANNEL_MODELS:
-        model_file = _model_path(name)
-        _size_model_path(name)
-        return model_file
+        try:
+            model_file = _model_path(name)
+            _size_model_path(name)
+            return model_file
+        except HTTPError as e:
+            raise FileNotFoundError(
+                f"Could not resolve Cellpose model '{name}' via Cellpose or scPortrait cache."
+            ) from e
 
     if callable(model_path_fn):
         try:

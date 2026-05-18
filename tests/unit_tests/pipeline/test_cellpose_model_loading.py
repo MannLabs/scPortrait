@@ -16,8 +16,13 @@ if str(TEST_HELPER_DIR) not in sys.path:
 from cellpose_test_helpers import make_cellpose_workflow
 
 
-def test_load_model_pretrained_uses_download_and_cellpose_model_constructor(tmp_path, monkeypatch):
-    workflow = make_cellpose_workflow(DAPISegmentationCellpose, tmp_path=tmp_path)
+@pytest.mark.parametrize("model_name", ["nuclei", "cpsam"])
+def test_load_model_pretrained_uses_download_and_cellpose_model_constructor(tmp_path, monkeypatch, model_name):
+    workflow = make_cellpose_workflow(
+        DAPISegmentationCellpose,
+        tmp_path=tmp_path,
+        config={"nucleus_segmentation": {"model": model_name}},
+    )
     fake_model = object()
 
     download_calls: list[str] = []
@@ -37,9 +42,9 @@ def test_load_model_pretrained_uses_download_and_cellpose_model_constructor(tmp_
     loaded_model = workflow._load_model(model_type="nucleus", gpu=False, device="cpu")
 
     assert loaded_model is fake_model
-    assert download_calls == ["nuclei"]
+    assert download_calls == [model_name]
     assert constructor_calls == [
-        {"args": (), "kwargs": {"pretrained_model": "/cache/nuclei", "gpu": False, "device": "cpu"}}
+        {"args": (), "kwargs": {"pretrained_model": f"/cache/{model_name}", "gpu": False, "device": "cpu"}}
     ]
 
 
