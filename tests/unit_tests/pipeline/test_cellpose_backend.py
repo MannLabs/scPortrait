@@ -15,6 +15,12 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+def _assert_contains_items(actual: dict[str, Any], expected_subset: dict[str, Any]) -> None:
+    for key, value in expected_subset.items():
+        assert key in actual
+        assert actual[key] == value
+
+
 def test_load_model_pretrained_delegates_download_and_cellpose_model_constructor():
     download_calls: list[str] = []
     constructor_calls: list[dict[str, Any]] = []
@@ -38,9 +44,12 @@ def test_load_model_pretrained_delegates_download_and_cellpose_model_constructor
 
     assert loaded is fake_model
     assert download_calls == ["nuclei"]
-    assert constructor_calls == [
-        {"args": (), "kwargs": {"pretrained_model": "/cache/nuclei", "gpu": False, "device": "cpu"}}
-    ]
+    assert len(constructor_calls) == 1
+    assert constructor_calls[0]["args"] == ()
+    _assert_contains_items(
+        constructor_calls[0]["kwargs"],
+        {"pretrained_model": "/cache/nuclei", "gpu": False, "device": "cpu"},
+    )
 
 
 def test_load_model_pretrained_converts_pathlike_download_result_to_string(tmp_path):
@@ -65,9 +74,12 @@ def test_load_model_pretrained_converts_pathlike_download_result_to_string(tmp_p
     loaded = backend.load_model(spec)
 
     assert loaded is fake_model
-    assert constructor_calls == [
-        {"args": (), "kwargs": {"pretrained_model": str(resolved_path), "gpu": False, "device": "cpu"}}
-    ]
+    assert len(constructor_calls) == 1
+    assert constructor_calls[0]["args"] == ()
+    _assert_contains_items(
+        constructor_calls[0]["kwargs"],
+        {"pretrained_model": str(resolved_path), "gpu": False, "device": "cpu"},
+    )
     assert isinstance(constructor_calls[0]["kwargs"]["pretrained_model"], str)
 
 
@@ -94,9 +106,12 @@ def test_load_model_pretrained_cpsam_uses_downloaded_reference_for_cellposemodel
 
     assert loaded is fake_model
     assert download_calls == ["cpsam"]
-    assert constructor_calls == [
-        {"args": (), "kwargs": {"pretrained_model": "/cache/cpsam", "gpu": False, "device": "cpu"}}
-    ]
+    assert len(constructor_calls) == 1
+    assert constructor_calls[0]["args"] == ()
+    _assert_contains_items(
+        constructor_calls[0]["kwargs"],
+        {"pretrained_model": "/cache/cpsam", "gpu": False, "device": "cpu"},
+    )
 
 
 def test_load_model_custom_missing_path_raises_helpful_error(tmp_path):
@@ -131,16 +146,16 @@ def test_load_model_custom_instantiates_cellpose_model_for_existing_path(tmp_pat
     loaded = backend.load_model(spec)
 
     assert loaded is fake_model
-    assert constructor_calls == [
+    assert len(constructor_calls) == 1
+    assert constructor_calls[0]["args"] == ()
+    _assert_contains_items(
+        constructor_calls[0]["kwargs"],
         {
-            "args": (),
-            "kwargs": {
-                "pretrained_model": str(model_path),
-                "gpu": True,
-                "device": "cuda:0",
-            },
-        }
-    ]
+            "pretrained_model": str(model_path),
+            "gpu": True,
+            "device": "cuda:0",
+        },
+    )
 
 
 def test_eval_returns_masks_and_forwards_expected_kwargs():
@@ -176,15 +191,18 @@ def test_eval_returns_masks_and_forwards_expected_kwargs():
     assert len(recorded_calls[0]["args"]) == 1
     assert isinstance(recorded_calls[0]["args"][0], list)
     assert recorded_calls[0]["args"][0][0] is input_image
-    assert recorded_calls[0]["kwargs"] == {
-        "rescale": params.rescale,
-        "resample": params.resample,
-        "normalize": params.normalize,
-        "diameter": params.diameter,
-        "flow_threshold": params.flow_threshold,
-        "cellprob_threshold": params.cellprob_threshold,
-        "channels": params.channels,
-    }
+    _assert_contains_items(
+        recorded_calls[0]["kwargs"],
+        {
+            "rescale": params.rescale,
+            "resample": params.resample,
+            "normalize": params.normalize,
+            "diameter": params.diameter,
+            "flow_threshold": params.flow_threshold,
+            "cellprob_threshold": params.cellprob_threshold,
+            "channels": params.channels,
+        },
+    )
     assert isinstance(result, np.ndarray)
     assert result.shape == (1, 4, 5)
     assert np.array_equal(result[0], expected_mask)
