@@ -475,8 +475,8 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
             masks_cytosol = self._perform_size_filtering(
                 mask=masks_cytosol,
-                thresholds=self.nucleus_thresholds,  # type: ignore
-                confidence_interval=self.nucleus_confidence_interval,  # type: ignore
+                thresholds=self.cytosol_thresholds,  # type: ignore
+                confidence_interval=self.cytosol_confidence_interval,  # type: ignore
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
@@ -683,8 +683,8 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         if self.filter_size:
             masks_cytosol = self._perform_size_filtering(
                 mask=masks_cytosol,
-                thresholds=self.nucleus_thresholds,  # type: ignore
-                confidence_interval=self.nucleus_confidence_interval,  # type: ignore
+                thresholds=self.cytosol_thresholds,  # type: ignore
+                confidence_interval=self.cytosol_confidence_interval,  # type: ignore
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
