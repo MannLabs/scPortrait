@@ -16,8 +16,8 @@ if str(TEST_HELPER_DIR) not in sys.path:
     sys.path.insert(0, str(TEST_HELPER_DIR))
 
 from cellpose_test_helpers import (
-    FakeCellposeModel,
     DummyFileHandler,
+    FakeCellposeModel,
     make_cellpose_workflow,
     make_input_image,
 )
