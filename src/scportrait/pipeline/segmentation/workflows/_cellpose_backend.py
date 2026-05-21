@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from enum import Enum
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from inspect import Parameter, signature
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -13,6 +16,14 @@ from scportrait.pipeline.segmentation.workflows._model_caches import _download_m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+class CellposeRuntime(Enum):
+    V3 = "v3"
+    V4 = "v4"
+
+
+_CELLPOSE3_FULL_BUILTIN_MODELS = {"cyto", "cyto2", "cyto3", "nuclei"}
 
 
 @dataclass(frozen=True)
@@ -38,34 +49,107 @@ class CellposeBackend:
     def __init__(
         self,
         *,
+        runtime: CellposeRuntime | None = None,
         download_model: Callable[[str], str] = _download_model,
         cellpose_model_ctor: Callable[..., object] = models.CellposeModel,
+        cellpose_ctor: Callable[..., object] | None = getattr(models, "Cellpose", None),
+        cellpose_version_getter: Callable[[str], str] = package_version,
     ) -> None:
+        self._runtime = runtime or self._detect_runtime(cellpose_version_getter)
         self._download_model = download_model
         self._cellpose_model_ctor = cellpose_model_ctor
+        self._cellpose_ctor = cellpose_ctor
+
+    @staticmethod
+    def _detect_runtime(cellpose_version_getter: Callable[[str], str]) -> CellposeRuntime:
+        try:
+            installed_version = cellpose_version_getter("cellpose")
+        except PackageNotFoundError as exc:
+            raise RuntimeError(
+                "Cellpose is not installed. Please install `cellpose` to use Cellpose workflows."
+            ) from exc
+
+        major_version_token = installed_version.split(".", 1)[0]
+        try:
+            major_version = int(major_version_token)
+        except ValueError as exc:
+            raise RuntimeError(f"Could not parse installed Cellpose version '{installed_version}'.") from exc
+
+        if major_version == 3:
+            return CellposeRuntime.V3
+        if major_version >= 4:
+            return CellposeRuntime.V4
+
+        raise RuntimeError(
+            f"Unsupported Cellpose major version '{major_version}' (installed: '{installed_version}'). "
+            "Supported major versions are 3 and 4+."
+        )
+
+    def _normalize_custom_model_path(self, model_name: str) -> str:
+        model_path = Path(model_name)
+        if not model_path.exists():
+            raise FileNotFoundError(
+                f"The file containing the custom trained model {model_name} does not exist. "
+                "Please provide a valid path."
+            )
+        return os.fspath(model_name)
+
+    def _resolve_pretrained_model_reference(self, model_name: str) -> str:
+        try:
+            return os.fspath(self._download_model(model_name))
+        except FileNotFoundError as e:
+            raise FileNotFoundError(
+                f"Could not download the requested Cellpose model '{model_name}'. "
+                "Please check the model name or ensure that the Cellpose model server is available."
+            ) from e
+
+    def _load_model_cellpose3(self, spec: CellposeModelSpec) -> object:
+        if spec.model_type == "custom":
+            model_path = self._normalize_custom_model_path(spec.name)
+            return self._cellpose_model_ctor(pretrained_model=model_path, gpu=spec.gpu, device=spec.device)
+
+        if spec.model_type != "pretrained":
+            raise ValueError(
+                f"Unsupported Cellpose model type '{spec.model_type}'. Expected one of: 'pretrained', 'custom'."
+            )
+
+        if spec.name in _CELLPOSE3_FULL_BUILTIN_MODELS:
+            self._resolve_pretrained_model_reference(spec.name)
+            if self._cellpose_ctor is None:
+                raise RuntimeError(
+                    "The installed Cellpose runtime does not expose models.Cellpose, "
+                    f"but model '{spec.name}' requires the Cellpose 3 full-model API."
+                )
+            return self._cellpose_ctor(model_type=spec.name, gpu=spec.gpu, device=spec.device)
+
+        return self._cellpose_model_ctor(model_type=spec.name, gpu=spec.gpu, device=spec.device)
+
+    def _load_model_cellpose4(self, spec: CellposeModelSpec) -> object:
+        if spec.model_type == "custom":
+            model_path = self._normalize_custom_model_path(spec.name)
+            return self._cellpose_model_ctor(pretrained_model=model_path, gpu=spec.gpu, device=spec.device)
+
+        if spec.model_type != "pretrained":
+            raise ValueError(
+                f"Unsupported Cellpose model type '{spec.model_type}'. Expected one of: 'pretrained', 'custom'."
+            )
+
+        if spec.name in _CELLPOSE3_FULL_BUILTIN_MODELS:
+            raise ValueError(
+                f"Model '{spec.name}' is a legacy Cellpose 3 model name. "
+                "It is not automatically mapped to Cellpose 4's 'cpsam' model because that can change segmentation "
+                "results. Use a Python < 3.13 environment with Cellpose 3, or provide a compatible custom model_path."
+            )
+
+        model_ref = self._resolve_pretrained_model_reference(spec.name)
+        return self._cellpose_model_ctor(pretrained_model=model_ref, gpu=spec.gpu, device=spec.device)
 
     def load_model(self, spec: CellposeModelSpec) -> object:
-        if spec.model_type == "pretrained":
-            try:
-                model_ref = os.fspath(self._download_model(spec.name))
-            except FileNotFoundError as e:
-                raise FileNotFoundError(
-                    f"Could not download the requested Cellpose model '{spec.name}'. "
-                    "Please check the model name or ensure that the Cellpose model server is available."
-                ) from e
-            return self._cellpose_model_ctor(pretrained_model=model_ref, gpu=spec.gpu, device=spec.device)
-
-        if spec.model_type == "custom":
-            if not Path(spec.name).exists():
-                raise FileNotFoundError(
-                    f"The file containing the custom trained model {spec.name} does not exist. "
-                    "Please provide a valid path."
-                )
-            return self._cellpose_model_ctor(pretrained_model=os.fspath(spec.name), gpu=spec.gpu, device=spec.device)
-
-        raise ValueError(
-            f"Unsupported Cellpose model type '{spec.model_type}'. Expected one of: 'pretrained', 'custom'."
-        )
+        if self._runtime == CellposeRuntime.V3:
+            return self._load_model_cellpose3(spec)
+        if self._runtime == CellposeRuntime.V4:
+            return self._load_model_cellpose4(spec)
+        raise RuntimeError(f"Unsupported Cellpose runtime '{self._runtime}'.")
 
     def _filter_eval_kwargs_for_model(self, model: Any, eval_kwargs: dict[str, Any]) -> dict[str, Any]:
         """

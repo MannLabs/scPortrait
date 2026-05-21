@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 
 from scportrait.pipeline.segmentation.workflows._cellpose import DAPISegmentationCellpose
-from scportrait.pipeline.segmentation.workflows._cellpose_backend import CellposeBackend
+from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
+    CellposeBackend,
+    CellposeModelSpec,
+    CellposeRuntime,
+)
 
 TEST_HELPER_DIR = Path(__file__).resolve().parent
 if str(TEST_HELPER_DIR) not in sys.path:
@@ -16,12 +20,51 @@ if str(TEST_HELPER_DIR) not in sys.path:
 from cellpose_test_helpers import make_cellpose_workflow
 
 
-@pytest.mark.parametrize("model_name", ["nuclei", "cpsam"])
-def test_load_model_pretrained_uses_download_and_cellpose_model_constructor(tmp_path, monkeypatch, model_name):
+def test_load_model_pretrained_nuclei_uses_cellpose3_full_model_path(tmp_path, monkeypatch):
     workflow = make_cellpose_workflow(
         DAPISegmentationCellpose,
         tmp_path=tmp_path,
-        config={"nucleus_segmentation": {"model": model_name}},
+        config={"nucleus_segmentation": {"model": "nuclei"}},
+    )
+    fake_model = object()
+
+    download_calls: list[str] = []
+    cellpose_calls: list[dict] = []
+    cellpose_model_calls: list[dict] = []
+
+    def _fake_download(name: str) -> str:
+        download_calls.append(name)
+        return f"/cache/{name}"
+
+    def _fake_cellpose(*args, **kwargs):
+        cellpose_calls.append({"args": args, "kwargs": kwargs})
+        return fake_model
+
+    def _fake_cellpose_model(*args, **kwargs):
+        cellpose_model_calls.append({"args": args, "kwargs": kwargs})
+        return object()
+
+    backend = CellposeBackend(
+        runtime=CellposeRuntime.V3,
+        download_model=_fake_download,
+        cellpose_ctor=_fake_cellpose,
+        cellpose_model_ctor=_fake_cellpose_model,
+    )
+    monkeypatch.setattr(workflow, "_get_cellpose_backend", lambda: backend)
+
+    loaded_model = workflow._load_model(model_type="nucleus", gpu=False, device="cpu")
+
+    assert loaded_model is fake_model
+    assert download_calls == ["nuclei"]
+    assert cellpose_calls == [{"args": (), "kwargs": {"model_type": "nuclei", "gpu": False, "device": "cpu"}}]
+    assert cellpose_model_calls == []
+
+
+def test_load_model_pretrained_cpsam_uses_cellpose4_pretrained_model_reference(tmp_path, monkeypatch):
+    workflow = make_cellpose_workflow(
+        DAPISegmentationCellpose,
+        tmp_path=tmp_path,
+        config={"nucleus_segmentation": {"model": "cpsam"}},
     )
     fake_model = object()
 
@@ -36,15 +79,19 @@ def test_load_model_pretrained_uses_download_and_cellpose_model_constructor(tmp_
         constructor_calls.append({"args": args, "kwargs": kwargs})
         return fake_model
 
-    backend = CellposeBackend(download_model=_fake_download, cellpose_model_ctor=_fake_cellpose_model)
+    backend = CellposeBackend(
+        runtime=CellposeRuntime.V4,
+        download_model=_fake_download,
+        cellpose_model_ctor=_fake_cellpose_model,
+    )
     monkeypatch.setattr(workflow, "_get_cellpose_backend", lambda: backend)
 
     loaded_model = workflow._load_model(model_type="nucleus", gpu=False, device="cpu")
 
     assert loaded_model is fake_model
-    assert download_calls == [model_name]
+    assert download_calls == ["cpsam"]
     assert constructor_calls == [
-        {"args": (), "kwargs": {"pretrained_model": f"/cache/{model_name}", "gpu": False, "device": "cpu"}}
+        {"args": (), "kwargs": {"pretrained_model": "/cache/cpsam", "gpu": False, "device": "cpu"}}
     ]
 
 
@@ -68,7 +115,11 @@ def test_load_model_custom_uses_cellposemodel_and_converts_pathlike_to_str(tmp_p
         constructor_calls.append({"args": args, "kwargs": kwargs})
         return fake_model
 
-    backend = CellposeBackend(download_model=_fake_download, cellpose_model_ctor=_fake_cellpose_model)
+    backend = CellposeBackend(
+        runtime=CellposeRuntime.V4,
+        download_model=_fake_download,
+        cellpose_model_ctor=_fake_cellpose_model,
+    )
     monkeypatch.setattr(workflow, "_get_cellpose_backend", lambda: backend)
 
     loaded_model = workflow._load_model(model_type="nucleus", gpu=True, device="cuda:0")
@@ -96,8 +147,35 @@ def test_load_model_custom_missing_path_raises_helpful_error(tmp_path):
     )
     workflow.config["nucleus_segmentation"] = {"model_path": missing_model}
 
+    backend = CellposeBackend(
+        runtime=CellposeRuntime.V4,
+        download_model=lambda _name: "/cache/model",
+        cellpose_model_ctor=lambda **_kwargs: object(),
+    )
+    workflow._cellpose_backend = backend
+
     with pytest.raises(FileNotFoundError, match=r"custom trained model .* does not exist"):
         workflow._load_model(model_type="nucleus", gpu=False, device="cpu")
+
+
+def test_read_cellpose_model_delegates_to_backend_load_model_with_spec(tmp_path, monkeypatch):
+    workflow = make_cellpose_workflow(DAPISegmentationCellpose, tmp_path=tmp_path)
+    recorded_specs: list[CellposeModelSpec] = []
+    fake_model = object()
+
+    class _RecordingBackend:
+        def load_model(self, spec: CellposeModelSpec) -> object:
+            recorded_specs.append(spec)
+            return fake_model
+
+    monkeypatch.setattr(workflow, "_get_cellpose_backend", lambda: _RecordingBackend())
+
+    loaded = workflow._read_cellpose_model("pretrained", "nuclei", gpu=False, device="cpu")
+
+    assert loaded is fake_model
+    assert recorded_specs == [
+        CellposeModelSpec(model_type="pretrained", name="nuclei", gpu=False, device="cpu"),
+    ]
 
 
 def test_load_model_raises_clear_error_when_model_and_model_path_are_missing(tmp_path, monkeypatch):

@@ -288,7 +288,12 @@ Both use cases can of course also be combined. In case you pass both `combine_{m
 Customize Cellpose Model Behaviour
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-scPortrait currently supports **Cellpose 4.x** (``cellpose>=4.1,<5``).
+scPortrait supports a transition policy for Cellpose:
+
+* Python < 3.13 resolves to **Cellpose 3.x** (``cellpose>=3.1.1,<4``).
+* Python >= 3.13 resolves to **Cellpose 4.x** (``cellpose>=4.1,<5``).
+
+Existing projects that rely on legacy Cellpose 3 model names should stay on Python < 3.13 during the transition.
 After migrating from Cellpose 3 to Cellpose 4, segmentation outputs can change because upstream models and APIs changed.
 Do not expect bitwise-identical masks across major versions.
 
@@ -312,16 +317,16 @@ Model-loading behaviour:
 * ``model`` loads a pretrained Cellpose model by name.
 * ``model_path`` loads a custom local model file and requires the path to exist.
 * If both are set, ``model`` takes precedence.
-* Legacy names such as ``cyto``, ``cyto2``, ``cyto3``, and ``nuclei`` are resolved as channel-aware models for scPortrait workflows.
-* Other names (for example ``cpsam``) are passed to Cellpose model resolution.
+* In Cellpose 3 runtimes, legacy names such as ``cyto``, ``cyto2``, ``cyto3``, and ``nuclei`` use the Cellpose 3 full-model API.
+* In Cellpose 4 runtimes, legacy Cellpose 3 names are not silently mapped to ``cpsam`` because that can change scientific output without user awareness.
+* For Cellpose 4, use supported Cellpose 4 model names (for example ``cpsam``) or provide a compatible ``model_path``.
 
-Parameter behaviour in Cellpose 4:
+Parameter behaviour:
 
 * scPortrait does not rename these keys; use them as listed below.
-* Parameters are forwarded to Cellpose ``CellposeModel.eval`` in Cellpose 4.
+* Parameters are forwarded through the backend to the active Cellpose runtime ``eval`` method.
 * If the selected model/runtime does not support a forwarded argument, Cellpose may ignore it.
 * For Cellpose-SAM, channel IDs are model-invariant in upstream Cellpose 4; scPortrait still applies its own input channel selection before calling Cellpose.
-* Cellpose 3 ``models.Cellpose`` is removed upstream; use Cellpose 4 ``models.CellposeModel``.
 
 .. list-table::
    :widths: 20 50 30

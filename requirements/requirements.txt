@@ -29,7 +29,8 @@ scipy
 scikit-image>=0.22.0
 scikit-learn
 
-cellpose>=4.1,<5 #cellpose segmentation
+cellpose>=3.1.1,<4; python_version < "3.13"
+cellpose>=4.1,<5; python_version >= "3.13"
 
 torch
 pytorch-lightning
