@@ -38,17 +38,20 @@ def _write_h5sc_image_dataset(
     channel_mapping: np.ndarray,
     compression_type: Literal["gzip", "lzf"],
     image_dtype: npt.DTypeLike,
+    source_channel_indices: np.ndarray | None = None,
 ) -> None:
     """Write the H5SC image container and its metadata."""
-    n_cells, n_channels, image_size_x, image_size_y = images.shape
+    n_cells, _, image_size_x, image_size_y = images.shape
+    n_channels = len(channel_names) if source_channel_indices is not None else images.shape[1]
     n_masks = int(np.sum(channel_mapping == "mask"))
     n_image_channels = int(np.sum(channel_mapping == "image_channel"))
     chunks = getattr(images, "chunks", None)
+    dataset_shape = (n_cells, n_channels, image_size_x, image_size_y)
 
     with h5py.File(output_path, "a") as hf:
         hf.create_dataset(
             IMAGE_DATACONTAINER_NAME,
-            shape=images.shape,
+            shape=dataset_shape,
             chunks=chunks if chunks is not None else (1, 1, image_size_x, image_size_y),
             compression=compression_type,
             dtype=image_dtype,
@@ -68,7 +71,10 @@ def _write_h5sc_image_dataset(
         container.attrs["compression"] = compression_type
 
         for save_index in range(n_cells):
-            container[save_index] = images[save_index]
+            if source_channel_indices is None:
+                container[save_index] = images[save_index]
+            else:
+                container[save_index] = images[save_index, source_channel_indices, :, :]
 
 
 def _extract_legacy_cell_ids(index_values: np.ndarray) -> np.ndarray:
@@ -96,7 +102,8 @@ def _resolve_channel_metadata(
     handle: h5py.File,
     n_channels: int,
     image_channel_order: Sequence[str] | None,
-) -> tuple[np.ndarray, np.ndarray]:
+    selected_channels: Sequence[str] | None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Resolve channel names for the legacy format with two leading mask channels."""
     channel_information = _extract_image_channel_names_from_legacy(handle)
     if image_channel_order is None:
@@ -118,6 +125,8 @@ def _resolve_channel_metadata(
             raise ValueError(
                 "image_channel_order must contain exactly the same channel names as 'channel_information'."
             )
+    if len(set(image_channel_names.tolist())) != len(image_channel_names):
+        raise ValueError("image_channel_order must not contain duplicate channel names.")
 
     num_mask_channels = n_channels - len(image_channel_names)
     if num_mask_channels != 2:
@@ -125,9 +134,27 @@ def _resolve_channel_metadata(
             "Legacy conversion expects exactly two leading mask channels named 'seg_all_nucleus' and 'seg_all_cytosol'."
         )
 
-    names = np.asarray(["seg_all_nucleus", "seg_all_cytosol", *image_channel_names.tolist()], dtype=str)
-    mapping = np.asarray(["mask", "mask", *(["image_channel"] * len(image_channel_names))], dtype=str)
-    return names, mapping
+    if selected_channels is None:
+        selected_image_channel_names = image_channel_names
+    else:
+        selected_image_channel_names = np.asarray(selected_channels, dtype=str)
+        if len(set(selected_image_channel_names.tolist())) != len(selected_image_channel_names):
+            raise ValueError("selected_channels must not contain duplicate channel names.")
+        missing_channels = sorted(set(selected_image_channel_names.tolist()) - set(image_channel_names.tolist()))
+        if missing_channels:
+            raise ValueError(
+                "selected_channels must be a subset of image_channel_order, got unknown channel(s): "
+                f"{missing_channels}."
+            )
+
+    names = np.asarray(["seg_all_nucleus", "seg_all_cytosol", *selected_image_channel_names.tolist()], dtype=str)
+    mapping = np.asarray(["mask", "mask", *(["image_channel"] * len(selected_image_channel_names))], dtype=str)
+    image_channel_positions = {name: ix for ix, name in enumerate(image_channel_names.tolist(), start=2)}
+    source_channel_indices = np.asarray(
+        [0, 1, *[image_channel_positions[name] for name in selected_image_channel_names.tolist()]],
+        dtype=np.int64,
+    )
+    return names, mapping, source_channel_indices
 
 
 def read_h5sc(filename: str | Path) -> AnnData:
@@ -491,6 +518,7 @@ def legacy_h5_to_h5sc(
     output_path: str | Path,
     image_channel_order: Sequence[str] | None = None,
     *,
+    selected_channels: Sequence[str] | None = None,
     compression_type: Literal["gzip", "lzf"] | None = None,
     image_dtype: npt.DTypeLike | None = None,
 ) -> None:
@@ -507,8 +535,10 @@ def legacy_h5_to_h5sc(
     ``seg_all_nucleus`` and ``seg_all_cytosol``. The remaining channel names are taken
     from ``image_channel_order``, which must contain exactly the same names as
     ``channel_information``. If ``image_channel_order`` is omitted, the function raises
-    an error and reports the alphabetized channel names found in the file. If
-    ``single_cell_index_labelled`` exists it is ignored and a warning is emitted.
+    an error and reports the alphabetized channel names found in the file.
+    ``selected_channels`` optionally restricts which image channels are exported; mask
+    channels are always retained. If ``single_cell_index_labelled`` exists it is ignored
+    and a warning is emitted.
 
     This converter is best-effort for a range of older legacy `.h5` layouts from before
     the scPortrait single-cell format was fully standardized. Files from different legacy
@@ -550,19 +580,21 @@ def legacy_h5_to_h5sc(
                 stacklevel=2,
             )
 
-        resolved_channel_names, resolved_channel_mapping = _resolve_channel_metadata(
+        resolved_channel_names, resolved_channel_mapping, source_channel_indices = _resolve_channel_metadata(
             legacy_hf,
             n_channels,
             image_channel_order,
+            selected_channels,
         )
         obs = pd.DataFrame({DEFAULT_CELL_ID_NAME: cell_ids}, index=np.arange(n_cells).astype(str))
+        output_n_channels = len(resolved_channel_names)
 
         var = pd.DataFrame(
             {
                 "channels": resolved_channel_names,
                 "channel_mapping": resolved_channel_mapping,
             },
-            index=np.arange(n_channels).astype(str),
+            index=np.arange(output_n_channels).astype(str),
         )
 
         n_masks = int(np.sum(resolved_channel_mapping == "mask"))
@@ -570,7 +602,7 @@ def legacy_h5_to_h5sc(
 
         adata = AnnData(obs=obs, var=var)
         adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = n_channels
+        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = output_n_channels
         adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = n_masks
         adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = n_image_channels
         adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = image_size_x
@@ -594,4 +626,5 @@ def legacy_h5_to_h5sc(
             channel_mapping=resolved_channel_mapping,
             compression_type=compression_type,
             image_dtype=output_dtype,
+            source_channel_indices=source_channel_indices,
         )
