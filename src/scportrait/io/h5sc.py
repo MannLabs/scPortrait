@@ -99,9 +99,6 @@ def _resolve_channel_metadata(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Resolve channel names for the legacy format with two leading mask channels."""
     channel_information = _extract_image_channel_names_from_legacy(handle)
-    if channel_information is None:
-        raise ValueError("Legacy file is missing image-channel names in 'channel_information'.")
-
     if image_channel_order is None:
         raise ValueError(
             "image_channel_order is required because legacy 'channel_information' names are alphabetized and "
@@ -110,8 +107,17 @@ def _resolve_channel_metadata(
         )
 
     image_channel_names = np.asarray(image_channel_order, dtype=str)
-    if sorted(image_channel_names.tolist()) != sorted(channel_information.tolist()):
-        raise ValueError("image_channel_order must contain exactly the same channel names as 'channel_information'.")
+    if channel_information is None:
+        warnings.warn(
+            "Legacy 'channel_information' is missing. Assuming image_channel_order defines all image channels.",
+            UserWarning,
+            stacklevel=2,
+        )
+    else:
+        if sorted(image_channel_names.tolist()) != sorted(channel_information.tolist()):
+            raise ValueError(
+                "image_channel_order must contain exactly the same channel names as 'channel_information'."
+            )
 
     num_mask_channels = n_channels - len(image_channel_names)
     if num_mask_channels != 2:
@@ -503,7 +509,19 @@ def legacy_h5_to_h5sc(
     ``channel_information``. If ``image_channel_order`` is omitted, the function raises
     an error and reports the alphabetized channel names found in the file. If
     ``single_cell_index_labelled`` exists it is ignored and a warning is emitted.
+
+    This converter is best-effort for a range of older legacy `.h5` layouts from before
+    the scPortrait single-cell format was fully standardized. Files from different legacy
+    vintages may vary in their metadata conventions, so manual validation of converted
+    output is recommended.
     """
+    warnings.warn(
+        "legacy_h5_to_h5sc() is a best-effort converter for several older pre-standardization "
+        "scPortrait .h5 layouts. Legacy files may differ in metadata conventions across versions, "
+        "so please validate converted outputs manually.",
+        UserWarning,
+        stacklevel=2,
+    )
     with h5py.File(input_path, "r") as legacy_hf:
         if "single_cell_data" not in legacy_hf:
             raise ValueError("Legacy file is missing required dataset 'single_cell_data'.")
