@@ -58,7 +58,7 @@ def test_write_h5sc_accepts_valid_channel_mapping(tmp_path):
     write_h5sc(adata, tmp_path / "valid.h5sc")
 
 
-def test_legacy_h5_to_h5sc_converts_channel_information_and_obs_metadata(tmp_path):
+def test_legacy_h5_to_h5sc_converts_channel_information_and_warns_for_ignored_labelled_metadata(tmp_path):
     legacy_path = tmp_path / "legacy.h5"
     output_path = tmp_path / "converted.h5sc"
 
@@ -84,13 +84,15 @@ def test_legacy_h5_to_h5sc_converts_channel_information_and_obs_metadata(tmp_pat
             data=np.array(["dna"], dtype="S"),
         )
 
-    legacy_h5_to_h5sc(legacy_path, output_path, ["dna"])
+    with pytest.warns(UserWarning, match="best-effort converter"):
+        with pytest.warns(UserWarning, match="single_cell_index_labelled"):
+            legacy_h5_to_h5sc(legacy_path, output_path, ["dna"])
 
     adata = read_h5sc(output_path)
     np.testing.assert_array_equal(np.asarray(adata.obsm["single_cell_images"]), images)
     assert adata.obs["scportrait_cell_id"].tolist() == [101, 102]
-    assert adata.obs["condition"].tolist() == ["WT", "KO"]
-    assert adata.obs["score"].tolist() == [1.5, 2.5]
+    assert "condition" not in adata.obs.columns
+    assert "score" not in adata.obs.columns
     assert adata.var["channels"].tolist() == ["seg_all_nucleus", "seg_all_cytosol", "dna"]
     assert adata.var["channel_mapping"].tolist() == ["mask", "mask", "image_channel"]
 
@@ -166,6 +168,31 @@ def test_legacy_h5_to_h5sc_requires_image_channel_order(tmp_path):
         legacy_h5_to_h5sc(legacy_path, output_path)
 
 
+def test_legacy_h5_to_h5sc_rejects_missing_channel_information_without_order(tmp_path):
+    legacy_path = tmp_path / "legacy_missing_channel_information.h5"
+    output_path = tmp_path / "converted_missing_channel_information.h5sc"
+
+    with h5py.File(legacy_path, "w") as handle:
+        handle.create_dataset("single_cell_data", data=np.ones((1, 4, 2, 2), dtype=np.float16))
+        handle.create_dataset("single_cell_index", data=np.array([[0, 7]], dtype=np.int64))
+
+    with pytest.raises(ValueError, match="channel_information.*none"):
+        legacy_h5_to_h5sc(legacy_path, output_path)
+
+
+def test_legacy_h5_to_h5sc_rejects_non_flat_channel_information(tmp_path):
+    legacy_path = tmp_path / "legacy_non_flat_channel_information.h5"
+    output_path = tmp_path / "converted_non_flat_channel_information.h5sc"
+
+    with h5py.File(legacy_path, "w") as handle:
+        handle.create_dataset("single_cell_data", data=np.ones((1, 4, 2, 2), dtype=np.float16))
+        handle.create_dataset("single_cell_index", data=np.array([[0, 7]], dtype=np.int64))
+        handle.create_dataset("channel_information", data=np.array([["Alexa488", "Alexa647"]], dtype="S"))
+
+    with pytest.raises(ValueError, match="must be a flat array"):
+        legacy_h5_to_h5sc(legacy_path, output_path, ["Alexa488", "Alexa647"])
+
+
 def test_legacy_h5_to_h5sc_exports_only_selected_image_channels(tmp_path):
     legacy_path = tmp_path / "legacy_subset.h5"
     output_path = tmp_path / "converted_subset.h5sc"
@@ -173,7 +200,7 @@ def test_legacy_h5_to_h5sc_exports_only_selected_image_channels(tmp_path):
     images = np.arange(1 * 6 * 2 * 2, dtype=np.float32).reshape(1, 6, 2, 2)
 
     with h5py.File(legacy_path, "w") as handle:
-        handle.create_dataset("single_cell_data", data=images)
+        handle.create_dataset("single_cell_data", data=images, chunks=(1, 6, 2, 2), compression="gzip")
         handle.create_dataset("single_cell_index", data=np.array([[0, 7]], dtype=np.int64))
         handle.create_dataset(
             "channel_information",
@@ -200,8 +227,8 @@ def test_legacy_h5_to_h5sc_exports_only_selected_image_channels(tmp_path):
         "image_channel",
         "image_channel",
     ]
-    assert adata.uns["single_cell_images/n_channels"] == 4
-    assert adata.uns["single_cell_images/n_image_channels"] == 2
+    assert adata.uns["single_cell_images"]["n_channels"] == 4
+    assert adata.uns["single_cell_images"]["n_image_channels"] == 2
     np.testing.assert_array_equal(
         np.asarray(adata.obsm["single_cell_images"]),
         images[:, [0, 1, 3, 5], :, :],
