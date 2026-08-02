@@ -138,6 +138,8 @@ def test_get_bounding_box_sdata_clamps_edges(sdata_builder, center_x, center_y):
 
     assert x_coords.min() >= sdata.images["input_image"].coords["x"].values.min()
     assert y_coords.min() >= sdata.images["input_image"].coords["y"].values.min()
+
+
 from scportrait.tools.sdata.processing import get_bounding_box_sdata
 
 

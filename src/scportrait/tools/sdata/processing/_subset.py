@@ -2,12 +2,12 @@ import warnings
 
 import dask.array as da
 import numpy as np
+import spatialdata
 import xarray as xr
 from affine import Affine
 from rasterio.features import rasterize
 from shapely.geometry import mapping
 from spatialdata import SpatialData
-import spatialdata
 
 
 def _infer_spatial_extent_xy(sdata: spatialdata) -> tuple[int, int] | None:
