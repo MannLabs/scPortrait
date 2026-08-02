@@ -27,6 +27,14 @@ jobs:
             ${{ runner.os }}-py3.13-uv-
             ${{ runner.os }}-uv-
 
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-python-3.11-uv-${{ hashFiles('pyproject.toml', 'requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-3.11-uv-
+
       - name: Install package
         run: |
           pip install uv
