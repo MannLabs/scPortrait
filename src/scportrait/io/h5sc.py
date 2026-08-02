@@ -30,6 +30,33 @@ def _decode_hdf5_strings(values: Any) -> np.ndarray:
     return array.astype(object, copy=False)
 
 
+def _set_h5sc_anndata_metadata(
+    adata: AnnData,
+    *,
+    n_cells: int,
+    image_size_x: int,
+    image_size_y: int,
+    channel_names: Sequence[str] | np.ndarray,
+    channel_mapping: Sequence[str] | np.ndarray,
+    compression_type: Literal["gzip", "lzf"],
+) -> None:
+    """Set the shared H5SC metadata stored in an AnnData object's ``uns``."""
+    channel_names = np.asarray(channel_names, dtype=str)
+    channel_mapping = np.asarray(channel_mapping, dtype="<U15")
+    metadata = {
+        "n_cells": n_cells,
+        "n_channels": len(channel_names),
+        "n_masks": int(np.sum(channel_mapping == "mask")),
+        "n_image_channels": int(np.sum(channel_mapping == "image_channel")),
+        "image_size_x": image_size_x,
+        "image_size_y": image_size_y,
+        "channel_names": channel_names,
+        "channel_mapping": channel_mapping,
+        "compression": compression_type,
+    }
+    adata.uns[DEFAULT_NAME_SINGLE_CELL_IMAGES] = metadata
+
+
 def _write_h5sc_image_dataset(
     output_path: str | Path,
     images: h5py.Dataset | npt.NDArray,
@@ -45,14 +72,22 @@ def _write_h5sc_image_dataset(
     n_channels = len(channel_names) if source_channel_indices is not None else images.shape[1]
     n_masks = int(np.sum(channel_mapping == "mask"))
     n_image_channels = int(np.sum(channel_mapping == "image_channel"))
-    chunks = getattr(images, "chunks", None)
     dataset_shape = (n_cells, n_channels, image_size_x, image_size_y)
+    source_chunks = getattr(images, "chunks", None)
+    chunks = (
+        tuple(
+            min(chunk_size, dimension_size)
+            for chunk_size, dimension_size in zip(source_chunks, dataset_shape, strict=False)
+        )
+        if source_chunks is not None
+        else (1, 1, image_size_x, image_size_y)
+    )
 
     with h5py.File(output_path, "a") as hf:
         hf.create_dataset(
             IMAGE_DATACONTAINER_NAME,
             shape=dataset_shape,
-            chunks=chunks if chunks is not None else (1, 1, image_size_x, image_size_y),
+            chunks=chunks,
             compression=compression_type,
             dtype=image_dtype,
         )
@@ -70,11 +105,38 @@ def _write_h5sc_image_dataset(
         container.attrs["channel_mapping"] = np.array([x.encode("utf-8") for x in channel_mapping])
         container.attrs["compression"] = compression_type
 
-        for save_index in range(n_cells):
-            if source_channel_indices is None:
-                container[save_index] = images[save_index]
-            else:
-                container[save_index] = images[save_index, source_channel_indices, :, :]
+        # HDF5 point selections are substantially slower than regular hyperslabs.
+        # Read bounded batches and use NumPy only for the channel reordering.
+        batch_bytes = 64 * 1024**2
+        source_item_bytes = np.dtype(images.dtype).itemsize
+        source_batch_elements = n_channels * image_size_x * image_size_y * source_item_bytes
+        batch_size = max(1, min(n_cells, batch_bytes // max(1, source_batch_elements)))
+
+        if source_channel_indices is None:
+            for start in range(0, n_cells, batch_size):
+                stop = min(start + batch_size, n_cells)
+                container[start:stop] = images[start:stop]
+            return
+
+        channel_ranges: list[tuple[int, int, int, int]] = []
+        output_start = 0
+        source_start = int(source_channel_indices[0])
+        previous_source = source_start
+        for output_index, source_index in enumerate(source_channel_indices[1:], start=1):
+            source_index = int(source_index)
+            if source_index != previous_source + 1:
+                channel_ranges.append((source_start, previous_source + 1, output_start, output_index))
+                source_start = source_index
+                output_start = output_index
+            previous_source = source_index
+        channel_ranges.append((source_start, previous_source + 1, output_start, len(source_channel_indices)))
+
+        for start in range(0, n_cells, batch_size):
+            stop = min(start + batch_size, n_cells)
+            output_batch = np.empty((stop - start, n_channels, image_size_x, image_size_y), dtype=images.dtype)
+            for source_start, source_stop, output_start, output_stop in channel_ranges:
+                output_batch[:, output_start:output_stop] = images[start:stop, source_start:source_stop, :, :]
+            container[start:stop] = output_batch
 
 
 def _extract_legacy_cell_ids(index_values: np.ndarray) -> np.ndarray:
@@ -92,10 +154,10 @@ def _extract_image_channel_names_from_legacy(handle: h5py.File) -> np.ndarray | 
     if "channel_information" not in handle:
         return None
 
-    channel_information = _decode_hdf5_strings(handle["channel_information"][:]).reshape(-1)
+    channel_information = np.asarray(handle["channel_information"][:])
     if channel_information.ndim != 1:
         raise ValueError("Legacy 'channel_information' must be a flat array of image-channel names.")
-    return channel_information.astype(str)
+    return _decode_hdf5_strings(channel_information).astype(str)
 
 
 def _resolve_channel_metadata(
@@ -107,10 +169,11 @@ def _resolve_channel_metadata(
     """Resolve channel names for the legacy format with two leading mask channels."""
     channel_information = _extract_image_channel_names_from_legacy(handle)
     if image_channel_order is None:
+        available_channels = "none" if channel_information is None else channel_information.tolist()
         raise ValueError(
             "image_channel_order is required because legacy 'channel_information' names are alphabetized and "
             "do not define image order. Pass the real image channel order using these channel names: "
-            f"{channel_information.tolist()}."
+            f"{available_channels}."
         )
 
     image_channel_names = np.asarray(image_channel_order, dtype=str)
@@ -361,19 +424,15 @@ def numpy_to_h5sc(
     # create anndata object
     adata = AnnData(obs=obs, var=vars)
 
-    # add additional metadata to `uns`
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = num_cells
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = len(channels)
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = mask_imgs.shape[1]
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = channel_imgs.shape[1]
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = img_size[0]
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_y"] = img_size[1]
-    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization"] = self.normalization
-    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_lower"] = self.normalization_range[0]
-    # adata.uns[f"{self.DEFAULT_NAME_SINGLE_CELL_IMAGES}/normalization_range_upper"] = self.normalization_range[1]
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channels
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = np.array(channel_mapping, dtype="<U15")
-    adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = compression_type
+    _set_h5sc_anndata_metadata(
+        adata,
+        n_cells=num_cells,
+        image_size_x=img_size[0],
+        image_size_y=img_size[1],
+        channel_names=channels,
+        channel_mapping=channel_mapping,
+        compression_type=compression_type,
+    )
 
     # write to file
     adata.write(output_path)
@@ -480,7 +539,6 @@ def write_h5sc(
         )
 
     n_masks = int(np.sum(channel_mapping == "mask"))
-    n_image_channels = int(np.sum(channel_mapping == "image_channel"))
     if n_masks == 0:
         raise ValueError("AnnData.var['channel_mapping'] must contain at least one 'mask' channel.")
 
@@ -491,15 +549,15 @@ def write_h5sc(
     adata_to_write.var["channel_mapping"] = np.asarray(channel_mapping, dtype=object)
     _normalize_anndata_strings(adata_to_write)
 
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = n_channels
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = n_masks
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = n_image_channels
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = image_size_x
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_y"] = image_size_y
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = channel_names
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = channel_mapping.astype("<U15")
-    adata_to_write.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = compression_type
+    _set_h5sc_anndata_metadata(
+        adata_to_write,
+        n_cells=n_cells,
+        image_size_x=image_size_x,
+        image_size_y=image_size_y,
+        channel_names=channel_names,
+        channel_mapping=channel_mapping,
+        compression_type=compression_type,
+    )
 
     adata_to_write.write(output_path)
 
@@ -537,8 +595,9 @@ def legacy_h5_to_h5sc(
     ``channel_information``. If ``image_channel_order`` is omitted, the function raises
     an error and reports the alphabetized channel names found in the file.
     ``selected_channels`` optionally restricts which image channels are exported; mask
-    channels are always retained. If ``single_cell_index_labelled`` exists it is ignored
-    and a warning is emitted.
+    channels are always retained. If ``single_cell_index_labelled`` exists, its labelled
+    metadata columns are not imported into ``adata.obs``; they are ignored and a warning
+    is emitted.
 
     This converter is best-effort for a range of older legacy `.h5` layouts from before
     the scPortrait single-cell format was fully standardized. Files from different legacy
@@ -597,24 +656,20 @@ def legacy_h5_to_h5sc(
             index=np.arange(output_n_channels).astype(str),
         )
 
-        n_masks = int(np.sum(resolved_channel_mapping == "mask"))
-        n_image_channels = int(np.sum(resolved_channel_mapping == "image_channel"))
-
         adata = AnnData(obs=obs, var=var)
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_cells"] = n_cells
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_channels"] = output_n_channels
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_masks"] = n_masks
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/n_image_channels"] = n_image_channels
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_x"] = image_size_x
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/image_size_y"] = image_size_y
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_names"] = resolved_channel_names
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/channel_mapping"] = resolved_channel_mapping.astype("<U15")
-
         if compression_type is None:
             compression_type = legacy_images.compression or "gzip"
         if compression_type not in ["gzip", "lzf"]:
             raise ValueError("Compression needs to be lzf or gzip.")
-        adata.uns[f"{DEFAULT_NAME_SINGLE_CELL_IMAGES}/compression"] = compression_type
+        _set_h5sc_anndata_metadata(
+            adata,
+            n_cells=n_cells,
+            image_size_x=image_size_x,
+            image_size_y=image_size_y,
+            channel_names=resolved_channel_names,
+            channel_mapping=resolved_channel_mapping,
+            compression_type=compression_type,
+        )
         _normalize_anndata_strings(adata)
         adata.write(output_path)
 
