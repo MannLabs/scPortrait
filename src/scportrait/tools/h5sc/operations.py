@@ -22,7 +22,9 @@ import dask.array as da
 import geopandas as gpd
 import h5py
 import numpy as np
+import pandas as pd
 from anndata import AnnData
+from anndata.io import write_elem
 from shapely.geometry import Point
 
 from scportrait.io.h5sc import read_h5sc
@@ -43,29 +45,44 @@ def update_obs_on_disk(adata: AnnData) -> None:
         adata: AnnData object whose .obs will replace the existing one.
     """
 
-    # 1. Get the open HDF5 file handle
-    file_handle = adata.uns.get("_h5sc_file_handle", None)
+    path = adata.uns.get(DEFAULT_IDENTIFIER_FILENAME)
+    if path is None:
+        raise ValueError(f"AnnData object is missing {DEFAULT_IDENTIFIER_FILENAME!r}.")
+    if not Path(path).is_file():
+        raise FileNotFoundError(f"H5SC source file does not exist: {path}")
 
-    # 2. Close file to release read-only lock
-    if file_handle:
+    if len(adata.obs) != adata.n_obs:
+        raise ValueError("adata.obs must have the same number of rows as AnnData observations.")
+    if not adata.obs.index.is_unique:
+        raise ValueError("adata.obs.index must be unique.")
+
+    image_container = adata.obsm.get(DEFAULT_NAME_SINGLE_CELL_IMAGES)
+    if image_container is None:
+        raise ValueError(f"AnnData object is missing obsm[{DEFAULT_NAME_SINGLE_CELL_IMAGES!r}].")
+    if image_container.shape[0] != adata.n_obs:
+        raise ValueError("The image container and adata.obs must have the same number of rows.")
+
+    file_handle = adata.uns.get("_h5sc_file_handle")
+    if file_handle is not None:
         file_handle.close()
-        adata.uns["_h5sc_file_handle"] = None
+    adata.uns["_h5sc_file_handle"] = None
 
-    # 3. Write updated obs
-    obs_df = adata.obs.copy()
-    obs_df.index = obs_df.index.astype(str)
-
-    with h5py.File(adata.uns[DEFAULT_IDENTIFIER_FILENAME], "r+") as f:
-        if "obs" in f:
-            del f["obs"]
-        grp = f.create_group("obs")
-        for col in obs_df.columns:
-            grp.create_dataset(col, data=obs_df[col].to_numpy())
-
-    # 4. Reopen file handle and restore image dataset
-    f = h5py.File(adata.uns[DEFAULT_IDENTIFIER_FILENAME], "r")
-    adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = f.get(IMAGE_DATACONTAINER_NAME)
-    adata.uns["_h5sc_file_handle"] = f
+    try:
+        # write_elem emits AnnData's dataframe encoding, including the index,
+        # categorical metadata, string metadata, and required encoding attrs.
+        with h5py.File(path, "r+") as f:
+            if "_obs_to_replace" in f:
+                del f["_obs_to_replace"]
+            write_elem(f, "_obs_to_replace", adata.obs.copy())
+            if "obs" in f:
+                del f["obs"]
+            f.move("_obs_to_replace", "obs")
+            f.flush()
+    finally:
+        # Keep the AnnData object usable even when the write fails.
+        reopened = h5py.File(path, "r")
+        adata.obsm[DEFAULT_NAME_SINGLE_CELL_IMAGES] = reopened[IMAGE_DATACONTAINER_NAME]
+        adata.uns["_h5sc_file_handle"] = reopened
 
 
 def get_cell_id_index(adata: AnnData, cell_id: int | list[int]) -> int | list[int]:
@@ -142,10 +159,27 @@ def add_spatial_coordinates(
         Updates the obs object of the passed h5sc object.
     """
 
-    assert cell_id_identifier in adata.obs.columns, f"{cell_id_identifier} must be a column in h5sc.obs"
-    assert ["x", "y"] == list(centers_object.columns), (
-        "centers_object must be scportrait's standardized centers object containing columns 'x' and 'y' and the scportrait cell id as index, but detected columns are {centers_object.columns}"
-    )
+    if cell_id_identifier not in adata.obs.columns:
+        raise ValueError(f"{cell_id_identifier} must be a column in h5sc.obs")
+    if list(centers_object.columns) != ["x", "y"]:
+        raise ValueError(
+            f"centers_object must contain exactly the columns 'x' and 'y', but detected {list(centers_object.columns)}."
+        )
+
+    centers = centers_object.compute()
+    cell_ids = pd.Index(adata.obs[cell_id_identifier])
+    if not cell_ids.is_unique:
+        raise ValueError(f"adata.obs[{cell_id_identifier!r}] must contain unique cell IDs.")
+    if not centers.index.is_unique:
+        raise ValueError("centers_object.index must contain unique cell IDs.")
+
+    missing = cell_ids.difference(centers.index)
+    extra = centers.index.difference(cell_ids)
+    if len(missing) or len(extra):
+        raise ValueError(
+            "centers_object IDs must exactly match AnnData cell IDs "
+            f"(missing={missing.tolist()}, extra={extra.tolist()})."
+        )
 
     if ("x" in adata.obs.columns) or ("y" in adata.obs.columns):
         adata.obs.drop(columns=["x", "y"], inplace=True, errors="ignore")
@@ -154,7 +188,8 @@ def add_spatial_coordinates(
             stacklevel=2,
         )
 
-    adata.obs = adata.obs.merge(centers_object.compute(), left_on=cell_id_identifier, right_index=True)
+    # Align by the existing AnnData row order so metadata and image rows stay paired.
+    adata.obs[["x", "y"]] = centers.loc[cell_ids, ["x", "y"]].to_numpy()
 
     if update_on_disk:
         update_obs_on_disk(adata)
