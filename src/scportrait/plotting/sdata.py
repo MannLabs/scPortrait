@@ -84,7 +84,6 @@ def _render_labels_as_fixed_color_shapes(
     fill_alpha: float,
     ax: Axes,
     coordinate_systems: str | list[str] | None = None,
-    method: str | None = None,
 ) -> None:
     """Render a labels layer as polygons with a fixed color."""
     vectorized_layer = f"{label_layer}_vectorized"
@@ -95,7 +94,6 @@ def _render_labels_as_fixed_color_shapes(
         color=color,
         fill_alpha=fill_alpha,
         outline_alpha=0,
-        method=method,
     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
 
 
@@ -542,7 +540,6 @@ def plot_labels(
     sdata: spatialdata.SpatialData,
     label_layer: str,
     coordinate_systems: str | list[str] | None = None,
-    method: str | None = None,
     title: str | None = None,
     title_fontsize: int = 20,
     color: str = "grey",
@@ -568,7 +565,6 @@ def plot_labels(
         sdata: SpatialData object containing the input image and segmentation mask.
         label_layer: Key identifying the label layer to plot.
         coordinate_systems: Coordinate system(s) to plot. If None, all coordinate systems are plotted.
-        method: Plotting backend passed to spatialdata_plot (`None`, "matplotlib", or "datashader").
         title: Title of the plot.
         title_fontsize: Font size of the title in points.
         color: Color to plot the label layer in. Can be a string specifying a specific color or linking to a column in an annotating table.
@@ -628,7 +624,6 @@ def plot_labels(
                 fill_alpha=fill_alpha,
                 ax=ax,
                 coordinate_systems=coordinate_systems,
-                method=method,
             )
         else:
             if f"{label_layer}_vectorized" not in sdata:
@@ -674,7 +669,6 @@ def plot_labels(
                         palette=palette,
                         groups=normalized_groups,
                         norm=norm,
-                        method=method,
                     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
                 finally:
                     if had_annotation:
@@ -692,7 +686,6 @@ def plot_labels(
                         palette=palette,
                         groups=normalized_groups,
                         norm=norm,
-                        method=method,
                     ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
                 except Exception:
                     raise
@@ -705,7 +698,6 @@ def plot_labels(
                 fill_alpha=fill_alpha,
                 ax=ax,
                 coordinate_systems=coordinate_systems,
-                method=method,
             )
         else:
             try:
@@ -718,7 +710,6 @@ def plot_labels(
                     palette=palette,
                     groups=normalized_groups,
                     norm=norm,
-                    method=method,
                 ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
             except Exception:
                 raise
