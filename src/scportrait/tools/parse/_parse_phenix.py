@@ -1031,7 +1031,8 @@ class CombinedPhenixParser(PhenixParser):
         metadata = {}
         for phenix_dir in self.phenix_dirs:
             normalized_phenix_dir = normalize_path(phenix_dir)
-            df = self._read_phenix_xml(os.fspath(normalized_phenix_dir / xml_path))
+            xml_file = (normalized_phenix_dir / xml_path).as_posix()
+            df = self._read_phenix_xml(xml_file)
             df.loc[:, "source"] = str(normalized_phenix_dir / append_string)  # update source with the correct strings
             metadata[str(normalized_phenix_dir)] = df
 

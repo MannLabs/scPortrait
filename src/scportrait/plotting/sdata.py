@@ -106,6 +106,41 @@ def _normalize_groups(groups: list | None) -> list[str] | None:
     return [str(group) for group in groups]
 
 
+def _render_labels_with_method_fallback(
+    sdata: spatialdata.SpatialData,
+    label_layer: str,
+    color: str,
+    fill_alpha: float,
+    cmap,
+    palette,
+    groups,
+    norm,
+    method: str | None,
+    coordinate_systems: str | list[str] | None,
+    ax: Axes,
+) -> None:
+    """Render labels while remaining compatible with spatialdata-plot versions without ``method``."""
+    kwargs = {
+        "color": color,
+        "fill_alpha": fill_alpha,
+        "outline_alpha": 1,
+        "cmap": cmap,
+        "palette": palette,
+        "groups": groups,
+        "norm": norm,
+    }
+    if method is not None:
+        kwargs["method"] = method
+
+    try:
+        sdata.pl.render_labels(label_layer, **kwargs).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+    except TypeError as exc:
+        if "unexpected keyword argument 'method'" not in str(exc) or "method" not in kwargs:
+            raise
+        kwargs.pop("method", None)
+        sdata.pl.render_labels(label_layer, **kwargs).pl.show(coordinate_systems=coordinate_systems, ax=ax)
+
+
 def _get_shape_element(sdata, element_name) -> tuple[int, int]:
     """Get the x, y shape of the element in the spatialdata object.
 
@@ -680,20 +715,19 @@ def plot_labels(
                     else:
                         del sdata["_annotation"]  # delete element again after plotting
             else:
-                try:
-                    sdata.pl.render_labels(
-                        f"{label_layer}",
-                        color=color,
-                        fill_alpha=fill_alpha,
-                        outline_alpha=1,
-                        cmap=cmap,
-                        palette=palette,
-                        groups=normalized_groups,
-                        norm=norm,
-                        method=method,
-                    ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
-                except Exception:
-                    raise
+                _render_labels_with_method_fallback(
+                    sdata=sdata,
+                    label_layer=f"{label_layer}",
+                    color=color,
+                    fill_alpha=fill_alpha,
+                    cmap=cmap,
+                    palette=palette,
+                    groups=normalized_groups,
+                    norm=norm,
+                    method=method,
+                    coordinate_systems=coordinate_systems,
+                    ax=ax,
+                )
     else:
         if use_fixed_color_fallback:
             _render_labels_as_fixed_color_shapes(
@@ -706,20 +740,19 @@ def plot_labels(
                 method=method,
             )
         else:
-            try:
-                sdata.pl.render_labels(
-                    f"{label_layer}",
-                    color=color,
-                    fill_alpha=fill_alpha,
-                    outline_alpha=1,
-                    cmap=cmap,
-                    palette=palette,
-                    groups=normalized_groups,
-                    norm=norm,
-                    method=method,
-                ).pl.show(coordinate_systems=coordinate_systems, ax=ax)
-            except Exception:
-                raise
+            _render_labels_with_method_fallback(
+                sdata=sdata,
+                label_layer=f"{label_layer}",
+                color=color,
+                fill_alpha=fill_alpha,
+                cmap=cmap,
+                palette=palette,
+                groups=normalized_groups,
+                norm=norm,
+                method=method,
+                coordinate_systems=coordinate_systems,
+                ax=ax,
+            )
 
     # configure axes
     ax.axis("off")

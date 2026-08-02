@@ -1,11 +1,9 @@
 import multiprocessing
 import os
 import timeit
-from pathlib import Path
 
 import numpy as np
 import torch
-from cellpose import models
 from skimage.morphology import dilation, disk
 from skimage.segmentation import watershed
 
@@ -18,10 +16,22 @@ from scportrait.pipeline.segmentation.segmentation import (
     ShardedSegmentation,
 )
 from scportrait.pipeline.segmentation.workflows._base_segmentation_workflow import _BaseSegmentation
+from scportrait.pipeline.segmentation.workflows._cellpose_backend import (
+    CellposeBackend,
+    CellposeEvalParameters,
+    CellposeModelSpec,
+)
 from scportrait.pipeline.segmentation.workflows._model_caches import _download_model
 
 
 class _CellposeSegmentation(_BaseSegmentation):
+    def _get_cellpose_backend(self) -> CellposeBackend:
+        backend = getattr(self, "_cellpose_backend", None)
+        if backend is None:
+            backend = CellposeBackend(download_model=_download_model)
+            self._cellpose_backend = backend
+        return backend
+
     def _write_cellpose_seg_params_to_file(self, model_type: str, model_name: str) -> None:
         """
         Writes the cellpose segmentation parameters to a file for debugging/logging purposes
@@ -37,7 +47,7 @@ class _CellposeSegmentation(_BaseSegmentation):
             f.write(f"Normalize: {self.normalize}\n")
             f.write(f"Rescale: {self.rescale}\n")
 
-    def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> models.Cellpose:
+    def _read_cellpose_model(self, modeltype: str, name: str, gpu: str, device) -> object:
         """
         Reads cellpose model based on the modeltype and name. Will load to GPU if available as specified in self._use_gpu
 
@@ -53,25 +63,23 @@ class _CellposeSegmentation(_BaseSegmentation):
         cellpose model
 
         """
-        if modeltype == "pretrained":
-            try:
-                _download_model(name)
+        backend = self._get_cellpose_backend()
+        spec = CellposeModelSpec(model_type=modeltype, name=name, gpu=gpu, device=device)
+        return backend.load_model(spec)
 
-            except FileNotFoundError as e:
-                raise FileNotFoundError(
-                    f"Could not download the requested Cellpose model '{name}'. "
-                    "Please check the model name or ensure that the Cellpose model server is available."
-                ) from e
-            model = models.Cellpose(model_type=name, gpu=gpu, device=device)
-        elif modeltype == "custom":
-            if not Path(name).exists():
-                raise FileNotFoundError(
-                    f"The file containing the custom trained model {name} does not exist. Please provide a valid path."
-                )
-            model = models.CellposeModel(pretrained_model=name, gpu=gpu, device=device)
-        return model
+    def _eval_cellpose_model(self, model: object, input_image: np.ndarray, channels: list[int]) -> np.ndarray:
+        params = CellposeEvalParameters(
+            rescale=self.rescale,
+            resample=self.resample,
+            normalize=self.normalize,
+            diameter=self.diameter,
+            flow_threshold=self.flow_threshold,
+            cellprob_threshold=self.cellprob_threshold,
+            channels=channels,
+        )
+        return self._get_cellpose_backend().eval(model, input_image, params)
 
-    def _load_model(self, model_type: str, gpu: str, device) -> models.Cellpose:
+    def _load_model(self, model_type: str, gpu: str, device) -> object:
         """
         Loads cellpose model
 
@@ -85,45 +93,53 @@ class _CellposeSegmentation(_BaseSegmentation):
         tuple of expected diameter and the cellpose model
         """
 
-        # load correct segmentation model for cytosol
-        if "model" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model"]
+        model_config = self.config[f"{model_type}_segmentation"]
+
+        # load correct segmentation model for the requested model_type
+        if "model" in model_config.keys():
+            model_name = model_config["model"]
             model = self._read_cellpose_model("pretrained", model_name, gpu=gpu, device=device)
 
-        elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
-            model_name = self.config[f"{model_type}_segmentation"]["model_path"]
+        elif "model_path" in model_config.keys():
+            model_name = model_config["model_path"]
             if isinstance(model_name, os.PathLike):
                 model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
+        else:
+            raise ValueError(
+                f"No Cellpose model configured for '{model_type}' segmentation. "
+                f"Please set either '{model_type}_segmentation.model' (pretrained) "
+                f"or '{model_type}_segmentation.model_path' (custom)."
+            )
 
         # get model parameters from config if not defined use default values
-        if "diameter" in self.config[f"{model_type}_segmentation"].keys():
-            self.diameter = self.config[f"{model_type}_segmentation"]["diameter"]
+        if "diameter" in model_config.keys():
+            self.diameter = model_config["diameter"]
         else:
             self.diameter = None
 
-        if "resample" in self.config[f"{model_type}_segmentation"].keys():
-            self.resample = self.config[f"{model_type}_segmentation"]["resample"]
+        if "resample" in model_config.keys():
+            self.resample = model_config["resample"]
         else:
             self.resample = True
 
-        if "flow_threshold" in self.config[f"{model_type}_segmentation"].keys():
-            self.flow_threshold = self.config[f"{model_type}_segmentation"]["flow_threshold"]
+        if "flow_threshold" in model_config.keys():
+            self.flow_threshold = model_config["flow_threshold"]
         else:
             self.flow_threshold = 0.4
 
-        if "cellprob_threshold" in self.config[f"{model_type}_segmentation"].keys():
-            self.cellprob_threshold = self.config[f"{model_type}_segmentation"]["cellprob_threshold"]
+        if "cellprob_threshold" in model_config.keys():
+            self.cellprob_threshold = model_config["cellprob_threshold"]
         else:
             self.cellprob_threshold = 0.0
 
-        if "normalize" in self.config[f"{model_type}_segmentation"].keys():
-            self.normalize = self.config[f"{model_type}_segmentation"]["normalize"]
+        if "normalize" in model_config.keys():
+            self.normalize = model_config["normalize"]
         else:
             self.normalize = True
 
-        if "rescale" in self.config[f"{model_type}_segmentation"].keys():
-            self.rescale = self.config[f"{model_type}_segmentation"]["rescale"]
+        if "rescale" in model_config.keys():
+            self.rescale = model_config["rescale"]
         else:
             self.rescale = None
 
@@ -134,13 +150,12 @@ class _CellposeSegmentation(_BaseSegmentation):
         return model
 
     def _check_input_image_dtype(self, input_image: np.ndarray):
-        if input_image.dtype != self.DEFAULT_IMAGE_DTYPE:
-            if isinstance(input_image.dtype, int):
-                ValueError(
-                    "Default image dtype is no longer int. Cellpose expects int inputs. Please contact developers."
-                )
-            else:
-                ValueError("Image is not of type uint16, cellpose segmentation expects int input images.")
+        expected_dtype = np.dtype(self.DEFAULT_IMAGE_DTYPE)
+        actual_dtype = input_image.dtype
+        if actual_dtype != expected_dtype:
+            raise ValueError(
+                f"Cellpose segmentation expects input images with dtype {expected_dtype}, got {actual_dtype}."
+            )
 
     def _check_gpu_status(self):
         """
@@ -234,16 +249,7 @@ class DAPISegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[1, 0],
-        )[0]
-        masks = np.array(masks)
+        masks = self._eval_cellpose_model(model=model, input_image=input_image, channels=[1, 0])
 
         # ensure all edge classes are removed
         masks = remove_edge_labels(masks)
@@ -427,16 +433,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_nucleus = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[1, 0],
-        )[0]
-        masks_nucleus = np.array(masks_nucleus)  # convert to array
+        masks_nucleus = self._eval_cellpose_model(model=model, input_image=input_image, channels=[1, 0])
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
@@ -450,16 +447,7 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
 
-        masks_cytosol = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=[2, 1],
-        )[0]
-        masks_cytosol = np.array(masks_cytosol)  # convert to array
+        masks_cytosol = self._eval_cellpose_model(model=model, input_image=input_image, channels=[2, 1])
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
@@ -487,8 +475,8 @@ class CytosolSegmentationCellpose(_CellposeSegmentation):
 
             masks_cytosol = self._perform_size_filtering(
                 mask=masks_cytosol,
-                thresholds=self.nucleus_thresholds,  # type: ignore
-                confidence_interval=self.nucleus_confidence_interval,  # type: ignore
+                thresholds=self.cytosol_thresholds,  # type: ignore
+                confidence_interval=self.cytosol_confidence_interval,  # type: ignore
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
@@ -678,16 +666,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
                 np.max(input_image) - np.min(input_image)
             )  # min max normalize to 0-1 range as cellpose expects this
 
-        masks_cytosol = model.eval(
-            [input_image],
-            rescale=self.rescale,
-            normalize=self.normalize,
-            diameter=self.diameter,
-            flow_threshold=self.flow_threshold,
-            cellprob_threshold=self.cellprob_threshold,
-            channels=channels,
-        )[0]
-        masks_cytosol = np.array(masks_cytosol)  # convert to array
+        masks_cytosol = self._eval_cellpose_model(model=model, input_image=input_image, channels=channels)
 
         # manually delete model and perform gc to free up memory on GPU
         self._clear_cache(vars_to_delete=[model])
@@ -704,8 +683,8 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         if self.filter_size:
             masks_cytosol = self._perform_size_filtering(
                 mask=masks_cytosol,
-                thresholds=self.nucleus_thresholds,  # type: ignore
-                confidence_interval=self.nucleus_confidence_interval,  # type: ignore
+                thresholds=self.cytosol_thresholds,  # type: ignore
+                confidence_interval=self.cytosol_confidence_interval,  # type: ignore
                 mask_name="cytosol",
                 log=True,
                 debug=self.debug,
