@@ -1,15 +1,15 @@
 import multiprocessing
 import os
 import timeit
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 import numpy as np
 import torch
 from cellpose import models
-from skfmm import travel_time as skfmm_travel_time
 from skimage.morphology import dilation, disk
 from skimage.segmentation import watershed
 
+from scportrait._utils.optional_dependencies import import_optional_dependency
 from scportrait.pipeline._utils.segmentation import (
     numba_mask_centroid,
     remove_edge_labels,
@@ -92,7 +92,7 @@ class _CellposeSegmentation(_BaseSegmentation):
 
         elif "model_path" in self.config[f"{model_type}_segmentation"].keys():
             model_name = self.config[f"{model_type}_segmentation"]["model_path"]
-            if isinstance(model_name, PosixPath):
+            if isinstance(model_name, os.PathLike):
                 model_name = str(model_name)
             model = self._read_cellpose_model("custom", model_name, gpu=gpu, device=device)
 
@@ -306,8 +306,6 @@ class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
         else:
             self.kernel_size = 20  # default value
 
-        print(self.kernel_size)
-
     def _expand_nucleus_mask(self, nucleus_mask: np.ndarray, kernel_size: int) -> np.ndarray:
         """
         Expands the nucleus mask by a given kernel size using dilation
@@ -323,6 +321,14 @@ class NuclearExpansionSegmentationCellpose(DAPISegmentationCellpose):
         -------
         expanded nucleus mask
         """
+        skfmm_travel_time = import_optional_dependency(
+            "skfmm",
+            attribute="travel_time",
+            package_name="scikit-fmm",
+            feature="the fast-marching segmentation utilities and workflows",
+            install_hint="pip install 'scportrait[segmentation]'",
+        )
+
         # get centers of segmented nuclei
         nucleus_centers, _, _ids = numba_mask_centroid(nucleus_mask)
         px_centers = np.round(nucleus_centers).astype(np.uint64)
@@ -608,6 +614,44 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _postprocess_selected_channels(self, selected_channels: dict[str, list[int]]) -> dict[str, list[int]]:
+        """Allow optional nucleus cue channel for cytosol-only Cellpose."""
+        nucleus_value = self.config.get("segmentation_channel_nuclei")
+        nucleus_specified = "segmentation_channel_nuclei" in self.config
+
+        if "segmentation_channel_cytosol" not in self.config and nucleus_specified:
+            if nucleus_value is not None and not (
+                isinstance(nucleus_value, str) and nucleus_value.strip().lower() == "none"
+            ):
+                raise ValueError(
+                    "segmentation_channel_cytosol must be provided when segmentation_channel_nuclei is set. "
+                    "Otherwise cytosol falls back to default channels [0, 1] and can overlap with nucleus assignment."
+                )
+
+        if nucleus_specified:
+            if nucleus_value is None or (isinstance(nucleus_value, str) and nucleus_value.strip().lower() == "none"):
+                nucleus_channels = []
+            else:
+                nucleus_channels = self._to_channel_list(nucleus_value, "nucleus")
+            selected_channels["cytosol"] = list(dict.fromkeys(selected_channels["cytosol"] + nucleus_channels))
+
+        n_input = len(selected_channels["cytosol"])
+        if n_input not in (1, 2):
+            raise ValueError(f"CytosolOnlySegmentationCellpose requires 1 or 2 selected channels, got {n_input}.")
+        self.N_INPUT_CHANNELS = n_input
+        return selected_channels
+
+    def _resolve_cellpose_channels(self, input_image: np.ndarray) -> list[int]:
+        """Map selected channel count to Cellpose channel semantics."""
+        n_input_channels = int(input_image.shape[0])
+        if n_input_channels == 1:
+            # grayscale cytosol-only input
+            return [1, 0]  # note this is 1-indexed to match Cellpose's expected input
+        if n_input_channels == 2:
+            # cytosol channel + optional nucleus cue
+            return [2, 1]  # note this is 1-indexed to match Cellpose's expected input
+        raise ValueError(f"Unsupported number of channels for Cellpose: {n_input_channels}. Expected 1 or 2.")
+
     def _setup_filtering(self):
         self._check_for_size_filtering(mask_types=self.MASK_NAMES)
 
@@ -627,6 +671,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
         #####
 
         model = self._load_model(model_type="cytosol", gpu=self.use_GPU, device=self.device)
+        channels = self._resolve_cellpose_channels(input_image)
 
         if self.normalize is False:
             input_image = (input_image - np.min(input_image)) / (
@@ -640,7 +685,7 @@ class CytosolOnlySegmentationCellpose(_CellposeSegmentation):
             diameter=self.diameter,
             flow_threshold=self.flow_threshold,
             cellprob_threshold=self.cellprob_threshold,
-            channels=[2, 1],
+            channels=channels,
         )[0]
         masks_cytosol = np.array(masks_cytosol)  # convert to array
 

@@ -30,10 +30,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
+        with:
+          submodules: recursive
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-py3.13-uv-docs-${{ hashFiles('pyproject.toml', 'requirements/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py3.13-uv-docs-
+            ${{ runner.os }}-py3.13-uv-
+            ${{ runner.os }}-uv-
       - name: set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
         with:
@@ -42,10 +53,6 @@ jobs:
         run: |
           pip install uv
           uv pip install --system ".[docs]"
-      - uses: Mushus/checkout-submodule@v1
-        with:
-          basePath: .
-          submodulePath: ./examples/notebooks
       - name: Generate Documentation
         run: |
           cd docs

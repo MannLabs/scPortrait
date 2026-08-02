@@ -1,12 +1,18 @@
 from matplotlib.axes import Axes
 from matplotlib.colors import BoundaryNorm, ListedColormap
 
-try:
-    from matplotlib_scalebar.scalebar import ScaleBar
-except ImportError:
-    raise ImportError(
-        "matplotlib_scalebar must be installed to use the plotting capabilities. please install with `pip install 'scportrait[plotting]'`."
-    ) from None
+from scportrait._utils.optional_dependencies import import_optional_dependency
+
+
+def _get_scalebar_class():
+    """Return the optional ``ScaleBar`` class when plotting extras are installed."""
+    return import_optional_dependency(
+        "matplotlib_scalebar.scalebar",
+        attribute="ScaleBar",
+        package_name="matplotlib_scalebar",
+        feature="the plotting capabilities",
+        install_hint="pip install 'scportrait[plotting]'",
+    )
 
 
 def _custom_cmap():
@@ -51,6 +57,8 @@ def add_scalebar(
         scale_location: where the text labelling the scale par should be located relative to the bar. If set to "none" then there will be no label.
         border_pad: distance between scalebar element and border of the image.
     """
+    ScaleBar = _get_scalebar_class()
+
     scalebar = ScaleBar(
         resolution,
         resolution_unit,

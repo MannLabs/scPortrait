@@ -23,7 +23,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "scPortrait"
-copyright = "2024 Sophia Mädler and Niklas Schmacke"
+copyright = "2026 Sophia Mädler and Niklas Schmacke"
 author = "Sophia Mädler and Niklas Schmacke"
 
 # -- General configuration ---------------------------------------------------
@@ -33,6 +33,7 @@ author = "Sophia Mädler and Niklas Schmacke"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
     "sphinxarg.ext",
@@ -61,6 +62,7 @@ exclude_patterns = [
     "auto_examples/**.py",
     "auto_examples/**.md5",
 ]
+suppress_warnings = ["config.cache"]
 
 # autodoc_mock_imports = []
 autodoc_mock_imports = []  # type: ignore
@@ -94,6 +96,7 @@ autodoc_default_options = {
     "member-order": "bysource",
 }
 autoclass_content = "both"
+autosummary_generate = True
 
 html_favicon = "favicon.png"
 html_logo = "_static/scPortrait_logo_light.svg"

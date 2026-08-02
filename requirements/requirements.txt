@@ -1,17 +1,26 @@
 tqdm
 psutil
 numba
+numpy
+pandas
 h5py
 alphabase
-anndata<0.12
-spatialdata>=0.3.0,<0.6
-pyarrow<22.0.0
+anndata
+spatialdata>=0.7.3
+dask
+xarray
+pyarrow
 py-lmd>=1.3.1
 affine
 rasterio
+requests
+filelock
+PyYAML
+deprecation
 
 spatialdata-plot>=0.2.14
 matplotlib
+Pillow
 
 tifffile
 zarr
@@ -20,11 +29,10 @@ ome-zarr
 scipy
 scikit-image>=0.22.0
 scikit-learn
-mahotas
 
-scikit-fmm #WGA segmentation
 cellpose>=3.1.1,<4 #cellpose segmentation
 
 torch
 pytorch-lightning
+torchmetrics
 torchvision

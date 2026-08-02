@@ -39,7 +39,7 @@ Stitching
 During stitching, individual fields-of-view are registered and combined into a single whole-slide image. Using parallel processing and out-of-memory computation scPortrait can efficiently align and assemble large
 datasets that exceed the memory capacities of a single machine. The stitching process is optional and can be skipped if the input images are already in the form of a single whole-slide image or individual images need to be processed.
 
-You can find an example notebook illustrating the stitching of individual tif files to whole-slide images :ref:`here <example_stitching>`
+You can find an example notebook illustrating the stitching of individual tif files to whole-slide images :ref:`in the stitching tutorial <example_stitching>`
 
 .. _quickstart_segmentation:
 
@@ -124,7 +124,7 @@ During featurization, the extracted single cell images are passed to a phenotype
 
 The type of featurization applicable to your use case will depend on the type of data you are working with and the biological question you are trying to answer. For example, in our `first publication <https://doi.org/10.1101/2023.06.01.542416>`_ we describe a deep learning-based binary image classifier that identifies individual cells defective in a biological process called "autophagy". Multiple featurization runs can be performed on the same dataset so that different featurization approaches can be used in parallel.
 
-You can find more information on running an inference within a scPortrait Project in this `notebook <https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Classification-of-extracted-single-cells>`_.
+You can find more information on running an inference within a scPortrait Project in this `classification notebook <https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Classification-of-extracted-single-cells>`_.
 
 .. _quickstart_selection:
 
@@ -135,7 +135,7 @@ The selection step takes a list of cells that have been selected based on their 
 
 During selection, the appearance of selected cells can be modified, e.g. by applying an erosion or dilation or by smoothing the shapes to further stream-line the excision process. Please refer to the `py-lmd <https://github.com/MannLabs/py-lmd>`_ library for more details on the available parameters.
 
-You can also find an example selection workflow outlined in this `notebook <https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-a-Leica-LMD7>`_.
+You can also find an example selection workflow outlined in this `selection notebook <https://mannlabs.github.io/scPortrait/html/pages/notebooks/example_scPortrait_project.html#Exporting-Cutting-contours-for-excision-on-a-Leica-LMD7>`_.
 
 .. _detailed_guide:
 

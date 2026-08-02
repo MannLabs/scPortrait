@@ -11,3 +11,4 @@ masks
 ############
 .. automodule:: scportrait.processing.masks
     :members:
+    :no-index:
