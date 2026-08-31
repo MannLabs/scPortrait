@@ -209,13 +209,16 @@ from os import PathLike
 
 from scportrait._utils.paths import normalize_path, path_suffix
 
+
 def read_config(path: str | PathLike[str]) -> dict:
     with open(path) as stream:
         ...
 
+
 def get_output_dir(path: str | PathLike[str]):
     normalized = normalize_path(path)
     return normalized.parent
+
 
 def is_hdf5(path: str | PathLike[str]) -> bool:
     return path_suffix(path) in {"h5", "hdf5"}
@@ -300,8 +303,7 @@ Example:
 ```python
 @pytest.mark.slow
 @pytest.mark.requires_dataset("dataset_1_config", "test_dataset")
-def test_full_pipeline_e2e(tmp_path):
-    ...
+def test_full_pipeline_e2e(tmp_path): ...
 ```
 
 Run marker-filtered tests:
