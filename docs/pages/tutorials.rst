@@ -44,6 +44,18 @@ This notebook walks you through creating a pyTorch dataloader from your scPortra
 
    notebooks/_notebook_deep_learning.nblink
 
+H5SC photomosaic
+----------------
+
+This notebook creates a mosaic of single-cell images from an h5sc single-cell image dataset. It samples and colorizes single-cell channels, matches them to a target PNG, and saves the completed mosaic.
+
+It requires the optional art dependencies (``pip install 'scportrait[art]'``) and an Apple Silicon GPU with PyTorch MPS.
+
+.. toctree::
+   :maxdepth: 2
+
+   notebooks/example_h5sc_collage.ipynb
+
 Parsing Workflow
 ----------------
 This notebook walks you through using scportrait's `parse` module to prepare imaging data obtained from an Opera Phenix microscope for downstream applications.
