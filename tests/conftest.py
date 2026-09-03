@@ -1,5 +1,6 @@
 import shutil
 
+import geopandas as gpd
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,8 +8,10 @@ import pandas as pd
 import pytest
 from anndata import AnnData
 from matplotlib.figure import Figure
+from shapely.geometry import box
 from spatialdata import SpatialData
 from spatialdata.datasets import blobs
+from spatialdata.models import Image2DModel, ShapesModel
 
 from scportrait.tools.sdata.write._helper import _normalize_anndata_strings
 
@@ -77,3 +80,31 @@ def sdata_with_labels() -> SpatialData:
     sdata["table"].obs["labelling_categorical"] = sdata["table"].obs["instance_id"].astype("category")
     sdata["table"].obs["labelling_continous"] = (sdata["table"].obs["instance_id"] > 10).astype(float)
     return sdata
+
+
+@pytest.fixture
+def sdata_with_selected_region():
+    image = np.ones((1, 10, 10), dtype=np.uint16)
+    shape = box(2, 3, 7, 8)
+    image_model = Image2DModel.parse(image, dims=("c", "y", "x"))
+    shapes_gdf = gpd.GeoDataFrame({"geometry": [shape]})
+    shapes_model = ShapesModel.parse(shapes_gdf)
+    sdata = SpatialData(images={"input_image": image_model}, shapes={"select_region": shapes_model})
+    return sdata
+
+
+@pytest.fixture
+def sdata_builder():
+    def _build(
+        image,
+        shapes,
+        image_name="input_image",
+        shape_name="select_region",
+        dims=("c", "y", "x"),
+    ):
+        image_model = Image2DModel.parse(image, dims=dims)
+        shapes_gdf = gpd.GeoDataFrame({"geometry": shapes})
+        shapes_model = ShapesModel.parse(shapes_gdf)
+        return SpatialData(images={image_name: image_model}, shapes={shape_name: shapes_model})
+
+    return _build

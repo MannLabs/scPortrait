@@ -79,7 +79,7 @@ def image(
                         f"Number of channel names ({len(channel_names)}) does not match the number of channels in the image ({image.shape[0]})."
                     )
                 channel_names_old = image.coords["c"].values.tolist()
-                if channel_names_old != channel_names:
+                if any(channel_names_old != channel_names):
                     warnings.warn(
                         f"Channel names in the DataArray ({channel_names_old}) do not match the provided channel names ({channel_names}). The DataArray will be updated with the provided channel names.",
                         stacklevel=2,
