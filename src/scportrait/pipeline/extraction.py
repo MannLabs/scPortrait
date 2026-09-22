@@ -68,6 +68,9 @@ class HDF5CellExtraction(ProcessingStep):
         self.extraction_file = os.path.join(self.directory, self.DEFAULT_DATA_DIR, self.DEFAULT_EXTRACTION_FILE)
         self.output_path = None
 
+        # whether to mask out background/neighbouring cells when extracting image channels
+        self.apply_masks = True
+
     def _get_compression_type(self) -> None:
         """setup compression of single-cell images in HDF5 file based on config."""
         # default value for compression is "lzf" is nothing else is specified
@@ -640,9 +643,11 @@ class HDF5CellExtraction(ProcessingStep):
         else:
             image_data = self.image_data[image_index, :, window_y, window_x]
 
-        image_data = (
-            image_data * masks[-1]
-        )  # always uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
+        if self.apply_masks:
+            image_data = (
+                image_data * masks[-1]
+            )  # uses the last available mask, in nucleus only seg its the nucleus, if both its the cytosol, if only cytosol its also the cytosol. This always is the mask we want to use to extract the channel information
+        # if apply_masks is False the raw image window is kept unmasked (background/neighbouring cells retained)
 
         # this needs to be performed on a per channel basis!
         images = []
@@ -1143,7 +1148,12 @@ class HDF5CellExtraction(ProcessingStep):
         return calibrated_max, first_wait_s, first_result, pending_results, next_submit_ix
 
     def process(
-        self, partial: bool = False, n_cells: int = None, seed: int = 42, output_folder_name: str | None = None
+        self,
+        partial: bool = False,
+        n_cells: int = None,
+        seed: int = 42,
+        output_folder_name: str | None = None,
+        apply_masks: bool = True,
     ) -> None:
         """
         Extracts single cell images from a segmented scPortrait project and saves the results to a standardized HDF5 file.
@@ -1153,6 +1163,9 @@ class HDF5CellExtraction(ProcessingStep):
             partial: if set to True only a random subset of n_cells will be extracted.
             n_cells: Number of cells to extract if partial is set to True.
             seed: Seed for random sampling of cells for reproducibility if partial is set to True.
+            apply_masks: if set to True (default) the segmentation mask is applied to the extracted
+                image channels so that background and neighbouring cells are zeroed out. If set to
+                False the raw image window is saved without masking.
 
         Important
         ---------
@@ -1239,6 +1252,9 @@ class HDF5CellExtraction(ProcessingStep):
         total_time_start = timeit.default_timer()
 
         start_setup = timeit.default_timer()
+
+        # set up flag for whether to mask image channels (set before pool creation so it propagates to workers)
+        self.apply_masks = apply_masks
 
         # set up flag for partial processing
         self.partial_processing = partial

@@ -1646,6 +1646,7 @@ class Project(Logable):
         seed: int = 42,
         overwrite: bool | None = None,
         output_folder_name: str | None = None,
+        apply_masks: bool = True,
     ) -> None:
         """Extract single-cell images from the input image using the defined extraction method.
 
@@ -1656,6 +1657,9 @@ class Project(Logable):
             overwrite: If set to ``None``, will read the overwrite value from the associated project.
                 Otherwise can be set to a boolean value to override project specific settings for image loading
             output_folder_name: can be set to override the default output folder location.
+            apply_masks: If set to ``True`` (default), the segmentation mask is applied to the extracted
+                image channels so background and neighbouring cells are zeroed out (current behaviour).
+                If set to ``False``, the raw image window is extracted without masking.
 
         Returns:
             Single-cell images are written to HDF5 files in the project associated extraction directory. The file path can be accessed via ``project.extraction_f.output_path``.
@@ -1674,7 +1678,13 @@ class Project(Logable):
         if overwrite is not None:
             self.extraction_f.overwrite_run_path = overwrite
 
-        self.extraction_f(partial=partial, n_cells=n_cells, seed=seed, output_folder_name=output_folder_name)
+        self.extraction_f(
+            partial=partial,
+            n_cells=n_cells,
+            seed=seed,
+            output_folder_name=output_folder_name,
+            apply_masks=apply_masks,
+        )
         self.get_project_status()
 
     def featurize(
