@@ -1,2 +1,2 @@
 # development
-pre-commit
+pre-commit>=3.2.0
