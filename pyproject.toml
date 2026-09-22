@@ -50,6 +50,7 @@ docs = {file = [
     "requirements/requirements_zstack.txt",
 ]}
 plotting = {file = ["requirements/requirements_plotting.txt"]}
+art = {file = ["requirements/requirements_art.txt"]}
 stitching = {file = ["requirements/requirements_stitching.txt"]}
 convnext = {file = ["requirements/requirements_convnext.txt"]}
 
@@ -58,6 +59,7 @@ all = {file = [
     "requirements/requirements_test.txt",
     "requirements/requirements_docs.txt",
     "requirements/requirements_plotting.txt",
+    "requirements/requirements_art.txt",
     "requirements/requirements_segmentation.txt",
     "requirements/requirements_stitching.txt",
     "requirements/requirements_zstack.txt",
