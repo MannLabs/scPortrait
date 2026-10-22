@@ -1,8 +1,11 @@
 import os
+from contextlib import nullcontext
 from typing import Any, Literal, TypeAlias
 
+import anndata as ad
 import numpy as np
 import pandas as pd
+import zarr
 from anndata import AnnData
 from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData, read_zarr
@@ -10,6 +13,7 @@ from spatialdata.models import get_model
 from xarray import DataArray, DataTree
 
 ObjectType: TypeAlias = Literal["images", "labels", "points", "tables", "shapes"]
+_TABLE_TARGET_SHARD_SIZE_BYTES = 64 * 1024**2
 
 
 def _get_image(elem: DataArray | DataTree) -> DataArray:
@@ -147,7 +151,19 @@ def add_element_sdata(sdata: SpatialData, element: Any, element_name: str, overw
 
     # Add the element to the SpatialData object
     sdata[element_name] = element
-    sdata.write_element(element_name)
+    if isinstance(element, AnnData) and hasattr(ad.settings, "auto_shard_zarr_v3"):
+        zarr_settings = nullcontext()
+        if (
+            hasattr(zarr, "config")
+            and "target_shard_size_bytes" in zarr.config.get("array")
+            and zarr.config.get("array.target_shard_size_bytes") is None
+        ):
+            # AnnData otherwise defaults to 1 GB shards, which can exhaust memory during table writes.
+            zarr_settings = zarr.config.set({"array.target_shard_size_bytes": _TABLE_TARGET_SHARD_SIZE_BYTES})
+        with ad.settings.override(auto_shard_zarr_v3=ad.settings.auto_shard_zarr_v3 is not False), zarr_settings:
+            sdata.write_element(element_name)
+    else:
+        sdata.write_element(element_name)
 
 
 def _rewrite_metadata_path_reference(metadata_path: os.PathLike[str], old_path: str, new_path: str) -> None:

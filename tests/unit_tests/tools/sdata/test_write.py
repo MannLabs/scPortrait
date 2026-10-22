@@ -1,11 +1,16 @@
 import shutil
+import warnings
+from types import SimpleNamespace
 
+import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
 import scportrait.tl.sdata.write as write
+import zarr
 from anndata import AnnData
 from spatialdata import SpatialData, read_zarr
+from spatialdata._io.format import SpatialDataContainerFormatV01
 from spatialdata.datasets import blobs
 
 
@@ -64,26 +69,72 @@ def test_add_element_sdata(sdata, sdata_path, element_name):
 def _make_table_from_dataframe() -> AnnData:
     obs = pd.DataFrame(
         {
-            "region": pd.Series(["1", "2", "3"], dtype="string"),
-            "group": pd.Series(["a", "b", "a"], dtype="string").astype("category"),
+            "region": pd.array(["1", "2", "3"], dtype="string"),
+            "group": pd.Categorical(pd.array(["a", "b", "a"], dtype="string")),
         },
         index=pd.Index(["1", "2", "3"], dtype="string"),
     )
     var = pd.DataFrame(index=pd.Index(["feature_0"], dtype="string"))
-    X = np.zeros((3, 1), dtype=np.float32)
+    X = np.arange(3, dtype=np.float32).reshape(3, 1)
     return AnnData(X=X, obs=obs, var=var)
 
 
-def test_add_element_sdata_table_from_dataframe(sdata_path):
+@pytest.mark.parametrize("legacy_settings", [False, True])
+@pytest.mark.parametrize("legacy_format", [False, True])
+def test_add_element_sdata_table_from_dataframe(sdata_path, monkeypatch, legacy_settings, legacy_format):
     sdata_new = SpatialData()
-    sdata_new.write(sdata_path)
+    sdata_new.write(sdata_path, sdata_formats=SpatialDataContainerFormatV01() if legacy_format else None)
 
     table = _make_table_from_dataframe()
-    write._helper.add_element_sdata(sdata_new, table, "table", overwrite=True)
+    if legacy_settings:
+        monkeypatch.setattr(write._helper, "ad", SimpleNamespace(settings=SimpleNamespace()))
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        write._helper.add_element_sdata(sdata_new, table, "table", overwrite=True)
+
+    if not legacy_settings and hasattr(ad.settings, "auto_shard_zarr_v3"):
+        assert not any("zarr v3 autosharding" in str(w.message) for w in caught_warnings)
 
     assert "table" in sdata_new
     sdata = read_zarr(sdata_path)
     assert "table" in sdata
+    np.testing.assert_array_equal(sdata["table"].X, table.X)
+    pd.testing.assert_frame_equal(sdata["table"].obs, table.obs)
+    pd.testing.assert_frame_equal(sdata["table"].var, table.var)
+    assert zarr.open_group(sdata_path, mode="r")["tables/table/X"].metadata.zarr_format == (2 if legacy_format else 3)
+
+
+@pytest.mark.parametrize("auto_sharding", [None, False, True])
+@pytest.mark.parametrize("target_size", [None, 8 * 1024**2])
+@pytest.mark.parametrize("write_fails", [False, True])
+def test_table_sharding_respects_and_restores_settings(monkeypatch, auto_sharding, target_size, write_fails):
+    if not hasattr(ad.settings, "auto_shard_zarr_v3") or not hasattr(zarr, "config"):
+        pytest.skip("Auto-sharding settings require newer AnnData and Zarr versions.")
+    if "target_shard_size_bytes" not in zarr.config.get("array"):
+        pytest.skip("This Zarr version does not support a target shard size.")
+
+    sdata = SpatialData()
+
+    def check_write_settings(element_name):
+        assert element_name == "table"
+        assert ad.settings.auto_shard_zarr_v3 is (auto_sharding is not False)
+        assert zarr.config.get("array.target_shard_size_bytes") == (target_size or 64 * 1024**2)
+        if write_fails:
+            raise OSError("write failed")
+
+    monkeypatch.setattr(sdata, "write_element", check_write_settings)
+    with (
+        ad.settings.override(auto_shard_zarr_v3=auto_sharding),
+        zarr.config.set({"array.target_shard_size_bytes": target_size}),
+    ):
+        if write_fails:
+            with pytest.raises(OSError, match="write failed"):
+                write._helper.add_element_sdata(sdata, _make_table_from_dataframe(), "table")
+        else:
+            write._helper.add_element_sdata(sdata, _make_table_from_dataframe(), "table")
+
+        assert ad.settings.auto_shard_zarr_v3 is auto_sharding
+        assert zarr.config.get("array.target_shard_size_bytes") == target_size
 
 
 ### test scportrait.tools.sdata.write._helper.rename_image_element
