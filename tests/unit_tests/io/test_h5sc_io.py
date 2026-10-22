@@ -24,32 +24,25 @@ def _make_adata(channel_mapping: list[str] | None = None, *, include_mapping: bo
     return adata
 
 
-def test_write_h5sc_requires_channel_mapping_column(tmp_path):
-    adata = _make_adata(include_mapping=False)
+@pytest.mark.parametrize(
+    ("channel_mapping", "include_mapping", "error"),
+    [
+        pytest.param(None, False, "must contain a 'channel_mapping' column", id="missing-column"),
+        pytest.param(["mask", None, "image_channel"], True, "contains missing values", id="missing-values"),
+        pytest.param(["mask", "image", "image_channel"], True, "may only contain", id="invalid-value"),
+        pytest.param(
+            ["image_channel"] * 3,
+            True,
+            "at least one 'mask' channel",
+            id="no-mask-channel",
+        ),
+    ],
+)
+def test_write_h5sc_rejects_invalid_channel_mapping(tmp_path, channel_mapping, include_mapping, error):
+    adata = _make_adata(channel_mapping, include_mapping=include_mapping)
 
-    with pytest.raises(ValueError, match="must contain a 'channel_mapping' column"):
-        write_h5sc(adata, tmp_path / "missing_mapping.h5sc")
-
-
-def test_write_h5sc_rejects_missing_channel_mapping_values(tmp_path):
-    adata = _make_adata(["mask", None, "image_channel"])
-
-    with pytest.raises(ValueError, match="contains missing values"):
-        write_h5sc(adata, tmp_path / "null_mapping.h5sc")
-
-
-def test_write_h5sc_rejects_invalid_channel_mapping_values(tmp_path):
-    adata = _make_adata(["mask", "image", "image_channel"])
-
-    with pytest.raises(ValueError, match="may only contain"):
+    with pytest.raises(ValueError, match=error):
         write_h5sc(adata, tmp_path / "invalid_mapping.h5sc")
-
-
-def test_write_h5sc_requires_at_least_one_mask_channel(tmp_path):
-    adata = _make_adata(["image_channel", "image_channel", "image_channel"])
-
-    with pytest.raises(ValueError, match="at least one 'mask' channel"):
-        write_h5sc(adata, tmp_path / "no_mask.h5sc")
 
 
 def test_write_h5sc_accepts_valid_channel_mapping(tmp_path):

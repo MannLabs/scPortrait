@@ -134,16 +134,6 @@ def test_import_transformers_missing_raises_guided_error(monkeypatch):
         _import_transformers()
 
 
-def test_zstack_compression_module_import_without_mahotas(monkeypatch):
-    import scportrait.processing.images._zstack_compression as zstack_compression
-
-    monkeypatch.setitem(sys.modules, "mahotas", None)
-
-    reloaded = importlib.reload(zstack_compression)
-
-    assert hasattr(reloaded, "EDF")
-
-
 def test_edf_missing_mahotas_raises_guided_error(monkeypatch):
     from scportrait.processing.images._zstack_compression import EDF
 
@@ -153,34 +143,24 @@ def test_edf_missing_mahotas_raises_guided_error(monkeypatch):
         EDF(np.zeros((2, 4, 4), dtype=np.uint16))
 
 
-def test_segmentation_utils_module_import_without_skfmm(monkeypatch):
-    import scportrait.pipeline._utils.segmentation as segmentation_utils
+@pytest.mark.parametrize(
+    ("module_name", "dependency", "symbol"),
+    [
+        ("scportrait.processing.images._zstack_compression", "mahotas", "EDF"),
+        ("scportrait.pipeline._utils.segmentation", "skfmm", "segment_global_threshold"),
+        (
+            "scportrait.pipeline.segmentation.workflows._cellpose",
+            "skfmm",
+            "NuclearExpansionSegmentationCellpose",
+        ),
+        ("scportrait.pipeline.segmentation.workflows._wga_segmentation", "skfmm", "WGASegmentation"),
+    ],
+)
+def test_modules_import_without_optional_dependencies(monkeypatch, module_name, dependency, symbol):
+    module = importlib.import_module(module_name)
+    monkeypatch.setitem(sys.modules, dependency, None)
 
-    monkeypatch.setitem(sys.modules, "skfmm", None)
-
-    reloaded = importlib.reload(segmentation_utils)
-
-    assert hasattr(reloaded, "segment_global_threshold")
-
-
-def test_cellpose_workflow_module_import_without_skfmm(monkeypatch):
-    import scportrait.pipeline.segmentation.workflows._cellpose as cellpose_workflow
-
-    monkeypatch.setitem(sys.modules, "skfmm", None)
-
-    reloaded = importlib.reload(cellpose_workflow)
-
-    assert hasattr(reloaded, "NuclearExpansionSegmentationCellpose")
-
-
-def test_wga_workflow_module_import_without_skfmm(monkeypatch):
-    import scportrait.pipeline.segmentation.workflows._wga_segmentation as wga_segmentation
-
-    monkeypatch.setitem(sys.modules, "skfmm", None)
-
-    reloaded = importlib.reload(wga_segmentation)
-
-    assert hasattr(reloaded, "WGASegmentation")
+    assert hasattr(importlib.reload(module), symbol)
 
 
 def test_segment_global_threshold_missing_skfmm_raises_guided_error(monkeypatch):
