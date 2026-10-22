@@ -166,84 +166,40 @@ class _FeaturizationBase(ProcessingStep):
         """Extract relevant metadata from single-cell image file(s).
         Will ensure that metadata that must be consistent across files is consistent.
         """
-        if isinstance(self.extraction_file, (str, os.PathLike)):
-            with h5py.File(self.extraction_file, "r") as f:
-                metadata: h5py.Dataset = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
-                self.n_masks = metadata["n_masks"][()]
-                self.n_channels = metadata["n_channels"][()]
-                self.n_image_channels = metadata["n_image_channels"][()]
-
-                # strings are encoded as bytes in HDF5 files, decode them to strings
-                self.channel_names = metadata["channel_names"].asstr()[:]
-                self.channel_mapping = metadata["channel_mapping"].asstr()[:]
-                self.segmentation_channel = [
-                    metadata["channel_names"].asstr()[i]
-                    for i, v in enumerate(metadata["channel_mapping"].asstr()[:])
-                    if v == "mask"
-                ][0]
-
-                # variable metadata can be saved directly to self
+        files = [self.extraction_file] if isinstance(self.extraction_file, (str, os.PathLike)) else self.extraction_file
+        self.n_cells = []
+        common_specs = None
+        for file in files:
+            with h5py.File(file, "r") as f:
+                metadata = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
+                specs = (
+                    metadata["n_masks"][()],
+                    metadata["n_channels"][()],
+                    metadata["n_image_channels"][()],
+                    metadata["channel_names"].asstr()[:],
+                    metadata["channel_mapping"].asstr()[:],
+                )
+                if common_specs is None:
+                    common_specs = specs
+                elif any(
+                    not np.array_equal(current, common) for current, common in zip(specs, common_specs, strict=True)
+                ):
+                    raise ValueError("Single-cell metadata is not consistent across extraction files.")
                 self.n_cells.append(metadata["n_cells"][()])
 
-        if isinstance(self.extraction_file, list):
-            # metadata that must be consistent across files
-            n_channels = []
-            n_image_channels = []
-            n_masks = []
-            channel_names = []
-            channel_mapping = []
-            segmentation_channel = []
+        if common_specs is None:
+            raise ValueError("At least one single-cell extraction file is required.")
 
-            # metadata that can be different across files -> saved directly into self
-
-            for file in self.extraction_file:
-                with h5py.File(file, "r") as f:
-                    metadata = f["uns"][self.DEFAULT_NAME_SINGLE_CELL_IMAGES]
-                    n_masks.append(metadata["n_masks"][()])
-                    n_channels.append(metadata["n_channels"][()])
-                    n_image_channels.append(metadata["n_image_channels"][()])
-
-                    # strings are encoded as bytes in HDF5 files, decode them to strings
-                    channel_names.append(metadata["channel_names"].asstr()[:])
-                    channel_mapping.append(metadata["channel_mapping"].asstr()[:])
-
-                    # variable metadata can be saved directly to self
-                    self.n_cells.append(metadata["n_cells"][()])
-                    segmentation_channel.append(
-                        [
-                            (
-                                metadata["channel_names"].asstr()[i]
-                                for i, v in enumerate(metadata["channel_mapping"].asstr()[:])
-                                if v == "mask"
-                            )
-                        ][0]
-                    )
-
-            # check to ensure that metadata that must be consistent between datasets is
-            assert (x == n_masks[0] for x in n_masks), "number of masks are not consistent over all passed inputfiles."
-            assert (x == n_channels[0] for x in n_channels), (
-                "number of channels are not consistent over all passed input files."
-            )
-            assert (x == n_image_channels[0] for x in n_image_channels), (
-                "number of image channels are not consistent over all passed input files."
-            )
-            assert (x == channel_mapping[0] for x in channel_mapping), (
-                "channel mapping is not consistent over all passed input files."
-            )
-            assert (x == channel_names[0] for x in channel_names), (
-                "channel names are not consistent over all passed input files."
-            )
-            assert (x == segmentation_channel[0] for x in segmentation_channel), (
-                "segmentation channel is not consistent over all passed input files."
-            )
-
-            # set variable names after assertions have passed to the first instance of each value
-            self.n_masks = n_masks[0]
-            self.n_channels = n_channels[0]
-            self.n_image_channels = n_image_channels[0]
-            self.channel_names = channel_names[0]
-            self.channel_mapping = channel_mapping[0]
-            self.segmentation_channel = segmentation_channel[0]
+        (
+            self.n_masks,
+            self.n_channels,
+            self.n_image_channels,
+            self.channel_names,
+            self.channel_mapping,
+        ) = common_specs
+        self.segmentation_channel = next(
+            name for name, mapping in zip(self.channel_names, self.channel_mapping, strict=True) if mapping == "mask"
+        )
 
         # get names for masks and image channels seperately
         self.mask_names = [
@@ -339,9 +295,10 @@ class _FeaturizationBase(ProcessingStep):
         """
 
         self.extraction_file = dataset_paths
+        self._get_single_cell_datafile_specs()
+        self._setup_channel_selection()
         if not return_results:
             self._setup_output()
-        self._get_single_cell_datafile_specs()
         self._setup_log_transform()
         self._setup_inference_device()
 
@@ -1659,9 +1616,7 @@ class CellFeaturizer(_cellFeaturizerBase):
 
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def _setup_channel_selection(self) -> None:
         self.channel_selection = None  # ensure that all images are passed to the function
 
     def _setup(
@@ -1671,7 +1626,6 @@ class CellFeaturizer(_cellFeaturizerBase):
     ):
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
         self._setup_transforms()
-        self._get_single_cell_datafile_specs()
         self.create_temp_dir()
 
     def process(
@@ -1781,27 +1735,36 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
     DEFAULT_LOG_NAME = "processing_CellFeaturizer.log"
     LABEL = "CellFeaturizer_single_channel"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _setup_channel_selection(self) -> None:
+        super()._setup_channel_selection()
+        if self.channel_selection is None or len(self.channel_selection) != 1:
+            raise ValueError(
+                "CellFeaturizer_single_channel requires channel_selection to be a single integer channel index."
+            )
 
-        self.label = f"{self.LABEL}_{'_'.join(f'Ch{n}' for n in self.channel_selection)}"
+        image_channel = self.channel_selection[0]
+        self.label = self.config.get("label", f"{self.LABEL}_Ch{image_channel}")
 
-    def _setup_channel_selection(self):
-        if self.n_masks == 2:
-            self.channel_selection = [0, 1, self.channel_selection]
-        if self.n_masks == 1:
-            self.channel_selection = [0, self.channel_selection]
-        return
+        # Construction parses the configuration; dataset metadata is only available during setup.
+        if not hasattr(self, "n_masks"):
+            return
+
+        if image_channel not in self.image_channel_locs:
+            raise ValueError(
+                f"channel_selection index {image_channel} does not identify an image channel in the dataset."
+            )
+
+        # Mask channels are stored before image channels in the dataset. Keep
+        # the masks plus the selected image channel for feature calculation.
+        self.channel_selection = [*range(self.n_masks), image_channel]
 
     def _setup(
         self,
         dataset_paths: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
         return_results: bool,
-    ):
+    ) -> None:
         self._general_setup(dataset_paths=dataset_paths, return_results=return_results)
-        self._setup_channel_selection()
         self._setup_transforms()
-        self._get_single_cell_datafile_specs()
         self.create_temp_dir()
 
     def process(
@@ -1861,7 +1824,7 @@ class CellFeaturizer_single_channel(_cellFeaturizerBase):
         )
 
         # generate column names
-        channel_name = self.channel_names[self.channel_selection]
+        channel_name = self.channel_names[self.channel_selection[-1]]
         column_names = self._generate_column_names(n_masks=self.n_masks, channel_names=[channel_name])
 
         # define inference function
