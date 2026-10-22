@@ -2,6 +2,7 @@
 
 __version__ = "1.8.1-dev0"
 
+import logging
 import sys
 import warnings
 
@@ -20,6 +21,18 @@ warnings.filterwarnings(
 
 # silence warning
 warnings.filterwarnings("ignore", category=FutureWarning, message="The plugin infrastructure in")
+
+
+class _OmeZarrNoParentFilter(logging.Filter):
+    """Hide the non-actionable OME-Zarr label-parent warning."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not (record.levelno == logging.WARNING and record.getMessage().startswith("no parent found for "))
+
+
+# OME-Zarr emits this while SpatialData loads label groups without a parent
+# group. It is informational for scPortrait's use case and otherwise noisy.
+logging.getLogger("ome_zarr.reader").addFilter(_OmeZarrNoParentFilter())
 
 from . import data, io, pipeline
 from . import plotting as pl
