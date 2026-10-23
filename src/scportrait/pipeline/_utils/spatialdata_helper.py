@@ -182,6 +182,7 @@ def calculate_centroids(mask: xarray.DataArray, coordinate_system: str = "global
     transform = get_transformation(mask, coordinate_system)
 
     if check_memory(mask):
+        print("Array fits in memory, using in-memory calculation.")
         centers, _, _ids = numba_mask_centroid(mask.values)
         return make_centers_object(centers, _ids, transform, coordinate_system)
 

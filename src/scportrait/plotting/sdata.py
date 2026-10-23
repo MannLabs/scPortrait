@@ -5,8 +5,10 @@ from numbers import Integral
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import spatialdata
 import xarray
+from geopandas.geodataframe import GeoDataFrame
 from matplotlib.axes import Axes
 
 PALETTE = [
