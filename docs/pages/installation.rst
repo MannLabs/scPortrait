@@ -25,11 +25,13 @@ We recommend installing the library within a separate conda environment running 
 
       conda install -c conda-forge openjdk
 
-   If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed separately via conda.
+   If you wish to utilize the accelerated stitching backend you need to install the `graph-tool library <https://graph-tool.skewed.de>`_. This library is not available via pip and needs to be installed separately via conda. scPortrait only needs the core library (``graph-tool-base``), not the drawing/GTK components.
 
    .. code::
 
-      conda install -c conda-forge graph-tool==2.68
+      conda install -c conda-forge "graph-tool-base>=2.98"
+
+   If graph-tool is not installed, scPortrait falls back to a networkx-based implementation that produces the same results.
 
    The stitching capabilities require optional dependencies which you can install along with scPortrait by running:
 

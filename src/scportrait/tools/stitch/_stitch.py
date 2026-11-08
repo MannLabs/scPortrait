@@ -400,11 +400,14 @@ class Stitcher:
         Returns:
             Initialized Mosaic object.
         """
+        from scportrait.tools.stitch._utils.blending import pastefunc_blend
+
         mosaic = self.ashlar_Mosaic(
             self.aligner,
             self.aligner.mosaic_shape,
             verbose=True,
             channels=self.channels,
+            pastefunc=pastefunc_blend,
         )
         return mosaic
 

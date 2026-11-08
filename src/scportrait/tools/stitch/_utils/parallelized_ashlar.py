@@ -4,6 +4,7 @@ functions adapted from https://github.com/labsyspharm/ashlar to provide support 
 
 import copy as copy
 import sys
+import warnings
 
 import numpy as np
 import sklearn.linear_model
@@ -16,7 +17,7 @@ try:
     from graph_tool import GraphView
     from graph_tool.generation import remove_parallel_edges
     from graph_tool.search import bfs_iterator
-    from graph_tool.topology import label_components, shortest_path
+    from graph_tool.topology import label_components, shortest_distance
 
     flavor = "graph-tool"
 except ImportError:
@@ -25,6 +26,7 @@ except ImportError:
 from ashlar import utils as utils
 from ashlar.reg import EdgeAligner, Mosaic, warn_data
 
+from scportrait.tools.stitch._utils.blending import pastefunc_blend
 from scportrait.tools.stitch._utils.graphs import get_center_nodes, nx2gt
 from scportrait.tools.stitch._utils.parallelilzation import execute_indexed_parallel, execute_parallel
 
@@ -57,16 +59,14 @@ class ParallelEdgeAligner(EdgeAligner):
 
         self.n_threads = n_threads
 
-        # set flavor to graph-tool if available
-        try:
-            from graph_tool import Graph as gtGraph
-
-            self.flavor = "graph-tool"
-        except ImportError:
-            Warning(
-                "graph-tool not available, using networkx as default. \n For stitching large datasets, graph-tool is recommended as it provides better performance."
+        # use graph-tool if it could be imported at module level, otherwise fall back to networkx
+        self.flavor = flavor
+        if self.flavor == "networkx":
+            warnings.warn(
+                "graph-tool not available, using networkx as default. For stitching large datasets, graph-tool is "
+                "recommended as it provides better performance.",
+                stacklevel=2,
             )
-            self.flavor = "networkx"
 
     def compute_threshold(self):
         # Compute error threshold for rejecting aligments. We generate a
@@ -208,10 +208,14 @@ class ParallelEdgeAligner(EdgeAligner):
 
             center = get_center_nodes(u)
             centers.append(center)
-            vertices = list(u.vertices())
-            for vertix in vertices:
-                vlist, elist = shortest_path(u, center, vertix, weights=u.ep.weight)
-                spanning_tree.add_edge_list(elist)
+
+            # a single Dijkstra run from the center yields the shortest-path tree via the predecessor map
+            # (equivalent to the union of all center->vertex shortest paths, but O(E log V) instead of O(V * E log V))
+            _, pred = shortest_distance(u, source=center, weights=u.ep.weight, pred_map=True)
+            vertices = u.get_vertices()
+            predecessors = pred.a[vertices]
+            is_tree_edge = predecessors != vertices
+            spanning_tree.add_edge_list(np.column_stack([predecessors[is_tree_edge], vertices[is_tree_edge]]))
 
         remove_parallel_edges(spanning_tree)
 
@@ -357,6 +361,7 @@ class ParallelMosaic(Mosaic):
         flip_mosaic_x=False,
         flip_mosaic_y=False,
         barrel_correction=None,
+        pastefunc=pastefunc_blend,
         verbose=False,
     ):
         super().__init__(
@@ -368,6 +373,7 @@ class ParallelMosaic(Mosaic):
             flip_mosaic_x=flip_mosaic_x,
             flip_mosaic_y=flip_mosaic_y,
             barrel_correction=barrel_correction,
+            pastefunc=pastefunc,
             verbose=verbose,
         )
 
@@ -414,7 +420,7 @@ class ParallelMosaic(Mosaic):
             for si, position in enumerate(self.aligner.positions):
                 img = self.aligner.reader.read(c=channel, series=si)
                 img = self.correct_illumination(img, channel)
-                utils.paste(out[ch_index, :, :], img, position, func=utils.pastefunc_blend)
+                utils.paste(out[ch_index, :, :], img, position, func=self.pastefunc)
 
                 # Update progress bar every n%
                 if si >= last_update + update_interval:
