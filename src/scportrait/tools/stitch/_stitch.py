@@ -1,14 +1,15 @@
 import os
 import shutil
 import sys
+import tempfile
 import warnings
+import weakref
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from alphabase.io.tempmmap import (
     create_empty_mmap,
     mmap_array_from_path,
-    redefine_temp_location,
 )
 from tqdm.auto import tqdm
 
@@ -114,6 +115,8 @@ class Stitcher:
 
         # initialize variables to default values
         self.reader = None
+        self.TEMP_DIR_NAME = None
+        self._cache_finalizer = None
 
     def _lazy_imports(self):
         """Import necessary packages for stitching."""
@@ -166,26 +169,56 @@ class Stitcher:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._clear_cache()
+        self.cleanup()
         return False
 
-    def __del__(self):
+    def cleanup(self) -> None:
+        """Delete the temporary files created during stitching (including the assembled mosaic).
+
+        Call this once all results have been written. Afterwards the assembled mosaic is no longer
+        accessible from this object. When the Stitcher is used as a context manager this is called automatically.
+        """
+        self.assembled_mosaic = None
         self._clear_cache()
 
     def _create_cache(self):
-        """Create a temporary cache directory for storing intermediate files during stitching."""
-        if self.cache is None:
-            TEMP_DIR_NAME = redefine_temp_location(self.outdir)
-        else:
-            TEMP_DIR_NAME = redefine_temp_location(self.cache)
+        """Create a temporary cache directory for storing intermediate files during stitching.
 
-        self.TEMP_DIR_NAME = TEMP_DIR_NAME
+        The directory is owned by this Stitcher instance only. It is removed by :meth:`cleanup`, when leaving a
+        ``with`` block, when the object is garbage collected, or at the latest when the Python process exits normally.
+        """
+        # remove a cache left over from a previous call to stitch() on the same object
+        self._clear_cache()
+
+        base_dir = self.outdir if self.cache is None else self.cache
+        os.makedirs(base_dir, exist_ok=True)
+        self.TEMP_DIR_NAME = tempfile.mkdtemp(prefix="temp_mmap_", dir=base_dir)
+        # weakref.finalize (unlike __del__) also runs at interpreter shutdown and does not keep the object alive
+        self._cache_finalizer = weakref.finalize(self, shutil.rmtree, self.TEMP_DIR_NAME, ignore_errors=True)
 
     def _clear_cache(self):
         """Clear the temporary cache directory."""
-        if "TEMP_DIR_NAME" in self.__dict__:
-            if os.path.exists(self.TEMP_DIR_NAME):
-                shutil.rmtree(self.TEMP_DIR_NAME)
+        finalizer = self.__dict__.get("_cache_finalizer")
+        if finalizer is not None:
+            finalizer()  # runs at most once
+        self._cache_finalizer = None
+        self.TEMP_DIR_NAME = None
+
+    def _get_assembled_mosaic(self):
+        if getattr(self, "assembled_mosaic", None) is None:
+            raise RuntimeError(
+                "No assembled mosaic available. Run stitch() first (results are no longer available after cleanup())."
+            )
+        return self.assembled_mosaic
+
+    def _create_mosaic_file(self, shape: tuple) -> str:
+        """Create the memory-mapped HDF5 file that holds the assembled mosaic inside this instance's cache."""
+        self._create_cache()
+        hdf5_path = create_empty_mmap(
+            shape, dtype=np.uint16, file_path=os.path.join(self.TEMP_DIR_NAME, "assembled_mosaic.hdf")
+        )
+        print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
+        return hdf5_path
 
     def _initialize_outdir(self):
         """Initialize the output directory for saving the stitched mosaic."""
@@ -420,12 +453,7 @@ class Stitcher:
 
         # initialize tempmmap array to save assembled mosaic to
         # if no cache is specified the tempmmap will be created in the outdir
-
-        self._create_cache()
-
-        # create empty mmap array to store assembled mosaic
-        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
-        print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
+        hdf5_path = self._create_mosaic_file(shape)
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)
         self.hdf5_path = hdf5_path  # save variable into self for easier access
 
@@ -456,9 +484,18 @@ class Stitcher:
         self._assemble_mosaic()
 
     def stitch(self):
-        """Generate the stitched mosaic."""
-        self._perform_alignment()
-        self._generate_mosaic()
+        """Generate the stitched mosaic.
+
+        The assembled mosaic is kept in a temporary file until :meth:`cleanup` is called (or the ``with`` block ends),
+        so that it can be written to one or more output formats.
+        """
+        try:
+            self._perform_alignment()
+            self._generate_mosaic()
+        except BaseException:
+            # do not leave a partially written mosaic behind
+            self.cleanup()
+            raise
 
     def write_tif(self, export_xml: bool = True) -> None:
         """Write the assembled mosaic as TIFF files.
@@ -478,7 +515,7 @@ class Stitcher:
         for i, channel in enumerate(channel_names):
             filename = os.path.join(self.outdir, f"{self.slidename}_{channel}.tif")
             filenames.append(filename)
-            write_tif(filename, self.assembled_mosaic[i, :, :])
+            write_tif(filename, self._get_assembled_mosaic()[i, :, :])
 
         if export_xml:
             write_xml(filenames, channel_names, self.slidename)
@@ -502,7 +539,7 @@ class Stitcher:
 
         write_ome_zarr(
             filepath,
-            self.assembled_mosaic,
+            self._get_assembled_mosaic(),
             self._current_channel_names(),
             self.slidename,
             overwrite=self.overwrite,
@@ -543,7 +580,7 @@ class Stitcher:
         # create spatialdata object
         write_spatialdata(
             filepath,
-            image=self.assembled_mosaic,
+            image=self._get_assembled_mosaic(),
             channel_names=self._current_channel_names(),
             scale_factors=scale_factors,
             overwrite=self.overwrite,
@@ -670,10 +707,7 @@ class ParallelStitcher(Stitcher):
 
         print(f"assembling mosaic with shape {shape}")
 
-        self._create_cache()
-
-        hdf5_path = create_empty_mmap(shape, dtype=np.uint16, tmp_dir_abs_path=self.TEMP_DIR_NAME)
-        print(f"created tempmmap array for assembled mosaic at {hdf5_path}")
+        hdf5_path = self._create_mosaic_file(shape)
 
         self.assembled_mosaic = mmap_array_from_path(hdf5_path)
         self.hdf5_path = hdf5_path  # save variable to self for easier access
@@ -717,10 +751,12 @@ class ParallelStitcher(Stitcher):
             "total": len(self.channels),
         }
 
+        mosaic = self._get_assembled_mosaic()
+
         # define helper function to execute in threadpooler
         def _write_tif(args):
             filename, ix = args
-            write_tif(filename, self.assembled_mosaic[ix, :, :])
+            write_tif(filename, mosaic[ix, :, :])
 
         # threading over channels is safe as the channels are written to different files
         workers = np.min([self.threads, self.n_channels])
